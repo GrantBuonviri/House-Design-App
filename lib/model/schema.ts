@@ -9,7 +9,7 @@ import { z } from "zod";
  * Angles are degrees clockwise from north (0 = N, 90 = E).
  */
 
-export const SCHEMA_VERSION = 1;
+export const SCHEMA_VERSION = 2;
 
 export const Point = z.object({ x: z.number(), y: z.number() });
 export type Point = z.infer<typeof Point>;
@@ -87,55 +87,45 @@ export const Plot = z.object({
 });
 export type Plot = z.infer<typeof Plot>;
 
-// ---------- 3. Discovery questions ----------
+// ---------- 3. Rooms ----------
 
-/** Answers to the "Rooms & vibe" questions. Every field has a sensible default. */
+export const Adjacency = z.object({
+  a: z.string(),
+  b: z.string(),
+  strength: z.enum(["must", "nice", "avoid"]),
+});
+export type Adjacency = z.infer<typeof Adjacency>;
+
+/** A room the user picked on the rooms page. */
+export const ChosenRoom = z.object({
+  id: z.string(),
+  /** A room type id from lib/brief/rooms.ts ("other" for the user's own rooms). */
+  type: z.string(),
+  name: z.string(),
+  /** Ideas for how the room is used or laid out. Becomes the room's notes in the brief. */
+  description: z.string().max(1000).default(""),
+  /** Optional size, in inches. */
+  lengthIn: z.number().positive().optional(),
+  widthIn: z.number().positive().optional(),
+  /** Which floor. Empty means "let Claude decide". */
+  levelId: z.string().optional(),
+});
+export type ChosenRoom = z.infer<typeof ChosenRoom>;
+
+/** Answers on the rooms page. */
 export const DiscoveryAnswers = z.object({
-  // Rooms
-  bedrooms: z.number().int().min(0).max(10).default(3),
-  fullBaths: z.number().int().min(0).max(10).default(2),
-  halfBaths: z.number().int().min(0).max(5).default(1),
-  primarySuite: z.enum(["main", "upper", "either"]).default("main"),
-  offices: z.number().int().min(0).max(4).default(1),
-  kitchen: z.enum(["open", "semi", "closed"]).default("open"),
-  dining: z.enum(["eat-in", "open", "separate"]).default("open"),
-  pantry: z.enum(["none", "cabinet", "walk-in"]).default("walk-in"),
-  mudroom: z.boolean().default(true),
-  laundry: z.enum(["near-bedrooms", "off-mudroom", "basement"]).default("near-bedrooms"),
-  extraRooms: z.array(z.string()).default([]),
-  // Floors and garage
-  floors: z.number().int().min(1).max(3).default(1),
-  basement: z.enum(["no", "yes", "if-land-suits"]).default("if-land-suits"),
-  garageBays: z.number().int().min(0).max(4).default(2),
-  storage: z.enum(["light", "average", "lots"]).default("average"),
-  outdoor: z.array(z.string()).default([]),
-  accessibility: z.array(z.string()).default([]),
-  // Feel and flow. Sliders run 0-100.
-  cozyAiry: z.number().min(0).max(100).default(50),
-  openDefined: z.number().min(0).max(100).default(40),
-  quietEntertaining: z.number().min(0).max(100).default(50),
-  bedroomPrivacy: z.enum(["together", "split", "separate-wing"]).default("split"),
-  indoorOutdoor: z.enum(["low", "some", "lots"]).default("some"),
-  dailyRoutine: z.string().max(2000).default(""),
-  styleWords: z.array(z.string().max(40)).default([]),
-  anythingElse: z.string().max(2000).default(""),
+  floorsAbove: z.number().int().min(1).max(5).default(1),
+  floorsBelow: z.number().int().min(0).max(3).default(0),
+  rooms: z.array(ChosenRoom).default([]),
+  garageCars: z.number().int().min(0).max(4).default(2),
+  connections: z.array(Adjacency).default([]),
+  /** "Describe how the house should feel", plus anything else. */
+  feel: z.string().max(3000).default(""),
 });
 export type DiscoveryAnswers = z.infer<typeof DiscoveryAnswers>;
 
-export const FollowUp = z.object({
-  id: z.string(),
-  question: z.string(),
-  /** Why the question matters, shown in small print. */
-  why: z.string().optional(),
-  /** Quick answers the user can click. */
-  options: z.array(z.string()).default([]),
-  answer: z.string().default(""),
-});
-export type FollowUp = z.infer<typeof FollowUp>;
-
 export const Discovery = z.object({
   answers: DiscoveryAnswers.prefault({}),
-  followUps: z.array(FollowUp).default([]),
 });
 export type Discovery = z.infer<typeof Discovery>;
 
@@ -146,21 +136,20 @@ export const BriefRoom = z.object({
   type: z.string(),
   name: z.string(),
   targetSqFt: z.number().positive(),
+  /** Optional size, in inches. When both are set, targetSqFt comes from them. */
+  lengthIn: z.number().positive().optional(),
+  widthIn: z.number().positive().optional(),
   levelId: z.string().optional(),
   notes: z.string().optional(),
 });
 
 export const DesignBrief = z.object({
   rooms: z.array(BriefRoom),
-  adjacencies: z.array(
-    z.object({
-      a: z.string(),
-      b: z.string(),
-      strength: z.enum(["must", "nice", "avoid"]),
-    }),
-  ),
+  adjacencies: z.array(Adjacency),
+  /** Floors above ground, 1 to 5. */
   floors: z.number().int().min(1).max(5),
-  basement: z.boolean(),
+  /** Floors below ground, 0 to 3. */
+  floorsBelow: z.number().int().min(0).max(3),
   garageBays: z.number().int().min(0).max(6),
   openKitchen: z.boolean(),
   primarySuiteLevel: z.string().optional(),

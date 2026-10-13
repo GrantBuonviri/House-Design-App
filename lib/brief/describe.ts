@@ -1,25 +1,14 @@
-import type { Plot, Profile } from "@/lib/model/schema";
+import type { Plot } from "@/lib/model/schema";
 import { describeSlope, plotAcres } from "@/lib/land/generate";
 import { plotImplications } from "@/lib/land/implications";
 import { compassName } from "@/lib/land/sun";
-import type { BriefContext } from "./rules";
+import { ruleSqft, type BriefContext } from "./rules";
+import { levelIdsFor, levelName } from "./levels";
+import { sqftFromDims } from "./rooms";
 
 /** Plain-text descriptions of the answers and the land, for Claude's prompts. */
 
 const SIDE = { N: "north", E: "east", S: "south", W: "west" } as const;
-
-export function describeHousehold(p: Profile): string {
-  const lines: string[] = [];
-  if (p.adults !== undefined) lines.push(`Adults: ${p.adults}`);
-  if (p.kids !== undefined) lines.push(`Kids: ${p.kids}`);
-  if (p.pets) lines.push(`Pets: ${p.pets}`);
-  if (p.olderRelatives) lines.push("Older relatives live here or visit often");
-  if (p.workFromHome !== undefined) lines.push(`People who work from home: ${p.workFromHome}`);
-  if (p.budget?.low || p.budget?.high) {
-    lines.push(`Budget: $${(p.budget.low ?? 0).toLocaleString("en-US")} to $${(p.budget.high ?? 0).toLocaleString("en-US")}`);
-  }
-  return lines.join("\n") || "Not given";
-}
 
 export function describePlot(plot: Plot | null): string {
   if (!plot) return "No land chosen yet.";
@@ -36,27 +25,28 @@ export function describePlot(plot: Plot | null): string {
   return lines.join("\n");
 }
 
-export function describeAnswers(ctx: Pick<BriefContext, "answers">): string {
+/** The rooms page, for Claude: floors, each room as JSON, the user's connections and the feel. */
+export function describeRooms(ctx: Pick<BriefContext, "answers">): string {
   const a = ctx.answers;
-  const lines = [
-    `Bedrooms: ${a.bedrooms}; full baths: ${a.fullBaths}; half baths: ${a.halfBaths}`,
-    `Primary suite: ${a.primarySuite === "either" ? "either floor" : `${a.primarySuite} floor`}`,
-    `Offices: ${a.offices}`,
-    `Kitchen: ${a.kitchen}; dining: ${a.dining}; pantry: ${a.pantry}`,
-    `Mudroom: ${a.mudroom ? "yes" : "no"}; laundry: ${a.laundry}`,
-    `Extra rooms: ${a.extraRooms.join(", ") || "none"}`,
-    `Floors above ground: ${a.floors}; basement: ${a.basement}`,
-    `Garage bays: ${a.garageBays}; storage needs: ${a.storage}`,
-    `Outdoor spaces: ${a.outdoor.join(", ") || "none"}`,
-    `Accessibility: ${a.accessibility.join(", ") || "none"}`,
-    `Cozy (0) to airy (100): ${a.cozyAiry}`,
-    `Open plan (0) to defined rooms (100): ${a.openDefined}`,
-    `Quiet retreat (0) to entertaining (100): ${a.quietEntertaining}`,
-    `Bedroom privacy: ${a.bedroomPrivacy}`,
-    `Indoor-outdoor connection: ${a.indoorOutdoor}`,
-    `Style words: ${a.styleWords.join(", ") || "none"}`,
-  ];
-  if (a.dailyRoutine.trim()) lines.push(`A typical day, in their words: ${a.dailyRoutine.trim()}`);
-  if (a.anythingElse.trim()) lines.push(`Anything else, in their words: ${a.anythingElse.trim()}`);
-  return lines.join("\n");
+  const levels = levelIdsFor(a.floorsAbove, a.floorsBelow);
+  const name = new Map(a.rooms.map((r) => [r.id, r.name]));
+  const rooms = a.rooms.map((r) => ({
+    id: r.id,
+    type: r.type,
+    name: r.name,
+    description: r.description.trim() || undefined,
+    sizeFromUser: sqftFromDims(r.lengthIn, r.widthIn) ?? undefined,
+    typicalSqft: ruleSqft({ type: r.type }, a.garageCars),
+    floor: r.levelId && levels.includes(r.levelId) ? r.levelId : "decide",
+  }));
+  return [
+    `Floors above ground: ${a.floorsAbove}. Floors below ground: ${a.floorsBelow}.`,
+    `Floor ids: ${levels.map((id) => `${id} (${levelName(id)})`).join(", ")}`,
+    a.rooms.some((r) => r.type === "garage") ? `Garage: ${a.garageCars} cars` : "No garage",
+    `Rooms (JSON):\n${JSON.stringify(rooms)}`,
+    a.connections.length
+      ? `The client's own connections (keep these): ${a.connections.map((e) => `${name.get(e.a)} ${e.strength} ${name.get(e.b)}`).join("; ")}`
+      : "The client gave no connections.",
+    a.feel.trim() ? `How the house should feel, in their words: ${a.feel.trim()}` : "They didn't describe the feel.",
+  ].join("\n");
 }

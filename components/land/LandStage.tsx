@@ -140,7 +140,7 @@ export default function LandStage({ onContinue }: { onContinue: () => void }) {
                 Choose different land
               </button>
               <button className="btn-primary" onClick={onContinue}>
-                Next: rooms &amp; vibe →
+                Next: rooms →
               </button>
             </div>
           </div>

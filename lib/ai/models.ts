@@ -1,6 +1,6 @@
 /**
  * Which Claude models the app uses, and what they cost. A cheap, fast model
- * handles simple steps (questions, the brief); the most capable one is saved
+ * handles simple steps like the design brief; the most capable one is saved
  * for floor plans and alternatives in later milestones.
  */
 export const MODELS = {
