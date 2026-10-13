@@ -2,11 +2,11 @@
 
 Design a house from start to finish: pick land, sketch the flow, draw the floor plan, choose finishes, walk through it in 3D, and watch a running Boise, Idaho cost estimate. It runs on your own computer in a desktop browser.
 
-The app is built in milestones. **Milestone 1** (this version) has the home screen, project setup, saving, and export/import.
+The app is built in milestones. **Milestone 1** (this version) has the home screen, project setup (your name and the house name), saving, and export/import.
 
 ## Run it on a Mac (first time)
 
-1. **Install Node.js.** Go to <https://nodejs.org>, download the **LTS** version for macOS, and run the installer.
+1. **Install Node.js.** Go to <https://nodejs.org>, download the **LTS** version for macOS, and run the installer. Node.js has no app icon in Finder; you use it by typing commands in Terminal. To check it worked, open Terminal and run `node -v`.
 2. **Install Git** if you don't have it. Open the **Terminal** app (press ⌘ Space, type "Terminal", press Enter) and run:
    ```sh
    git --version
@@ -15,10 +15,9 @@ The app is built in milestones. **Milestone 1** (this version) has the home scre
 3. **Download the app.** In Terminal:
    ```sh
    cd ~/Documents
-   git clone https://github.com/GrantBuonviri/house-design-app.git
-   cd house-design-app
+   git clone https://github.com/GrantBuonviri/House-Design-App.git
+   cd House-Design-App
    ```
-   GitHub may ask you to sign in, since the repo is private.
 4. **Install the app's libraries** (takes a minute):
    ```sh
    npm install
@@ -32,7 +31,7 @@ The app is built in milestones. **Milestone 1** (this version) has the home scre
 ## Get the latest version later
 
 ```sh
-cd ~/Documents/house-design-app
+cd ~/Documents/House-Design-App
 git pull
 npm install
 npm run dev

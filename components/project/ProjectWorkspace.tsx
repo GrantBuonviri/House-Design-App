@@ -7,7 +7,7 @@ import { useProjectStore, type SaveState } from "@/lib/store/projectStore";
 import { STAGE_INFO, stageAvailable } from "@/lib/stages";
 import { downloadProject } from "@/lib/download";
 import StageBar from "./StageBar";
-import ProfileForm from "./ProfileForm";
+import SetupForm from "./SetupForm";
 
 const SAVE_LABEL: Record<SaveState, string> = {
   saved: "All changes saved",
@@ -95,7 +95,7 @@ export default function ProjectWorkspace({ id }: { id: string }) {
       </div>
 
       {project.stage === "setup" ? (
-        <ProfileForm onContinue={() => setStage("land")} />
+        <SetupForm onContinue={() => setStage("land")} />
       ) : stageAvailable(project.stage) ? null : (
         <ComingSoon stage={project.stage} />
       )}
