@@ -1,9 +1,9 @@
 "use client";
 
-export function SourceBadge({ source }: { source: "ai" | "rules" | undefined }) {
+export function SourceBadge({ source, aiLabel = "Written by Claude" }: { source: "ai" | "rules" | undefined; aiLabel?: string }) {
   if (!source) return null;
   return source === "ai" ? (
-    <span className="rounded-full bg-violet-50 px-2.5 py-0.5 text-xs font-medium text-violet-800">Written by Claude</span>
+    <span className="rounded-full bg-violet-50 px-2.5 py-0.5 text-xs font-medium text-violet-800">{aiLabel}</span>
   ) : (
     <span className="rounded-full bg-stone-100 px-2.5 py-0.5 text-xs font-medium text-stone-700">Built-in suggestions</span>
   );

@@ -7,6 +7,14 @@ The app is built in milestones. So far it has:
 - **Milestone 1:** the home screen, project setup (your name and the house name), saving, and export/import.
 - **Milestone 2:** land selection. Made-up plots around Boise, three at a time with arrows to see more (forever). Each plot shows in 3D (drag to turn it) or as a 2D map, with slope, sun paths, drainage, soil and water features. A perfectly flat plot is always first and one click away from the top bar.
 - **Milestone 3:** the Rooms page (how many floors above and below ground, a checklist of rooms with optional sizes, floors and notes, which rooms connect, and how the house should feel), then an editable Design Brief (rooms and sizes, which rooms sit together, the feel, priorities). Works with or without a Claude API key.
+- **Milestone 4:** the flow sketch. Rooms become circles and ovals sized to their area, placed by your land (entry toward the road, living spaces on the sunny side, daylight rooms on the downhill side of a walkout). Move, resize, rename and connect them, draw with a pen, erase, and leave sticky notes, one tab per floor with the floor below shown faintly. **Show me alternatives** puts three similar designs next to yours: use one, use it for one floor, or click a room in one to move just that room. Works with or without a Claude API key.
+
+### Flow sketch tips
+
+- Tools down the left side, or press a key: **V** select and move, **C** circle, **O** oval, **L** flow line (click two rooms), **P** pen, **E** eraser, **N** note, **H** pan. **Delete** removes what's selected and **Esc** goes back to the select tool.
+- Zoom with a pinch on the trackpad, or hold **Control** and scroll. Scroll (or drag empty space) to move around. **Fit** shows everything.
+- Click a room to change its name, size, shape or floor in the panel on the right. Drag its corner handles to resize it, or to turn an oval.
+- **Undo** and **Redo** at the top work for everything, including taking an alternative.
 
 ## Run it on a Mac (first time)
 
@@ -43,7 +51,7 @@ npm run dev
 
 ## Your Claude API key (optional)
 
-The app works without a key, using simpler built-in suggestions. With a key, Claude fills in the Design Brief: sizes and floors for the rooms you left open, extra connections, the feel and a summary. It never adds or removes your rooms.
+The app works without a key, using simpler built-in suggestions. With a key, Claude fills in the Design Brief (sizes and floors for the rooms you left open, extra connections, the feel and a summary; it never adds or removes your rooms), lays out the starting flow sketch, and comes up with the alternatives.
 
 1. Create a key at <https://console.anthropic.com> (this is separate from a Claude.ai plan and is billed by usage, so add a little credit under Billing).
 2. In Terminal, in the app folder, copy the example file: `cp .env.example .env.local`
@@ -52,7 +60,7 @@ The app works without a key, using simpler built-in suggestions. With a key, Cla
 
 `.env.local` is never uploaded to GitHub, and the key is only used by the app's server, never sent to the browser.
 
-What it costs: the brief uses Claude Haiku 5.5, the cheapest model, well under a cent each time. Floor plans in later milestones use Claude Opus 5.5. Answers are saved, so asking the same thing twice is free. The Settings page keeps a running tally of what you've spent.
+What it costs: the brief and the starting flow sketch use Claude Haiku 5.5, the cheapest model, well under a cent each time. Flow sketch alternatives use Claude Opus 5.5, the most capable model, a few cents each time, and so will floor plans later on. Answers are saved, so asking the same thing twice is free. The Settings page keeps a running tally of what you've spent.
 
 ## Where your projects are saved
 
@@ -74,6 +82,7 @@ Projects live in your browser's storage (IndexedDB) on this computer. They stay 
 - `lib/land/` makes the land: `generate.ts` builds a plot from a seed (same seed, same plot), `terrain.ts` gives ground heights, `sun.ts` has Boise sun angles, and `implications.ts` turns a plot into foundation, sun, drainage and layout notes that later stages use. `mesh.ts` turns a plot into 3D data (ground, water, draped lines) for `components/land/PlotTerrain3D.tsx` (React Three Fiber).
 
 - `lib/brief/` is the Design Brief: `rules.ts` builds a brief from the rooms page without AI, `levels.ts` turns floor counts into levels, `ai.ts` merges what Claude returns while keeping the user's rooms, sizes and floors, and `service.ts` decides between Claude and the rules.
+- `lib/bubbles/` is the flow sketch. Bubbles are stored in inches with x pointing east and y pointing south, and a bubble's area always equals its room's square feet. Claude (or `site.ts`, without a key) only picks a spot for each room: one of eight compass sides of the floor or the middle. `arrange.ts` turns spots into a drawing with the small force layout in `layout.ts` (same input, same drawing), lines the stairs up across floors, and adds missing rooms. `alternatives.ts` makes the built-in alternatives and skips ones that would look the same as yours, `edit.ts` has the editing helpers, `ai.ts` the prompts and `service.ts` decides between Claude and the rules. The canvas is in `components/bubbles/` (Konva).
 - `lib/ai/` calls Claude from the server (`run.ts`), with the model choices and prices in `models.ts`. Saved answers and the spend tally live in `.app-data/` in the app folder (not uploaded to GitHub). Delete that folder to clear them.
 
 How to add products and update cost rates will be documented here when those milestones land.

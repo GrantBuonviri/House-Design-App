@@ -87,13 +87,13 @@ export default async function SettingsPage() {
         <h2 className="font-medium">Models</h2>
         <ul className="space-y-1 text-sm">
           <li>
-            The design brief: <strong>{MODEL_LABEL[MODELS.fast]}</strong>{" "}
+            The design brief and the starting flow sketch: <strong>{MODEL_LABEL[MODELS.fast]}</strong>{" "}
             <span className="text-muted">
               ({usd(PRICES[MODELS.fast].input)} in / {usd(PRICES[MODELS.fast].output)} out per million tokens)
             </span>
           </li>
           <li>
-            Floor plans and alternatives (later milestones): <strong>{MODEL_LABEL[MODELS.best]}</strong>{" "}
+            Flow sketch alternatives, and floor plans later on: <strong>{MODEL_LABEL[MODELS.best]}</strong>{" "}
             <span className="text-muted">
               ({usd(PRICES[MODELS.best].input)} in / {usd(PRICES[MODELS.best].output)} out per million tokens)
             </span>

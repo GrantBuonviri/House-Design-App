@@ -80,3 +80,25 @@ export function syncLevels(current: Level[], brief: Pick<DesignBrief, "floors" |
   const levels = wanted.map((id) => current.find((c) => c.id === id) ?? levelFor(id));
   return [...levels, ...extra].sort((a, b) => a.elevationIn - b.elevationIn);
 }
+
+/** Lofts and split levels the user adds in the flow sketch, on top of the brief's floors. */
+export type ExtraLevelKind = "loft" | "split-up" | "split-down";
+
+export const EXTRA_LEVEL_LABEL: Record<ExtraLevelKind, string> = {
+  loft: "Loft, above the top floor",
+  "split-up": "Split level, half a floor up",
+  "split-down": "Split level, half a floor down",
+};
+
+export function isExtraLevel(id: string): boolean {
+  return !parse(id);
+}
+
+/** Where a new loft or split level would sit, or null if there's already one there. */
+export function newExtraLevel(kind: ExtraLevelKind, levels: Level[]): Level | null {
+  const top = Math.max(...levels.filter((l) => !isExtraLevel(l.id)).map((l) => l.elevationIn), 0);
+  const elevationIn = kind === "loft" ? top + STORY_IN : kind === "split-up" ? STORY_IN / 2 : -BASEMENT_STORY_IN / 2;
+  if (levels.some((l) => l.elevationIn === elevationIn)) return null;
+  const id = `${kind === "loft" ? "loft" : "split"}-${Math.random().toString(36).slice(2, 8)}`;
+  return { id, name: kind === "loft" ? "Loft" : kind === "split-up" ? "Split level (up)" : "Split level (down)", kind: kind === "loft" ? "loft" : "split", elevationIn };
+}

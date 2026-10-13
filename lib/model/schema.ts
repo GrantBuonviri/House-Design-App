@@ -177,10 +177,16 @@ export type Level = z.infer<typeof Level>;
 
 // ---------- 4. Bubble diagrams ----------
 
+/**
+ * The flow sketch for one level. Positions and sizes are in inches at real
+ * scale, x pointing east and y pointing south, so a bubble's area matches
+ * its room's area.
+ */
 export const BubbleDiagram = z.object({
   bubbles: z.array(
     z.object({
       id: z.string(),
+      /** The brief room this bubble stands for. Bubbles the user adds may have none. */
       roomId: z.string().optional(),
       label: z.string(),
       shape: z.enum(["circle", "oval"]),
@@ -188,8 +194,11 @@ export const BubbleDiagram = z.object({
       y: z.number(),
       rx: z.number().positive(),
       ry: z.number().positive(),
+      /** Degrees clockwise. */
       rotation: z.number().default(0),
       color: z.string().optional(),
+      /** The stairs, kept in the same spot on every floor. */
+      stairs: z.boolean().optional(),
     }),
   ),
   flows: z.array(z.object({ id: z.string(), from: z.string(), to: z.string() })),
