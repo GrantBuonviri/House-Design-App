@@ -1,6 +1,6 @@
 "use client";
 
-import { useId, useState, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 
 /** Small form controls shared by the question pages and the brief editor. */
 
@@ -86,76 +86,6 @@ export function Choice<T extends string>({
   );
 }
 
-/** Pick any number of options. */
-export function MultiChoice({
-  value,
-  options,
-  onChange,
-  label,
-}: {
-  value: string[];
-  options: string[];
-  onChange: (v: string[]) => void;
-  label: string;
-}) {
-  const toggle = (o: string) => onChange(value.includes(o) ? value.filter((v) => v !== o) : [...value, o]);
-  return (
-    <div role="group" aria-label={label} className="flex flex-wrap gap-2">
-      {options.map((o) => {
-        const on = value.includes(o);
-        return (
-          <button
-            key={o}
-            type="button"
-            aria-pressed={on}
-            onClick={() => toggle(o)}
-            className={`rounded-full border px-3.5 py-1.5 text-sm ${
-              on ? "border-accent bg-accent-soft text-accent" : "border-line bg-white hover:border-accent"
-            }`}
-          >
-            {on ? "✓ " : ""}
-            {o}
-          </button>
-        );
-      })}
-    </div>
-  );
-}
-
-/** A slider between two ideas, like cozy and airy. */
-export function Scale({
-  value,
-  onChange,
-  left,
-  right,
-}: {
-  value: number;
-  onChange: (v: number) => void;
-  left: string;
-  right: string;
-}) {
-  const id = useId();
-  return (
-    <div>
-      <input
-        id={id}
-        type="range"
-        min={0}
-        max={100}
-        step={5}
-        value={value}
-        onChange={(e) => onChange(Number(e.target.value))}
-        aria-label={`${left} to ${right}`}
-        className="w-full accent-[var(--color-accent)]"
-      />
-      <div className="mt-1 flex justify-between text-xs text-muted">
-        <span className={value < 35 ? "font-medium text-ink" : ""}>{left}</span>
-        <span className={value > 65 ? "font-medium text-ink" : ""}>{right}</span>
-      </div>
-    </div>
-  );
-}
-
 /** A list of short words or phrases, with suggestions and a box to add your own. */
 export function TagEditor({
   value,
@@ -226,5 +156,47 @@ export function TagEditor({
         </div>
       )}
     </div>
+  );
+}
+
+function feetText(inches: number | undefined): string {
+  return inches ? String(Math.round((inches / 12) * 100) / 100) : "";
+}
+
+/** A length in feet (decimals OK, like 12.5), stored in inches. Empty means not set. */
+export function FeetInput({
+  value,
+  onChange,
+  label,
+  className = "",
+}: {
+  value: number | undefined;
+  onChange: (inches: number | undefined) => void;
+  label: string;
+  className?: string;
+}) {
+  const [text, setText] = useState(feetText(value));
+  const [focused, setFocused] = useState(false);
+  // Show outside changes (undo, another page) unless the user is typing here.
+  useEffect(() => {
+    if (!focused) setText(feetText(value));
+  }, [value, focused]);
+  return (
+    <input
+      className={`input px-2 py-1.5 text-right tabular-nums ${className}`}
+      inputMode="decimal"
+      placeholder="ft"
+      aria-label={label}
+      value={text}
+      onFocus={() => setFocused(true)}
+      onBlur={() => setFocused(false)}
+      onChange={(e) => {
+        const t = e.target.value.replace(/[^0-9.]/g, "");
+        setText(t);
+        const ft = Number(t);
+        if (t === "" || !Number.isFinite(ft) || ft <= 0) onChange(undefined);
+        else onChange(Math.round(Math.min(ft, 500) * 12 * 100) / 100);
+      }}
+    />
   );
 }

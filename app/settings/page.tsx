@@ -87,7 +87,7 @@ export default async function SettingsPage() {
         <h2 className="font-medium">Models</h2>
         <ul className="space-y-1 text-sm">
           <li>
-            Questions and the brief: <strong>{MODEL_LABEL[MODELS.fast]}</strong>{" "}
+            The design brief: <strong>{MODEL_LABEL[MODELS.fast]}</strong>{" "}
             <span className="text-muted">
               ({usd(PRICES[MODELS.fast].input)} in / {usd(PRICES[MODELS.fast].output)} out per million tokens)
             </span>

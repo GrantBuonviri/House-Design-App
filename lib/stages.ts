@@ -3,7 +3,7 @@ import type { Stage } from "@/lib/model/schema";
 export const STAGE_INFO: { id: Stage; label: string; milestone: number }[] = [
   { id: "setup", label: "Project setup", milestone: 1 },
   { id: "land", label: "Land", milestone: 2 },
-  { id: "brief", label: "Rooms & vibe", milestone: 3 },
+  { id: "brief", label: "Rooms", milestone: 3 },
   { id: "bubbles", label: "Flow sketch", milestone: 4 },
   { id: "plan", label: "Floor plan", milestone: 5 },
   { id: "interior", label: "Interior", milestone: 9 },

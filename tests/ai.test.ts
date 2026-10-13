@@ -7,9 +7,7 @@ import { z } from "zod";
 import { costUsd, MODELS } from "@/lib/ai/models";
 import { runStructured } from "@/lib/ai/run";
 import { readSpend } from "@/lib/ai/store";
-import { generateBrief, suggestFollowUps } from "@/lib/brief/service";
-import { briefToAiShape } from "@/lib/brief/ai";
-import { buildRuleBrief } from "@/lib/brief/rules";
+import { generateBrief } from "@/lib/brief/service";
 import { DiscoveryAnswers } from "@/lib/model/schema";
 import { FLAT_PLOT_SEED, generatePlot } from "@/lib/land/generate";
 
@@ -101,29 +99,60 @@ describe("calling Claude", () => {
 
 describe("the brief service", () => {
   const flat = generatePlot(FLAT_PLOT_SEED, { flat: true });
-  const ctx = { answers: DiscoveryAnswers.parse({}), profile: { mustHaves: [], dislikes: [] }, plot: flat, followUps: [] };
+  const rooms = [
+    { id: "k", type: "kitchen", name: "Kitchen", description: "" },
+    { id: "b", type: "bedroom", name: "Guest room", description: "Quiet", lengthIn: 144, widthIn: 132 },
+    { id: "w", type: "bathroom", name: "Bathroom", description: "" },
+  ];
+  const ctx = {
+    answers: DiscoveryAnswers.parse({ rooms, floorsAbove: 2 }),
+    profile: { mustHaves: [], dislikes: [] },
+    plot: flat,
+  };
 
   it("uses the built-in rules without a key", async () => {
-    const f = await suggestFollowUps(ctx);
-    expect(f.source).toBe("rules");
-    expect(f.followUps.length).toBeGreaterThan(0);
     const b = await generateBrief(ctx);
     expect(b.source).toBe("rules");
     expect(b.note).toMatch(/No API key/);
+    expect(b.brief.rooms.map((r) => r.id)).toEqual(["k", "b", "w"]);
   });
 
-  it("uses Claude's brief when it's good", async () => {
-    const shape = { ...briefToAiShape(buildRuleBrief(ctx)), summary: "From Claude." };
-    const b = await generateBrief(ctx, { client: fakeClient(fakeMessage(JSON.stringify(shape))) });
+  it("doesn't call Claude before any rooms are picked", async () => {
+    const client = fakeClient();
+    const b = await generateBrief({ ...ctx, answers: DiscoveryAnswers.parse({}) }, { client });
+    expect(b.source).toBe("rules");
+    expect(client.create).not.toHaveBeenCalled();
+  });
+
+  it("sends the rooms by id and merges Claude's answer", async () => {
+    const answer = {
+      summary: "From Claude.",
+      rooms: [
+        { id: "k", sqft: 260, level: "floor-1", notes: "Island facing the view" },
+        { id: "b", sqft: 400, level: "floor-1", notes: "" },
+        { id: "w", sqft: 60, level: "floor-2", notes: "" },
+      ],
+      connections: [{ a: "b", b: "w", strength: "nice" }],
+      openKitchen: true,
+      vibe: ["Calm"],
+      priorities: ["Quiet guest room"],
+      accessibility: [],
+    };
+    const client = fakeClient(fakeMessage(JSON.stringify(answer)));
+    const b = await generateBrief(ctx, { client });
     expect(b.source).toBe("ai");
     expect(b.brief.summary).toBe("From Claude.");
-  });
+    expect(b.brief.rooms.map((r) => [r.id, r.name, r.targetSqFt, r.levelId])).toEqual([
+      ["k", "Kitchen", 260, "floor-1"],
+      ["b", "Guest room", 132, "floor-1"],
+      ["w", "Bathroom", 60, "floor-2"],
+    ]);
+    expect(b.brief.adjacencies).toContainEqual({ a: "b", b: "w", strength: "nice" });
 
-  it("uses Claude's follow-up questions, at most four", async () => {
-    const qs = Array.from({ length: 6 }, (_, i) => ({ question: `Q${i}?`, why: "", options: ["a", "b"] }));
-    const f = await suggestFollowUps(ctx, { client: fakeClient(fakeMessage(JSON.stringify({ questions: qs }))) });
-    expect(f.source).toBe("ai");
-    expect(f.followUps).toHaveLength(4);
-    expect(f.followUps[0]).toMatchObject({ id: "ai-1", question: "Q0?", answer: "" });
+    const sent = client.create.mock.calls[0] as unknown as [Anthropic.MessageCreateParams];
+    const prompt = JSON.stringify(sent[0].messages);
+    expect(prompt).toContain('\\"id\\":\\"b\\"');
+    expect(prompt).toContain("Guest room");
+    expect(sent[0].model).toBe(MODELS.fast);
   });
 });

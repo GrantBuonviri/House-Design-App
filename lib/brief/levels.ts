@@ -1,48 +1,82 @@
 import type { DesignBrief, Level } from "@/lib/model/schema";
 
-/** The floors a brief can place rooms on, lowest first. */
-export const BRIEF_LEVELS = [
-  { id: "basement", name: "Basement", kind: "basement", elevationIn: -114 },
-  { id: "main", name: "Main floor", kind: "main", elevationIn: 0 },
-  { id: "upper", name: "Upper floor", kind: "upper", elevationIn: 126 },
-  { id: "upper-2", name: "Third floor", kind: "upper", elevationIn: 252 },
-] as const satisfies readonly Level[];
+/**
+ * Floors of the house, made from two counts: floors above ground (1 to 5)
+ * and below ground (0 to 3). Ids are stable so rooms, bubble diagrams and
+ * floor plans can refer to them: "floor-1" is the main floor, "floor-2" the
+ * one above it, "basement-1" the first floor down.
+ */
+export const MAX_ABOVE = 5;
+export const MAX_BELOW = 3;
 
-export type BriefLevelId = (typeof BRIEF_LEVELS)[number]["id"];
-export const BRIEF_LEVEL_IDS = BRIEF_LEVELS.map((l) => l.id) as [BriefLevelId, ...BriefLevelId[]];
+/** Floor-to-floor heights, inches: 9 ft ceilings plus the floor structure. */
+const STORY_IN = 126;
+const BASEMENT_STORY_IN = 114;
 
-/** Which levels exist for a number of floors above ground and a basement. */
-export function levelIdsFor(floors: number, basement: boolean): BriefLevelId[] {
-  const ids: BriefLevelId[] = [];
-  if (basement) ids.push("basement");
-  ids.push("main");
-  if (floors >= 2) ids.push("upper");
-  if (floors >= 3) ids.push("upper-2");
+const ABOVE_NAMES = ["Main floor", "Second floor", "Third floor", "Fourth floor", "Fifth floor"];
+const BELOW_NAMES = ["Basement", "Lower basement", "Deep basement"];
+
+export const ALL_LEVEL_IDS = [
+  ...BELOW_NAMES.map((_, i) => `basement-${i + 1}`).reverse(),
+  ...ABOVE_NAMES.map((_, i) => `floor-${i + 1}`),
+] as [string, ...string[]];
+
+export const MAIN_LEVEL_ID = "floor-1";
+
+/** Level ids used before schema version 2. */
+export const LEGACY_LEVEL_IDS: Record<string, string> = {
+  basement: "basement-1",
+  main: "floor-1",
+  upper: "floor-2",
+  "upper-2": "floor-3",
+};
+
+function parse(id: string | undefined): { below: boolean; n: number } | null {
+  const m = /^(floor|basement)-(\d)$/.exec(id ?? "");
+  return m ? { below: m[1] === "basement", n: Number(m[2]) } : null;
+}
+
+export function levelFor(id: string): Level {
+  const p = parse(id) ?? { below: false, n: 1 };
+  return p.below
+    ? { id, name: BELOW_NAMES[p.n - 1], kind: "basement", elevationIn: -BASEMENT_STORY_IN * p.n }
+    : { id, name: ABOVE_NAMES[p.n - 1], kind: p.n === 1 ? "main" : "upper", elevationIn: STORY_IN * (p.n - 1) };
+}
+
+/** The level ids for these counts, lowest first. */
+export function levelIdsFor(above: number, below: number): string[] {
+  const ids: string[] = [];
+  for (let i = Math.min(below, MAX_BELOW); i >= 1; i--) ids.push(`basement-${i}`);
+  for (let i = 1; i <= Math.max(1, Math.min(above, MAX_ABOVE)); i++) ids.push(`floor-${i}`);
   return ids;
 }
 
+export function levelsFor(above: number, below: number): Level[] {
+  return levelIdsFor(above, below).map(levelFor);
+}
+
 export function levelName(id: string | undefined): string {
-  return BRIEF_LEVELS.find((l) => l.id === id)?.name ?? "Main floor";
+  return parse(id) ? levelFor(id!).name : "Main floor";
 }
 
 /** Move a level that no longer exists to the nearest one that does. */
-export function nearestLevel(id: string | undefined, allowed: BriefLevelId[]): BriefLevelId {
-  if (id && (allowed as string[]).includes(id)) return id as BriefLevelId;
-  if (id === "upper-2" && allowed.includes("upper")) return "upper";
-  return "main";
+export function nearestLevel(id: string | undefined, allowed: string[]): string {
+  if (id && allowed.includes(id)) return id;
+  const p = parse(id);
+  if (p) {
+    const prefix = p.below ? "basement" : "floor";
+    for (let n = p.n - 1; n >= 1; n--) if (allowed.includes(`${prefix}-${n}`)) return `${prefix}-${n}`;
+  }
+  return MAIN_LEVEL_ID;
 }
 
 /**
- * The project's levels to match a brief: one per floor plus the basement.
- * Levels the user added that the brief doesn't know about are kept.
+ * The project's levels to match a brief: one per floor. Levels the user
+ * added that the brief doesn't know about are kept.
  */
-export function syncLevels(current: Level[], brief: DesignBrief): Level[] {
-  const wanted = levelIdsFor(brief.floors, brief.basement);
-  const known = new Set<string>(BRIEF_LEVELS.map((l) => l.id));
-  const extra = current.filter((l) => !known.has(l.id));
-  const levels: Level[] = BRIEF_LEVELS.filter((l) => wanted.includes(l.id)).map((l) => {
-    const existing = current.find((c) => c.id === l.id);
-    return existing ?? { ...l };
-  });
+export function syncLevels(current: Level[], brief: Pick<DesignBrief, "floors" | "floorsBelow">): Level[] {
+  const wanted = levelIdsFor(brief.floors, brief.floorsBelow);
+  const extra = current.filter((l) => !parse(l.id));
+  const levels = wanted.map((id) => current.find((c) => c.id === id) ?? levelFor(id));
   return [...levels, ...extra].sort((a, b) => a.elevationIn - b.elevationIn);
 }

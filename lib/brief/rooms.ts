@@ -1,3 +1,5 @@
+import type { ChosenRoom } from "@/lib/model/schema";
+
 /**
  * The kinds of rooms a brief can hold, with typical sizes for a new house in
  * Boise. Sizes are in square feet. min and max are used to repair sizes that
@@ -54,51 +56,57 @@ export function roomType(id: string): RoomType {
   return ROOM_TYPES.find((r) => r.id === id) ?? ROOM_TYPES[ROOM_TYPES.length - 1];
 }
 
-/** Extra rooms offered on the questions page, mapped to room types. */
-export const EXTRA_ROOM_OPTIONS: { label: string; type: string }[] = [
-  { label: "Family room", type: "family" },
-  { label: "Bonus room", type: "bonus" },
-  { label: "Media room", type: "media" },
-  { label: "Home gym", type: "gym" },
-  { label: "Workshop", type: "workshop" },
-  { label: "Craft room", type: "craft" },
-  { label: "Playroom", type: "playroom" },
-  { label: "Sunroom", type: "sunroom" },
-  { label: "Guest suite", type: "guest-suite" },
+export const CATEGORIES: { id: RoomCategory; label: string }[] = [
+  { id: "living", label: "Living" },
+  { id: "sleeping", label: "Sleeping" },
+  { id: "work", label: "Work and hobbies" },
+  { id: "service", label: "Service and storage" },
+  { id: "garage", label: "Garage" },
+  { id: "outdoor", label: "Outdoor" },
 ];
 
-export const OUTDOOR_OPTIONS: { label: string; type: string }[] = [
-  { label: "Covered patio", type: "patio" },
-  { label: "Deck", type: "deck" },
-  { label: "Front porch", type: "porch" },
-  { label: "Outdoor kitchen", type: "outdoor-kitchen" },
-];
+/** Typical garage sizes by number of cars (0 uses the room type's default). */
+export const GARAGE_SQFT = [0, 288, 528, 792, 1056];
 
-export const ACCESSIBILITY_OPTIONS = [
-  "Everything needed on one floor",
-  "No-step entry",
-  "Wide doorways and halls",
-  "Curbless shower",
-  "Room for a future elevator",
-];
+/** Floor area from a length and width in inches, rounded to whole square feet. */
+export function sqftFromDims(lengthIn: number | undefined, widthIn: number | undefined): number | null {
+  if (!lengthIn || !widthIn) return null;
+  return Math.max(1, Math.round((lengthIn * widthIn) / 144));
+}
 
-export const STYLE_WORD_SUGGESTIONS = [
-  "Modern farmhouse",
-  "Mountain modern",
-  "Craftsman",
-  "Scandinavian",
-  "Mid-century",
-  "Warm minimal",
-  "Rustic",
-  "Contemporary",
-  "Cottage",
-  "Natural wood",
-  "Lots of light",
-  "Stone and timber",
-];
+export function newRoomId(): string {
+  return `room-${Math.random().toString(36).slice(2, 10)}`;
+}
 
 /** Heated (conditioned) rooms: everything but garages and outdoor spaces. */
 export function isHeated(typeId: string): boolean {
   const c = roomType(typeId).category;
   return c !== "garage" && c !== "outdoor";
+}
+
+/** The most rooms of one type on the rooms page. */
+export const MAX_PER_TYPE = 10;
+
+/**
+ * Rooms of a type after changing how many there are. New rooms are named
+ * "Bedroom 1", "Bedroom 2" and so on; a single room just gets the type's name.
+ */
+export function setTypeCount(rooms: ChosenRoom[], type: string, count: number): ChosenRoom[] {
+  const label = roomType(type).label;
+  const mine = rooms.filter((r) => r.type === type);
+  let next = [...mine];
+  if (count > mine.length) {
+    if (mine.length === 1 && mine[0].name === label) next[0] = { ...mine[0], name: `${label} 1` };
+    for (let i = mine.length; i < count; i++) {
+      next.push({ id: newRoomId(), type, name: count === 1 ? label : `${label} ${i + 1}`, description: "" });
+    }
+  } else {
+    next = mine.slice(0, count);
+    if (count === 1 && next[0].name === `${label} 1`) next[0] = { ...next[0], name: label };
+  }
+  // Keep the other types where they were and this type's rooms together.
+  const firstIndex = rooms.findIndex((r) => r.type === type);
+  const others = rooms.filter((r) => r.type !== type);
+  const at = firstIndex === -1 ? others.length : rooms.slice(0, firstIndex).filter((r) => r.type !== type).length;
+  return [...others.slice(0, at), ...next, ...others.slice(at)];
 }
