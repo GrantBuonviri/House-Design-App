@@ -8,6 +8,7 @@ import { STAGE_INFO, stageAvailable } from "@/lib/stages";
 import { downloadProject } from "@/lib/download";
 import StageBar from "./StageBar";
 import SetupForm from "./SetupForm";
+import LandStage from "@/components/land/LandStage";
 
 const SAVE_LABEL: Record<SaveState, string> = {
   saved: "All changes saved",
@@ -96,6 +97,8 @@ export default function ProjectWorkspace({ id }: { id: string }) {
 
       {project.stage === "setup" ? (
         <SetupForm onContinue={() => setStage("land")} />
+      ) : project.stage === "land" ? (
+        <LandStage onContinue={() => setStage("brief")} />
       ) : stageAvailable(project.stage) ? null : (
         <ComingSoon stage={project.stage} />
       )}
