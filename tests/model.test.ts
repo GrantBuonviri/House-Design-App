@@ -14,6 +14,10 @@ describe("createProject", () => {
     expect(p.plot).toBeNull();
   });
 
+  it("keeps the owner's name", () => {
+    expect(createProject("Cabin", { ownerName: "Grant" }).profile.ownerName).toBe("Grant");
+  });
+
   it("names an unnamed project", () => {
     expect(createProject("   ").name).toBe("Untitled house");
   });

@@ -29,6 +29,9 @@ export type Stage = z.infer<typeof Stage>;
 // ---------- 1. Project setup ----------
 
 export const Profile = z.object({
+  /** The person designing the house. The setup page only asks for this and the house name. */
+  ownerName: z.string().max(120).optional(),
+  // The fields below aren't asked on the setup page; later stages may fill them in.
   adults: z.number().int().min(0).max(20).optional(),
   kids: z.number().int().min(0).max(20).optional(),
   pets: z.string().max(200).optional(),
