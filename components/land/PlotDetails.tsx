@@ -1,23 +1,29 @@
 "use client";
 
 import type { Plot } from "@/lib/model/schema";
-import PlotPreview from "./PlotPreview";
+import { useContext } from "react";
+import PlotView, { LandViewModeContext } from "./PlotView";
 import { DRAINAGE_STYLE, SUN_LABEL, plotFacts } from "./plotText";
 
 /** Full description of one plot: big map, every stat, and what it means for the house. */
 export default function PlotDetails({ plot }: { plot: Plot }) {
   const f = plotFacts(plot);
   const imp = f.implications;
+  const mode = useContext(LandViewModeContext);
   return (
     <div className="flex gap-6">
       <div className="w-[380px] shrink-0">
-        <PlotPreview plot={plot} size={380} detailed />
+        <PlotView plot={plot} size={380} detailed />
         <ul className="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted">
           <li><Swatch className="border border-dashed border-ink" /> Property line</li>
           <li><Swatch className="bg-[#8d8f8c]" /> Road</li>
           <li><Swatch className="bg-[#e8892b]" /> Summer sun path</li>
           <li><Swatch className="bg-[#d8b43a]" /> Winter sun path</li>
-          <li>Lines: ground contours</li>
+          {mode === "2d" ? (
+            <li>Lines: ground contours</li>
+          ) : (
+            <li>Drag to turn, scroll to zoom. Height is doubled so slopes are easy to see.</li>
+          )}
         </ul>
       </div>
       <div className="min-w-0 flex-1 space-y-4 text-sm">

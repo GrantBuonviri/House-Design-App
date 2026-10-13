@@ -6,34 +6,9 @@ import { bearingVector } from "@/lib/land/generate";
 import { pointInPolygon } from "@/lib/land/geometry";
 import { createTerrain } from "@/lib/land/terrain";
 import { dayArc, SUMMER_SOLSTICE, WINTER_SOLSTICE } from "@/lib/land/sun";
+import { landTint as tint, landView as viewFor, type LandView as View } from "@/lib/land/view";
 
-const MARGIN = 0.14; // neighbors' land shown around the plot, as a share of its size
 const VERTICAL_EXAGGERATION = 3;
-
-type View = { x0: number; y0: number; side: number };
-
-function viewFor(plot: Plot): View {
-  const side = Math.max(plot.widthIn, plot.depthIn) * (1 + MARGIN * 2);
-  return { x0: plot.widthIn / 2 - side / 2, y0: plot.depthIn / 2 - side / 2, side };
-}
-
-/** Earthy tint from low (green) to high (tan). t in [0, 1]. */
-function tint(t: number): [number, number, number] {
-  const stops: [number, [number, number, number]][] = [
-    [0, [122, 145, 104]],
-    [0.5, [176, 170, 128]],
-    [1, [205, 186, 150]],
-  ];
-  for (let i = 1; i < stops.length; i++) {
-    if (t <= stops[i][0]) {
-      const [t0, a] = stops[i - 1];
-      const [t1, b] = stops[i];
-      const k = (t - t0) / (t1 - t0);
-      return [a[0] + (b[0] - a[0]) * k, a[1] + (b[1] - a[1]) * k, a[2] + (b[2] - a[2]) * k];
-    }
-  }
-  return stops[stops.length - 1][1];
-}
 
 function drawRelief(ctx: CanvasRenderingContext2D, plot: Plot, px: number) {
   const view = viewFor(plot);
