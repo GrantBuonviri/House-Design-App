@@ -10,6 +10,7 @@ import StageBar from "./StageBar";
 import SetupForm from "./SetupForm";
 import LandStage from "@/components/land/LandStage";
 import BriefStage from "@/components/brief/BriefStage";
+import BubbleStage from "@/components/bubbles/BubbleStage";
 
 const SAVE_LABEL: Record<SaveState, string> = {
   saved: "All changes saved",
@@ -102,6 +103,8 @@ export default function ProjectWorkspace({ id }: { id: string }) {
         <LandStage onContinue={() => setStage("brief")} />
       ) : project.stage === "brief" ? (
         <BriefStage onContinue={() => setStage("bubbles")} onPickLand={() => setStage("land")} />
+      ) : project.stage === "bubbles" ? (
+        <BubbleStage onContinue={() => setStage("plan")} onGoToRooms={() => setStage("brief")} />
       ) : stageAvailable(project.stage) ? null : (
         <ComingSoon stage={project.stage} />
       )}
