@@ -57,9 +57,17 @@ export const WaterFeature = z.object({
   points: z.array(Point),
 });
 
+/**
+ * A made-up piece of land. Everything here can be rebuilt from `seed` (and
+ * `isFlat`) with generatePlot, so terrain heights are never stored.
+ * Plot-local coordinates are inches with x pointing east and y pointing
+ * south, origin at the north-west corner of the bounding box.
+ */
 export const Plot = z.object({
   seed: z.number().int(),
   isFlat: z.boolean(),
+  name: z.string().optional(),
+  shape: z.enum(["rectangle", "wide", "deep", "corner", "irregular"]).optional(),
   widthIn: z.number().positive(),
   depthIn: z.number().positive(),
   outline: z.array(Point),
@@ -67,6 +75,7 @@ export const Plot = z.object({
     percent: z.number().min(0),
     downhillDeg: z.number(),
   }),
+  /** The way the land faces (its downhill direction), degrees clockwise from north. */
   facingDeg: z.number(),
   drainage: z.object({
     rating: z.enum(["good", "fair", "poor"]),

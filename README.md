@@ -2,7 +2,10 @@
 
 Design a house from start to finish: pick land, sketch the flow, draw the floor plan, choose finishes, walk through it in 3D, and watch a running Boise, Idaho cost estimate. It runs on your own computer in a desktop browser.
 
-The app is built in milestones. **Milestone 1** (this version) has the home screen, project setup (your name and the house name), saving, and export/import.
+The app is built in milestones. So far it has:
+
+- **Milestone 1:** the home screen, project setup (your name and the house name), saving, and export/import.
+- **Milestone 2:** land selection. An endless feed of made-up plots around Boise, each with a shaded terrain map, slope, sun, drainage, soil and water features. A perfectly flat plot is always first in the feed and one click away from the top bar.
 
 ## Run it on a Mac (first time)
 
@@ -65,5 +68,6 @@ Projects live in your browser's storage (IndexedDB) on this computer. They stay 
 - `lib/model/project.ts` creates projects and migrates older saves. When the schema changes, bump `SCHEMA_VERSION` and add a migration step.
 - `lib/store/projectStore.ts` is the Zustand store: every change goes through `update`, which records undo history and autosaves.
 - `lib/storage/` holds IndexedDB saving (Dexie) and export/import.
+- `lib/land/` makes the land: `generate.ts` builds a plot from a seed (same seed, same plot), `terrain.ts` gives ground heights, `sun.ts` has Boise sun angles, and `implications.ts` turns a plot into foundation, sun, drainage and layout notes that later stages use.
 
 How to add products and update cost rates will be documented here when those milestones land.

@@ -11,7 +11,7 @@ export const STAGE_INFO: { id: Stage; label: string; milestone: number }[] = [
 ];
 
 /** Milestones finished so far; stages from later milestones show "coming soon". */
-export const BUILT_MILESTONE = 1;
+export const BUILT_MILESTONE = 2;
 
 export function stageAvailable(stage: Stage): boolean {
   return STAGE_INFO.find((s) => s.id === stage)!.milestone <= BUILT_MILESTONE;
