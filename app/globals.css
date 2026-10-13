@@ -1,0 +1,38 @@
+@import "tailwindcss";
+
+@theme {
+  --color-paper: #f7f5f0;
+  --color-ink: #1f2421;
+  --color-muted: #6b716c;
+  --color-line: #e2ded4;
+  --color-accent: #2f6b4f;
+  --color-accent-soft: #e3efe8;
+  --font-sans: ui-sans-serif, system-ui, sans-serif;
+}
+
+body {
+  background: var(--color-paper);
+  color: var(--color-ink);
+}
+
+/* Shared form styles */
+@layer components {
+  .field-label {
+    @apply mb-1 block text-sm font-medium text-ink;
+  }
+  .field-hint {
+    @apply mt-1 text-xs text-muted;
+  }
+  .input {
+    @apply w-full rounded-md border border-line bg-white px-3 py-2 text-sm outline-none focus:border-accent focus:ring-2 focus:ring-accent/20;
+  }
+  .btn {
+    @apply inline-flex items-center gap-2 rounded-md border border-line bg-white px-3 py-2 text-sm font-medium hover:bg-stone-50 disabled:cursor-not-allowed disabled:opacity-40;
+  }
+  .btn-primary {
+    @apply inline-flex items-center gap-2 rounded-md bg-accent px-4 py-2 text-sm font-medium text-white hover:bg-accent/90 disabled:opacity-40;
+  }
+  .card {
+    @apply rounded-xl border border-line bg-white;
+  }
+}
