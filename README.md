@@ -5,7 +5,7 @@ Design a house from start to finish: pick land, sketch the flow, draw the floor 
 The app is built in milestones. So far it has:
 
 - **Milestone 1:** the home screen, project setup (your name and the house name), saving, and export/import.
-- **Milestone 2:** land selection. An endless feed of made-up plots around Boise, each with a shaded terrain map, slope, sun, drainage, soil and water features. A perfectly flat plot is always first in the feed and one click away from the top bar.
+- **Milestone 2:** land selection. Made-up plots around Boise, three at a time with arrows to see more (forever). Each plot shows in 3D (drag to turn it) or as a 2D map, with slope, sun paths, drainage, soil and water features. A perfectly flat plot is always first and one click away from the top bar.
 
 ## Run it on a Mac (first time)
 
@@ -68,6 +68,6 @@ Projects live in your browser's storage (IndexedDB) on this computer. They stay 
 - `lib/model/project.ts` creates projects and migrates older saves. When the schema changes, bump `SCHEMA_VERSION` and add a migration step.
 - `lib/store/projectStore.ts` is the Zustand store: every change goes through `update`, which records undo history and autosaves.
 - `lib/storage/` holds IndexedDB saving (Dexie) and export/import.
-- `lib/land/` makes the land: `generate.ts` builds a plot from a seed (same seed, same plot), `terrain.ts` gives ground heights, `sun.ts` has Boise sun angles, and `implications.ts` turns a plot into foundation, sun, drainage and layout notes that later stages use.
+- `lib/land/` makes the land: `generate.ts` builds a plot from a seed (same seed, same plot), `terrain.ts` gives ground heights, `sun.ts` has Boise sun angles, and `implications.ts` turns a plot into foundation, sun, drainage and layout notes that later stages use. `mesh.ts` turns a plot into 3D data (ground, water, draped lines) for `components/land/PlotTerrain3D.tsx` (React Three Fiber).
 
 How to add products and update cost rates will be documented here when those milestones land.

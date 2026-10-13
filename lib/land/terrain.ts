@@ -1,6 +1,6 @@
 import type { Plot } from "@/lib/model/schema";
 import { bearingVector } from "./generate";
-import { centroid, distanceToPolygonEdge, distanceToPolyline, pointInPolygon } from "./geometry";
+import { distanceToPolygonEdge, distanceToPolyline, pointInPolygon } from "./geometry";
 import { createNoise2D } from "./random";
 
 /** Ground height in inches at a plot-local point, relative to the plot's center. */
@@ -15,7 +15,42 @@ const FT = 12;
  */
 export function createTerrain(plot: Plot): HeightFn {
   if (plot.isFlat) return () => 0;
+  const base = baseTerrain(plot);
+  const levels = waterLevels(plot);
 
+  const features = plot.waterFeatures.map((f, i) => ({ ...f, level: levels[i] }));
+
+  return (x, y) => {
+    let h = base(x, y);
+    const p = { x, y };
+    for (const f of features) {
+      if (f.kind === "creek" || f.kind === "wash") {
+        const depth = f.kind === "creek" ? 4 * FT : 2.5 * FT;
+        const halfWidth = f.kind === "creek" ? 14 * FT : 10 * FT;
+        const d = distanceToPolyline(p, f.points);
+        h -= depth * Math.exp(-((d / halfWidth) ** 2));
+      } else {
+        // Ponds and lakes: a gentle bank outside, and inside a bed that
+        // deepens away from the shore, always below the water level.
+        const d = distanceToPolygonEdge(p, f.points);
+        const deepAt = f.kind === "pond" ? 15 * FT : 30 * FT;
+        const depth = f.kind === "pond" ? 3 * FT : 6 * FT;
+        if (pointInPolygon(p, f.points)) {
+          h = Math.min(h, f.level - WATER_DEPTH_AT_SHORE - Math.min(d / deepAt, 1) * depth);
+        } else {
+          h -= 0.75 * FT * Math.exp(-((d / (15 * FT)) ** 2));
+        }
+      }
+    }
+    return h;
+  };
+}
+
+/** How far the bed sits below the water right at the shoreline. */
+const WATER_DEPTH_AT_SHORE = 0.5 * FT;
+
+/** The slope plus gentle rolls, before any water is carved in. */
+function baseTerrain(plot: Plot): HeightFn {
   const cx = plot.widthIn / 2;
   const cy = plot.depthIn / 2;
   const down = bearingVector(plot.slope.downhillDeg);
@@ -24,42 +59,28 @@ export function createTerrain(plot: Plot): HeightFn {
   // Gentle rolls: a few feet of relief, a little more on steeper ground.
   const amp = Math.min(2 + plot.slope.percent * 0.25, 7) * FT;
   const wavelength = 140 * FT;
-
-  const features = plot.waterFeatures.map((f) => {
-    if (f.kind === "pond") {
-      const c = centroid(f.points);
-      const radius = Math.max(...f.points.map((p) => Math.hypot(p.x - c.x, p.y - c.y)));
-      return { kind: f.kind, points: f.points, c, radius };
-    }
-    return { kind: f.kind, points: f.points, c: { x: 0, y: 0 }, radius: 0 };
-  });
-
   return (x, y) => {
     const along = (x - cx) * down.x + (y - cy) * down.y;
-    let h = -grade * along;
     const nx = x / wavelength;
     const ny = y / wavelength;
-    h += amp * (0.65 * noise(nx, ny) + 0.35 * noise(nx * 2.3 + 17, ny * 2.3 + 5));
-
-    for (const f of features) {
-      const p = { x, y };
-      if (f.kind === "creek" || f.kind === "wash") {
-        const depth = f.kind === "creek" ? 4 * FT : 2.5 * FT;
-        const halfWidth = f.kind === "creek" ? 14 * FT : 10 * FT;
-        const d = distanceToPolyline(p, f.points);
-        h -= depth * Math.exp(-((d / halfWidth) ** 2));
-      } else if (f.kind === "pond") {
-        const d = Math.hypot(x - f.c.x, y - f.c.y) / (f.radius * 1.4);
-        if (d < 1) h -= 5 * FT * (1 - d * d);
-      } else if (f.kind === "lake") {
-        const inside = pointInPolygon(p, f.points);
-        const d = distanceToPolygonEdge(p, f.points);
-        // Shore drops off into the lake.
-        h -= inside ? 4 * FT + Math.min(d / (30 * FT), 1) * 6 * FT : 2 * FT * Math.exp(-((d / (20 * FT)) ** 2));
-      }
-    }
-    return h;
+    return -grade * along + amp * (0.65 * noise(nx, ny) + 0.35 * noise(nx * 2.3 + 17, ny * 2.3 + 5));
   };
+}
+
+/**
+ * The flat water surface height (inches) for each pond or lake, matching
+ * plot.waterFeatures by index (NaN for creeks and washes). Water sits a foot
+ * below the lowest point of its shoreline, so it never spills over the bank.
+ */
+export function waterLevels(plot: Plot): number[] {
+  if (plot.isFlat) return plot.waterFeatures.map(() => NaN);
+  const base = baseTerrain(plot);
+  return plot.waterFeatures.map((f) => {
+    if (f.kind !== "pond" && f.kind !== "lake") return NaN;
+    // A lake's last two points are its far side, well off the plot.
+    const shore = f.kind === "lake" ? f.points.slice(0, -2) : f.points;
+    return Math.min(...shore.map((p) => base(p.x, p.y))) - FT;
+  });
 }
 
 /** Sample a grid of heights covering a box (inches), row by row. */

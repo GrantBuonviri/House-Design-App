@@ -36,3 +36,15 @@ body {
     @apply rounded-xl border border-line bg-white;
   }
 }
+
+/* Land carousel: a short slide when moving between sets of plots */
+@keyframes slide-from-right {
+  from { opacity: 0; transform: translateX(40px); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes slide-from-left {
+  from { opacity: 0; transform: translateX(-40px); }
+  to { opacity: 1; transform: none; }
+}
+.slide-from-right { animation: slide-from-right 220ms ease-out; }
+.slide-from-left { animation: slide-from-left 220ms ease-out; }
