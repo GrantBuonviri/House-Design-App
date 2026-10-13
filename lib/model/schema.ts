@@ -87,7 +87,59 @@ export const Plot = z.object({
 });
 export type Plot = z.infer<typeof Plot>;
 
-// ---------- 3. Design brief ----------
+// ---------- 3. Discovery questions ----------
+
+/** Answers to the "Rooms & vibe" questions. Every field has a sensible default. */
+export const DiscoveryAnswers = z.object({
+  // Rooms
+  bedrooms: z.number().int().min(0).max(10).default(3),
+  fullBaths: z.number().int().min(0).max(10).default(2),
+  halfBaths: z.number().int().min(0).max(5).default(1),
+  primarySuite: z.enum(["main", "upper", "either"]).default("main"),
+  offices: z.number().int().min(0).max(4).default(1),
+  kitchen: z.enum(["open", "semi", "closed"]).default("open"),
+  dining: z.enum(["eat-in", "open", "separate"]).default("open"),
+  pantry: z.enum(["none", "cabinet", "walk-in"]).default("walk-in"),
+  mudroom: z.boolean().default(true),
+  laundry: z.enum(["near-bedrooms", "off-mudroom", "basement"]).default("near-bedrooms"),
+  extraRooms: z.array(z.string()).default([]),
+  // Floors and garage
+  floors: z.number().int().min(1).max(3).default(1),
+  basement: z.enum(["no", "yes", "if-land-suits"]).default("if-land-suits"),
+  garageBays: z.number().int().min(0).max(4).default(2),
+  storage: z.enum(["light", "average", "lots"]).default("average"),
+  outdoor: z.array(z.string()).default([]),
+  accessibility: z.array(z.string()).default([]),
+  // Feel and flow. Sliders run 0-100.
+  cozyAiry: z.number().min(0).max(100).default(50),
+  openDefined: z.number().min(0).max(100).default(40),
+  quietEntertaining: z.number().min(0).max(100).default(50),
+  bedroomPrivacy: z.enum(["together", "split", "separate-wing"]).default("split"),
+  indoorOutdoor: z.enum(["low", "some", "lots"]).default("some"),
+  dailyRoutine: z.string().max(2000).default(""),
+  styleWords: z.array(z.string().max(40)).default([]),
+  anythingElse: z.string().max(2000).default(""),
+});
+export type DiscoveryAnswers = z.infer<typeof DiscoveryAnswers>;
+
+export const FollowUp = z.object({
+  id: z.string(),
+  question: z.string(),
+  /** Why the question matters, shown in small print. */
+  why: z.string().optional(),
+  /** Quick answers the user can click. */
+  options: z.array(z.string()).default([]),
+  answer: z.string().default(""),
+});
+export type FollowUp = z.infer<typeof FollowUp>;
+
+export const Discovery = z.object({
+  answers: DiscoveryAnswers.prefault({}),
+  followUps: z.array(FollowUp).default([]),
+});
+export type Discovery = z.infer<typeof Discovery>;
+
+// ---------- Design brief ----------
 
 export const BriefRoom = z.object({
   id: z.string(),
@@ -116,6 +168,10 @@ export const DesignBrief = z.object({
   priorities: z.array(z.string()),
   accessibility: z.array(z.string()),
   freeText: z.string().optional(),
+  /** A short paragraph describing the house in plain words. */
+  summary: z.string().optional(),
+  /** Who wrote the first draft: Claude or the built-in rules. */
+  source: z.enum(["ai", "rules"]).optional(),
 });
 export type DesignBrief = z.infer<typeof DesignBrief>;
 
@@ -257,6 +313,7 @@ export const Project = z.object({
   stage: Stage,
   profile: Profile,
   plot: Plot.nullable().default(null),
+  discovery: Discovery.prefault({}),
   brief: DesignBrief.nullable().default(null),
   levels: z.array(Level).min(1),
   bubbles: z.record(z.string(), BubbleDiagram).default({}),
