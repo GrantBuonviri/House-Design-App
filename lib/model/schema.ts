@@ -9,7 +9,7 @@ import { z } from "zod";
  * Angles are degrees clockwise from north (0 = N, 90 = E).
  */
 
-export const SCHEMA_VERSION = 2;
+export const SCHEMA_VERSION = 3;
 
 export const Point = z.object({ x: z.number(), y: z.number() });
 export type Point = z.infer<typeof Point>;
@@ -189,11 +189,15 @@ export const BubbleDiagram = z.object({
       /** The brief room this bubble stands for. Bubbles the user adds may have none. */
       roomId: z.string().optional(),
       label: z.string(),
-      shape: z.enum(["circle", "oval"]),
+      /** "free" is a room drawn in any shape, with its `outline`. */
+      shape: z.enum(["circle", "oval", "free"]),
       x: z.number(),
       y: z.number(),
+      /** Half the width and height. For a drawn room, of its outline (before rotation). */
       rx: z.number().positive(),
       ry: z.number().positive(),
+      /** A drawn room's outline, relative to (x, y) and before rotation. */
+      outline: z.array(Point).optional(),
       /** Degrees clockwise. */
       rotation: z.number().default(0),
       color: z.string().optional(),
@@ -210,6 +214,26 @@ export const BubbleDiagram = z.object({
   ),
 });
 export type BubbleDiagram = z.infer<typeof BubbleDiagram>;
+
+/** Flow sketch settings that are saved with the project. */
+export const SketchSettings = z.object({
+  /** Land drawn under the sketch. */
+  overlays: z
+    .object({
+      property: z.boolean().default(false),
+      sun: z.boolean().default(false),
+      land: z.boolean().default(false),
+      /** The downhill arrow, part of the land features. */
+      arrow: z.boolean().default(true),
+    })
+    .prefault({}),
+  /**
+   * Where the house sits on the lot, one for all floors: a plot point is the
+   * sketch point plus this offset. Null until it's first needed.
+   */
+  lotOffset: Point.nullable().default(null),
+});
+export type SketchSettings = z.infer<typeof SketchSettings>;
 
 // ---------- 5. Floor plans ----------
 
@@ -315,6 +339,7 @@ export const Project = z.object({
   brief: DesignBrief.nullable().default(null),
   levels: z.array(Level).min(1),
   bubbles: z.record(z.string(), BubbleDiagram).default({}),
+  sketch: SketchSettings.prefault({}),
   floorPlans: z.record(z.string(), FloorPlan).default({}),
   interior: DesignChoices,
   exterior: DesignChoices,

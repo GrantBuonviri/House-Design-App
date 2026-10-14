@@ -114,7 +114,8 @@ export default function LandStage({ onContinue }: { onContinue: () => void }) {
 
   const choose = useCallback(
     (plot: Plot) => {
-      update((p) => ({ ...p, plot }));
+      // A different lot puts the house back in the middle of it on the flow sketch.
+      update((p) => ({ ...p, plot, sketch: p.plot?.seed === plot.seed ? p.sketch : { ...p.sketch, lotOffset: null } }));
       setOpen(null);
       setBrowsing(false);
       window.scrollTo({ top: 0, behavior: "smooth" });

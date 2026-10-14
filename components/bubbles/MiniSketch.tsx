@@ -1,8 +1,9 @@
 "use client";
 
-import { Ellipse, Group, Layer, Line, Stage, Text } from "react-konva";
+import { Group, Layer, Line, Stage, Text } from "react-konva";
 import type { BubbleDiagram } from "@/lib/model/schema";
 import { FREE_COLOR } from "@/lib/bubbles/shapes";
+import BubbleShape from "./BubbleShape";
 
 /**
  * A small read-only drawing of one level, for comparing alternatives. Every
@@ -48,14 +49,10 @@ export default function MiniSketch({
               if (c) c.style.cursor = "default";
             }}
           >
-            <Ellipse
+            <BubbleShape
               name="mini-bubble"
               id={`mini-${b.id}`}
-              x={b.x}
-              y={b.y}
-              radiusX={b.rx}
-              radiusY={b.ry}
-              rotation={b.rotation}
+              b={b}
               fill={b.color ?? FREE_COLOR}
               stroke="#5b564d"
               strokeWidth={1}
