@@ -2,7 +2,7 @@ import type { BubbleDiagram, DesignBrief, Level, Plot, Point } from "@/lib/model
 import { MAIN_LEVEL_ID, nearestLevel } from "@/lib/brief/levels";
 import { roomType } from "@/lib/brief/rooms";
 import { freeSpot, layout, type LayoutLink, type LayoutNode } from "./layout";
-import { bubbleForRoom, bubbleIdFor, emptyDiagram, stairsBubble, type Bubble } from "./shapes";
+import { bubbleForRoom, bubbleIdFor, emptyDiagram, isDrawn, stairsBubble, type Bubble } from "./shapes";
 import { ruleSpot, siteOf, spotFromVector, spotVector, type Spot } from "./site";
 
 /**
@@ -104,12 +104,16 @@ export function ruleSpots(ctx: SketchContext): Map<string, Spot> {
  * A complete starting sketch: every brief room as a bubble on its floor, at
  * its spot (by room id; rooms without one use the built-in choice).
  */
-export function suggestDiagrams(ctx: SketchContext, spots: Map<string, Spot> = new Map(), seed = 7): Diagrams {
+export function suggestDiagrams(ctx: SketchContext, spots: Map<string, Spot> = new Map(), seed = 7, current: Diagrams = {}): Diagrams {
   const rules = ruleSpots(ctx);
   const byLevel = new Map<string, Bubble[]>(ctx.levels.map((l) => [l.id, []]));
   const spotOf = new Map<string, Spot>();
+  // Rooms the user drew in their own shape keep it.
+  const drawn = new Map(Object.values(current).flatMap((d) => d.bubbles.filter(isDrawn).map((b) => [b.id, b] as const)));
   for (const room of ctx.brief.rooms) {
-    const b = bubbleForRoom(room, ctx.brief.garageBays);
+    const fresh = bubbleForRoom(room, ctx.brief.garageBays);
+    const own = drawn.get(fresh.id);
+    const b: Bubble = own ? { ...fresh, shape: "free", outline: own.outline, rx: own.rx, ry: own.ry, rotation: own.rotation } : fresh;
     byLevel.get(levelForRoom(room, ctx.levels))!.push(b);
     spotOf.set(b.id, spots.get(room.id) ?? rules.get(room.id)!);
   }

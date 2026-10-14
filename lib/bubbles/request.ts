@@ -7,6 +7,8 @@ export const SketchRequest = z.object({
   plot: Plot.nullable(),
   levels: z.array(Level).min(1),
   fresh: z.boolean().optional(),
+  /** The sketch now, so rooms drawn in their own shape keep it. */
+  current: z.record(z.string(), BubbleDiagram).optional(),
 });
 
 export const AlternativesRequest = SketchRequest.extend({

@@ -1,12 +1,14 @@
 "use client";
 
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
-import { Ellipse, Group, Layer, Line, Rect, Shape, Stage, Text, Transformer } from "react-konva";
-import type Konva from "konva";
-import type { BubbleDiagram } from "@/lib/model/schema";
-import { FREE_COLOR, bubbleSqft, radiiFor, type Bubble } from "@/lib/bubbles/shapes";
-import { addBubble, addFlow, addNote, addStroke, newElementId, removeAny, updateBubble, updateNote } from "@/lib/bubbles/edit";
-import type { Selection, Side, Tool } from "./types";
+import { Group, Layer, Line, Rect, Shape, Stage, Text, Transformer } from "react-konva";
+import Konva from "konva";
+import type { BubbleDiagram, Point } from "@/lib/model/schema";
+import { FREE_COLOR, MAX_SQFT, MIN_SQFT, bubbleSqft, isDrawn, outlineShape, polygonArea, radiiFor, resized, scaledOutline, tidyOutline, type Bubble } from "@/lib/bubbles/shapes";
+import { addBubble, addNote, addStroke, connected, moveMany, newElementId, removeAny, updateBubble } from "@/lib/bubbles/edit";
+import BubbleShape from "./BubbleShape";
+import LandLayer from "./LandLayer";
+import { isSelected, type LandView, type SelectedItem, type Selection, type Side, type Tool } from "./types";
 
 /**
  * The flow sketch drawing for one level, at real scale: 1 unit is 1 inch.
@@ -15,15 +17,26 @@ import type { Selection, Side, Tool } from "./types";
  */
 
 type View = { scale: number; x: number; y: number };
+type Delta = { dx: number; dy: number };
+type Box = { x0: number; y0: number; x1: number; y1: number };
+
+/** What a press-and-drag on the drawing is doing. */
+type Gesture =
+  | { type: "move"; start: Point; ids: string[]; ref: Point; moved: boolean }
+  | { type: "box"; start: Point; additive: boolean; base: Selection }
+  | { type: "lot"; start: Point }
+  | { type: "draw" }
+  | { type: "erase"; key: string };
 
 const SNAP_IN = 12;
 const NEW_SQFT = 150;
-const MIN_SCALE = 0.08;
+const MIN_SCALE = 0.04;
 const MAX_SCALE = 5;
 const MIN_RADIUS_IN = 18;
 const INK = "#3d3a35";
 const ACCENT = "#2f6b4f";
 const NOTE_W = 170;
+const SQ_IN_PER_SQ_FT = 144;
 
 type Props = {
   diagram: BubbleDiagram;
@@ -35,9 +48,17 @@ type Props = {
   /** Labels for each edge of the drawing, like "Road" or "Sunny side". */
   sides: Record<Side, string[]>;
   height: number;
+  /** The land under the sketch, when any of it is turned on. */
+  land: LandView | null;
+  /** "Move on lot": dragging slides the land under the sketch. */
+  lotMode: boolean;
+  onLotMove: (offset: Point) => void;
+  /** "Pick on drawing": clicking a room connects it to this one, or disconnects it. */
+  connectFrom: string | null;
+  onToggleConnection: (id: string) => void;
   onSelect: (s: Selection) => void;
   onChange: (d: BubbleDiagram, coalesce?: string) => void;
-  /** The one-shot tools (circle, oval, note) hand back to Select after use. */
+  /** The one-shot tools (circle, oval, draw room, note) hand back to Select after use. */
   onToolDone: () => void;
   onEditNote: (id: string) => void;
 };
@@ -45,7 +66,7 @@ type Props = {
 const clampScale = (s: number) => Math.min(MAX_SCALE, Math.max(MIN_SCALE, s));
 const snapTo = (n: number) => Math.round(n / SNAP_IN) * SNAP_IN;
 
-function boundsOf(diagrams: BubbleDiagram[]) {
+function boundsOf(diagrams: BubbleDiagram[], extra: Point[] = []) {
   let x0 = Infinity;
   let y0 = Infinity;
   let x1 = -Infinity;
@@ -58,13 +79,14 @@ function boundsOf(diagrams: BubbleDiagram[]) {
   };
   for (const d of diagrams) {
     for (const b of d.bubbles) {
-      const r = Math.max(b.rx, b.ry);
+      const r = Math.hypot(b.rx, b.ry);
       add(b.x - r, b.y - r);
       add(b.x + r, b.y + r);
     }
     for (const n of d.notes) add(n.x, n.y);
     for (const s of d.strokes) for (let i = 0; i < s.points.length; i += 2) add(s.points[i], s.points[i + 1]);
   }
+  for (const p of extra) add(p.x, p.y);
   return Number.isFinite(x0) ? { x0, y0, x1, y1 } : null;
 }
 
@@ -82,8 +104,11 @@ function noteHeight(text: string, scale: number): number {
   return (lines * 17 + 16) / scale;
 }
 
+const pairs = (flat: number[]): Point[] => Array.from({ length: flat.length / 2 }, (_, i) => ({ x: flat[2 * i], y: flat[2 * i + 1] }));
+
 export default function SketchCanvas(props: Props) {
-  const { diagram, below, tool, selection, snap, sides, height, onSelect, onChange, onToolDone, onEditNote } = props;
+  const { diagram, below, tool, selection, snap, sides, height, land, lotMode, onLotMove, connectFrom, onToggleConnection } = props;
+  const { onSelect, onChange, onToolDone, onEditNote } = props;
   const wrapRef = useRef<HTMLDivElement>(null);
   const stageRef = useRef<Konva.Stage>(null);
   const layerRef = useRef<Konva.Layer>(null);
@@ -91,14 +116,15 @@ export default function SketchCanvas(props: Props) {
   const [width, setWidth] = useState(0);
   const [view, setView] = useState<View>({ scale: 0.6, x: 0, y: 0 });
   const fitted = useRef(false);
-  const [live, setLive] = useState<{ id: string; x: number; y: number } | null>(null);
+  const gesture = useRef<Gesture | null>(null);
+  const [moveDelta, setMoveDelta] = useState<Delta | null>(null);
+  const [lotDelta, setLotDelta] = useState<Delta | null>(null);
+  const [box, setBox] = useState<Box | null>(null);
   const [draft, setDraft] = useState<number[] | null>(null);
-  const [flowFrom, setFlowFrom] = useState<string | null>(null);
-  const [cursor, setCursor] = useState<{ x: number; y: number } | null>(null);
-  const erasing = useRef<string | null>(null);
-  // Always the latest diagram, for handlers that fire many times in one gesture.
-  const latest = useRef(diagram);
-  latest.current = diagram;
+  const [spaceDown, setSpaceDown] = useState(false);
+  // Always the latest values, for handlers that fire many times in one gesture.
+  const latest = useRef({ diagram, selection, moveDelta, lotDelta });
+  latest.current = { diagram, selection, moveDelta, lotDelta };
 
   useLayoutEffect(() => {
     const el = wrapRef.current;
@@ -109,17 +135,19 @@ export default function SketchCanvas(props: Props) {
     return () => ro.disconnect();
   }, []);
 
+  const propertyPoints = land?.show.property ? land.drawing.outline.map((p) => ({ x: p.x - land.offset.x, y: p.y - land.offset.y })) : [];
   const fit = useCallback(() => {
     if (!width) return;
-    const b = boundsOf(below ? [diagram, below.diagram] : [diagram]);
+    const b = boundsOf(below ? [diagram, below.diagram] : [diagram], propertyPoints);
     if (!b) {
       setView({ scale: 0.6, x: width / 2, y: height / 2 });
       return;
     }
-    const pad = 80;
+    const pad = 70;
     const scale = clampScale(Math.min((width - pad * 2) / Math.max(1, b.x1 - b.x0), (height - pad * 2) / Math.max(1, b.y1 - b.y0), 1.2));
     setView({ scale, x: width / 2 - ((b.x0 + b.x1) / 2) * scale, y: height / 2 - ((b.y0 + b.y1) / 2) * scale });
-  }, [width, height, diagram, below]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [width, height, diagram, below, JSON.stringify(propertyPoints)]);
 
   useEffect(() => {
     if (width && !fitted.current) {
@@ -128,27 +156,52 @@ export default function SketchCanvas(props: Props) {
     }
   }, [width, fit]);
 
-  // Hand the transformer to the selected bubble.
+  // Hold Space to pan with the mouse, as in most drawing apps. Only while the
+  // pointer is over the drawing, so Space still presses buttons elsewhere.
+  const hovering = useRef(false);
+  useEffect(() => {
+    const typing = (e: KeyboardEvent) => (e.target as HTMLElement | null)?.closest?.("input, textarea, select, [contenteditable]");
+    const down = (e: KeyboardEvent) => {
+      if (e.code !== "Space" || !hovering.current || typing(e)) return;
+      e.preventDefault();
+      // A focused button would otherwise be pressed when Space comes back up.
+      (e.target as HTMLElement | null)?.closest?.("button")?.blur();
+      setSpaceDown(true);
+    };
+    const up = (e: KeyboardEvent) => {
+      if (e.code === "Space") setSpaceDown(false);
+    };
+    const blur = () => setSpaceDown(false);
+    window.addEventListener("keydown", down);
+    window.addEventListener("keyup", up);
+    window.addEventListener("blur", blur);
+    return () => {
+      window.removeEventListener("keydown", down);
+      window.removeEventListener("keyup", up);
+      window.removeEventListener("blur", blur);
+    };
+  }, []);
+
+  const byId = new Map(diagram.bubbles.map((b) => [b.id, b]));
+  const single = selection.length === 1 && selection[0].kind === "bubble" ? byId.get(selection[0].id) : undefined;
+  const transforming = single && tool === "select" && !connectFrom && !lotMode ? single : undefined;
+
+  // Hand the transformer to the one selected room.
   useEffect(() => {
     const tr = trRef.current;
     if (!tr) return;
-    const node = selection?.kind === "bubble" && tool === "select" ? layerRef.current?.findOne(`#${selection.id}`) : undefined;
+    const node = transforming ? layerRef.current?.findOne(`#${transforming.id}`) : undefined;
     tr.nodes(node ? [node] : []);
     tr.getLayer()?.batchDraw();
-  }, [selection, tool, diagram]);
-
-  // Leaving the flow tool drops a half-made flow line.
-  useEffect(() => {
-    if (tool !== "flow") setFlowFrom(null);
-  }, [tool]);
+  }, [transforming, diagram]);
 
   const world = () => layerRef.current?.getRelativePointerPosition() ?? { x: 0, y: 0 };
   const s = view.scale;
-  const pos = (b: Bubble) => (live?.id === b.id ? { x: live.x, y: live.y } : { x: b.x, y: b.y });
-  const byId = new Map(diagram.bubbles.map((b) => [b.id, b]));
+  const moving = (id: string) => moveDelta !== null && gesture.current?.type === "move" && gesture.current.ids.includes(id);
+  const pos = (b: Bubble) => (moving(b.id) ? { x: b.x + moveDelta!.dx, y: b.y + moveDelta!.dy } : { x: b.x, y: b.y });
 
   /** The sketch element under a Konva node: a bubble, flow, stroke or note. */
-  function elementOf(node: Konva.Node | null): { kind: NonNullable<Selection>["kind"]; id: string } | null {
+  function elementOf(node: Konva.Node | null): SelectedItem | null {
     if (!node) return null;
     for (const kind of ["bubble", "flow", "stroke", "note"] as const) {
       const hit = node.findAncestor(`.${kind}`, true);
@@ -157,58 +210,101 @@ export default function SketchCanvas(props: Props) {
     return null;
   }
 
+  /** Where an element sits, for snapping a group move to the grid. */
+  function refPoint(id: string): Point {
+    const d = latest.current.diagram;
+    const b = d.bubbles.find((x) => x.id === id);
+    if (b) return { x: b.x, y: b.y };
+    const n = d.notes.find((x) => x.id === id);
+    if (n) return { x: n.x, y: n.y };
+    const st = d.strokes.find((x) => x.id === id);
+    return st ? { x: st.points[0], y: st.points[1] } : { x: 0, y: 0 };
+  }
+
   function erase(node: Konva.Node | null, allowBubbles: boolean) {
     const el = elementOf(node);
     if (!el || (el.kind === "bubble" && !allowBubbles)) return;
-    if (selection?.id === el.id) onSelect(null);
-    onChange(removeAny(latest.current, el.id), erasing.current ?? undefined);
+    const { diagram: d, selection: sel } = latest.current;
+    if (isSelected(sel, el.id)) onSelect(sel.filter((x) => x.id !== el.id));
+    onChange(removeAny(d, el.id), gesture.current?.type === "erase" ? gesture.current.key : undefined);
   }
 
   function onMouseDown(e: Konva.KonvaEventObject<MouseEvent>) {
-    if (e.evt.button !== 0) return;
+    if (e.evt.button !== 0 || spaceDown || tool === "pan") return;
     const stage = e.target.getStage()!;
     const p = world();
     const el = elementOf(e.target === stage ? null : e.target);
+
+    if (lotMode) {
+      gesture.current = { type: "lot", start: p };
+      return;
+    }
+    if (connectFrom) {
+      if (el?.kind === "bubble" && el.id !== connectFrom) onToggleConnection(el.id);
+      return;
+    }
     if (tool === "circle" || tool === "oval") {
       const { rx, ry } = radiiFor(NEW_SQFT, tool === "oval" ? 1.7 : 1);
       const at = snap ? { x: snapTo(p.x), y: snapTo(p.y) } : { x: Math.round(p.x), y: Math.round(p.y) };
       const b: Bubble = { id: newElementId("b"), label: "New room", shape: tool, ...at, rx, ry, rotation: 0, color: FREE_COLOR };
       onChange(addBubble(diagram, b));
-      onSelect({ kind: "bubble", id: b.id });
+      onSelect([{ kind: "bubble", id: b.id }]);
       onToolDone();
     } else if (tool === "note") {
       const id = newElementId("n");
       onChange(addNote(diagram, { id, x: Math.round(p.x), y: Math.round(p.y), text: "" }));
-      onSelect({ kind: "note", id });
+      onSelect([{ kind: "note", id }]);
       onToolDone();
       onEditNote(id);
-    } else if (tool === "pen") {
+    } else if (tool === "pen" || tool === "room") {
+      gesture.current = { type: "draw" };
       setDraft([p.x, p.y]);
     } else if (tool === "eraser") {
-      erasing.current = newElementId("erase");
+      gesture.current = { type: "erase", key: newElementId("erase") };
       erase(e.target === stage ? null : e.target, true);
-    } else if (tool === "flow") {
-      if (el?.kind !== "bubble") setFlowFrom(null);
-      else if (!flowFrom) setFlowFrom(el.id);
-      else {
-        onChange(addFlow(diagram, flowFrom, el.id));
-        setFlowFrom(null);
-      }
     } else if (tool === "select") {
-      // Grabbing a resize handle keeps the bubble selected.
+      // Grabbing a resize handle keeps the room selected.
       if (e.target.findAncestor("Transformer")) return;
-      onSelect(el);
+      const shift = e.evt.shiftKey;
+      if (!el) {
+        gesture.current = { type: "box", start: p, additive: shift, base: selection };
+        setBox({ x0: p.x, y0: p.y, x1: p.x, y1: p.y });
+        return;
+      }
+      if (shift) {
+        onSelect(isSelected(selection, el.id) ? selection.filter((x) => x.id !== el.id) : [...selection, el]);
+        return;
+      }
+      const next = isSelected(selection, el.id) ? selection : [el];
+      if (next !== selection) onSelect(next);
+      const ids = next.filter((x) => x.kind !== "flow").map((x) => x.id);
+      if (el.kind !== "flow" && ids.length) gesture.current = { type: "move", start: p, ids, ref: refPoint(el.id), moved: false };
     }
   }
 
   function onMouseMove() {
+    const g = gesture.current;
+    if (!g) return;
     const p = world();
-    if (tool === "flow" || tool === "pen") setCursor(p);
-    if (tool === "pen" && draft) {
+    if (g.type === "move") {
+      let dx = p.x - g.start.x;
+      let dy = p.y - g.start.y;
+      if (!g.moved && Math.hypot(dx, dy) * s < 3) return;
+      g.moved = true;
+      if (snap) {
+        dx = snapTo(g.ref.x + dx) - g.ref.x;
+        dy = snapTo(g.ref.y + dy) - g.ref.y;
+      }
+      setMoveDelta({ dx, dy });
+    } else if (g.type === "box") {
+      setBox({ x0: g.start.x, y0: g.start.y, x1: p.x, y1: p.y });
+    } else if (g.type === "lot") {
+      setLotDelta({ dx: p.x - g.start.x, dy: p.y - g.start.y });
+    } else if (g.type === "draw" && draft) {
       const lx = draft[draft.length - 2];
       const ly = draft[draft.length - 1];
       if (Math.hypot(p.x - lx, p.y - ly) * s > 3) setDraft([...draft, p.x, p.y]);
-    } else if (tool === "eraser" && erasing.current) {
+    } else if (g.type === "erase") {
       const stage = stageRef.current!;
       const pointer = stage.getPointerPosition();
       erase(pointer ? stage.getIntersection(pointer) : null, false);
@@ -216,14 +312,62 @@ export default function SketchCanvas(props: Props) {
   }
 
   function onMouseUp() {
-    if (tool === "pen" && draft) {
-      if (draft.length >= 4) {
+    const g = gesture.current;
+    gesture.current = null;
+    if (!g) return;
+    const { moveDelta: delta, lotDelta: lot } = latest.current;
+    if (g.type === "move") {
+      if (g.moved && delta && (delta.dx || delta.dy)) onChange(moveMany(diagram, g.ids, delta.dx, delta.dy));
+      setMoveDelta(null);
+    } else if (g.type === "box") {
+      finishBox(g);
+      setBox(null);
+    } else if (g.type === "lot") {
+      if (lot && land) onLotMove({ x: Math.round(land.offset.x - lot.dx), y: Math.round(land.offset.y - lot.dy) });
+      setLotDelta(null);
+    } else if (g.type === "draw") {
+      if (draft && tool === "pen" && draft.length >= 4) {
         const points = draft.map((n) => Math.round(n * 2) / 2);
         onChange(addStroke(diagram, { id: newElementId("s"), points, width: Math.round((3 / s) * 10) / 10 }));
+      } else if (draft && tool === "room") {
+        finishRoom(draft);
       }
       setDraft(null);
     }
-    erasing.current = null;
+  }
+
+  /** Select everything the box touches: rooms, notes and pen marks. */
+  function finishBox(g: Extract<Gesture, { type: "box" }>) {
+    const b = latest.current;
+    const rect = box ?? { x0: g.start.x, y0: g.start.y, x1: g.start.x, y1: g.start.y };
+    const r = { x: Math.min(rect.x0, rect.x1), y: Math.min(rect.y0, rect.y1), width: Math.abs(rect.x1 - rect.x0), height: Math.abs(rect.y1 - rect.y0) };
+    if (Math.max(r.width, r.height) * s < 4) {
+      // A click on empty space lets go of everything (unless Shift is held).
+      if (!g.additive && b.selection.length) onSelect([]);
+      return;
+    }
+    const layer = layerRef.current;
+    if (!layer) return;
+    const hits: SelectedItem[] = [];
+    for (const kind of ["bubble", "note", "stroke"] as const) {
+      for (const node of layer.find(`.${kind}`)) {
+        if (Konva.Util.haveIntersection(r, node.getClientRect({ relativeTo: layer }))) hits.push({ kind, id: node.id() });
+      }
+    }
+    onSelect(g.additive ? [...g.base, ...hits.filter((h) => !isSelected(g.base, h.id))] : hits);
+  }
+
+  /** Close a drawn outline into a room, if it's big enough to be one. */
+  function finishRoom(flat: number[]) {
+    const pts = pairs(flat);
+    if (pts.length < 3) return;
+    const tidy = tidyOutline(pts, 2.5 / s);
+    if (tidy.length < 3 || polygonArea(tidy) < MIN_SQFT * SQ_IN_PER_SQ_FT) return;
+    let b: Bubble = { id: newElementId("b"), label: "New room", shape: "free", ...outlineShape(tidy), rotation: 0, color: FREE_COLOR };
+    if (bubbleSqft(b) > MAX_SQFT) b = resized(b, MAX_SQFT);
+    onChange(addBubble(diagram, b));
+    onSelect([{ kind: "bubble", id: b.id }]);
+    onToolDone();
   }
 
   function onWheel(e: Konva.KonvaEventObject<WheelEvent>) {
@@ -254,35 +398,46 @@ export default function SketchCanvas(props: Props) {
     setView({ scale: s, x: stage.x(), y: stage.y() });
   }
 
-  function onBubbleDragMove(e: Konva.KonvaEventObject<DragEvent>, b: Bubble) {
-    const node = e.target;
-    if (snap) node.position({ x: snapTo(node.x()), y: snapTo(node.y()) });
-    setLive({ id: b.id, x: node.x(), y: node.y() });
-  }
-
-  function onBubbleDragEnd(e: Konva.KonvaEventObject<DragEvent>, b: Bubble) {
-    const node = e.target;
-    setLive(null);
-    onChange(updateBubble(diagram, b.id, { x: Math.round(node.x()), y: Math.round(node.y()) }));
-  }
-
   function onTransformEnd(e: Konva.KonvaEventObject<Event>, b: Bubble) {
-    const node = e.target as Konva.Ellipse;
-    let rx = Math.max(MIN_RADIUS_IN, node.radiusX() * Math.abs(node.scaleX()));
-    let ry = Math.max(MIN_RADIUS_IN, node.radiusY() * Math.abs(node.scaleY()));
-    if (b.shape === "circle") rx = ry = (rx + ry) / 2;
+    const node = e.target;
+    const sx = Math.abs(node.scaleX());
+    const sy = Math.abs(node.scaleY());
     node.scaleX(1);
     node.scaleY(1);
-    onChange(updateBubble(diagram, b.id, { x: Math.round(node.x()), y: Math.round(node.y()), rx, ry, rotation: Math.round(node.rotation()) }));
+    const at = { x: Math.round(node.x()), y: Math.round(node.y()), rotation: Math.round(node.rotation()) };
+    if (isDrawn(b)) {
+      onChange(updateBubble(diagram, b.id, { ...scaledOutline(b, sx, sy), ...at }));
+      return;
+    }
+    let rx = Math.max(MIN_RADIUS_IN, b.rx * sx);
+    let ry = Math.max(MIN_RADIUS_IN, b.ry * sy);
+    if (b.shape === "circle") rx = ry = (rx + ry) / 2;
+    onChange(updateBubble(diagram, b.id, { ...at, rx, ry }));
   }
 
-  const panning = tool === "pan" || tool === "select";
-  const cursorStyle =
-    tool === "pan" ? "grab" : tool === "select" ? "default" : tool === "eraser" ? "cell" : "crosshair";
-  const selectedBubble = selection?.kind === "bubble" ? byId.get(selection.id) : undefined;
+  const panning = tool === "pan" || spaceDown;
+  const cursorStyle = panning
+    ? "grab"
+    : lotMode
+      ? "move"
+      : connectFrom
+        ? "pointer"
+        : tool === "select"
+          ? "default"
+          : tool === "eraser"
+            ? "cell"
+            : "crosshair";
+  const linked = (id: string) => connectFrom !== null && id !== connectFrom && connected(diagram, connectFrom, id);
+  const shiftNotes = (id: string) => (moving(id) ? moveDelta! : { dx: 0, dy: 0 });
 
   return (
-    <div ref={wrapRef} className="relative overflow-hidden rounded-lg border border-line bg-[#fbfaf7]" style={{ height, cursor: cursorStyle }}>
+    <div
+      ref={wrapRef}
+      className="relative overflow-hidden rounded-lg border border-line bg-[#fbfaf7]"
+      style={{ height, cursor: cursorStyle }}
+      onMouseEnter={() => (hovering.current = true)}
+      onMouseLeave={() => (hovering.current = false)}
+    >
       {width > 0 && (
         <Stage
           ref={stageRef}
@@ -298,21 +453,20 @@ export default function SketchCanvas(props: Props) {
           onMouseDown={onMouseDown}
           onMouseMove={onMouseMove}
           onMouseUp={onMouseUp}
-          onMouseLeave={() => {
-            setCursor(null);
-            onMouseUp();
-          }}
+          onMouseLeave={onMouseUp}
           onWheel={onWheel}
         >
           <Layer listening={false}>
             <Grid view={view} width={width} height={height} />
           </Layer>
 
+          {land && <LandLayer land={land} scale={s} shift={lotDelta} />}
+
           {below && (
             <Layer listening={false} opacity={0.3}>
               {below.diagram.bubbles.map((b) => (
                 <Group key={b.id}>
-                  <Ellipse x={b.x} y={b.y} radiusX={b.rx} radiusY={b.ry} rotation={b.rotation} stroke={INK} strokeWidth={1} strokeScaleEnabled={false} dash={[6, 4]} dashEnabled fill="#e9e5dc" />
+                  <BubbleShape b={b} stroke={INK} strokeWidth={1} strokeScaleEnabled={false} dash={[6, 4]} dashEnabled fill="#e9e5dc" />
                   <Text x={b.x} y={b.y - 7 / s} text={b.label} fontSize={11 / s} width={160 / s} offsetX={80 / s} align="center" fill={INK} />
                 </Group>
               ))}
@@ -326,7 +480,7 @@ export default function SketchCanvas(props: Props) {
               if (!a || !b) return null;
               const pa = pos(a);
               const pb = pos(b);
-              const on = selection?.id === f.id;
+              const on = isSelected(selection, f.id);
               return (
                 <Line
                   key={f.id}
@@ -343,26 +497,26 @@ export default function SketchCanvas(props: Props) {
             })}
 
             {diagram.bubbles.map((b) => {
-              const on = selection?.id === b.id;
+              const on = isSelected(selection, b.id);
+              const source = connectFrom === b.id;
               const fill = b.color ?? FREE_COLOR;
+              const p = pos(b);
               return (
-                <Ellipse
+                <BubbleShape
                   key={b.id}
                   id={b.id}
                   name="bubble"
-                  x={b.x}
-                  y={b.y}
-                  radiusX={b.rx}
-                  radiusY={b.ry}
-                  rotation={b.rotation}
+                  b={b}
+                  x={p.x}
+                  y={p.y}
                   fill={fill}
-                  stroke={on || flowFrom === b.id ? ACCENT : edgeColor(fill)}
-                  strokeWidth={on || flowFrom === b.id ? 3 : 1.5}
+                  stroke={on || source || linked(b.id) ? ACCENT : edgeColor(fill)}
+                  strokeWidth={source ? 4.5 : on ? 3 : linked(b.id) ? 2.5 : 1.5}
                   strokeScaleEnabled={false}
+                  shadowColor={ACCENT}
+                  shadowBlur={source ? 14 : 0}
+                  shadowOpacity={source ? 0.6 : 0}
                   dash={b.stairs ? [5, 4] : undefined}
-                  draggable={tool === "select"}
-                  onDragMove={(e) => onBubbleDragMove(e, b)}
-                  onDragEnd={(e) => onBubbleDragEnd(e, b)}
                   onTransformEnd={(e) => onTransformEnd(e, b)}
                 />
               );
@@ -379,36 +533,36 @@ export default function SketchCanvas(props: Props) {
               );
             })}
 
-            {diagram.strokes.map((st) => (
-              <Line
-                key={st.id}
-                id={st.id}
-                name="stroke"
-                points={st.points}
-                stroke={selection?.id === st.id ? ACCENT : INK}
-                strokeWidth={st.width}
-                hitStrokeWidth={Math.max(st.width, 14 / s)}
-                tension={0.4}
-                lineCap="round"
-                lineJoin="round"
-              />
-            ))}
-            {draft && <Line points={draft} stroke={INK} strokeWidth={3 / s} tension={0.4} lineCap="round" lineJoin="round" listening={false} />}
+            {diagram.strokes.map((st) => {
+              const d = shiftNotes(st.id);
+              return (
+                <Line
+                  key={st.id}
+                  id={st.id}
+                  name="stroke"
+                  x={d.dx}
+                  y={d.dy}
+                  points={st.points}
+                  stroke={isSelected(selection, st.id) ? ACCENT : INK}
+                  strokeWidth={st.width}
+                  hitStrokeWidth={Math.max(st.width, 14 / s)}
+                  tension={0.4}
+                  lineCap="round"
+                  lineJoin="round"
+                />
+              );
+            })}
+            {draft && tool === "pen" && <Line points={draft} stroke={INK} strokeWidth={3 / s} tension={0.4} lineCap="round" lineJoin="round" listening={false} />}
+            {draft && tool === "room" && (
+              <Line points={draft} closed fill="rgba(234,217,240,0.6)" stroke={ACCENT} strokeWidth={2} strokeScaleEnabled={false} dash={[6, 4]} lineJoin="round" listening={false} />
+            )}
 
             {diagram.notes.map((n) => {
               const h = noteHeight(n.text, s);
-              const on = selection?.id === n.id;
+              const on = isSelected(selection, n.id);
+              const d = shiftNotes(n.id);
               return (
-                <Group
-                  key={n.id}
-                  id={n.id}
-                  name="note"
-                  x={n.x}
-                  y={n.y}
-                  draggable={tool === "select"}
-                  onDragEnd={(e) => onChange(updateNote(diagram, n.id, { x: Math.round(e.target.x()), y: Math.round(e.target.y()) }))}
-                  onDblClick={() => onEditNote(n.id)}
-                >
+                <Group key={n.id} id={n.id} name="note" x={n.x + d.dx} y={n.y + d.dy} onDblClick={() => onEditNote(n.id)}>
                   <Rect width={NOTE_W / s} height={h} fill="#fff4b8" stroke={on ? ACCENT : "#e2cf72"} strokeWidth={on ? 2 : 1} strokeScaleEnabled={false} cornerRadius={4 / s} shadowColor="#000" shadowOpacity={0.12} shadowBlur={6} shadowOffsetY={2} />
                   <Text
                     x={8 / s}
@@ -423,24 +577,35 @@ export default function SketchCanvas(props: Props) {
               );
             })}
 
-            {flowFrom && cursor && byId.get(flowFrom) && (
-              <Line points={[pos(byId.get(flowFrom)!).x, pos(byId.get(flowFrom)!).y, cursor.x, cursor.y]} stroke={ACCENT} strokeWidth={2} strokeScaleEnabled={false} dash={[6, 4]} listening={false} />
+            {box && (
+              <Rect
+                x={Math.min(box.x0, box.x1)}
+                y={Math.min(box.y0, box.y1)}
+                width={Math.abs(box.x1 - box.x0)}
+                height={Math.abs(box.y1 - box.y0)}
+                fill="rgba(47,107,79,0.08)"
+                stroke={ACCENT}
+                strokeWidth={1}
+                strokeScaleEnabled={false}
+                dash={[4, 3]}
+                listening={false}
+              />
             )}
 
             <Transformer
               ref={trRef}
-              rotateEnabled={selectedBubble?.shape === "oval"}
-              keepRatio={selectedBubble?.shape !== "oval"}
+              rotateEnabled={transforming?.shape === "oval" || transforming?.shape === "free"}
+              keepRatio={transforming?.shape === "circle"}
               enabledAnchors={
-                selectedBubble?.shape === "oval"
-                  ? ["top-left", "top-center", "top-right", "middle-right", "middle-left", "bottom-left", "bottom-center", "bottom-right"]
-                  : ["top-left", "top-right", "bottom-left", "bottom-right"]
+                transforming?.shape === "circle"
+                  ? ["top-left", "top-right", "bottom-left", "bottom-right"]
+                  : ["top-left", "top-center", "top-right", "middle-right", "middle-left", "bottom-left", "bottom-center", "bottom-right"]
               }
               anchorSize={9}
               borderStroke={ACCENT}
               anchorStroke={ACCENT}
               ignoreStroke
-              boundBoxFunc={(oldBox, box) => (Math.abs(box.width) < MIN_RADIUS_IN * 2 * s || Math.abs(box.height) < MIN_RADIUS_IN * 2 * s ? oldBox : box)}
+              boundBoxFunc={(oldBox, next) => (Math.abs(next.width) < MIN_RADIUS_IN * 2 * s || Math.abs(next.height) < MIN_RADIUS_IN * 2 * s ? oldBox : next)}
             />
           </Layer>
         </Stage>
@@ -521,7 +686,7 @@ function SideLabels({ sides }: { sides: Record<Side, string[]> }) {
 }
 
 function ScaleBar({ scale }: { scale: number }) {
-  const feet = [5, 10, 20, 25, 50, 100, 200].find((f) => f * 12 * scale >= 60) ?? 200;
+  const feet = [5, 10, 20, 25, 50, 100, 200, 500].find((f) => f * 12 * scale >= 60) ?? 500;
   const px = feet * 12 * scale;
   return (
     <div className="pointer-events-none absolute bottom-4 left-10 text-xs text-muted">

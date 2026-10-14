@@ -34,6 +34,8 @@ export function migrateProject(raw: unknown): Project {
     );
   }
   const migrated = version < 2 ? migrateV1(data) : data;
+  // Version 2 to 3 added drawn room shapes and saved sketch settings. Both
+  // are optional with defaults, so older data needs no changes.
   return Project.parse({ ...migrated, schemaVersion: SCHEMA_VERSION });
 }
 

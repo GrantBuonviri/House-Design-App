@@ -3,6 +3,7 @@ import { currentSpots, moveToSpots, suggestDiagrams, type Diagrams, type SketchC
 import { pickDistinct, ruleAlternatives, type Alternative } from "./alternatives";
 import { AiAlternatives, AiSketch, ALTERNATIVES_SYSTEM, SKETCH_SYSTEM, alternativesPrompt, sketchPrompt, spotsFrom } from "./ai";
 import { cleanDiagrams } from "./edit";
+import type { Spot } from "./site";
 
 /**
  * The server side of the flow sketch: Claude when a key is set, the built-in
@@ -16,9 +17,11 @@ type Options = { fresh?: boolean; client?: StructuredRequest<never>["client"] };
 export async function suggestSketch(
   ctx: SketchContext,
   opts: Options = {},
+  current: Diagrams = {},
 ): Promise<{ diagrams: Diagrams; source: Source; idea?: string; note?: string }> {
+  const draw = (spots?: Map<string, Spot>) => cleanDiagrams(suggestDiagrams(ctx, spots, undefined, current));
   if (ctx.brief.rooms.length === 0) {
-    return { diagrams: suggestDiagrams(ctx), source: "rules", note: "Your brief has no rooms yet." };
+    return { diagrams: draw(), source: "rules", note: "Your brief has no rooms yet." };
   }
   const result = await runStructured({
     task: "flow sketch",
@@ -30,9 +33,9 @@ export async function suggestSketch(
     maxTokens: 12000,
     ...opts,
   });
-  if (!result.ok) return { diagrams: cleanDiagrams(suggestDiagrams(ctx)), source: "rules", note: result.message };
+  if (!result.ok) return { diagrams: draw(), source: "rules", note: result.message };
   const spots = spotsFrom(result.data.rooms, new Set(ctx.brief.rooms.map((r) => r.id)));
-  return { diagrams: cleanDiagrams(suggestDiagrams(ctx, spots)), source: "ai", idea: result.data.idea.trim() || undefined };
+  return { diagrams: draw(spots), source: "ai", idea: result.data.idea.trim() || undefined };
 }
 
 export async function suggestAlternatives(
