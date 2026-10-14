@@ -1,7 +1,7 @@
 "use client";
 
 import type { DesignBrief } from "@/lib/model/schema";
-import { ROOM_TYPES, isHeated, newRoomId, roomType, sqftFromDims } from "@/lib/brief/rooms";
+import { BRIEF_ROOM_TYPES, isHeated, newRoomId, roomType, sqftFromDims } from "@/lib/brief/rooms";
 import { MAX_ABOVE, MAX_BELOW, levelIdsFor, levelName, levelsFor, nearestLevel } from "@/lib/brief/levels";
 import { briefTotals } from "@/lib/brief/rules";
 import { Choice, FeetInput, Field, Stepper, TagEditor } from "./controls";
@@ -159,7 +159,7 @@ export default function BriefEditor({
                                   value={r.type}
                                   onChange={(e) => setRoom(r.id, { type: e.target.value }, "type")}
                                 >
-                                  {ROOM_TYPES.map((t) => (
+                                  {BRIEF_ROOM_TYPES.map((t) => (
                                     <option key={t.id} value={t.id}>
                                       {t.label}
                                     </option>

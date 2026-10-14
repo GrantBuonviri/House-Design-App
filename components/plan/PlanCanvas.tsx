@@ -66,6 +66,8 @@ type Props = {
   height: number;
   land: LandView | null;
   lotMode: boolean;
+  /** Center the drawing on this spot (a new key each time it's asked). */
+  focus?: { at: Point; key: number } | null;
   onLotMove: (offset: Point) => void;
   onSelect: (s: PlanSelection) => void;
   onChange: (p: FloorPlan, coalesce?: string) => void;
@@ -164,6 +166,17 @@ export default function PlanCanvas(props: Props) {
       fit();
     }
   }, [width, fit]);
+
+  // Center on a spot when asked (a warning was clicked), zooming in a little if far out.
+  const focus = props.focus;
+  useEffect(() => {
+    if (!focus || !width) return;
+    setView((v) => {
+      const sc = clampScale(Math.max(v.scale, 0.6));
+      return { scale: sc, x: width / 2 - focus.at.x * sc, y: height / 2 - focus.at.y * sc };
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [focus?.key]);
 
   // ---- What's drawn ----
   const pieces = useMemo(() => wallPieces(shown, exteriorIn), [shown, exteriorIn]);

@@ -1,7 +1,7 @@
 "use client";
 
 import type { ChosenRoom, DiscoveryAnswers, Plot } from "@/lib/model/schema";
-import { CATEGORIES, MAX_PER_TYPE, ROOM_TYPES, newRoomId, setTypeCount, sqftFromDims } from "@/lib/brief/rooms";
+import { CATEGORIES, MAX_PER_TYPE, BRIEF_ROOM_TYPES, newRoomId, setTypeCount, sqftFromDims } from "@/lib/brief/rooms";
 import { MAX_ABOVE, MAX_BELOW, levelIdsFor, levelName } from "@/lib/brief/levels";
 import { plotImplications } from "@/lib/land/implications";
 import { FeetInput, Field, Stepper } from "./controls";
@@ -81,7 +81,7 @@ export default function RoomsPage({
         </p>
         <div className="space-y-7">
           {CATEGORIES.map((cat) => {
-            const types = ROOM_TYPES.filter((t) => t.category === cat.id && t.id !== "other");
+            const types = BRIEF_ROOM_TYPES.filter((t) => t.category === cat.id && t.id !== "other");
             const checked = types.filter((t) => a.rooms.some((r) => r.type === t.id));
             return (
               <div key={cat.id}>

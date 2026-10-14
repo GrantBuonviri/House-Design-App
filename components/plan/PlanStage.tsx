@@ -1,23 +1,29 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { FloorPlan, Level, PlanBasics, Point } from "@/lib/model/schema";
 import { useProjectStore } from "@/lib/store/projectStore";
 import { diagramOf } from "@/lib/bubbles/edit";
 import { WINTER_RING, defaultLotOffset, houseCenter, landDrawing, lotCenter } from "@/lib/bubbles/land";
 import { siteOf } from "@/lib/bubbles/site";
 import { MAIN_LEVEL_ID } from "@/lib/brief/levels";
+import { createRequestGate, ifCurrent } from "@/lib/bubbles/start";
 import { nearestSide } from "@/lib/land/generate";
 import { blankPlans, moveMany, planHasContent, planOf, removeMany } from "@/lib/plan/edit";
 import { plansFromSketch } from "@/lib/plan/fromSketch";
+import type { PlanAlternative } from "@/lib/plan/alternatives";
+import { planWarnings, type PlanWarning } from "@/lib/plan/checks";
+import { suggestPlans } from "@/lib/plan/suggest";
 import { boundsOf, dist } from "@/lib/plan/geometry";
 import { houseTotals, totalsText } from "@/lib/plan/measure";
-import { Note } from "@/components/brief/bits";
+import { Note, Working } from "@/components/brief/bits";
 import LevelTabs from "@/components/bubbles/LevelTabs";
 import ViewOptions, { type Overlay } from "@/components/bubbles/ViewOptions";
 import type { LandView, Side } from "@/components/bubbles/types";
 import PlanBasicsForm from "./PlanBasicsForm";
+import PlanAlternativesView from "./PlanAlternativesView";
+import PlanChecks from "./PlanChecks";
 import PlanSidePanel from "./PlanSidePanel";
 import { PLAN_TOOLS, type PlanSelection, type PlanTool } from "./types";
 
@@ -28,6 +34,14 @@ const PlanCanvas = dynamic(() => import("./PlanCanvas"), {
 
 const CANVAS_HEIGHT = 640;
 const FT = 12;
+
+type Compare = { alternatives: PlanAlternative[]; source: "ai" | "rules"; note?: string; basis: Record<string, FloorPlan> };
+
+async function post<T>(path: string, body: unknown, signal: AbortSignal): Promise<T> {
+  const res = await fetch(path, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body), signal });
+  if (!res.ok) throw new Error((await res.json().catch(() => null))?.error ?? `The app's server answered ${res.status}.`);
+  return res.json() as Promise<T>;
+}
 
 /** Stage 5: the floor plan. Rooms with real walls, doors, windows, stairs and fixtures, one tab per floor. */
 export default function PlanStage({ onContinue, onGoToSketch }: { onContinue: () => void; onGoToSketch: () => void }) {
@@ -52,6 +66,15 @@ export default function PlanStage({ onContinue, onGoToSketch }: { onContinue: ()
   const [notes, setNotes] = useState<string[]>([]);
   const [flash, setFlash] = useState<string>();
   const [drafting, setDrafting] = useState(false);
+  const [focus, setFocus] = useState<{ at: Point; key: number } | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string>();
+  const [compare, setCompare] = useState<Compare | null>(null);
+  const [comparing, setComparing] = useState(false);
+
+  // Only the latest request to Claude may land, and none once you've left the page.
+  const gate = useRef(createRequestGate()).current;
+  useEffect(() => () => gate.cancel(), [gate]);
 
   // Back on the drawing when a plan appears (after Undo, say). Start over keeps
   // the old plan until a new start is picked, so it isn't counted.
@@ -143,7 +166,7 @@ export default function PlanStage({ onContinue, onGoToSketch }: { onContinue: ()
 
   // Keyboard: tool letters, Delete to remove, arrows to nudge, Escape to let go.
   useEffect(() => {
-    if (choosing || editingBasics || !basics) return;
+    if (choosing || editingBasics || comparing || !basics) return;
     function onKey(e: KeyboardEvent) {
       const t = e.target as HTMLElement;
       if (e.metaKey || e.ctrlKey || e.altKey || t.closest("input, textarea, select, [contenteditable]")) return;
@@ -176,7 +199,16 @@ export default function PlanStage({ onContinue, onGoToSketch }: { onContinue: ()
     }
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [choosing, editingBasics, basics, sel, plan, drafting, lotOn, setLevelPlan]);
+  }, [choosing, editingBasics, comparing, basics, sel, plan, drafting, lotOn, setLevelPlan]);
+
+  /** The sketch as a plan, plus hallways, closets, windows and doors from the built-in rules. */
+  function suggest() {
+    const res = suggestPlans(sketches, { brief, plot, levels, basics });
+    update((p) => ({ ...p, floorPlans: { ...blankPlans(levels), ...res.plans }, plan: { ...p.plan, showSketch: false } }));
+    setNotes(res.notes);
+    setSelection([]);
+    setChoosing(false);
+  }
 
   function fromSketch() {
     const res = plansFromSketch(sketches, { brief, plot, levels, basics });
@@ -204,6 +236,8 @@ export default function PlanStage({ onContinue, onGoToSketch }: { onContinue: ()
 
   /** Back to the start choices. The plan stays until a new start is picked (and Undo brings it back after). */
   function startOver() {
+    gate.cancel();
+    setBusy(false);
     setNotes([]);
     setSelection([]);
     setLotMode(false);
@@ -211,9 +245,57 @@ export default function PlanStage({ onContinue, onGoToSketch }: { onContinue: ()
     setChoosing(true);
   }
 
+  /** Three variations on the plan as it is now. The last ones come back if the plan hasn't changed since. */
+  async function showAlternatives(fresh = false) {
+    if (compare && compare.basis === plans && !fresh) {
+      setComparing(true);
+      return;
+    }
+    setBusy(true);
+    setError(undefined);
+    let res;
+    try {
+      res = await ifCurrent(gate, (signal) => post<Omit<Compare, "basis">>("/api/plan/alternatives", { brief, plot, levels, basics, plans, fresh, skip: fresh ? compare?.alternatives.map((a) => a.title) : undefined }, signal));
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Couldn't make alternatives.");
+      setBusy(false);
+      return;
+    }
+    if (!res) return;
+    setBusy(false);
+    if (res.value.alternatives.length === 0) {
+      setError(res.value.note ?? "There were no alternatives to show. Try adding a few more rooms first.");
+      return;
+    }
+    setCompare({ ...res.value, basis: plans });
+    setComparing(true);
+    window.scrollTo({ top: 0 });
+  }
+
+  function takeAlternative(i: number, levelOnly: boolean) {
+    if (!compare) return;
+    const alt = compare.alternatives[i];
+    setPlans((ps) => (levelOnly ? { ...ps, [level.id]: alt.plans[level.id] } : { ...ps, ...alt.plans }));
+    setComparing(false);
+    setSelection([]);
+    setNotes([]);
+    setFlash(`Using “${alt.title}”${levelOnly ? ` for the ${level.name.toLowerCase()}` : ""}. Undo brings back your own plan.`);
+  }
+
   function saveBasics(b: PlanBasics) {
     update((p) => ({ ...p, plan: { ...p.plan, basics: b } }));
     setEditingBasics(false);
+  }
+
+  const warnings = useMemo(() => (basics && !choosing ? planWarnings(plans, { levels, brief, basics }) : []), [plans, levels, brief, basics, choosing]);
+
+  /** A warning was clicked: go to its floor, select its rooms and center them. */
+  function pickWarning(w: PlanWarning) {
+    setLevelId(w.levelId);
+    setSelection(w.roomIds.map((id) => ({ kind: "room" as const, id })));
+    setTool("select");
+    setLotMode(false);
+    if (w.at) setFocus({ at: w.at, key: Date.now() });
   }
 
   const hasGarage = Boolean(brief?.rooms.some((r) => r.type === "garage") || brief?.garageBays);
@@ -230,9 +312,20 @@ export default function PlanStage({ onContinue, onGoToSketch }: { onContinue: ()
       <div className="card mx-auto max-w-2xl px-8 py-12 text-center">
         <h2 className="text-xl font-semibold tracking-tight">Start your floor plan</h2>
         <p className="mx-auto mt-2 max-w-lg text-sm text-muted">
-          Turn your flow sketch into rooms with real walls: each bubble becomes a room of the same size, in the same spot, pushed together so neighbors share walls, with
-          doors between the rooms you connected. Or start with an empty floor and trace over your sketch yourself.
+          Turn your flow sketch into rooms with real walls: each bubble becomes a room of the same size, in the same spot, pushed together so neighbors share walls.
         </p>
+        <ul className="mx-auto mt-4 max-w-lg space-y-2 text-left text-sm text-muted">
+          <li>
+            <span className="font-medium text-ink">Suggest a plan</span> also adds what a real plan needs: hallways so bedrooms don&apos;t open off each other, closets,
+            windows (more on the sunny side), and doors so every room can be reached.
+          </li>
+          <li>
+            <span className="font-medium text-ink">Turn my sketch into a plan</span> only adds doors between the rooms you connected, and a front door.
+          </li>
+          <li>
+            <span className="font-medium text-ink">Start blank</span> gives you an empty floor to trace over your sketch yourself.
+          </li>
+        </ul>
         {filled && <p className="mx-auto mt-3 max-w-lg text-sm text-amber-800">Either choice replaces the floor plan you have now on every floor. Undo brings it back.</p>}
         <div className="mt-6 flex justify-center gap-3">
           {filled && (
@@ -243,8 +336,11 @@ export default function PlanStage({ onContinue, onGoToSketch }: { onContinue: ()
           <button className="btn" onClick={startBlank}>
             Start blank
           </button>
-          <button className="btn-primary" onClick={fromSketch} disabled={!sketchHasRooms}>
+          <button className="btn" onClick={fromSketch} disabled={!sketchHasRooms}>
             Turn my sketch into a plan
+          </button>
+          <button className="btn-primary" onClick={suggest} disabled={!sketchHasRooms}>
+            Suggest a plan
           </button>
         </div>
         {!sketchHasRooms && (
@@ -259,6 +355,30 @@ export default function PlanStage({ onContinue, onGoToSketch }: { onContinue: ()
         <button className="mt-6 text-xs text-muted hover:text-ink hover:underline" onClick={() => setEditingBasics(true)}>
           Change the plan basics
         </button>
+      </div>
+    );
+  }
+
+  // ---- Comparing alternatives ----
+  if (comparing && compare) {
+    return (
+      <div className="pb-10">
+        <PlanAlternativesView
+          mine={plans}
+          alternatives={compare.alternatives}
+          source={compare.source}
+          note={compare.note}
+          levels={levels}
+          level={level}
+          basics={basics}
+          busy={busy}
+          onLevel={setLevelId}
+          onUse={takeAlternative}
+          onAgain={() => void showAlternatives(true)}
+          onClose={() => setComparing(false)}
+        />
+        {busy && <Working text="Thinking up three more…" />}
+        <Note text={error} />
       </div>
     );
   }
@@ -280,8 +400,11 @@ export default function PlanStage({ onContinue, onGoToSketch }: { onContinue: ()
           <button className="btn" onClick={() => setEditingBasics(true)}>
             Plan basics
           </button>
-          <button className="btn" onClick={startOver} title="Choose Start blank or Turn my sketch into a plan again">
+          <button className="btn" onClick={startOver} title="Choose Suggest a plan, Turn my sketch into a plan or Start blank again">
             Start over
+          </button>
+          <button className="btn" onClick={() => void showAlternatives()} disabled={busy || !filled}>
+            Show me alternatives
           </button>
           <button className="btn-primary" onClick={onContinue}>
             Next: interior →
@@ -289,6 +412,8 @@ export default function PlanStage({ onContinue, onGoToSketch }: { onContinue: ()
         </div>
       </div>
 
+      {busy && <Working text="Thinking up three alternatives. With Claude this can take a minute…" />}
+      <Note text={error} />
       {notes.map((n) => (
         <Note key={n} text={n} />
       ))}
@@ -365,6 +490,7 @@ export default function PlanStage({ onContinue, onGoToSketch }: { onContinue: ()
             height={CANVAS_HEIGHT}
             land={land}
             lotMode={lotOn}
+            focus={focus}
             onLotMove={(offset) => update((p) => ({ ...p, sketch: { ...p.sketch, lotOffset: offset } }))}
             onSelect={setSelection}
             onChange={setLevelPlan}
@@ -383,21 +509,24 @@ export default function PlanStage({ onContinue, onGoToSketch }: { onContinue: ()
           <p className="mt-2 text-xs text-muted">{hint} Pinch or hold Control and scroll to zoom; scroll to move around. Arrow keys nudge what&apos;s selected.</p>
         </div>
 
-        <PlanSidePanel
-          plan={plan}
-          level={level}
-          levels={levels}
-          brief={brief}
-          basics={basics}
-          selection={sel}
-          tool={tool}
-          placeOpening={placeOpening}
-          placeFixture={placeFixture}
-          onPlaceOpening={setPlaceOpening}
-          onPlaceFixture={setPlaceFixture}
-          onChange={setLevelPlan}
-          onSelect={setSelection}
-        />
+        <div className="space-y-3">
+          <PlanSidePanel
+            plan={plan}
+            level={level}
+            levels={levels}
+            brief={brief}
+            basics={basics}
+            selection={sel}
+            tool={tool}
+            placeOpening={placeOpening}
+            placeFixture={placeFixture}
+            onPlaceOpening={setPlaceOpening}
+            onPlaceFixture={setPlaceFixture}
+            onChange={setLevelPlan}
+            onSelect={setSelection}
+          />
+          <PlanChecks warnings={warnings} levels={levels} levelId={level.id} onPick={pickWarning} />
+        </div>
       </div>
     </div>
   );

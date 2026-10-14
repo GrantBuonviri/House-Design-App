@@ -97,12 +97,38 @@ export function centerOfMany(plan: FloorPlan, ids: string[]): Point {
   return { x: pts.reduce((s, p) => s + p.x, 0) / pts.length, y: pts.reduce((s, p) => s + p.y, 0) / pts.length };
 }
 
+/**
+ * After rooms change shape (same corners, moved), keep each door and window
+ * where it was on its wall, instead of letting it slide along with the
+ * corner its wall starts from.
+ */
+export function keepOpeningsInPlace(before: FloorPlan, after: FloorPlan): FloorPlan {
+  const was = new Map(before.rooms.map((r) => [r.id, r]));
+  const now = new Map(after.rooms.map((r) => [r.id, r]));
+  let changed = false;
+  const openings = after.openings.map((o) => {
+    if (!("roomId" in o.host)) return o;
+    const old = was.get(o.host.roomId);
+    const cur = now.get(o.host.roomId);
+    if (!old || !cur || old.polygon === cur.polygon || old.polygon.length !== cur.polygon.length) return o;
+    const from = hostSegment(before, o.host);
+    const to = hostSegment(after, o.host);
+    if (!from || !to) return o;
+    const at = add(from.a, scale(unit(sub(from.b, from.a)), o.offsetIn));
+    const offsetIn = round1(clampOffset(project(at, to.a, to.b).t, o.widthIn, to.length));
+    if (offsetIn === o.offsetIn) return o;
+    changed = true;
+    return { ...o, offsetIn };
+  });
+  return changed ? { ...after, openings } : after;
+}
+
 /** Move one corner of a room. */
 export function setCorner(plan: FloorPlan, roomId: string, i: number, p: Point): FloorPlan {
-  return {
+  return keepOpeningsInPlace(plan, {
     ...plan,
     rooms: plan.rooms.map((r) => (r.id === roomId ? { ...r, polygon: r.polygon.map((q, k) => (k === i ? roundPoint(p) : q)) } : r)),
-  };
+  });
 }
 
 /** Give a room a new outline, keeping each door and window as close as it can to where it was. */
@@ -164,7 +190,7 @@ export function setEdgeLength(plan: FloorPlan, roomId: string, edge: number, len
     // Only when the next edge turns (isn't straight on), or the room would fold.
     if (Math.abs(dot(next, u)) < 0.98) poly[k] = roundPoint(add(room.polygon[k], delta));
   }
-  return { ...plan, rooms: plan.rooms.map((r) => (r.id === roomId ? { ...r, polygon: poly } : r)) };
+  return keepOpeningsInPlace(plan, { ...plan, rooms: plan.rooms.map((r) => (r.id === roomId ? { ...r, polygon: poly } : r)) });
 }
 
 /**
@@ -176,7 +202,7 @@ export function moveEdge(plan: FloorPlan, roomId: string, edge: number, d: Point
   if (!room) return plan;
   const a = room.polygon[edge];
   const b = room.polygon[(edge + 1) % room.polygon.length];
-  return {
+  return keepOpeningsInPlace(plan, {
     ...plan,
     rooms: plan.rooms.map((r) => {
       const moveIdx = new Set<number>();
@@ -189,7 +215,7 @@ export function moveEdge(plan: FloorPlan, roomId: string, edge: number, d: Point
       }
       return moveIdx.size ? { ...r, polygon: r.polygon.map((p, i) => (moveIdx.has(i) ? roundPoint(add(p, d)) : p)) } : r;
     }),
-  };
+  });
 }
 
 /** Change a wall drawn on its own to a given length, keeping its start. */
