@@ -38,6 +38,7 @@ export function migrateProject(raw: unknown): Project {
   // are optional with defaults, so older data needs no changes.
   if (version < 4) migrated = migrateV3(migrated);
   // Version 4 to 5 added the 3D house settings (the roof), with defaults.
+  // Version 5 to 6 added the cost settings (water and sewer), with defaults.
   return Project.parse({ ...migrated, schemaVersion: SCHEMA_VERSION });
 }
 

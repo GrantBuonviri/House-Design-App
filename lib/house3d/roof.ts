@@ -140,11 +140,18 @@ function skeletonOnce(r: Region): Face[] | null {
     const sk = SkeletonBuilder.BuildFromGeoJSON([[ring(r.outline), ...r.holes.map(ring)]]);
     const edges = r.outline.length + r.holes.reduce((s, h) => s + h.length, 0);
     if (sk.Edges.length !== edges) return null;
+    // Every corner of the roof has to sit inside the outline's box: the
+    // skeleton maker sometimes sends one off toward infinity instead of failing.
+    const xs = r.outline.map((p) => p.x);
+    const ys = r.outline.map((p) => p.y);
+    const [x0, x1, y0, y1] = [Math.min(...xs) - 1, Math.max(...xs) + 1, Math.min(...ys) - 1, Math.max(...ys) + 1];
+    const maxDist = Math.min(x1 - x0, y1 - y0) / 2 + 1;
     const faces: Face[] = [];
     for (const e of sk.Edges) {
       const pts = e.Polygon.map((v) => ({ x: v.X, y: v.Y }));
       const dist = e.Polygon.map((v) => sk.Distances.get(v) ?? 0);
-      if (pts.length < 3 || dist.some((d) => !Number.isFinite(d) || d < -1e-6)) return null;
+      if (pts.length < 3 || dist.some((d) => !Number.isFinite(d) || d < -1e-6 || d > maxDist)) return null;
+      if (pts.some((p) => p.x < x0 || p.x > x1 || p.y < y0 || p.y > y1)) return null;
       faces.push({ pts, dist, edge: [{ x: e.Edge.Begin.X, y: e.Edge.Begin.Y }, { x: e.Edge.End.X, y: e.Edge.End.Y }] });
     }
     return faces;

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useDeferredValue, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import dynamic from "next/dynamic";
 import type { Stage } from "@/lib/model/schema";
@@ -13,6 +13,8 @@ import LandStage from "@/components/land/LandStage";
 import BriefStage from "@/components/brief/BriefStage";
 import BubbleStage from "@/components/bubbles/BubbleStage";
 import PlanStage from "@/components/plan/PlanStage";
+import CostPanel, { CostBadge } from "@/components/cost/CostPanel";
+import { estimate as estimateCost } from "@/lib/cost/estimate";
 
 const Walkthrough = dynamic(() => import("@/components/walk/Walkthrough"), { ssr: false });
 
@@ -37,6 +39,18 @@ export default function ProjectWorkspace({ id }: { id: string }) {
   const { project, loading, notFound, saveState, past, future, open, close, update, undo, redo } =
     useProjectStore();
   const [walking, setWalking] = useState(false);
+  const [costOpen, setCostOpen] = useState(false);
+  // Worked out a moment behind edits, so dragging in the plan stays smooth.
+  const deferred = useDeferredValue(project);
+  const { cost, costError } = useMemo(() => {
+    if (!deferred) return { cost: null, costError: null };
+    try {
+      return { cost: estimateCost(deferred), costError: null };
+    } catch (e) {
+      console.error("Cost estimate failed", e);
+      return { cost: null, costError: e instanceof Error ? e.message : String(e) };
+    }
+  }, [deferred]);
 
   useEffect(() => {
     void open(id);
@@ -75,6 +89,7 @@ export default function ProjectWorkspace({ id }: { id: string }) {
   const canWalk = !!project.plan.basics && Object.values(project.floorPlans).some((pl) => pl.rooms.length > 0);
 
   return (
+    <div className={costOpen && cost ? "pr-[380px]" : ""}>
     <main className="mx-auto max-w-6xl px-6 py-6">
       <div className="mb-4 flex items-center justify-between gap-4">
         <div className="min-w-0">
@@ -96,6 +111,7 @@ export default function ProjectWorkspace({ id }: { id: string }) {
           <button className="btn" onClick={() => downloadProject(project)}>
             Export
           </button>
+          <CostBadge estimate={cost} error={costError} open={costOpen} onToggle={() => setCostOpen(!costOpen)} />
           <button
             className="btn btn-primary"
             onClick={() => setWalking(true)}
@@ -127,5 +143,9 @@ export default function ProjectWorkspace({ id }: { id: string }) {
 
       {walking && canWalk && <Walkthrough project={project} onClose={() => setWalking(false)} />}
     </main>
+      {costOpen && cost && (
+        <CostPanel estimate={cost} onClose={() => setCostOpen(false)} onUtilities={(utilities) => update((p) => ({ ...p, cost: { ...p.cost, utilities } }))} />
+      )}
+    </div>
   );
 }

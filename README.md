@@ -55,6 +55,15 @@ The app is built in milestones. So far it has:
 - Drag either picture to look around a little. Double-click it to look straight at the window again.
 - The direct sun times are worked out every 15 minutes on the longest day (summer), the spring equinox (spring and fall) and the shortest day (winter), in Boise clock time.
 
+### Cost estimate tips
+
+- The cost total is at the top right of every project once you've added rooms: **About $585k ($520k to $670k)**. Click it to open the cost panel on the right. It stays open while you work, and the numbers change as you edit.
+- Before there's a floor plan, the estimate is **rough**: it uses the room sizes from the Rooms page. Once you draw the floor plan, it's measured from the plan itself: floor areas, walls, the roof shape and pitch, doors and windows, fixtures, and the land's slope and drainage.
+- Click a category to see what was measured, the material and labor rates, and where each rate came from.
+- **Water and sewer** switches between city hookups and a well and septic system.
+- Finishes (flooring, cabinets, fixtures and so on) are priced as mid-range until products are picked in the interior and exterior stages.
+- Land is always $0. The estimate is for Boise, Idaho in 2026 and is not a bid.
+
 ### Walkthrough tips
 
 - **Walkthrough** is at the top right of every project once there's a floor plan. It fills the window.
@@ -123,4 +132,28 @@ Projects live in your browser's storage (IndexedDB) on this computer. They stay 
 - `lib/bubbles/` is the flow sketch. Bubbles are stored in inches with x pointing east and y pointing south, and a bubble's area always equals its room's square feet. `site.ts` picks a spot for each room: one of eight compass sides of the floor or the middle. `arrange.ts` turns spots into a drawing with the small force layout in `layout.ts` (same input, same drawing), lines the stairs up across floors, and adds missing rooms. `alternatives.ts` makes the alternatives and skips ones that would look the same as yours, `suggest.ts` is what the page calls for a starting sketch or alternatives, and `edit.ts` has the editing helpers. A drawn room is a `"free"` bubble with an outline around its middle; its `rx`/`ry` are half the outline's width and height so the layout code treats it like an oval. `land.ts` draws the lot, water, contours, downhill arrow and sun paths under the sketch (a plot point is the sketch point plus the saved `sketch.lotOffset`), and `start.ts` makes the blank sketch for Start blank. The canvas is in `components/bubbles/` (Konva).
 - `lib/plan/` is the floor plan, in the same inches and coordinates as the flow sketch (so the lot offset is shared). Rooms come first: each `PlanRoom` is a polygon stored clockwise on screen, so the left side of every edge is outside. `walls.ts` derives the walls from the rooms: where two rooms' edges run along each other it's one inside wall, the rest are outside walls, and the open sides of a porch or deck get no wall. `walls` in the saved plan are only the extra walls drawn with the Wall tool. Doors and windows sit on a room edge (`{roomId, edge}`) or an extra wall (`{wallId}`) at a distance along it. `fromSketch.ts` turns sketch bubbles into rectangles of the same area, separates overlaps, slides them together, lines up near edges, then adds doors, stairs and hallway notes. `edit.ts` has the editing helpers (pushing a shared wall moves it for both rooms), `snap.ts` the snapping, `stairs.ts` sizes stairs from the rise between floors (risers up to 7 3/4", 10" treads), `basics.ts` the Plan basics defaults, `measure.ts` the square footage, and `catalog.ts` the door, window and fixture sizes. `connect.ts` says which rooms a door joins and what each room is for (living space, hallway, private room, part of the primary suite and so on). `suggest.ts` is Suggest a plan: stair halls, then hallways (it cuts the plan along a line, slides one side over by 3' 6" and puts the hallway in the gap, picking the cut that serves the most bedrooms and baths), doors, closets and windows. `checks.ts` makes the warnings. `changes.ts` applies small changes for alternatives (push a wall, swap two rooms, add or remove a door, open up a wall, add a window, flip the house) and checks each one: no rooms on top of each other, sensible sizes, no room cut off. A wall pushed into a room whose wall runs further gets a step, so nothing else moves. `alternatives.ts` has the ideas for alternatives, and `suggestPlanAlternatives` there is what the page calls. The canvas is in `components/plan/` (Konva), sharing the zoom, grid and overlay bits in `components/canvas/` and `components/bubbles/ViewOptions.tsx` with the flow sketch.
 
-How to add products and update cost rates will be documented here when those milestones land.
+- `lib/cost/` is the cost estimate. `quantities.ts` measures the house (from the floor plan, or roughly from the Rooms page), `estimate.ts` multiplies by the rates and sorts the lines into the 16 categories, and `rates.ts` checks the rates file. The panel is `components/cost/CostPanel.tsx`. The estimate is worked out every time and never saved.
+
+## How to update cost rates
+
+All the prices live in one file: `lib/cost/data/cost-rates.json`. Each rate looks like this:
+
+```json
+"siding": {
+  "label": "Fiber cement siding (painted)",
+  "unit": "sqft",
+  "material": [3.8, 4.8, 6.8],
+  "labor": [4, 5.2, 7.2],
+  "source": "HomeGuide Hardie board siding cost",
+  "url": "https://...",
+  "checked": "2026-10-14"
+}
+```
+
+- `material` and `labor` are each **[low, likely, high]** in dollars per unit. Keep them in that order (low ≤ likely ≤ high).
+- `unit` is `sqft`, `linft`, `each` or `cuyd` (cubic yards).
+- Update `source`, `url` and `checked` when you change a number, so you know where it came from.
+- `percents` holds builder overhead and profit, contingency and the plan review fee. `permit` holds Boise's building permit table.
+- Save the file and the app picks it up (restart `npm run dev` if it doesn't). If a number is mistyped, the app shows an error naming the rate, and `npm test` checks the file too.
+
+How to add products will be documented here when that milestone lands.
