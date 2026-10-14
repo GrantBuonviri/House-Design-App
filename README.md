@@ -13,6 +13,7 @@ The app is built in milestones. So far it has:
 - **Milestone 5, part 2:** **Suggest a plan** does what Turn my sketch into a plan does, then adds what a real plan needs: hallways so bedrooms and baths don't open off each other, a stair hall around stairs that would otherwise stand outside the rooms, closets in bedrooms (a walk-in for a big primary bedroom), windows on outside walls (bigger and more on the sunny south side, one you could climb out of in every bedroom), and doors so every room can be reached. **Things to check** lists friendly warnings as you draw (a room with no door, a bedroom without a window you could climb out of, a narrow hallway, missing stairs, no front door, rooms much smaller or bigger than your brief) and clicking one jumps to it. **Show me alternatives** puts three variations next to your plan, each trying one change (a bigger kitchen, sizes closer to your brief, a mirror image and so on): use one, or just its floor. Works with or without a Claude API key.
 
 - **Milestone 6, part 1:** the house in 3D. On the floor plan page, switch between **2D plan**, **Bird's-eye** (the current floor from straight above, with room names) and **3D** (the whole house on your land). Walls, doors, windows, floors, stairs and fixtures come straight from the plan, the house sits on the real slope of your lot with its foundation running down to the ground (a basement shows as a walkout on the downhill side), and the roof is built from the house's outline: gable, hip, shed or flat, with the steepness and overhang you pick. Click a room, door, window, stairs or fixture in 3D to select it and drag it to move it; the 2D plan changes with it.
+- **Milestone 6, part 2:** the walkthrough. Press **Walkthrough** at the top of any project with a floor plan to walk through the house in first person, starting outside the front door. Walls stop you, doors and openings let you through, stairs take you between floors, outside doors and porches above the ground get steps, and you can walk out onto the land. A time of day slider and a season pick move the sun for Boise, so you can see where the light falls through the windows.
 
 ### Flow sketch tips
 
@@ -44,6 +45,13 @@ The app is built in milestones. So far it has:
 - In either view, click a room's floor, a door, a window, stairs or a fixture to select it (the panel on the right shows its details, like in 2D), then drag it to move it. Rooms snap to other rooms' corners, and doors and windows slide along their wall or hop to the nearest one. **Delete**, the arrow keys and **Undo** work as in 2D.
 - **Roof** in the panel picks the shape (gable, hip, shed or flat), how steep it is and how far it reaches past the walls. Porches and covered patios get a roof on posts; decks stay open.
 - Finishes are plain for now (light walls, wood floors, tile in bathrooms, a grey roof). Real ones come with the interior and exterior design.
+
+### Walkthrough tips
+
+- **Walkthrough** is at the top right of every project once there's a floor plan. It fills the window.
+- Click to start. Move the mouse to look around, **W A S D** or the arrow keys to walk, and hold **Shift** to walk faster.
+- **Esc** gives you the mouse back, so you can use the time of day slider, the season and **Go to** (jump to any room, or back to the front door). Click the picture to keep walking. **Esc** again, or **Close walkthrough**, takes you back.
+- Times are Boise clock times (with daylight saving time in summer and spring or fall), from sunrise to sunset.
 
 ## Run it on a Mac (first time)
 

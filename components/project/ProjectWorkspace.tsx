@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
+import dynamic from "next/dynamic";
 import type { Stage } from "@/lib/model/schema";
 import { useProjectStore, type SaveState } from "@/lib/store/projectStore";
 import { STAGE_INFO, stageAvailable } from "@/lib/stages";
@@ -12,6 +13,8 @@ import LandStage from "@/components/land/LandStage";
 import BriefStage from "@/components/brief/BriefStage";
 import BubbleStage from "@/components/bubbles/BubbleStage";
 import PlanStage from "@/components/plan/PlanStage";
+
+const Walkthrough = dynamic(() => import("@/components/walk/Walkthrough"), { ssr: false });
 
 const SAVE_LABEL: Record<SaveState, string> = {
   saved: "All changes saved",
@@ -33,6 +36,7 @@ function ComingSoon({ stage }: { stage: Stage }) {
 export default function ProjectWorkspace({ id }: { id: string }) {
   const { project, loading, notFound, saveState, past, future, open, close, update, undo, redo } =
     useProjectStore();
+  const [walking, setWalking] = useState(false);
 
   useEffect(() => {
     void open(id);
@@ -68,6 +72,7 @@ export default function ProjectWorkspace({ id }: { id: string }) {
   }
 
   const setStage = (stage: Stage) => update((p) => ({ ...p, stage }));
+  const canWalk = !!project.plan.basics && Object.values(project.floorPlans).some((pl) => pl.rooms.length > 0);
 
   return (
     <main className="mx-auto max-w-6xl px-6 py-6">
@@ -91,6 +96,14 @@ export default function ProjectWorkspace({ id }: { id: string }) {
           <button className="btn" onClick={() => downloadProject(project)}>
             Export
           </button>
+          <button
+            className="btn btn-primary"
+            onClick={() => setWalking(true)}
+            disabled={!canWalk}
+            title={canWalk ? "Walk through the house in first person" : "Make a floor plan first, then you can walk through it"}
+          >
+            Walkthrough
+          </button>
         </div>
       </div>
 
@@ -111,6 +124,8 @@ export default function ProjectWorkspace({ id }: { id: string }) {
       ) : stageAvailable(project.stage) ? null : (
         <ComingSoon stage={project.stage} />
       )}
+
+      {walking && canWalk && <Walkthrough project={project} onClose={() => setWalking(false)} />}
     </main>
   );
 }

@@ -59,6 +59,12 @@ const SHAPES: Record<string, Piece[]> = {
   ],
 };
 
+/** How high a fixture's solid parts reach above its floor (glass left out). */
+export function fixtureSpan(kind: string): { z0: number; z1: number } {
+  const solid = (SHAPES[kind] ?? [{ z0: 0, z1: 30 }]).filter((p) => !("glass" in p && p.glass));
+  return { z0: Math.min(...solid.map((p) => p.z0)), z1: Math.max(...solid.map((p) => p.z1)) };
+}
+
 export function drawFixture(solid: MeshBuilder, glass: MeshBuilder, f: Frame, fx: Fixture, floorIn: number) {
   const pieces = SHAPES[fx.kind] ?? [{ z0: 0, z1: 30, color: COLORS.cabinet }];
   const c: Point = { x: fx.x, y: fx.y };
