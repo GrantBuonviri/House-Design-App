@@ -9,7 +9,7 @@ import { z } from "zod";
  * Angles are degrees clockwise from north (0 = N, 90 = E).
  */
 
-export const SCHEMA_VERSION = 5;
+export const SCHEMA_VERSION = 6;
 
 export const Point = z.object({ x: z.number(), y: z.number() });
 export type Point = z.infer<typeof Point>;
@@ -372,6 +372,15 @@ export const House3D = z.object({
 });
 export type House3D = z.infer<typeof House3D>;
 
+// ---------- 8. Cost estimate ----------
+
+/** Cost estimate settings. The estimate itself is worked out from the project every time, never saved. */
+export const CostSettings = z.object({
+  /** City water and sewer hookups, or a well and a septic system. */
+  utilities: z.enum(["city", "well-septic"]).default("city"),
+});
+export type CostSettings = z.infer<typeof CostSettings>;
+
 // ---------- 6 & 7. Interior / exterior selections ----------
 
 export const Product = z.object({
@@ -423,6 +432,7 @@ export const Project = z.object({
   floorPlans: z.record(z.string(), FloorPlan).default({}),
   plan: PlanSettings.prefault({}),
   house3d: House3D.prefault({}),
+  cost: CostSettings.prefault({}),
   interior: DesignChoices,
   exterior: DesignChoices,
 });
