@@ -9,7 +9,7 @@ import { z } from "zod";
  * Angles are degrees clockwise from north (0 = N, 90 = E).
  */
 
-export const SCHEMA_VERSION = 3;
+export const SCHEMA_VERSION = 4;
 
 export const Point = z.object({ x: z.number(), y: z.number() });
 export type Point = z.infer<typeof Point>;
@@ -237,60 +237,121 @@ export type SketchSettings = z.infer<typeof SketchSettings>;
 
 // ---------- 5. Floor plans ----------
 
+/**
+ * A floor plan is drawn room by room. Each room is a straight-walled outline
+ * (any angle), in the same coordinates as the flow sketch: inches, x east,
+ * y south. Walls are worked out from the room edges (an edge two rooms share
+ * is one interior wall), plus any extra walls drawn on their own.
+ */
+export const PlanRoom = z.object({
+  id: z.string(),
+  name: z.string(),
+  /** The brief room this stands for, if any. */
+  briefRoomId: z.string().optional(),
+  /** A room type id from lib/brief/rooms.ts, for colors and later suggestions. */
+  type: z.string().optional(),
+  /** Corners in order, at least three. The edge from corner i to corner i + 1 is "edge i". */
+  polygon: z.array(Point).min(3),
+});
+export type PlanRoom = z.infer<typeof PlanRoom>;
+
+/** A wall drawn on its own, not around a room. */
+export const PlanWall = z.object({
+  id: z.string(),
+  a: Point,
+  b: Point,
+  thicknessIn: z.number().positive(),
+});
+export type PlanWall = z.infer<typeof PlanWall>;
+
+/** The wall a door or window sits in: one edge of a room, or a wall drawn on its own. */
+export const OpeningHost = z.union([
+  z.object({ roomId: z.string(), edge: z.number().int().min(0) }),
+  z.object({ wallId: z.string() }),
+]);
+export type OpeningHost = z.infer<typeof OpeningHost>;
+
+export const Opening = z.object({
+  id: z.string(),
+  host: OpeningHost,
+  /** From the start of the host wall to the middle of the opening, inches. */
+  offsetIn: z.number(),
+  kind: z.enum(["door", "window", "opening"]),
+  /** A catalog id from lib/plan/catalog.ts, such as "door-hinged" or "window". */
+  style: z.string(),
+  widthIn: z.number().positive(),
+  heightIn: z.number().positive(),
+  /** Windows: height of the bottom of the window above the floor. */
+  sillIn: z.number().min(0).optional(),
+  /** Which side a door swings to: 1 is the left of the host wall (walking from its start), -1 the right. */
+  side: z.union([z.literal(1), z.literal(-1)]).default(1),
+  /** Which end of the opening the hinges are on. */
+  hinge: z.enum(["start", "end"]).default("start"),
+});
+export type Opening = z.infer<typeof Opening>;
+
+export const PlanStairs = z.object({
+  id: z.string(),
+  /** The middle of the stairs' footprint. */
+  x: z.number(),
+  y: z.number(),
+  /** Degrees clockwise. At 0 the stairs climb toward the north (up the page). */
+  rotation: z.number().default(0),
+  widthIn: z.number().positive(),
+  shape: z.enum(["straight", "l", "u"]),
+  /** L-shaped stairs: turn left instead of right. */
+  flip: z.boolean().default(false),
+  /** The floor the stairs climb to. They show, faintly, on that floor too. */
+  toLevelId: z.string().optional(),
+});
+export type PlanStairs = z.infer<typeof PlanStairs>;
+
+export const Fixture = z.object({
+  id: z.string(),
+  /** A catalog id from lib/plan/catalog.ts, such as "toilet" or "range". */
+  kind: z.string(),
+  x: z.number(),
+  y: z.number(),
+  rotation: z.number().default(0),
+  widthIn: z.number().positive(),
+  depthIn: z.number().positive(),
+  /** The room it was placed in; it moves with that room. */
+  roomId: z.string().optional(),
+});
+export type Fixture = z.infer<typeof Fixture>;
+
 export const FloorPlan = z.object({
-  ceilingHeightIn: z.number().positive(),
-  walls: z.array(
-    z.object({
-      id: z.string(),
-      a: Point,
-      b: Point,
-      thicknessIn: z.number().positive(),
-      exterior: z.boolean(),
-    }),
-  ),
-  openings: z.array(
-    z.object({
-      id: z.string(),
-      wallId: z.string(),
-      kind: z.enum(["door", "window", "opening"]),
-      offsetIn: z.number(),
-      widthIn: z.number().positive(),
-      heightIn: z.number().positive(),
-      sillIn: z.number().optional(),
-      style: z.string().optional(),
-    }),
-  ),
-  rooms: z.array(
-    z.object({
-      id: z.string(),
-      briefRoomId: z.string().optional(),
-      name: z.string(),
-      polygon: z.array(Point),
-    }),
-  ),
-  stairs: z.array(
-    z.object({
-      id: z.string(),
-      x: z.number(),
-      y: z.number(),
-      widthIn: z.number().positive(),
-      runIn: z.number().positive(),
-      rotation: z.number(),
-      toLevelId: z.string(),
-    }),
-  ),
-  fixtures: z.array(
-    z.object({
-      id: z.string(),
-      kind: z.string(),
-      x: z.number(),
-      y: z.number(),
-      rotation: z.number(),
-      roomId: z.string().optional(),
-    }),
-  ),
+  rooms: z.array(PlanRoom).default([]),
+  walls: z.array(PlanWall).default([]),
+  openings: z.array(Opening).default([]),
+  stairs: z.array(PlanStairs).default([]),
+  fixtures: z.array(Fixture).default([]),
 });
 export type FloorPlan = z.infer<typeof FloorPlan>;
+
+/** The "plan basics" questions asked before the floor plan editor. */
+export const PlanBasics = z.object({
+  /** Ceiling height per level id, inches. Levels not listed use the default for their kind. */
+  ceilings: z.record(z.string(), z.number().min(84).max(240)).default({}),
+  exteriorWall: z.enum(["2x4", "2x6"]).default("2x6"),
+  garage: z.enum(["front", "side", "detached", "none"]).default("front"),
+  stairs: z.enum(["straight", "l", "u"]).default("straight"),
+  /** Interior door height, inches: 80 (6' 8") or 96 (8'). */
+  doorHeightIn: z.number().min(78).max(120).default(80),
+  doorStyle: z.enum(["shaker", "flat", "panel", "glass"]).default("shaker"),
+});
+export type PlanBasics = z.infer<typeof PlanBasics>;
+
+/** Floor plan settings saved with the project. */
+export const PlanSettings = z.object({
+  /** Null until the plan basics page has been answered. */
+  basics: PlanBasics.nullable().default(null),
+  /** Show the flow sketch faintly under the plan, to trace over. */
+  showSketch: z.boolean().default(false),
+  /** Show wall lengths. */
+  showDims: z.boolean().default(true),
+});
+export type PlanSettings = z.infer<typeof PlanSettings>;
 
 // ---------- 6 & 7. Interior / exterior selections ----------
 
@@ -341,6 +402,7 @@ export const Project = z.object({
   bubbles: z.record(z.string(), BubbleDiagram).default({}),
   sketch: SketchSettings.prefault({}),
   floorPlans: z.record(z.string(), FloorPlan).default({}),
+  plan: PlanSettings.prefault({}),
   interior: DesignChoices,
   exterior: DesignChoices,
 });
