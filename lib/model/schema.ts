@@ -9,7 +9,7 @@ import { z } from "zod";
  * Angles are degrees clockwise from north (0 = N, 90 = E).
  */
 
-export const SCHEMA_VERSION = 4;
+export const SCHEMA_VERSION = 5;
 
 export const Point = z.object({ x: z.number(), y: z.number() });
 export type Point = z.infer<typeof Point>;
@@ -353,6 +353,25 @@ export const PlanSettings = z.object({
 });
 export type PlanSettings = z.infer<typeof PlanSettings>;
 
+// ---------- The 3D house ----------
+
+/** The roof shape for the 3D house. Roofing materials come with the exterior design. */
+export const Roof = z.object({
+  style: z.enum(["gable", "hip", "shed", "flat"]).default("gable"),
+  /** Inches the roof rises for every foot it runs (6 means a "6 in 12" roof). */
+  pitch: z.number().min(1).max(16).default(6),
+  /** How far the roof reaches past the walls, inches. */
+  overhangIn: z.number().min(0).max(36).default(16),
+  /** Shed roofs: the side the roof slopes down to. */
+  shedDown: z.enum(["N", "E", "S", "W"]).default("S"),
+});
+export type Roof = z.infer<typeof Roof>;
+
+export const House3D = z.object({
+  roof: Roof.prefault({}),
+});
+export type House3D = z.infer<typeof House3D>;
+
 // ---------- 6 & 7. Interior / exterior selections ----------
 
 export const Product = z.object({
@@ -403,6 +422,7 @@ export const Project = z.object({
   sketch: SketchSettings.prefault({}),
   floorPlans: z.record(z.string(), FloorPlan).default({}),
   plan: PlanSettings.prefault({}),
+  house3d: House3D.prefault({}),
   interior: DesignChoices,
   exterior: DesignChoices,
 });

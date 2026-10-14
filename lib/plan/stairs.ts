@@ -41,8 +41,7 @@ function raw(shape: PlanStairs["shape"], w: number, treads: number) {
     return { footprint: [P(0, 0), P(w, 0), P(w, -L), P(0, -L)], lines, arrow: [P(w / 2, 0), P(w / 2, -L)], run: L };
   }
   // A landing takes the place of one step.
-  const n1 = Math.ceil((treads - 1) / 2);
-  const n2 = Math.max(1, treads - 1 - n1);
+  const { n1, n2 } = flightSplit(treads);
   const L1 = n1 * T;
   const L2 = n2 * T;
   for (let k = 1; k < n1; k++) lines.push([P(0, -k * T), P(w, -k * T)]);
@@ -69,15 +68,27 @@ function raw(shape: PlanStairs["shape"], w: number, treads: number) {
   };
 }
 
-export function stairsDrawing(s: Pick<PlanStairs, "x" | "y" | "rotation" | "widthIn" | "shape" | "flip">, riseIn: number): StairsDrawing {
-  const { risers, riserIn, treads } = stepsFor(riseIn);
-  const r = raw(s.shape, s.widthIn, treads);
+/** The stairs' own frame: turns a point in the climbing-north layout into a plan point. */
+export function stairsFrame(s: Pick<PlanStairs, "x" | "y" | "rotation" | "widthIn" | "shape" | "flip">, riseIn: number) {
+  const steps = stepsFor(riseIn);
+  const r = raw(s.shape, s.widthIn, steps.treads);
   const mirror = (p: Point): Point => (s.flip ? { x: -p.x, y: p.y } : p);
   const pts = r.footprint.map(mirror);
   const xs = pts.map((p) => p.x);
   const ys = pts.map((p) => p.y);
   const mid = { x: (Math.min(...xs) + Math.max(...xs)) / 2, y: (Math.min(...ys) + Math.max(...ys)) / 2 };
   const place = (p: Point) => add(rotate({ x: mirror(p).x - mid.x, y: mirror(p).y - mid.y }, s.rotation ?? 0), { x: s.x, y: s.y });
+  return { ...steps, raw: r, place };
+}
+
+/** How the treads of L- and U-shaped stairs split around the landing (which takes the place of one step). */
+export function flightSplit(treads: number): { n1: number; n2: number } {
+  const n1 = Math.ceil((treads - 1) / 2);
+  return { n1, n2: Math.max(1, treads - 1 - n1) };
+}
+
+export function stairsDrawing(s: Pick<PlanStairs, "x" | "y" | "rotation" | "widthIn" | "shape" | "flip">, riseIn: number): StairsDrawing {
+  const { risers, riserIn, raw: r, place } = stairsFrame(s, riseIn);
   const footprint = r.footprint.map(place);
   return {
     footprint: s.flip ? footprint.reverse() : footprint,

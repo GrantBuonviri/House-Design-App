@@ -12,6 +12,8 @@ The app is built in milestones. So far it has:
 - **Milestone 5, part 1:** the floor plan. A short **Plan basics** page first (ceiling heights, outside wall framing, garage, stairs and doors, all filled in with common Boise choices). Then **Turn my sketch into a plan** makes rooms with real walls from your flow sketch, with doors between connected rooms, a front door, a garage door and stairs that line up between floors. Or **Start blank** and draw your own. Walls appear around the rooms you draw, at any angle. Push walls, type exact lengths, reshape rooms, add extra walls, doors, windows, stairs and fixtures, and see the square footage as you go.
 - **Milestone 5, part 2:** **Suggest a plan** does what Turn my sketch into a plan does, then adds what a real plan needs: hallways so bedrooms and baths don't open off each other, a stair hall around stairs that would otherwise stand outside the rooms, closets in bedrooms (a walk-in for a big primary bedroom), windows on outside walls (bigger and more on the sunny south side, one you could climb out of in every bedroom), and doors so every room can be reached. **Things to check** lists friendly warnings as you draw (a room with no door, a bedroom without a window you could climb out of, a narrow hallway, missing stairs, no front door, rooms much smaller or bigger than your brief) and clicking one jumps to it. **Show me alternatives** puts three variations next to your plan, each trying one change (a bigger kitchen, sizes closer to your brief, a mirror image and so on): use one, or just its floor. Works with or without a Claude API key.
 
+- **Milestone 6, part 1:** the house in 3D. On the floor plan page, switch between **2D plan**, **Bird's-eye** (the current floor from straight above, with room names) and **3D** (the whole house on your land). Walls, doors, windows, floors, stairs and fixtures come straight from the plan, the house sits on the real slope of your lot with its foundation running down to the ground (a basement shows as a walkout on the downhill side), and the roof is built from the house's outline: gable, hip, shed or flat, with the steepness and overhang you pick. Click a room, door, window, stairs or fixture in 3D to select it and drag it to move it; the 2D plan changes with it.
+
 ### Flow sketch tips
 
 - Tools down the left side, or press a key: **V** select and move, **C** circle, **O** oval, **R** draw a room in any shape, **P** pen, **E** eraser, **N** note, **H** pan. **Delete** removes what's selected and **Esc** lets go of it and goes back to the select tool.
@@ -33,6 +35,15 @@ The app is built in milestones. So far it has:
 - **Wall lengths** and **Flow sketch** at the top turn the measurements and your sketch (drawn faintly under the plan) on or off. **Plan basics** changes ceiling heights, wall framing and the rest later; **Start over** goes back to the start choices, and **Undo** brings your plan back.
 - **Things to check** (under the panel on the right) updates as you draw. Click a line to jump to that room, on whichever floor it's on. They're general guidelines for a comfortable house, not building code.
 - **Show me alternatives:** rooms that changed have a purple outline. **Show me different ones** tries other ideas, **Back to my plan** keeps yours, and **Undo** brings yours back after you use one.
+
+### 3D view tips
+
+- **2D plan**, **Bird's-eye** and **3D** are at the top right of the floor plan. The floor tabs on the left pick the floor you're working on.
+- **3D:** drag to turn the house, right-drag (or drag with two fingers) to slide it, and scroll to zoom. Tick **Look inside** to take off the roof and the floors above the one you picked.
+- **Bird's-eye:** drag empty space to slide around and scroll to zoom.
+- In either view, click a room's floor, a door, a window, stairs or a fixture to select it (the panel on the right shows its details, like in 2D), then drag it to move it. Rooms snap to other rooms' corners, and doors and windows slide along their wall or hop to the nearest one. **Delete**, the arrow keys and **Undo** work as in 2D.
+- **Roof** in the panel picks the shape (gable, hip, shed or flat), how steep it is and how far it reaches past the walls. Porches and covered patios get a roof on posts; decks stay open.
+- Finishes are plain for now (light walls, wood floors, tile in bathrooms, a grey roof). Real ones come with the interior and exterior design.
 
 ## Run it on a Mac (first time)
 
