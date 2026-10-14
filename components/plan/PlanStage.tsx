@@ -17,6 +17,7 @@ import { suggestPlans } from "@/lib/plan/suggest";
 import { boundsOf, dist } from "@/lib/plan/geometry";
 import { houseTotals, totalsText } from "@/lib/plan/measure";
 import { lotOffsetFor } from "@/lib/house3d/site";
+import { canPreview } from "@/lib/house3d/windowView";
 import { Note } from "@/components/brief/bits";
 import LevelTabs from "@/components/bubbles/LevelTabs";
 import ViewOptions, { type Overlay } from "@/components/bubbles/ViewOptions";
@@ -33,6 +34,8 @@ const PlanCanvas = dynamic(() => import("./PlanCanvas"), {
   ssr: false,
   loading: () => <div className="h-full w-full animate-pulse rounded-lg bg-stone-100" />,
 });
+
+const WindowPreview = dynamic(() => import("@/components/house3d/WindowPreview"), { ssr: false });
 
 const House3DView = dynamic(() => import("@/components/house3d/House3DView"), {
   ssr: false,
@@ -84,6 +87,9 @@ export default function PlanStage({ onContinue, onGoToSketch }: { onContinue: ()
   const [editing3d, setEditing3d] = useState(false);
   const [showRoof, setShowRoof] = useState(true);
   const [walls3d, setWalls3d] = useState<WallsShown>("all");
+  // The Preview window popup: which window, and the 2D plan mid-drag so it follows along.
+  const [previewing, setPreviewing] = useState<{ levelId: string; openingId: string } | null>(null);
+  const [dragged, setDragged] = useState<FloorPlan | null>(null);
 
   // Back on the drawing when a plan appears (after Undo, say). Start over keeps
   // the old plan until a new start is picked, so it isn't counted.
@@ -116,6 +122,19 @@ export default function PlanStage({ onContinue, onGoToSketch }: { onContinue: ()
     ...plan.fixtures.map((x) => x.id),
   ]);
   const sel = selection.filter((s) => live.has(s.id));
+
+  // The preview switches to another window when one is selected, and closes if its window is deleted.
+  const picked = sel.length === 1 && sel[0].kind === "opening" ? plan.openings.find((o) => o.id === sel[0].id) : undefined;
+  const pickedId = picked && canPreview(plan, picked, basics) ? picked.id : null;
+  const previewGone = previewing !== null && !plans[previewing.levelId]?.openings.some((o) => o.id === previewing.openingId);
+  useEffect(() => {
+    if (previewGone) {
+      setPreviewing(null);
+      setDragged(null);
+    }
+    else if (pickedId && previewing && pickedId !== previewing.openingId) setPreviewing({ levelId: level.id, openingId: pickedId });
+  }, [pickedId, previewGone]); // eslint-disable-line react-hooks/exhaustive-deps
+  const previewPlans = useMemo(() => (dragged && display === "plan" ? { ...plans, [level.id]: dragged } : plans), [dragged, display, plans, level.id]);
 
   const sides = useMemo(() => {
     const out: Record<Side, string[]> = { N: [], E: [], S: ["Sunny side"], W: [] };
@@ -520,6 +539,7 @@ export default function PlanStage({ onContinue, onGoToSketch }: { onContinue: ()
                 onPlaceFixture={setPlaceFixture}
                 onChange={setLevelPlan}
                 onSelect={setSelection}
+                onPreviewWindow={(id) => setPreviewing({ levelId: level.id, openingId: id })}
               />
             )}
             <PlanChecks warnings={warnings} levels={levels} levelId={level.id} onPick={pickWarning} />
@@ -595,6 +615,7 @@ export default function PlanStage({ onContinue, onGoToSketch }: { onContinue: ()
               onToolDone={() => setTool("select")}
               onDrafting={setDrafting}
               onMessage={setFlash}
+              onPreview={previewing ? setDragged : undefined}
             />
             {lotOn && (
               <div className="absolute top-10 left-1/2 flex -translate-x-1/2 items-center gap-3 rounded-full bg-ink px-4 py-1.5 text-sm text-white shadow-md" role="status">
@@ -622,11 +643,29 @@ export default function PlanStage({ onContinue, onGoToSketch }: { onContinue: ()
               onPlaceFixture={setPlaceFixture}
               onChange={setLevelPlan}
               onSelect={setSelection}
+              onPreviewWindow={(id) => setPreviewing({ levelId: level.id, openingId: id })}
             />
             <PlanChecks warnings={warnings} levels={levels} levelId={level.id} onPick={pickWarning} />
           </div>
         </div>
         </>
+      )}
+
+      {previewing && (
+        <WindowPreview
+          plans={previewPlans}
+          levels={levels}
+          basics={basics}
+          house3d={project.house3d}
+          plot={plot}
+          offset={offset}
+          levelId={previewing.levelId}
+          openingId={previewing.openingId}
+          onClose={() => {
+            setPreviewing(null);
+            setDragged(null);
+          }}
+        />
       )}
     </div>
   );

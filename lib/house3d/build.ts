@@ -73,7 +73,7 @@ function stack(levels: Level[], heights: LevelHeights) {
 }
 
 /** The wall piece a door or window sits in. */
-function hostPiece(pieces: WallPiece[], og: OpeningGeometry): WallPiece | undefined {
+export function hostPiece(pieces: WallPiece[], og: OpeningGeometry): WallPiece | undefined {
   return pieces.find((p) => {
     const pr = project(og.center, p.a, p.b);
     return pr.d < 1 && pr.t > 0.01 && pr.t < pr.length - 0.01;

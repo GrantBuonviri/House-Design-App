@@ -75,6 +75,8 @@ type Props = {
   onToolDone: () => void;
   onDrafting: (drafting: boolean) => void;
   onMessage: (text: string) => void;
+  /** The plan as it looks mid-drag (null once let go), for views that follow along. */
+  onPreview?: (p: FloorPlan | null) => void;
 };
 
 function roomFill(type?: string): string {
@@ -108,6 +110,8 @@ export default function PlanCanvas(props: Props) {
   const [rectEnd, setRectEnd] = useState<Point | null>(null);
   const { spaceDown, hovering } = useSpacePan();
   const shown = preview ?? plan;
+  const onPreview = props.onPreview;
+  useEffect(() => onPreview?.(preview), [preview, onPreview]);
   const latest = useRef({ plan, preview, selection });
   latest.current = { plan, preview, selection };
 

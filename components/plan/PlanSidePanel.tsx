@@ -11,6 +11,7 @@ import { planTotals, roomSqft, totalsText } from "@/lib/plan/measure";
 import { MIN_STAIRS_WIDTH_IN, stairsDrawing } from "@/lib/plan/stairs";
 import { clampOffset, hostSegment } from "@/lib/plan/walls";
 import { newOpening } from "@/lib/plan/connect";
+import { canPreview } from "@/lib/house3d/windowView";
 import { ROOM_TYPES, roomType } from "@/lib/brief/rooms";
 import { parseEdgeId, type PlanSelection, type PlanTool } from "./types";
 
@@ -31,6 +32,8 @@ type Props = {
   onPlaceFixture: (id: string) => void;
   onChange: (p: FloorPlan, coalesce?: string) => void;
   onSelect: (s: PlanSelection) => void;
+  /** Open the Preview window popup for a window or sliding glass door on an outside wall. */
+  onPreviewWindow?: (openingId: string) => void;
 };
 
 /** Details of whatever is selected on the plan, the catalog for the placing tools, or a summary of the floor. */
@@ -237,8 +240,14 @@ export default function PlanSidePanel(props: Props) {
     const t = openingType(o.style);
     const set = (patch: Parameters<typeof updateOpening>[2]) => onChange(updateOpening(plan, o.id, patch));
     const widths = [...new Set([...t.widths, o.widthIn])].sort((a, b) => a - b);
+    const previewable = props.onPreviewWindow && canPreview(plan, o, basics);
     return (
       <Panel title={t.label}>
+        {previewable && (
+          <button className="btn-primary mb-4 w-full text-sm" onClick={() => props.onPreviewWindow?.(o.id)} title="See the view out of this window, and the window from outside">
+            Preview window
+          </button>
+        )}
         <label className="field-label" htmlFor="op-type">
           Type
         </label>
