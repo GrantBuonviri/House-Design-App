@@ -45,8 +45,8 @@ type Props = {
 const SKY = "#dfe9f2";
 const ACCENT = "#2f6b4f";
 
-const solidMaterial = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.9, metalness: 0 });
-const glassMaterial = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.15, metalness: 0, transparent: true, opacity: 0.35, depthWrite: false });
+export const solidMaterial = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.9, metalness: 0 });
+export const glassMaterial = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.15, metalness: 0, transparent: true, opacity: 0.35, depthWrite: false });
 const highlightMaterial = new THREE.MeshBasicMaterial({
   color: ACCENT,
   transparent: true,
@@ -207,7 +207,7 @@ function Lights({ span, day, hour }: { span: number; day: number; hour: number }
   );
 }
 
-function Ground({ site, frame, plans, ctx, heights, onEmpty }: { site: Site; frame: Frame; plans: Plans; ctx: HouseContext; heights: LevelHeights; onEmpty: () => void }) {
+export function Ground({ site, frame, plans, ctx, heights, onEmpty }: { site: Site; frame: Frame; plans: Plans; ctx: HouseContext; heights: LevelHeights; onEmpty?: () => void }) {
   const geometry = useMemo(() => {
     const m = groundMesh(site, frame, { house: planBounds(plans), holes: dugOut(plans, { ...ctx, heights }) });
     const g = new THREE.BufferGeometry();
@@ -254,7 +254,7 @@ function Ground({ site, frame, plans, ctx, heights, onEmpty }: { site: Site; fra
           down.current = { x: e.clientX, y: e.clientY };
         }}
         onPointerUp={(e) => {
-          if (down.current && Math.hypot(e.clientX - down.current.x, e.clientY - down.current.y) < 4) onEmpty();
+          if (onEmpty && down.current && Math.hypot(e.clientX - down.current.x, e.clientY - down.current.y) < 4) onEmpty();
           down.current = null;
         }}
       />

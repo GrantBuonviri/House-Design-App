@@ -13,7 +13,8 @@ import { MeshBuilder, toScene, type Frame, type MeshData, type Vec3 } from "./me
 import { drawOpening, openingSpan } from "./openings";
 import { drawRoof, roofShape, roofTop, ROOF_THICK_IN } from "./roof";
 import type { Site } from "./site";
-import { drawStairs } from "./stairs";
+import { entrySteps } from "./entry";
+import { drawStairs, prism } from "./stairs";
 
 /**
  * The whole 3D house from the project: walls with doors and windows cut in,
@@ -195,6 +196,14 @@ export function buildLevel(
     const mb = new MeshBuilder();
     drawStairs(mb, f, s, rise, floorIn);
     parts.push({ key: `${L}:s:${s.id}`, levelId: L, layer: "stairs", pick: { kind: "stairs", id: s.id, levelId: L }, mesh: mb.build() });
+  }
+
+  // ---- Steps down to the ground from outside doors and porches ----
+  const entry = entrySteps(plan, floorIn, exteriorIn, site.groundAt);
+  if (entry.length) {
+    const mb = new MeshBuilder();
+    for (const s of entry) prism(mb, f, s.outline, Math.min(...s.outline.map(site.groundAt)) - 6, s.top, COLORS.concrete, COLORS.concrete);
+    parts.push({ key: `${L}:entry`, levelId: L, layer: "stairs", mesh: mb.build() });
   }
 
   // ---- Fixtures ----
