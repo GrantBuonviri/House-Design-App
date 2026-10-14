@@ -12,6 +12,9 @@ export const COLORS = {
   drywall: hex("#f3f0ea"),
   /** The cut top of a wall, seen when the floor above is lifted off. */
   wallTop: hex("#b9b1a3"),
+  /** The strip left on the floor where a hidden wall stands: dark, so the room layout reads. */
+  footprintOutside: hex("#3f3c39"),
+  footprintInside: hex("#6b665f"),
   foundation: hex("#a9a59d"),
   roof: hex("#5b5f66"),
   fascia: hex("#f1efe9"),
