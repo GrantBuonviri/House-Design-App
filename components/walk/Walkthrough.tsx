@@ -3,33 +3,15 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import { PerspectiveCamera } from "@react-three/drei";
-import * as THREE from "three";
 import type { Project } from "@/lib/model/schema";
 import { buildHouse, type HouseContext } from "@/lib/house3d/build";
 import { levelHeights } from "@/lib/house3d/levels";
 import { IN_PER_UNIT, type Frame } from "@/lib/house3d/mesh";
 import { lotOffsetFor, planBounds, siteFor } from "@/lib/house3d/site";
-import { EQUINOX, SUMMER, WINTER, sunDirection } from "@/lib/house3d/sun";
+import { SEASONS, clockTime, daylight, type SeasonId } from "@/lib/house3d/sun";
 import { EYE_IN, walkStep, walkWorld, whereAmI, type Spot, type Walker } from "@/lib/house3d/walk";
-import { dayArc } from "@/lib/land/sun";
-import { Ground, glassMaterial, solidMaterial } from "@/components/house3d/House3DView";
-import { mergeParts } from "@/components/house3d/geometry";
-
-const SEASONS = [
-  { id: "summer", label: "Summer", day: SUMMER, daylightSaving: true },
-  { id: "springfall", label: "Spring / fall", day: EQUINOX, daylightSaving: true },
-  { id: "winter", label: "Winter", day: WINTER, daylightSaving: false },
-] as const;
-type SeasonId = (typeof SEASONS)[number]["id"];
-
-/** Boise is about 45 minutes behind Mountain Standard Time by the sun, plus an hour in daylight saving time. */
-function clockTime(solarHour: number, daylightSaving: boolean): string {
-  const h = solarHour + 0.75 + (daylightSaving ? 1 : 0);
-  const mins = Math.round((h * 60) / 15) * 15;
-  const hh = Math.floor(mins / 60) % 24;
-  const mm = mins % 60;
-  return `${hh % 12 === 0 ? 12 : hh % 12}:${String(mm).padStart(2, "0")} ${hh < 12 ? "am" : "pm"}`;
-}
+import { Ground } from "@/components/house3d/House3DView";
+import { HouseMeshes, Sky } from "@/components/house3d/Scene";
 
 const LOOK_PER_PX = 0.0022;
 
@@ -57,10 +39,7 @@ export default function Walkthrough({ project, onClose }: { project: Project; on
 
   const [season, setSeason] = useState<SeasonId>("summer");
   const seasonInfo = SEASONS.find((s) => s.id === season)!;
-  const arc = useMemo(() => dayArc(seasonInfo.day), [seasonInfo.day]);
-  // On the quarter hour, so the slider lands on round times.
-  const sunrise = Math.ceil((12 - arc.daylightHours / 2) * 4) / 4;
-  const sunset = Math.floor((12 + arc.daylightHours / 2) * 4) / 4;
+  const { sunrise, sunset } = daylight(seasonInfo.day);
   const [hour, setHour] = useState(14);
   const shownHour = Math.min(sunset, Math.max(sunrise, hour));
 
@@ -245,70 +224,6 @@ export default function Walkthrough({ project, onClose }: { project: Project; on
         </div>
       )}
     </div>
-  );
-}
-
-/** The whole house, ceilings included, as one solid mesh and one glass mesh. Walls are always up, so no footprint strips. */
-function HouseMeshes({ parts }: { parts: ReturnType<typeof buildHouse>["parts"] }) {
-  const solid = useMemo(() => mergeParts(parts.filter((p) => !p.glass && p.layer !== "footprints")), [parts]);
-  const glass = useMemo(() => mergeParts(parts.filter((p) => p.glass)), [parts]);
-  useEffect(() => () => solid?.geometry.dispose(), [solid]);
-  useEffect(() => () => glass?.geometry.dispose(), [glass]);
-  return (
-    <>
-      {solid && <mesh geometry={solid.geometry} material={solidMaterial} castShadow receiveShadow />}
-      {glass && <mesh geometry={glass.geometry} material={glassMaterial} />}
-    </>
-  );
-}
-
-/** Sunlight for the day and hour, and a sky that warms up near sunrise and sunset. */
-function Sky({ day, hour, span, center }: { day: number; hour: number; span: number; center: [number, number, number] }) {
-  const { scene, gl } = useThree();
-  const sun = useMemo(() => sunDirection(day, hour), [day, hour]);
-  const low = Math.max(0, Math.min(1, 1 - sun[1] / 0.35)); // 1 near the horizon, 0 once the sun is up
-  const sky = useMemo(() => new THREE.Color("#a9cbe8").lerp(new THREE.Color("#f2c49b"), low * 0.8), [low]);
-  const sunColor = useMemo(() => new THREE.Color("#fffaf0").lerp(new THREE.Color("#ffb46b"), low), [low]);
-  // Nothing in the scene moves, so shadows are only redrawn when the sun does.
-  useEffect(() => {
-    gl.shadowMap.autoUpdate = false;
-    gl.shadowMap.needsUpdate = true;
-  }, [gl, sun, center]);
-  useEffect(() => {
-    scene.background = sky;
-    scene.fog = new THREE.Fog(sky, span * 8, span * 30);
-  }, [scene, sky, span]);
-
-  const reach = span * 0.8 + 30;
-  const d = reach * 2;
-  const target = useMemo(() => {
-    const o = new THREE.Object3D();
-    o.position.set(...center);
-    return o;
-  }, [center]);
-  return (
-    <>
-      <primitive object={target} />
-      {/* Light bouncing around indoors: from above like the sky, and back up off the floors onto the ceilings. */}
-      <hemisphereLight args={["#eef4fb", "#d9cfbd", 0.7 + 0.4 * (1 - low)]} />
-      <ambientLight intensity={0.25} />
-      <directionalLight
-        position={[center[0] + sun[0] * d, sun[1] * d, center[2] + sun[2] * d]}
-        target={target}
-        color={sunColor}
-        intensity={1.4 + 1.2 * (1 - low)}
-        castShadow
-        shadow-mapSize={[4096, 4096]}
-        shadow-bias={-0.0003}
-        shadow-normalBias={0.03}
-        shadow-camera-left={-reach}
-        shadow-camera-right={reach}
-        shadow-camera-top={reach}
-        shadow-camera-bottom={-reach}
-        shadow-camera-near={1}
-        shadow-camera-far={d * 2.5}
-      />
-    </>
   );
 }
 
