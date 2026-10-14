@@ -33,9 +33,10 @@ export function migrateProject(raw: unknown): Project {
       `This project was saved by a newer version of the app (format ${version}).`,
     );
   }
-  const migrated = version < 2 ? migrateV1(data) : data;
+  let migrated = version < 2 ? migrateV1(data) : data;
   // Version 2 to 3 added drawn room shapes and saved sketch settings. Both
   // are optional with defaults, so older data needs no changes.
+  if (version < 4) migrated = migrateV3(migrated);
   return Project.parse({ ...migrated, schemaVersion: SCHEMA_VERSION });
 }
 
@@ -76,4 +77,13 @@ function migrateV1(data: Raw): Raw {
     };
   }
   return out;
+}
+
+/**
+ * Version 3 to 4: floor plans became rooms, walls, doors, windows, stairs and
+ * fixtures. There was no floor plan editor before, so older floor plans were
+ * always empty; start them fresh.
+ */
+function migrateV3(data: Raw): Raw {
+  return { ...data, floorPlans: {} };
 }

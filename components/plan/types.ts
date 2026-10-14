@@ -1,0 +1,41 @@
+/** Shared by the floor plan editor and its canvas (which loads separately, in the browser only). */
+
+export type PlanTool = "select" | "room" | "wall" | "door" | "stairs" | "fixture" | "pan";
+
+/**
+ * Something selected on the plan. An "edge" is one side of a room, with the
+ * id written as `roomId#edge`; a "wall" is a wall drawn on its own.
+ */
+export type PlanItem = { kind: "room" | "edge" | "wall" | "opening" | "stairs" | "fixture"; id: string };
+export type PlanSelection = PlanItem[];
+
+export const PLAN_TOOLS: { id: PlanTool; label: string; key: string; hint: string }[] = [
+  {
+    id: "select",
+    label: "Select and move",
+    key: "V",
+    hint: "Click a room, wall, door or fixture to change it. Drag a wall to push it, or a room's corner dots to reshape it. Shift-click or drag a box to pick several.",
+  },
+  {
+    id: "room",
+    label: "Room",
+    key: "R",
+    hint: "Drag to draw a rectangle. Or click corner by corner for any shape, then click the first corner (or press Enter) to close it.",
+  },
+  { id: "wall", label: "Wall", key: "W", hint: "Click to start a wall, click again at each turn, and double-click or press Enter to finish." },
+  { id: "door", label: "Doors and windows", key: "D", hint: "Pick a door or window on the right, then click a wall to put it there." },
+  { id: "stairs", label: "Stairs", key: "S", hint: "Click to place stairs. They climb to the floor above and show there too." },
+  { id: "fixture", label: "Fixtures", key: "F", hint: "Pick a fixture on the right, then click to place it. Near a wall, it backs up against it." },
+  { id: "pan", label: "Pan", key: "H", hint: "Drag to move around the drawing." },
+];
+
+export const isPicked = (sel: PlanSelection, id: string) => sel.some((s) => s.id === id);
+
+export function edgeId(roomId: string, edge: number): string {
+  return `${roomId}#${edge}`;
+}
+
+export function parseEdgeId(id: string): { roomId: string; edge: number } {
+  const at = id.lastIndexOf("#");
+  return { roomId: id.slice(0, at), edge: Number(id.slice(at + 1)) };
+}
