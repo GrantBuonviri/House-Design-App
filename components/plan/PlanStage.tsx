@@ -2,7 +2,7 @@
 
 import dynamic from "next/dynamic";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import type { FloorPlan, Level, PlanBasics, Point } from "@/lib/model/schema";
+import type { FloorPlan, Level, PlanBasics, Point, Roof } from "@/lib/model/schema";
 import { useProjectStore } from "@/lib/store/projectStore";
 import { diagramOf } from "@/lib/bubbles/edit";
 import { WINTER_RING, defaultLotOffset, houseCenter, landDrawing, lotCenter } from "@/lib/bubbles/land";
@@ -17,6 +17,7 @@ import { planWarnings, type PlanWarning } from "@/lib/plan/checks";
 import { suggestPlans } from "@/lib/plan/suggest";
 import { boundsOf, dist } from "@/lib/plan/geometry";
 import { houseTotals, totalsText } from "@/lib/plan/measure";
+import { lotOffsetFor } from "@/lib/house3d/site";
 import { Note, Working } from "@/components/brief/bits";
 import LevelTabs from "@/components/bubbles/LevelTabs";
 import ViewOptions, { type Overlay } from "@/components/bubbles/ViewOptions";
@@ -25,6 +26,8 @@ import PlanBasicsForm from "./PlanBasicsForm";
 import PlanAlternativesView from "./PlanAlternativesView";
 import PlanChecks from "./PlanChecks";
 import PlanSidePanel from "./PlanSidePanel";
+import House3DPanel from "@/components/house3d/House3DPanel";
+import type { View3DMode } from "@/components/house3d/House3DView";
 import { PLAN_TOOLS, type PlanSelection, type PlanTool } from "./types";
 
 const PlanCanvas = dynamic(() => import("./PlanCanvas"), {
@@ -32,7 +35,20 @@ const PlanCanvas = dynamic(() => import("./PlanCanvas"), {
   loading: () => <div className="h-full w-full animate-pulse rounded-lg bg-stone-100" />,
 });
 
+const House3DView = dynamic(() => import("@/components/house3d/House3DView"), {
+  ssr: false,
+  loading: () => <div className="w-full animate-pulse rounded-lg bg-stone-100" style={{ height: CANVAS_HEIGHT }} />,
+});
+
 const CANVAS_HEIGHT = 640;
+
+type Display = "plan" | View3DMode;
+
+const DISPLAYS: { id: Display; label: string; hint: string }[] = [
+  { id: "plan", label: "2D plan", hint: "The floor plan editor" },
+  { id: "birdseye", label: "Bird's-eye", hint: "A rendered view of the current floor from straight above" },
+  { id: "3d", label: "3D", hint: "The whole house on your land" },
+];
 const FT = 12;
 
 type Compare = { alternatives: PlanAlternative[]; source: "ai" | "rules"; note?: string; basis: Record<string, FloorPlan> };
@@ -71,6 +87,8 @@ export default function PlanStage({ onContinue, onGoToSketch }: { onContinue: ()
   const [error, setError] = useState<string>();
   const [compare, setCompare] = useState<Compare | null>(null);
   const [comparing, setComparing] = useState(false);
+  const [display, setDisplay] = useState<Display>("plan");
+  const [cutAway, setCutAway] = useState(false);
 
   // Only the latest request to Claude may land, and none once you've left the page.
   const gate = useRef(createRequestGate()).current;
@@ -157,6 +175,11 @@ export default function PlanStage({ onContinue, onGoToSketch }: { onContinue: ()
   );
   const setLevelPlan = useCallback((pl: FloorPlan, coalesce?: string) => setPlans((ps) => ({ ...ps, [level.id]: pl }), coalesce), [setPlans, level.id]);
   const setView = (patch: Partial<typeof project.plan>) => update((p) => ({ ...p, plan: { ...p.plan, ...patch } }));
+  const setRoof = (patch: Partial<Roof>) => update((p) => ({ ...p, house3d: { ...p.house3d, roof: { ...p.house3d.roof, ...patch } } }));
+
+  // Where the house sits on the lot in 3D. Kept as the same object while its value doesn't change.
+  const offsetKey = JSON.stringify(lotOffsetFor(project));
+  const offset = useMemo<Point>(() => JSON.parse(offsetKey), [offsetKey]);
 
   const chooseTool = (t: PlanTool) => {
     setTool(t);
@@ -194,12 +217,13 @@ export default function PlanStage({ onContinue, onGoToSketch }: { onContinue: ()
         }
         return;
       }
-      const hit = PLAN_TOOLS.find((x) => x.key.toLowerCase() === e.key.toLowerCase());
+      // The drawing tools belong to the 2D plan.
+      const hit = display === "plan" && PLAN_TOOLS.find((x) => x.key.toLowerCase() === e.key.toLowerCase());
       if (hit) chooseTool(hit.id);
     }
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [choosing, editingBasics, comparing, basics, sel, plan, drafting, lotOn, setLevelPlan]);
+  }, [choosing, editingBasics, comparing, basics, sel, plan, drafting, lotOn, setLevelPlan, display]);
 
   /** The sketch as a plan, plus hallways, closets, windows and doors from the built-in rules. */
   function suggest() {
@@ -419,115 +443,196 @@ export default function PlanStage({ onContinue, onGoToSketch }: { onContinue: ()
       ))}
       {flash && <p className="rounded-md bg-accent-soft px-3 py-2 text-sm text-accent">{flash}</p>}
 
-      <LevelTabs
-        levels={levels}
-        current={level.id}
-        counts={counts}
-        onSelect={(id) => {
-          setLevelId(id);
-          setSelection([]);
-        }}
-      />
-
-      <ViewOptions
-        snap={snap}
-        onSnap={setSnap}
-        hasPlot={Boolean(plot)}
-        flat={!drawing?.downhill}
-        overlays={overlays}
-        onOverlay={(key, on) => {
-          setOverlay(key, on);
-          if (!on && key !== "arrow" && key !== "sun") setLotMode(false);
-        }}
-        lotMode={lotOn}
-        canMoveLot={canMoveLot}
-        onLotMode={setLotMode}
-        extra={
-          <>
-            <label className="flex cursor-pointer items-center gap-2">
-              <input type="checkbox" className={box} checked={showDims} onChange={(e) => setView({ showDims: e.target.checked })} />
-              Wall lengths
-            </label>
-            <label className={`flex items-center gap-2 ${sketch.bubbles.length ? "cursor-pointer" : "cursor-not-allowed opacity-50"}`}>
-              <input type="checkbox" className={box} checked={showSketch} disabled={!sketch.bubbles.length} onChange={(e) => setView({ showSketch: e.target.checked })} />
-              Flow sketch
-            </label>
-          </>
-        }
-      />
-
-      <div className="grid grid-cols-[44px_1fr_260px] items-start gap-3">
-        <div className="card flex flex-col gap-1 p-1" role="toolbar" aria-label="Drawing tools" aria-orientation="vertical">
-          {PLAN_TOOLS.map((t) => (
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <LevelTabs
+          levels={levels}
+          current={level.id}
+          counts={counts}
+          onSelect={(id) => {
+            setLevelId(id);
+            setSelection([]);
+          }}
+        />
+        <div className="flex rounded-md border border-line bg-white p-0.5" role="tablist" aria-label="View">
+          {DISPLAYS.map((d) => (
             <button
-              key={t.id}
-              aria-label={t.label}
-              aria-pressed={tool === t.id}
-              title={`${t.label} (${t.key})`}
-              onClick={() => chooseTool(t.id)}
-              className={`flex size-9 items-center justify-center rounded-md ${tool === t.id ? "bg-accent text-white" : "text-ink hover:bg-stone-100"}`}
+              key={d.id}
+              role="tab"
+              aria-selected={display === d.id}
+              title={d.hint}
+              onClick={() => {
+                setDisplay(d.id);
+                setTool("select");
+                setLotMode(false);
+              }}
+              className={`rounded px-3 py-1 text-sm font-medium ${display === d.id ? "bg-ink text-white" : "text-muted hover:text-ink"}`}
             >
-              <ToolIcon tool={t.id} />
+              {d.label}
             </button>
           ))}
         </div>
-
-        <div className="relative min-w-0">
-          <PlanCanvas
-            plan={plan}
-            level={level}
-            levels={levels}
-            basics={basics}
-            below={below}
-            sketch={showSketch && sketch.bubbles.length ? sketch : null}
-            tool={tool}
-            placeOpening={placeOpening}
-            placeFixture={placeFixture}
-            selection={sel}
-            snap={snap}
-            showDims={showDims}
-            sides={sides}
-            height={CANVAS_HEIGHT}
-            land={land}
-            lotMode={lotOn}
-            focus={focus}
-            onLotMove={(offset) => update((p) => ({ ...p, sketch: { ...p.sketch, lotOffset: offset } }))}
-            onSelect={setSelection}
-            onChange={setLevelPlan}
-            onToolDone={() => setTool("select")}
-            onDrafting={setDrafting}
-            onMessage={setFlash}
-          />
-          {lotOn && (
-            <div className="absolute top-10 left-1/2 flex -translate-x-1/2 items-center gap-3 rounded-full bg-ink px-4 py-1.5 text-sm text-white shadow-md" role="status">
-              <span>Drag to slide the lot under your house.</span>
-              <button className="rounded-full bg-white/15 px-2.5 py-0.5 text-xs font-medium hover:bg-white/25" onClick={() => setLotMode(false)}>
-                Done (Esc)
-              </button>
-            </div>
-          )}
-          <p className="mt-2 text-xs text-muted">{hint} Pinch or hold Control and scroll to zoom; scroll to move around. Arrow keys nudge what&apos;s selected.</p>
-        </div>
-
-        <div className="space-y-3">
-          <PlanSidePanel
-            plan={plan}
-            level={level}
-            levels={levels}
-            brief={brief}
-            basics={basics}
-            selection={sel}
-            tool={tool}
-            placeOpening={placeOpening}
-            placeFixture={placeFixture}
-            onPlaceOpening={setPlaceOpening}
-            onPlaceFixture={setPlaceFixture}
-            onChange={setLevelPlan}
-            onSelect={setSelection}
-          />
-          <PlanChecks warnings={warnings} levels={levels} levelId={level.id} onPick={pickWarning} />
-        </div>
       </div>
+
+      {display !== "plan" ? (
+        <div className="grid grid-cols-[1fr_260px] items-start gap-3">
+          <div className="min-w-0">
+            <House3DView
+              key={display}
+              mode={display}
+              plans={plans}
+              levels={levels}
+              basics={basics}
+              house3d={project.house3d}
+              plot={plot}
+              offset={offset}
+              levelId={level.id}
+              cutAway={cutAway}
+              selection={sel}
+              snap={snap}
+              height={CANVAS_HEIGHT}
+              onSelect={(id, s) => {
+                if (id !== level.id) setLevelId(id);
+                setSelection(s);
+              }}
+              onChange={(id, pl, coalesce) => setPlans((ps) => ({ ...ps, [id]: pl }), coalesce)}
+            />
+            <p className="mt-2 text-xs text-muted">
+              Changes here change the 2D plan too, and Undo works the same. Delete removes what&apos;s selected and the arrow keys nudge it.
+            </p>
+          </div>
+          <div className="space-y-3">
+            <House3DPanel
+              mode={display}
+              roof={project.house3d.roof}
+              levelName={level.name}
+              canCutAway={levels.some((l) => l.elevationIn > level.elevationIn && (plans[l.id]?.rooms.length ?? 0) > 0)}
+              cutAway={cutAway}
+              onCutAway={setCutAway}
+              onRoof={setRoof}
+            />
+            {sel.length > 0 && (
+              <PlanSidePanel
+                plan={plan}
+                level={level}
+                levels={levels}
+                brief={brief}
+                basics={basics}
+                selection={sel}
+                tool="select"
+                placeOpening={placeOpening}
+                placeFixture={placeFixture}
+                onPlaceOpening={setPlaceOpening}
+                onPlaceFixture={setPlaceFixture}
+                onChange={setLevelPlan}
+                onSelect={setSelection}
+              />
+            )}
+            <PlanChecks warnings={warnings} levels={levels} levelId={level.id} onPick={pickWarning} />
+          </div>
+        </div>
+      ) : (
+        <>
+        <ViewOptions
+          snap={snap}
+          onSnap={setSnap}
+          hasPlot={Boolean(plot)}
+          flat={!drawing?.downhill}
+          overlays={overlays}
+          onOverlay={(key, on) => {
+            setOverlay(key, on);
+            if (!on && key !== "arrow" && key !== "sun") setLotMode(false);
+          }}
+          lotMode={lotOn}
+          canMoveLot={canMoveLot}
+          onLotMode={setLotMode}
+          extra={
+            <>
+              <label className="flex cursor-pointer items-center gap-2">
+                <input type="checkbox" className={box} checked={showDims} onChange={(e) => setView({ showDims: e.target.checked })} />
+                Wall lengths
+              </label>
+              <label className={`flex items-center gap-2 ${sketch.bubbles.length ? "cursor-pointer" : "cursor-not-allowed opacity-50"}`}>
+                <input type="checkbox" className={box} checked={showSketch} disabled={!sketch.bubbles.length} onChange={(e) => setView({ showSketch: e.target.checked })} />
+                Flow sketch
+              </label>
+            </>
+          }
+        />
+
+        <div className="grid grid-cols-[44px_1fr_260px] items-start gap-3">
+          <div className="card flex flex-col gap-1 p-1" role="toolbar" aria-label="Drawing tools" aria-orientation="vertical">
+            {PLAN_TOOLS.map((t) => (
+              <button
+                key={t.id}
+                aria-label={t.label}
+                aria-pressed={tool === t.id}
+                title={`${t.label} (${t.key})`}
+                onClick={() => chooseTool(t.id)}
+                className={`flex size-9 items-center justify-center rounded-md ${tool === t.id ? "bg-accent text-white" : "text-ink hover:bg-stone-100"}`}
+              >
+                <ToolIcon tool={t.id} />
+              </button>
+            ))}
+          </div>
+
+          <div className="relative min-w-0">
+            <PlanCanvas
+              plan={plan}
+              level={level}
+              levels={levels}
+              basics={basics}
+              below={below}
+              sketch={showSketch && sketch.bubbles.length ? sketch : null}
+              tool={tool}
+              placeOpening={placeOpening}
+              placeFixture={placeFixture}
+              selection={sel}
+              snap={snap}
+              showDims={showDims}
+              sides={sides}
+              height={CANVAS_HEIGHT}
+              land={land}
+              lotMode={lotOn}
+              focus={focus}
+              onLotMove={(offset) => update((p) => ({ ...p, sketch: { ...p.sketch, lotOffset: offset } }))}
+              onSelect={setSelection}
+              onChange={setLevelPlan}
+              onToolDone={() => setTool("select")}
+              onDrafting={setDrafting}
+              onMessage={setFlash}
+            />
+            {lotOn && (
+              <div className="absolute top-10 left-1/2 flex -translate-x-1/2 items-center gap-3 rounded-full bg-ink px-4 py-1.5 text-sm text-white shadow-md" role="status">
+                <span>Drag to slide the lot under your house.</span>
+                <button className="rounded-full bg-white/15 px-2.5 py-0.5 text-xs font-medium hover:bg-white/25" onClick={() => setLotMode(false)}>
+                  Done (Esc)
+                </button>
+              </div>
+            )}
+            <p className="mt-2 text-xs text-muted">{hint} Pinch or hold Control and scroll to zoom; scroll to move around. Arrow keys nudge what&apos;s selected.</p>
+          </div>
+
+          <div className="space-y-3">
+            <PlanSidePanel
+              plan={plan}
+              level={level}
+              levels={levels}
+              brief={brief}
+              basics={basics}
+              selection={sel}
+              tool={tool}
+              placeOpening={placeOpening}
+              placeFixture={placeFixture}
+              onPlaceOpening={setPlaceOpening}
+              onPlaceFixture={setPlaceFixture}
+              onChange={setLevelPlan}
+              onSelect={setSelection}
+            />
+            <PlanChecks warnings={warnings} levels={levels} levelId={level.id} onPick={pickWarning} />
+          </div>
+        </div>
+        </>
+      )}
     </div>
   );
 }

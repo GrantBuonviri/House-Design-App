@@ -37,6 +37,7 @@ export function migrateProject(raw: unknown): Project {
   // Version 2 to 3 added drawn room shapes and saved sketch settings. Both
   // are optional with defaults, so older data needs no changes.
   if (version < 4) migrated = migrateV3(migrated);
+  // Version 4 to 5 added the 3D house settings (the roof), with defaults.
   return Project.parse({ ...migrated, schemaVersion: SCHEMA_VERSION });
 }
 
