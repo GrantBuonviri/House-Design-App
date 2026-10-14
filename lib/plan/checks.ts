@@ -1,0 +1,141 @@
+import type { DesignBrief, FloorPlan, Level, PlanBasics, PlanRoom, Point } from "@/lib/model/schema";
+import { formatFeetInches } from "@/lib/model/units";
+import { MAIN_LEVEL_ID } from "@/lib/brief/levels";
+import { INTERIOR_WALL_IN, levelAbove } from "./basics";
+import { OUTSIDE, openingRooms, reachable, roleOf, roomLinks } from "./connect";
+import { planOf, type Plans } from "./edit";
+import { dist, edgesOf, isRectangle, polygonCenter, polygonsOverlap, scale, add } from "./geometry";
+import { areaKind, roomSqft } from "./measure";
+import { MIN_STAIRS_WIDTH_IN } from "./stairs";
+import { isWayIn, stairsBoxes, wayInRooms } from "./suggest";
+
+/**
+ * Friendly checks on a floor plan: rooms you can't get into, bedrooms without
+ * a window, narrow hallways, missing stairs, rooms far from the size the
+ * brief asked for. They're general guidelines for a comfortable house, not
+ * building code.
+ */
+
+export type PlanWarning = {
+  id: string;
+  levelId: string;
+  text: string;
+  /** Rooms to select when the warning is clicked. */
+  roomIds: string[];
+  /** Where to look on the drawing, if anywhere in particular. */
+  at: Point | null;
+};
+
+const BEDROOMS = new Set(["bedroom", "primary-bedroom", "guest-suite"]);
+/** Below this, a hallway feels tight (inside, wall to wall). */
+export const MIN_HALL_CLEAR_IN = 36;
+/** Rooms this far from the brief's size get a note (and at least 20 to 30 sq ft off, so small rooms aren't flagged for a few feet). */
+const TOO_SMALL = 0.75;
+const TOO_BIG = 1.4;
+
+type Ctx = { levels: Level[]; brief: DesignBrief | null; basics: PlanBasics | null };
+
+/** A window you could climb out of: wide enough, and low enough to reach. */
+const isEgress = (o: FloorPlan["openings"][number]) => o.kind === "window" && o.widthIn >= 24 && o.heightIn >= 24 && (o.sillIn ?? 30) <= 44;
+
+export function planWarnings(plans: Plans, ctx: Ctx): PlanWarning[] {
+  const out: PlanWarning[] = [];
+  const levels = [...ctx.levels].sort((a, b) => a.elevationIn - b.elevationIn);
+  const add_ = (levelId: string, key: string, text: string, rooms: PlanRoom[] = [], at?: Point | null) =>
+    out.push({ id: `${levelId}:${key}`, levelId, text, roomIds: rooms.map((r) => r.id), at: at === undefined ? (rooms[0] ? polygonCenter(rooms[0].polygon) : null) : at });
+
+  for (const level of levels) {
+    const plan = planOf(plans, level.id);
+    if (!plan.rooms.length) continue;
+    const links = roomLinks(plan);
+    const byId = new Map(plan.rooms.map((r) => [r.id, r]));
+    const doors = (r: PlanRoom) => [...(links.get(r.id) ?? [])];
+
+    // Rooms drawn on top of each other.
+    for (let i = 0; i < plan.rooms.length; i++) {
+      for (let j = i + 1; j < plan.rooms.length; j++) {
+        const a = plan.rooms[i];
+        const b = plan.rooms[j];
+        if (polygonsOverlap(a.polygon, b.polygon)) add_(level.id, `overlap:${a.id}:${b.id}`, `${a.name} and ${b.name} overlap.`, [a, b], scale(add(polygonCenter(a.polygon), polygonCenter(b.polygon)), 0.5));
+      }
+    }
+
+    // No way in at all.
+    const noDoor = plan.rooms.filter((r) => doors(r).length === 0);
+    for (const r of noDoor) add_(level.id, `nodoor:${r.id}`, `${r.name} has no door or opening.`, [r]);
+
+    // A way in from outside on the main floor.
+    if (level.id === MAIN_LEVEL_ID || level.kind === "main") {
+      const outdoor = new Set(plan.rooms.filter((r) => areaKind(r) === "outdoor").map((r) => r.id));
+      // The garage door doesn't count: people come in through a front door.
+      const toOutside = plan.rooms.some((r) => !outdoor.has(r.id) && roleOf(r) !== "garage" && doors(r).some((id) => id === OUTSIDE || outdoor.has(id)));
+      if (!toOutside) add_(level.id, "nofront", "There's no front door yet. Add one with the Doors and windows tool, on an outside wall of the entry or a living space.", [], null);
+    }
+
+    // Rooms with doors that still can't be reached from the way in.
+    const seeds = wayInRooms(plan, stairsBoxes(plans, ctx, level));
+    if (seeds.length) {
+      const seen = reachable(plan, seeds);
+      for (const r of plan.rooms) {
+        if (seen.has(r.id) || noDoor.includes(r) || areaKind(r) === "outdoor") continue;
+        add_(level.id, `cutoff:${r.id}`, `${r.name} can't be reached from the rest of the floor.`, [r]);
+      }
+    }
+
+    // Bedrooms, offices and the like that you only get to through a bedroom.
+    for (const r of plan.rooms) {
+      if (roleOf(r) !== "private" || r.type === "bathroom" || r.type === "half-bath") continue;
+      const next = doors(r)
+        .filter((id) => id !== OUTSIDE)
+        .map((id) => byId.get(id)!)
+        .filter((n) => n.type !== "closet");
+      if (!next.length || next.some((n) => isWayIn(n, r) || roleOf(n) === "outdoor")) continue;
+      const via = next.filter((n) => BEDROOMS.has(n.type ?? "") || roleOf(n) === "suite");
+      if (via.length === next.length) add_(level.id, `through:${r.id}`, `${r.name} can only be reached through ${via.map((n) => n.name).join(" or ")}.`, [r]);
+    }
+
+    // Bedrooms need a window you could climb out of.
+    for (const r of plan.rooms.filter((x) => BEDROOMS.has(x.type ?? ""))) {
+      const windows = plan.openings.filter((o) => o.kind === "window" && openingRooms(plan, o).includes(r.id));
+      if (!windows.length) add_(level.id, `egress:${r.id}`, `${r.name} has no window. A bedroom needs one you could climb out of in an emergency.`, [r]);
+      else if (!windows.some(isEgress)) add_(level.id, `egress:${r.id}`, `${r.name}'s windows are too small or too high to climb out of in an emergency.`, [r]);
+    }
+
+    // Hallways at least 3 ft wide inside.
+    for (const r of plan.rooms.filter((x) => x.type === "hall")) {
+      if (!isRectangle(r.polygon)) continue;
+      const clear = Math.min(...edgesOf(r.polygon).map((e) => dist(e.a, e.b))) - INTERIOR_WALL_IN;
+      if (clear < MIN_HALL_CLEAR_IN - 0.5) add_(level.id, `narrow:${r.id}`, `${r.name} is ${formatFeetInches(Math.round(clear))} wide inside. Hallways are more comfortable at 3' or wider.`, [r]);
+    }
+
+    // Stairs: some up to the next floor, and wide enough.
+    const above = levelAbove(levels, level);
+    if (above && planOf(plans, above.id).rooms.length && !plan.stairs.some((s) => s.toLevelId === above.id)) {
+      add_(level.id, "nostairs", `There are no stairs up to the ${above.name.toLowerCase()} yet. Add them with the Stairs tool.`, [], null);
+    }
+    for (const s of plan.stairs) {
+      if (s.widthIn < MIN_STAIRS_WIDTH_IN - 0.5) add_(level.id, `stairwidth:${s.id}`, `The stairs are ${formatFeetInches(s.widthIn)} wide. 3' is the usual minimum.`, [], { x: s.x, y: s.y });
+    }
+
+    // Rooms far from the size the brief asked for.
+    for (const r of plan.rooms) {
+      const want = ctx.brief?.rooms.find((b) => b.id === r.briefRoomId)?.targetSqFt;
+      if (!want) continue;
+      const have = roomSqft(r);
+      const f = (n: number) => Math.round(n).toLocaleString("en-US");
+      if (have < want * TOO_SMALL && want - have >= 20) add_(level.id, `size:${r.id}`, `${r.name} is ${f(have)} sq ft, much smaller than the ${f(want)} your brief asked for.`, [r]);
+      else if (have > want * TOO_BIG && have - want >= 30) add_(level.id, `size:${r.id}`, `${r.name} is ${f(have)} sq ft, much bigger than the ${f(want)} your brief asked for.`, [r]);
+    }
+  }
+
+  // Rooms from the brief that aren't drawn anywhere yet.
+  if (ctx.brief && levels.some((l) => planOf(plans, l.id).rooms.length)) {
+    const drawn = new Set(levels.flatMap((l) => planOf(plans, l.id).rooms.map((r) => r.briefRoomId)));
+    for (const b of ctx.brief.rooms) {
+      if (drawn.has(b.id)) continue;
+      const levelId = b.levelId && levels.some((l) => l.id === b.levelId) ? b.levelId : MAIN_LEVEL_ID;
+      out.push({ id: `${levelId}:missing:${b.id}`, levelId, text: `${b.name} from your brief isn't in the plan yet.`, roomIds: [], at: null });
+    }
+  }
+  return out;
+}

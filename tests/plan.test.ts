@@ -21,7 +21,8 @@ import {
   setEdgeLength,
   updateOpening,
 } from "@/lib/plan/edit";
-import { alignEdges, compact, plansFromSketch, resolveOverlaps, sharedWall, straightenOutline } from "@/lib/plan/fromSketch";
+import { sharedWall } from "@/lib/plan/connect";
+import { alignEdges, compact, plansFromSketch, resolveOverlaps, straightenOutline } from "@/lib/plan/fromSketch";
 import { collinearOverlap, dist, isRectangle, polygonArea, polygonsOverlap, rectangle, signedArea, subtractIntervals } from "@/lib/plan/geometry";
 import { houseTotals, planTotals, roomSqft } from "@/lib/plan/measure";
 import { snapMove, snapPoint, snapPush, snapTargets } from "@/lib/plan/snap";

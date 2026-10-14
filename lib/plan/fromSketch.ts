@@ -2,9 +2,9 @@ import type { BubbleDiagram, DesignBrief, FloorPlan, Level, Opening, PlanBasics,
 import { isDrawn, type Bubble } from "@/lib/bubbles/shapes";
 import { roomType } from "@/lib/brief/rooms";
 import { exteriorWallIn, levelAbove, levelBelow, riseBetween } from "./basics";
-import { openingType } from "./catalog";
+import { freeSpot, newOpening, sharedWall } from "./connect";
 import { emptyPlan, type Plans } from "./edit";
-import { add, boundsOf, clockwise, collinearOverlap, dist, dot, edgesOf, leftNormal, polygonArea, rectangle, rotate, round1, roundPoint, sub, unit } from "./geometry";
+import { add, boundsOf, clockwise, dist, dot, leftNormal, polygonArea, rectangle, rotate, roundPoint, sub, unit } from "./geometry";
 import { DEFAULT_STAIRS_WIDTH_IN, stairsDrawing } from "./stairs";
 import { wallPieces } from "./walls";
 
@@ -223,6 +223,36 @@ export function alignEdges(rects: Rect[], tolerance = ALIGN_IN): void {
   }
 }
 
+/**
+ * Close gaps of up to `most` inches between rooms that face each other, so
+ * they share one wall instead of having two walls a few inches apart. The
+ * smaller room grows to meet the bigger one.
+ */
+export function closeGaps(rects: Rect[], most = 18): void {
+  const sides = [
+    ["x1", 1],
+    ["x0", -1],
+    ["y1", 1],
+    ["y0", -1],
+  ] as const;
+  for (const r of [...rects].sort((a, b) => rectArea(a) - rectArea(b))) {
+    if (r.fixed || r.poly) continue;
+    for (const [key, sign] of sides) {
+      const alongX = key === "x0" || key === "x1";
+      let gap = Infinity;
+      for (const o of rects) {
+        if (o === r || (alongX ? overlapY(r, o) : overlapX(r, o)) <= 12) continue;
+        const g = sign > 0 ? (alongX ? o.x0 - r.x1 : o.y0 - r.y1) : alongX ? r.x0 - o.x1 : r.y0 - o.y1;
+        if (g >= -0.5) gap = Math.min(gap, g);
+      }
+      if (gap <= 0.5 || gap > most) continue;
+      const before = r[key];
+      r[key] += sign * gap;
+      if (rects.some((o) => o !== r && overlapX(r, o) > 0.5 && overlapY(r, o) > 0.5)) r[key] = before;
+    }
+  }
+}
+
 function rectArea(r: Rect) {
   return (r.x1 - r.x0) * (r.y1 - r.y0);
 }
@@ -253,34 +283,6 @@ function stairsFor(diagrams: Record<string, BubbleDiagram>, ctx: PlanContext): R
 const ROAD_DIR: Record<Plot["roadSide"], Point> = { N: { x: 0, y: -1 }, S: { x: 0, y: 1 }, E: { x: 1, y: 0 }, W: { x: -1, y: 0 } };
 const OPEN_PLAN = new Set(["kitchen", "dining", "living", "family"]);
 
-export function newOpening(styleId: string, host: Opening["host"], offsetIn: number, side: 1 | -1, widthIn?: number): Opening {
-  const t = openingType(styleId);
-  return {
-    id: `o-${Math.random().toString(36).slice(2, 10)}`,
-    host,
-    offsetIn: round1(offsetIn),
-    kind: t.kind,
-    style: t.id,
-    widthIn: widthIn ?? t.widths[0],
-    heightIn: t.heightIn,
-    ...(t.sillIn !== undefined ? { sillIn: t.sillIn } : {}),
-    side,
-    hinge: "start",
-  };
-}
-
-/** The longest stretch of wall two rooms share: on which edge of `a`, and where along it. */
-export function sharedWall(a: PlanRoom, b: PlanRoom): { edge: number; t0: number; t1: number } | null {
-  let best: { edge: number; t0: number; t1: number } | null = null;
-  for (const e of edgesOf(a.polygon)) {
-    for (const f of edgesOf(b.polygon)) {
-      const o = collinearOverlap(e.a, e.b, f.a, f.b, 1);
-      if (o && (!best || o[1] - o[0] > best.t1 - best.t0)) best = { edge: e.i, t0: o[0], t1: o[1] };
-    }
-  }
-  return best;
-}
-
 /** A door, or a wide opening for open-plan living spaces, between two connected rooms that share a wall. */
 function connectRooms(a: PlanRoom, b: PlanRoom, openKitchen: boolean): Opening | null {
   const wall = sharedWall(a, b);
@@ -292,6 +294,8 @@ function connectRooms(a: PlanRoom, b: PlanRoom, openKitchen: boolean): Opening |
     return newOpening("opening", host, mid, 1, Math.min(144, roundTo(room - 24, STEP_IN)));
   }
   const outdoor = (r: PlanRoom) => (r.type ? roomType(r.type).category === "outdoor" : false);
+  // From a porch into the entry is the front door.
+  if ((a.type === "porch" && b.type === "entry") || (a.type === "entry" && b.type === "porch")) return newOpening("door-entry", host, mid, a.type === "entry" ? -1 : 1, 36);
   if ((outdoor(a) || outdoor(b)) && room >= 84) return newOpening("door-slider", host, mid, 1, 72);
   // Doors swing into the smaller room. Room corners run clockwise, so the left of a's edge is b.
   const side = polygonArea(b.polygon) <= polygonArea(a.polygon) ? 1 : -1;
@@ -299,7 +303,7 @@ function connectRooms(a: PlanRoom, b: PlanRoom, openKitchen: boolean): Opening |
 }
 
 /** A door on the outside wall of a room that best faces a direction (at least `minFacing`, from -1 to 1). */
-function outsideDoor(plan: FloorPlan, room: PlanRoom | undefined, facing: Point, style: string, widthIn: number, exteriorIn: number, minFacing = 0.5): Opening | null {
+export function outsideDoor(plan: FloorPlan, room: PlanRoom | undefined, facing: Point, style: string, widthIn: number, exteriorIn: number, minFacing = 0.5): Opening | null {
   if (!room) return null;
   let best: { score: number; host: Opening["host"]; mid: number } | null = null;
   for (const p of wallPieces(plan, exteriorIn)) {
@@ -308,7 +312,9 @@ function outsideDoor(plan: FloorPlan, room: PlanRoom | undefined, facing: Point,
     if (length < widthIn + 12) continue;
     const out = leftNormal(unit(sub(p.b, p.a)));
     const score = dot(out, facing) * 1000 + length;
-    if (dot(out, facing) > minFacing && (!best || score > best.score)) best = { score, host: p.host, mid: (p.t0 + p.t1) / 2 };
+    // Clear of doors already in that wall.
+    const at = freeSpot(plan, p.host, p.t0, p.t1, widthIn);
+    if (at !== null && dot(out, facing) > minFacing && (!best || score > best.score)) best = { score, host: p.host, mid: at };
   }
   return best ? newOpening(style, best.host, best.mid, -1, widthIn) : null;
 }
@@ -352,6 +358,7 @@ export function plansFromSketch(diagrams: Record<string, BubbleDiagram>, ctx: Pl
       alignEdges(rects);
       resolveOverlaps(rects);
       compact(rects, center, 10);
+      closeGaps(rects);
 
       const byBubble = new Map(rects.map((r) => [r.id, r]));
       for (const b of bubbles) {
@@ -382,7 +389,9 @@ export function plansFromSketch(diagrams: Record<string, BubbleDiagram>, ctx: Pl
       const road = ROAD_DIR[ctx.plot?.roadSide ?? "S"];
       const byType = (t: string) => plan.rooms.find((r) => r.type === t);
       const entry = byType("entry");
+      const porchDoor = plan.openings.some((o) => o.style === "door-entry");
       const front =
+        porchDoor ? null :
         outsideDoor(plan, entry, road, "door-entry", 36, exteriorIn) ??
         outsideDoor(plan, entry, road, "door-entry", 36, exteriorIn, -0.5) ??
         outsideDoor(plan, byType("living") ?? byType("family"), road, "door-entry", 36, exteriorIn);

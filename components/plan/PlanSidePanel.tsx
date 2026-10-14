@@ -10,8 +10,12 @@ import { dist, isRectangle, lerp, polygonCenter } from "@/lib/plan/geometry";
 import { planTotals, roomSqft, totalsText } from "@/lib/plan/measure";
 import { MIN_STAIRS_WIDTH_IN, stairsDrawing } from "@/lib/plan/stairs";
 import { clampOffset, hostSegment } from "@/lib/plan/walls";
-import { newOpening } from "@/lib/plan/fromSketch";
+import { newOpening } from "@/lib/plan/connect";
+import { ROOM_TYPES, roomType } from "@/lib/brief/rooms";
 import { parseEdgeId, type PlanSelection, type PlanTool } from "./types";
+
+/** Room types a plan can have that a brief doesn't: hallways and closets. */
+const PLAN_ONLY = ROOM_TYPES.filter((t) => t.planOnly).map((t) => t.id);
 
 type Props = {
   plan: FloorPlan;
@@ -101,29 +105,41 @@ export default function PlanSidePanel(props: Props) {
         </label>
         <input id="room-name" ref={nameRef} className="input" value={room.name} maxLength={60} onChange={(e) => set({ name: e.target.value }, "name")} />
 
-        {brief && (
-          <>
-            <label className="field-label mt-4" htmlFor="room-brief">
-              Room in your brief
-            </label>
-            <select
-              id="room-brief"
-              className="input"
-              value={room.briefRoomId ?? ""}
-              onChange={(e) => {
-                const r = brief.rooms.find((x) => x.id === e.target.value);
-                set(r ? { briefRoomId: r.id, type: r.type, name: room.name === "New room" ? r.name : room.name } : { briefRoomId: undefined, type: undefined }, "brief");
-              }}
-            >
-              <option value="">Not one of your rooms</option>
+        <label className="field-label mt-4" htmlFor="room-brief">
+          {brief ? "Room in your brief" : "What it is"}
+        </label>
+        <select
+          id="room-brief"
+          className="input"
+          value={room.briefRoomId ?? (room.type && PLAN_ONLY.includes(room.type) ? `type:${room.type}` : "")}
+          onChange={(e) => {
+            const v = e.target.value;
+            const r = brief?.rooms.find((x) => x.id === v);
+            if (r) set({ briefRoomId: r.id, type: r.type, name: room.name === "New room" ? r.name : room.name }, "brief");
+            else if (v.startsWith("type:")) {
+              const type = v.slice(5);
+              set({ briefRoomId: undefined, type, name: room.name === "New room" ? roomType(type).label : room.name }, "brief");
+            } else set({ briefRoomId: undefined, type: undefined }, "brief");
+          }}
+        >
+          <option value="">{brief ? "Not one of your rooms" : "A room"}</option>
+          {brief && brief.rooms.length > 0 && (
+            <optgroup label="Your rooms">
               {brief.rooms.map((r) => (
                 <option key={r.id} value={r.id}>
                   {r.name}
                 </option>
               ))}
-            </select>
-          </>
-        )}
+            </optgroup>
+          )}
+          <optgroup label="Not in your brief">
+            {PLAN_ONLY.map((t) => (
+              <option key={t} value={`type:${t}`}>
+                {roomType(t).label}
+              </option>
+            ))}
+          </optgroup>
+        </select>
 
         <p className="field-label mt-4">Size</p>
         <p className="text-sm">

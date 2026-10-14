@@ -14,6 +14,8 @@ export type RoomType = {
   sqft: number;
   min: number;
   max: number;
+  /** Made by the floor plan (hallways, closets), not picked on the rooms page. */
+  planOnly?: boolean;
 };
 
 export const ROOM_TYPES: RoomType[] = [
@@ -47,10 +49,14 @@ export const ROOM_TYPES: RoomType[] = [
   { id: "deck", label: "Deck", category: "outdoor", sqft: 250, min: 60, max: 900 },
   { id: "porch", label: "Porch", category: "outdoor", sqft: 140, min: 40, max: 600 },
   { id: "outdoor-kitchen", label: "Outdoor kitchen", category: "outdoor", sqft: 120, min: 40, max: 400 },
+  { id: "hall", label: "Hallway", category: "living", sqft: 60, min: 15, max: 400, planOnly: true },
+  { id: "closet", label: "Closet", category: "service", sqft: 15, min: 6, max: 120, planOnly: true },
   { id: "other", label: "Other", category: "living", sqft: 120, min: 10, max: 1500 },
 ];
 
-export const ROOM_TYPE_IDS = ROOM_TYPES.map((r) => r.id);
+/** The room types a brief can hold (hallways and closets come later, with the floor plan). */
+export const BRIEF_ROOM_TYPES = ROOM_TYPES.filter((r) => !r.planOnly);
+export const ROOM_TYPE_IDS = BRIEF_ROOM_TYPES.map((r) => r.id);
 
 export function roomType(id: string): RoomType {
   return ROOM_TYPES.find((r) => r.id === id) ?? ROOM_TYPES[ROOM_TYPES.length - 1];
