@@ -10,8 +10,8 @@ import { outsideStretches, roomJustOutside, stairsBoxes, wayInRooms } from "./su
 import { openingGeometry } from "./walls";
 
 /**
- * Small changes to a floor plan, as Claude (or the built-in alternatives)
- * describe them: push a wall, swap two rooms, add or take away a door, open
+ * Small changes to a floor plan, as the built-in alternatives describe
+ * them: push a wall, swap two rooms, add or take away a door, open
  * up a wall, add a window, flip the house. Code applies each one and checks
  * the result (no rooms on top of each other, every room still reachable,
  * sensible sizes); a change that fails a check is skipped.
@@ -23,8 +23,8 @@ export const CHANGE_SIDES = ["N", "E", "S", "W", "none"] as const;
 export type ChangeSide = (typeof CHANGE_SIDES)[number];
 
 /**
- * One change. Every field is always there (Claude's answers have a fixed
- * shape); `other` is "" and `side` is "none" and `feet` is 0 when unused.
+ * One change. Every field is always there: `other` is "" and `side` is
+ * "none" and `feet` is 0 when unused.
  */
 export type PlanChange = {
   op: ChangeOp;

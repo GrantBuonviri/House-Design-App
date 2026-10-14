@@ -34,7 +34,7 @@ import { openingGeometry, wallPieces } from "./walls";
  * needs that the sketch doesn't show. A hallway where bedrooms and bathrooms
  * would otherwise only open off other bedrooms, doors so every room can be
  * reached, a closet in each bedroom, and windows on outside walls (more and
- * bigger on the sunny south side). All built-in rules; no AI.
+ * bigger on the sunny south side). All built-in rules.
  */
 
 /** A hallway is 3' 6" from wall middle to wall middle, about 3' 2" clear. */

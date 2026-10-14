@@ -1,15 +1,10 @@
-import { mkdtempSync } from "node:fs";
-import { tmpdir } from "node:os";
-import path from "node:path";
-import { beforeEach, describe, expect, it, vi } from "vitest";
-import type Anthropic from "@anthropic-ai/sdk";
+import { describe, expect, it } from "vitest";
 import { DiscoveryAnswers, type ChosenRoom, type Plot, type Profile } from "@/lib/model/schema";
 import { FLAT_PLOT_SEED, generatePlot } from "@/lib/land/generate";
 import { plotImplications } from "@/lib/land/implications";
 import { buildRuleBrief } from "@/lib/brief/rules";
 import { levelsFor, newExtraLevel } from "@/lib/brief/levels";
 import { roomType } from "@/lib/brief/rooms";
-import { MODELS } from "@/lib/ai/models";
 import {
   addMissingRooms,
   centerOf,
@@ -27,7 +22,7 @@ import { freeSpot, layout, overlapAmount } from "@/lib/bubbles/layout";
 import { bubbleIdFor, bubbleSqft, emptyDiagram, radiiFor, resized, reshaped, type Bubble } from "@/lib/bubbles/shapes";
 import { mirroredSpot, oppositeSpot, ruleSpot, siteOf, spotFromVector, spotVector } from "@/lib/bubbles/site";
 import { addFlow, cleanDiagram, copyBubbleFrom, moveBubbleToLevel, removeBubble, takeAlternative } from "@/lib/bubbles/edit";
-import { suggestAlternatives, suggestSketch } from "@/lib/bubbles/service";
+import { suggestAlternatives, suggestSketch } from "@/lib/bubbles/suggest";
 
 const profile: Profile = { mustHaves: [], dislikes: [] };
 const flat = generatePlot(FLAT_PLOT_SEED, { flat: true });
@@ -180,7 +175,7 @@ describe("the starting sketch", () => {
     expect(worstOverlap(s)).toBeLessThan(0.1);
   });
 
-  it("uses Claude's spots when given", () => {
+  it("puts rooms in the spots asked for", () => {
     const living = ctx.brief.rooms.find((r) => r.type === "living")!;
     const s = suggestDiagrams(ctx, new Map([[living.id, "N" as const]]));
     const c = centerOf(s["floor-1"].bubbles);
@@ -339,84 +334,24 @@ describe("extra levels", () => {
   });
 });
 
-// ---------- Claude ----------
+// ---------- Suggestions ----------
 
-function fakeMessage(data: unknown): Anthropic.Message {
-  return {
-    id: "msg_test",
-    type: "message",
-    role: "assistant",
-    model: MODELS.fast,
-    content: [{ type: "text", text: JSON.stringify(data), citations: null }],
-    stop_reason: "end_turn",
-    stop_sequence: null,
-    usage: { input_tokens: 1000, output_tokens: 2000 },
-  } as unknown as Anthropic.Message;
-}
-
-function fakeClient(...replies: Anthropic.Message[]) {
-  const create = vi.fn(async () => {
-    const r = replies.shift();
-    if (!r) throw new Error("no more replies");
-    return r;
-  });
-  return { create } as unknown as Pick<Anthropic["messages"], "create"> & { create: typeof create };
-}
-
-describe("asking Claude", () => {
-  beforeEach(() => {
-    process.env.APP_DATA_DIR = mkdtempSync(path.join(tmpdir(), "house-bubbles-"));
-    delete process.env.ANTHROPIC_API_KEY;
-  });
-
-  it("uses the built-in rules without a key", async () => {
+describe("suggestions", () => {
+  it("makes the starting sketch from the brief, and says so when there are no rooms", () => {
     const ctx = context(ranch());
-    const s = await suggestSketch(ctx);
-    expect(s.source).toBe("rules");
-    expect(s.note).toMatch(/No API key/);
+    const s = suggestSketch(ctx);
+    expect(s.note).toBeUndefined();
     expect(s.diagrams).toEqual(suggestDiagrams(ctx));
-    const alts = await suggestAlternatives(ctx, s.diagrams);
-    expect(alts.source).toBe("rules");
-    expect(alts.alternatives).toHaveLength(3);
+    expect(suggestSketch({ ...ctx, brief: { ...ctx.brief, rooms: [] } }).note).toMatch(/no rooms/);
   });
 
-  it("draws Claude's spots with the cheaper model and ignores rooms that don't exist", async () => {
-    process.env.ANTHROPIC_API_KEY = "sk-test";
+  it("gives three alternatives, and different ones when asked again", () => {
     const ctx = context(ranch());
-    const living = ctx.brief.rooms.find((r) => r.type === "living")!;
-    const client = fakeClient(fakeMessage({ idea: "Living to the north.", rooms: [{ id: living.id, spot: "N" }, { id: "ghost", spot: "E" }] }));
-    const s = await suggestSketch(ctx, { client });
-    expect(s.source).toBe("ai");
-    expect(s.idea).toBe("Living to the north.");
-    expect(allBubbles(s.diagrams).some((b) => b.id.includes("ghost"))).toBe(false);
-    expect(byName(s.diagrams, "Living room").y).toBeLessThan(centerOf(s.diagrams["floor-1"].bubbles).y);
-    const sent = client.create.mock.calls[0] as unknown as [Anthropic.MessageCreateParams];
-    expect(sent[0].model).toBe(MODELS.fast);
-  });
-
-  it("asks the most capable model for alternatives and fills gaps with built-in ones", async () => {
-    process.env.ANTHROPIC_API_KEY = "sk-test";
-    const ctx = context(ranch(), flat, 2);
     const sketch = suggestDiagrams(ctx);
-    const kitchen = bubbleIdFor(ctx.brief.rooms.find((r) => r.type === "kitchen")!.id);
-    const now = currentSpots(ctx, sketch);
-    const far = oppositeSpot(now.get(kitchen)!.spot === "center" ? "N" : now.get(kitchen)!.spot);
-    const client = fakeClient(
-      fakeMessage({
-        alternatives: [
-          { title: "Kitchen moves", why: "A different kitchen.", moves: [{ id: kitchen, spot: far }] },
-          { title: "Nothing moves", why: "Same as now.", moves: [{ id: kitchen, spot: now.get(kitchen)!.spot }] },
-          { title: "Stairs only", why: "Stairs never move.", moves: [{ id: "stairs-floor-1", spot: "N" }, { id: "ghost", spot: "S" }] },
-        ],
-      }),
-    );
-    const r = await suggestAlternatives(ctx, sketch, { client });
-    expect(r.source).toBe("ai");
-    expect(r.alternatives).toHaveLength(3);
-    expect(r.alternatives[0].title).toBe("Kitchen moves");
-    expect(r.alternatives.map((a) => a.title)).not.toContain("Nothing moves");
-    expect(r.alternatives.map((a) => a.title)).not.toContain("Stairs only");
-    const sent = client.create.mock.calls[0] as unknown as [Anthropic.MessageCreateParams];
-    expect(sent[0].model).toBe(MODELS.best);
+    const first = suggestAlternatives(ctx, sketch);
+    expect(first.alternatives).toHaveLength(3);
+    const again = suggestAlternatives(ctx, sketch, first.alternatives.map((a) => a.title));
+    expect(again.alternatives[0].title).not.toBe(first.alternatives[0].title);
+    expect(suggestAlternatives(ctx, {}).note).toMatch(/sketch first/);
   });
 });

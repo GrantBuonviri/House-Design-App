@@ -1,24 +1,23 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import type { FloorPlan, Level, PlanBasics, Point, Roof } from "@/lib/model/schema";
 import { useProjectStore } from "@/lib/store/projectStore";
 import { diagramOf } from "@/lib/bubbles/edit";
 import { WINTER_RING, defaultLotOffset, houseCenter, landDrawing, lotCenter } from "@/lib/bubbles/land";
 import { siteOf } from "@/lib/bubbles/site";
 import { MAIN_LEVEL_ID } from "@/lib/brief/levels";
-import { createRequestGate, ifCurrent } from "@/lib/bubbles/start";
 import { nearestSide } from "@/lib/land/generate";
 import { blankPlans, moveMany, planHasContent, planOf, removeMany } from "@/lib/plan/edit";
 import { plansFromSketch } from "@/lib/plan/fromSketch";
-import type { PlanAlternative } from "@/lib/plan/alternatives";
+import { suggestPlanAlternatives, type PlanAlternative } from "@/lib/plan/alternatives";
 import { planWarnings, type PlanWarning } from "@/lib/plan/checks";
 import { suggestPlans } from "@/lib/plan/suggest";
 import { boundsOf, dist } from "@/lib/plan/geometry";
 import { houseTotals, totalsText } from "@/lib/plan/measure";
 import { lotOffsetFor } from "@/lib/house3d/site";
-import { Note, Working } from "@/components/brief/bits";
+import { Note } from "@/components/brief/bits";
 import LevelTabs from "@/components/bubbles/LevelTabs";
 import ViewOptions, { type Overlay } from "@/components/bubbles/ViewOptions";
 import type { LandView, Side } from "@/components/bubbles/types";
@@ -50,13 +49,7 @@ const DISPLAYS: { id: Display; label: string; hint: string }[] = [
 ];
 const FT = 12;
 
-type Compare = { alternatives: PlanAlternative[]; source: "ai" | "rules"; note?: string; basis: Record<string, FloorPlan> };
-
-async function post<T>(path: string, body: unknown, signal: AbortSignal): Promise<T> {
-  const res = await fetch(path, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body), signal });
-  if (!res.ok) throw new Error((await res.json().catch(() => null))?.error ?? `The app's server answered ${res.status}.`);
-  return res.json() as Promise<T>;
-}
+type Compare = { alternatives: PlanAlternative[]; note?: string; basis: Record<string, FloorPlan> };
 
 /** Stage 5: the floor plan. Rooms with real walls, doors, windows, stairs and fixtures, one tab per floor. */
 export default function PlanStage({ onContinue, onGoToSketch }: { onContinue: () => void; onGoToSketch: () => void }) {
@@ -82,7 +75,6 @@ export default function PlanStage({ onContinue, onGoToSketch }: { onContinue: ()
   const [flash, setFlash] = useState<string>();
   const [drafting, setDrafting] = useState(false);
   const [focus, setFocus] = useState<{ at: Point; key: number } | null>(null);
-  const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string>();
   const [compare, setCompare] = useState<Compare | null>(null);
   const [comparing, setComparing] = useState(false);
@@ -92,10 +84,6 @@ export default function PlanStage({ onContinue, onGoToSketch }: { onContinue: ()
   const [editing3d, setEditing3d] = useState(false);
   const [showRoof, setShowRoof] = useState(true);
   const [walls3d, setWalls3d] = useState<WallsShown>("all");
-
-  // Only the latest request to Claude may land, and none once you've left the page.
-  const gate = useRef(createRequestGate()).current;
-  useEffect(() => () => gate.cancel(), [gate]);
 
   // Back on the drawing when a plan appears (after Undo, say). Start over keeps
   // the old plan until a new start is picked, so it isn't counted.
@@ -265,8 +253,6 @@ export default function PlanStage({ onContinue, onGoToSketch }: { onContinue: ()
 
   /** Back to the start choices. The plan stays until a new start is picked (and Undo brings it back after). */
   function startOver() {
-    gate.cancel();
-    setBusy(false);
     setNotes([]);
     setSelection([]);
     setLotMode(false);
@@ -275,28 +261,18 @@ export default function PlanStage({ onContinue, onGoToSketch }: { onContinue: ()
   }
 
   /** Three variations on the plan as it is now. The last ones come back if the plan hasn't changed since. */
-  async function showAlternatives(fresh = false) {
-    if (compare && compare.basis === plans && !fresh) {
+  function showAlternatives(again = false) {
+    if (compare && compare.basis === plans && !again) {
       setComparing(true);
       return;
     }
-    setBusy(true);
     setError(undefined);
-    let res;
-    try {
-      res = await ifCurrent(gate, (signal) => post<Omit<Compare, "basis">>("/api/plan/alternatives", { brief, plot, levels, basics, plans, fresh, skip: fresh ? compare?.alternatives.map((a) => a.title) : undefined }, signal));
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "Couldn't make alternatives.");
-      setBusy(false);
+    const res = suggestPlanAlternatives(plans, { brief, plot, levels, basics }, again ? compare?.alternatives.map((a) => a.title) : undefined);
+    if (res.alternatives.length === 0) {
+      setError(res.note ?? "There were no alternatives to show. Try adding a few more rooms first.");
       return;
     }
-    if (!res) return;
-    setBusy(false);
-    if (res.value.alternatives.length === 0) {
-      setError(res.value.note ?? "There were no alternatives to show. Try adding a few more rooms first.");
-      return;
-    }
-    setCompare({ ...res.value, basis: plans });
+    setCompare({ ...res, basis: plans });
     setComparing(true);
     window.scrollTo({ top: 0 });
   }
@@ -397,18 +373,15 @@ export default function PlanStage({ onContinue, onGoToSketch }: { onContinue: ()
         <PlanAlternativesView
           mine={plans}
           alternatives={compare.alternatives}
-          source={compare.source}
           note={compare.note}
           levels={levels}
           level={level}
           basics={basics}
-          busy={busy}
           onLevel={setLevelId}
           onUse={takeAlternative}
-          onAgain={() => void showAlternatives(true)}
+          onAgain={() => showAlternatives(true)}
           onClose={() => setComparing(false)}
         />
-        {busy && <Working text="Thinking up three more…" />}
         <Note text={error} />
       </div>
     );
@@ -434,7 +407,7 @@ export default function PlanStage({ onContinue, onGoToSketch }: { onContinue: ()
           <button className="btn" onClick={startOver} title="Choose Suggest a plan, Turn my sketch into a plan or Start blank again">
             Start over
           </button>
-          <button className="btn" onClick={() => void showAlternatives()} disabled={busy || !filled}>
+          <button className="btn" onClick={() => showAlternatives()} disabled={!filled}>
             Show me alternatives
           </button>
           <button className="btn-primary" onClick={onContinue}>
@@ -443,7 +416,6 @@ export default function PlanStage({ onContinue, onGoToSketch }: { onContinue: ()
         </div>
       </div>
 
-      {busy && <Working text="Thinking up three alternatives. With Claude this can take a minute…" />}
       <Note text={error} />
       {notes.map((n) => (
         <Note key={n} text={n} />

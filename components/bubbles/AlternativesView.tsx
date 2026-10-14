@@ -5,7 +5,7 @@ import type { BubbleDiagram, Level } from "@/lib/model/schema";
 import type { Alternative } from "@/lib/bubbles/alternatives";
 import type { Diagrams } from "@/lib/bubbles/arrange";
 import { emptyDiagram } from "@/lib/bubbles/shapes";
-import { Note, SourceBadge } from "@/components/brief/bits";
+import { Note } from "@/components/brief/bits";
 import LevelTabs from "./LevelTabs";
 
 const MiniSketch = dynamic(() => import("./MiniSketch"), {
@@ -36,12 +36,10 @@ function frameOf(diagrams: BubbleDiagram[]) {
 export default function AlternativesView({
   mine,
   alternatives,
-  source,
   note,
   message,
   levels,
   levelId,
-  busy,
   onLevel,
   onUse,
   onCopyRoom,
@@ -50,12 +48,10 @@ export default function AlternativesView({
 }: {
   mine: Diagrams;
   alternatives: Alternative[];
-  source: "ai" | "rules";
   note?: string;
   message?: string;
   levels: Level[];
   levelId: string;
-  busy: boolean;
   onLevel: (id: string) => void;
   onUse: (index: number, levelOnly: boolean) => void;
   onCopyRoom: (index: number, bubbleId: string) => void;
@@ -70,16 +66,13 @@ export default function AlternativesView({
     <div className="space-y-4">
       <div className="flex items-start justify-between gap-6">
         <div>
-          <div className="flex items-center gap-3">
-            <h2 className="text-xl font-semibold tracking-tight">{alternatives.length === 3 ? "Three alternatives" : "Alternatives"}</h2>
-            <SourceBadge source={source} aiLabel="Suggested by Claude" />
-          </div>
+          <h2 className="text-xl font-semibold tracking-tight">{alternatives.length === 3 ? "Three alternatives" : "Alternatives"}</h2>
           <p className="mt-1 text-sm text-muted">
             Use one as it is, or click a room in any of them to move your room to that spot. Your pen marks and notes are always kept.
           </p>
         </div>
         <div className="flex shrink-0 gap-2">
-          <button className="btn" onClick={onAgain} disabled={busy}>
+          <button className="btn" onClick={onAgain}>
             Show me different ones
           </button>
           <button className="btn-primary" onClick={onClose}>

@@ -3,7 +3,6 @@ import { DiscoveryAnswers, SCHEMA_VERSION, type ChosenRoom, type DesignBrief, ty
 import { createProject, migrateProject } from "@/lib/model/project";
 import { FLAT_PLOT_SEED, generatePlot } from "@/lib/land/generate";
 import { buildRuleBrief, briefTotals, missingEssentials, type BriefContext } from "@/lib/brief/rules";
-import { briefFromAi, type AiBrief } from "@/lib/brief/ai";
 import { levelIdsFor, levelsFor, nearestLevel, syncLevels } from "@/lib/brief/levels";
 import { GARAGE_SQFT, roomType, setTypeCount, sqftFromDims } from "@/lib/brief/rooms";
 
@@ -182,92 +181,6 @@ describe("rule-based brief", () => {
     expect(t.rooms).toBe(200);
     expect(t.heated).toBe(230);
     expect(t.garage).toBe(GARAGE_SQFT[2]);
-  });
-});
-
-describe("merging Claude's brief", () => {
-  const rooms = [
-    room("kitchen", { lengthIn: 180, widthIn: 144, description: "Island" }),
-    room("dining"),
-    room("bedroom", { levelId: "floor-1" }),
-    room("media"),
-    room("bathroom"),
-  ];
-  const c = ctx({ rooms, floorsAbove: 2, floorsBelow: 1, connections: [{ a: rooms[1].id, b: rooms[2].id, strength: "avoid" }] });
-  const draft = buildRuleBrief(c);
-  const ai = (over: Partial<AiBrief> = {}): AiBrief => ({
-    summary: "A calm house.",
-    rooms: rooms.map((r) => ({ id: r.id, sqft: 200, level: "floor-2", notes: "From Claude" })),
-    connections: [],
-    openKitchen: false,
-    vibe: ["Calm", "calm ", "Warm"],
-    priorities: ["Quiet bedrooms"],
-    accessibility: [],
-    ...over,
-  });
-
-  it("keeps the user's rooms, sizes, floors and descriptions", () => {
-    const b = briefFromAi(ai(), draft, rooms);
-    expectConsistent(b);
-    expect(b.source).toBe("ai");
-    expect(b.rooms.map((r) => r.id)).toEqual(rooms.map((r) => r.id));
-    expect(b.rooms.map((r) => r.name)).toEqual(draft.rooms.map((r) => r.name));
-    expect(b.rooms[0]).toMatchObject({ targetSqFt: 180, notes: "Island" });
-    expect(b.rooms[2].levelId).toBe("floor-1");
-    // Rooms left to Claude take its size, floor and note.
-    expect(b.rooms[1]).toMatchObject({ targetSqFt: 200, levelId: "floor-2", notes: "From Claude" });
-    expect(b.vibe).toEqual(["Calm", "Warm"]);
-    expect(b.openKitchen).toBe(false);
-    expect(b.summary).toBe("A calm house.");
-  });
-
-  it("ignores rooms Claude made up, floors that don't exist and silly sizes", () => {
-    const answer = ai({
-      rooms: [
-        { id: rooms[1].id, sqft: 9000, level: "floor-5", notes: "" },
-        { id: rooms[3].id, sqft: 1, level: "basement-1", notes: "" },
-        { id: "invented", sqft: 300, level: "floor-1", notes: "A spa" },
-      ],
-    });
-    const b = briefFromAi(answer, draft, rooms);
-    expectConsistent(b);
-    expect(b.rooms).toHaveLength(rooms.length);
-    expect(b.rooms[1].targetSqFt).toBe(roomType("dining").max);
-    expect(b.rooms[1].levelId).toBe(draft.rooms[1].levelId);
-    expect(b.rooms[3]).toMatchObject({ targetSqFt: roomType("media").min, levelId: "basement-1" });
-    // Rooms Claude skipped keep the draft's values.
-    expect(b.rooms[4]).toEqual(draft.rooms[4]);
-  });
-
-  it("keeps a garage sized for its number of cars", () => {
-    const withGarage = [...rooms, room("garage")];
-    const d = buildRuleBrief(ctx({ rooms: withGarage, garageCars: 3 }));
-    const b = briefFromAi(ai({ rooms: [{ id: withGarage.at(-1)!.id, sqft: 480, level: "floor-1", notes: "" }] }), d, withGarage);
-    expect(b.rooms.at(-1)?.targetSqFt).toBe(GARAGE_SQFT[3]);
-  });
-
-  it("adds Claude's connections on top of the user's, never replacing them", () => {
-    const [kitchen, dining, bedroom, media] = rooms;
-    const answer = ai({
-      connections: [
-        { a: bedroom.id, b: dining.id, strength: "must" },
-        { a: media.id, b: bedroom.id, strength: "avoid" },
-        { a: media.id, b: "nowhere", strength: "nice" },
-        { a: kitchen.id, b: kitchen.id, strength: "must" },
-      ],
-    });
-    const b = briefFromAi(answer, draft, rooms);
-    expectConsistent(b);
-    expect(b.adjacencies.slice(0, draft.adjacencies.length)).toEqual(draft.adjacencies);
-    expect(b.adjacencies[0]).toEqual({ a: dining.id, b: bedroom.id, strength: "avoid" });
-    expect(b.adjacencies.slice(draft.adjacencies.length)).toEqual([{ a: media.id, b: bedroom.id, strength: "avoid" }]);
-  });
-
-  it("makes sure missing essentials are mentioned", () => {
-    const noBath = rooms.filter((r) => r.type !== "bathroom");
-    const d = buildRuleBrief(ctx({ rooms: noBath }));
-    expect(briefFromAi(ai(), d, noBath).summary).toBe("A calm house. Heads up: there are bedrooms but no full bathroom.");
-    expect(briefFromAi(ai({ summary: "Note: no bathroom yet." }), d, noBath).summary).toBe("Note: no bathroom yet.");
   });
 });
 
