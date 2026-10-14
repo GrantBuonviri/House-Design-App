@@ -26,7 +26,10 @@ import { drawStairs, prism } from "./stairs";
 export type PickKind = "room" | "opening" | "stairs" | "fixture";
 export type Pick = { kind: PickKind; id: string; levelId: string };
 
-export type Layer = "walls" | "floors" | "ceilings" | "openings" | "stairs" | "fixtures" | "roof" | "foundation";
+export type Layer = "walls" | "footprints" | "floors" | "ceilings" | "openings" | "stairs" | "fixtures" | "roof" | "foundation";
+
+/** Which walls a part belongs to: outside (exterior) walls or inside ones. */
+export type WallGroup = "outside" | "inside";
 
 export type Part = {
   key: string;
@@ -36,6 +39,12 @@ export type Part = {
   pick?: Pick;
   mesh: MeshData;
   glass?: boolean;
+  /**
+   * Walls, their footprint strips, and the doors and windows in them say
+   * which walls they belong to, so the 3D view can hide a group of walls
+   * along with everything in them.
+   */
+  wall?: WallGroup;
 };
 
 export type HouseContext = {
@@ -45,6 +54,9 @@ export type HouseContext = {
   site: Site;
   frame: Frame;
 };
+
+const solidColor = (c: [number, number, number]) => ({ left: c, right: c, ends: c, top: c });
+const FOOTPRINT_COLOR = { outside: solidColor(COLORS.footprintOutside), inside: solidColor(COLORS.footprintInside) };
 
 /** Floor structure under the lowest floor (a slab or the floor over a crawlspace). */
 const GROUND_SLAB_IN = 8;
@@ -60,14 +72,21 @@ function stack(levels: Level[], heights: LevelHeights) {
   return [...levels].sort((a, b) => heights[a.id].floorIn - heights[b.id].floorIn);
 }
 
-/** The thickness of the wall a door or window sits in. */
-function hostThickness(pieces: WallPiece[], og: OpeningGeometry): number {
-  for (const p of pieces) {
+/** The wall piece a door or window sits in. */
+function hostPiece(pieces: WallPiece[], og: OpeningGeometry): WallPiece | undefined {
+  return pieces.find((p) => {
     const pr = project(og.center, p.a, p.b);
-    if (pr.d < 1 && pr.t > 0.01 && pr.t < pr.length - 0.01) return p.open ? INTERIOR_WALL_IN : p.thicknessIn;
-  }
-  return INTERIOR_WALL_IN;
+    return pr.d < 1 && pr.t > 0.01 && pr.t < pr.length - 0.01;
+  });
 }
+
+/** The thickness of the wall a door or window sits in. */
+function hostThickness(host: WallPiece | undefined): number {
+  return host && !host.open ? host.thicknessIn : INTERIOR_WALL_IN;
+}
+
+/** How thick the wall footprint strips are (a little over the floor, so they show). */
+export const FOOTPRINT_IN = 0.75;
 
 /** Everything for one floor. Rebuilt only when that floor's plan (or its neighbors') changes. */
 export function buildLevel(
@@ -92,7 +111,9 @@ export function buildLevel(
   // ---- Walls ----
   const pieces = wallPieces(plan, exteriorIn);
   const ogs = openingGeometries(plan);
-  const walls = new MeshBuilder();
+  const walls = { outside: new MeshBuilder(), inside: new MeshBuilder() };
+  // Where each wall stands on the floor: shown in its place when the wall is hidden.
+  const prints = { outside: new MeshBuilder(), inside: new MeshBuilder() };
   const found = new MeshBuilder();
   for (const p of pieces) {
     if (p.open) continue;
@@ -107,19 +128,27 @@ export function buildLevel(
       const o = collinearOverlap(p.a, p.b, og.a, og.b, tol);
       if (o) cuts.push({ t0: o[0], t1: o[1], og });
     }
+    const group: WallGroup = p.exterior ? "outside" : "inside";
+    // Run on past a corner by half the wall's thickness, for a clean corner.
+    const ends = (t0: number, t1: number, capA: boolean, capB: boolean) => [
+      lerp(p.a, p.b, (t0 - (capA ? p.thicknessIn / 2 : 0)) / len),
+      lerp(p.a, p.b, (t1 + (capB ? p.thicknessIn / 2 : 0)) / len),
+    ];
     const piece = (t0: number, t1: number, z0: number, z1: number, capA: boolean, capB: boolean) => {
-      // Run on past a corner by half the wall's thickness, for a clean corner.
-      const ext0 = capA ? p.thicknessIn / 2 : 0;
-      const ext1 = capB ? p.thicknessIn / 2 : 0;
-      const a = lerp(p.a, p.b, (t0 - ext0) / len);
-      const b = lerp(p.a, p.b, (t1 + ext1) / len);
-      walls.box(f, a, b, p.thicknessIn, z0, z1, color);
+      const [a, b] = ends(t0, t1, capA, capB);
+      walls[group].box(f, a, b, p.thicknessIn, z0, z1, color);
     };
     for (const [t0, t1] of subtractIntervals(len, cuts.map((c) => [c.t0, c.t1]))) piece(t0, t1, floorIn, upTo, t0 < 0.01, t1 > len - 0.01);
     for (const c of cuts) {
       const { bottom, top } = openingSpan(c.og, ceilingIn);
       if (bottom > 0.5) piece(c.t0, c.t1, floorIn, floorIn + bottom, false, false);
       if (floorIn + top < upTo - 0.5) piece(c.t0, c.t1, floorIn + top, upTo, false, false);
+    }
+    // The footprint: everywhere the wall meets the floor, so only doorways (openings down to the floor) leave gaps.
+    const doorways = cuts.filter((c) => openingSpan(c.og, ceilingIn).bottom <= 0.5).map((c): [number, number] => [c.t0, c.t1]);
+    for (const [t0, t1] of subtractIntervals(len, doorways)) {
+      const [a, b] = ends(t0, t1, t0 < 0.01, t1 > len - 0.01);
+      prints[group].box(f, a, b, p.thicknessIn, floorIn, floorIn + FOOTPRINT_IN, FOOTPRINT_COLOR[group]);
     }
     // Foundation: from below the ground up to this floor, where nothing is underneath.
     if (p.exterior && floorIn <= 1 && !covers(belowPolys, mid, 2)) {
@@ -135,17 +164,23 @@ export function buildLevel(
       }
     }
   }
-  if (!walls.empty) parts.push({ key: `${L}:walls`, levelId: L, layer: "walls", mesh: walls.build() });
+  for (const g of ["outside", "inside"] as const) {
+    if (!walls[g].empty) parts.push({ key: `${L}:walls:${g}`, levelId: L, layer: "walls", wall: g, mesh: walls[g].build() });
+    if (!prints[g].empty) parts.push({ key: `${L}:footprints:${g}`, levelId: L, layer: "footprints", wall: g, mesh: prints[g].build() });
+  }
   if (!found.empty) parts.push({ key: `${L}:foundation`, levelId: L, layer: "foundation", mesh: found.build() });
 
   // ---- Doors and windows ----
   for (const og of ogs) {
     const solid = new MeshBuilder();
     const glass = new MeshBuilder();
-    drawOpening(solid, glass, f, og, hostThickness(pieces, og), floorIn, ceilingIn);
+    const host = hostPiece(pieces, og);
+    drawOpening(solid, glass, f, og, hostThickness(host), floorIn, ceilingIn);
     const pick: Pick = { kind: "opening", id: og.opening.id, levelId: L };
-    if (!solid.empty) parts.push({ key: `${L}:o:${og.opening.id}`, levelId: L, layer: "openings", pick, mesh: solid.build() });
-    if (!glass.empty) parts.push({ key: `${L}:og:${og.opening.id}`, levelId: L, layer: "openings", pick, mesh: glass.build(), glass: true });
+    // Doors and windows hide with the wall they're in (an opening in no wall counts as inside).
+    const wall: WallGroup = host?.exterior ? "outside" : "inside";
+    if (!solid.empty) parts.push({ key: `${L}:o:${og.opening.id}`, levelId: L, layer: "openings", pick, wall, mesh: solid.build() });
+    if (!glass.empty) parts.push({ key: `${L}:og:${og.opening.id}`, levelId: L, layer: "openings", pick, wall, mesh: glass.build(), glass: true });
   }
 
   // ---- Floors ----

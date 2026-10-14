@@ -2,14 +2,15 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Canvas, useFrame, useThree, type ThreeEvent } from "@react-three/fiber";
-import { Line, MapControls, OrbitControls, OrthographicCamera, PerspectiveCamera } from "@react-three/drei";
+import { Line, OrbitControls, PerspectiveCamera } from "@react-three/drei";
 import * as THREE from "three";
 import type { FloorPlan, House3D, Level, PlanBasics, Plot, Point } from "@/lib/model/schema";
 import { buildLevel, buildRoofs, dugOut, houseBounds, type HouseContext, type Part, type Pick } from "@/lib/house3d/build";
+import { isLookingDown, orbitOf, orbitPosition, topViewOrbit, tweenOrbit, type Orbit } from "@/lib/house3d/camera";
 import { levelHeights, type LevelHeights } from "@/lib/house3d/levels";
 import { IN_PER_UNIT, toScene, type Frame } from "@/lib/house3d/mesh";
 import { planBounds, siteFor, type Site } from "@/lib/house3d/site";
-import { EQUINOX, SUMMER, sunDirection } from "@/lib/house3d/sun";
+import { EQUINOX, sunDirection } from "@/lib/house3d/sun";
 import { groundMesh, lineOnGround, waterIn3D } from "@/lib/house3d/terrain";
 import { landView } from "@/lib/land/view";
 import { roadLine } from "@/lib/land/mesh";
@@ -21,10 +22,10 @@ import { roomSqft } from "@/lib/plan/measure";
 import type { PlanSelection } from "@/components/plan/types";
 import { concatMeshes, mergeParts, toGeometry } from "./geometry";
 
-export type View3DMode = "birdseye" | "3d";
+/** Which walls the 3D view shows. Hidden walls leave a strip on the floor where they stood. */
+export type WallsShown = "all" | "outside" | "none";
 
 type Props = {
-  mode: View3DMode;
   plans: Plans;
   /** Lowest first. */
   levels: Level[];
@@ -33,8 +34,14 @@ type Props = {
   plot: Plot | null;
   offset: Point;
   levelId: string;
-  /** Show only up to the current floor (always, from above). */
+  /** Show only up to the current floor. */
   cutAway: boolean;
+  /** Show the roofs at all. */
+  roof: boolean;
+  walls: WallsShown;
+  /** Clicking and dragging select and move things only while editing; otherwise dragging just turns the view. */
+  editing: boolean;
+  onEditing: (on: boolean) => void;
   selection: PlanSelection;
   snap: boolean;
   height: number;
@@ -44,6 +51,7 @@ type Props = {
 
 const SKY = "#dfe9f2";
 const ACCENT = "#2f6b4f";
+const FOV = 40;
 
 export const solidMaterial = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.9, metalness: 0 });
 export const glassMaterial = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.15, metalness: 0, transparent: true, opacity: 0.35, depthWrite: false });
@@ -57,14 +65,36 @@ const highlightMaterial = new THREE.MeshBasicMaterial({
   polygonOffsetUnits: -4,
 });
 
+/** A floor's parts split the way they show and hide: walls by group, with their doors and windows, and the strips left when they're hidden. */
+type Groups = { base: Part[]; outside: Part[]; inside: Part[]; outsidePrints: Part[]; insidePrints: Part[] };
+const groupCache = new WeakMap<Part[], Groups>();
+function groupsOf(parts: Part[]): Groups {
+  let g = groupCache.get(parts);
+  if (!g) {
+    const prints = (w: string) => parts.filter((p) => p.wall === w && p.layer === "footprints");
+    const walls = (w: string) => parts.filter((p) => p.wall === w && p.layer !== "footprints");
+    g = { base: parts.filter((p) => !p.wall), outside: walls("outside"), inside: walls("inside"), outsidePrints: prints("outside"), insidePrints: prints("inside") };
+    groupCache.set(parts, g);
+  }
+  return g;
+}
+
+function shownGroups(walls: WallsShown): Record<keyof Groups, boolean> {
+  return { base: true, outside: walls !== "none", inside: walls === "all", outsidePrints: walls === "none", insidePrints: walls !== "all" };
+}
+
 /**
- * The house in 3D (or from straight above), built from the floor plan and
- * standing on the land. Click a room's floor, a door, a window, stairs or a
- * fixture to select it, and drag it to move it; the 2D plan changes with it.
+ * The house in 3D, built from the floor plan and standing on the land. Drag
+ * to turn the view. In edit mode, click a room's floor, a door, a window,
+ * stairs or a fixture to select it, and drag it to move it; the 2D plan
+ * changes with it. Looking straight down shows the current floor from above
+ * with its room names, like a plan.
  */
 export default function House3DView(props: Props) {
-  const { mode, plans, levels, basics, house3d, plot, offset, levelId, height } = props;
-  const cutAway = props.cutAway || mode === "birdseye";
+  const { plans, levels, basics, house3d, plot, offset, levelId, height, editing, walls } = props;
+  const [lookingDown, setLookingDown] = useState(false);
+  const [topRequest, setTopRequest] = useState(0);
+  const cutAway = props.cutAway || lookingDown;
 
   // While something is being dragged, the ground and the house's place on it wait until it's let go.
   const [dragging, setDragging] = useState(false);
@@ -101,7 +131,7 @@ export default function House3DView(props: Props) {
   const roofs = useMemo(() => buildRoofs(plans, ctx), [plans, ctx]);
   const [bounds] = useState(() => houseBounds(plans, ctx, roofs.topIn));
 
-  // Room names and sizes, shown from above.
+  // Room names and sizes, shown when looking straight down.
   const labelPlan = planOf(plans, levelId);
   const labelFloor = heights[levelId]?.floorIn ?? 0;
   const labels = useMemo(
@@ -112,38 +142,48 @@ export default function House3DView(props: Props) {
 
   const order = useMemo(() => Object.fromEntries(levels.map((l, i) => [l.id, i])), [levels]);
   const showUpTo = cutAway ? (order[levelId] ?? levels.length) : Infinity;
+  const shown = shownGroups(walls);
 
   const center: [number, number, number] = bounds
     ? [(bounds.min[0] + bounds.max[0]) / 2, Math.max(0, (bounds.min[1] + bounds.max[1]) / 3), (bounds.min[2] + bounds.max[2]) / 2]
     : [0, 4, 0];
   const span = bounds ? Math.max(bounds.max[0] - bounds.min[0], bounds.max[2] - bounds.min[2], 30) : 60;
 
+  const visibleParts = useMemo(
+    () =>
+      levels.flatMap((l, i) => {
+        if (i > showUpTo) return [];
+        const g = groupsOf(levelParts[l.id]);
+        return (Object.keys(g) as (keyof Groups)[]).flatMap((k) => (shown[k] ? g[k] : []));
+      }),
+    [levels, levelParts, showUpTo, shown.outside, shown.inside], // eslint-disable-line react-hooks/exhaustive-deps
+  );
+
+  const drag = { ...props, frame, heights, onDragging: setDragging };
   return (
-    <div style={{ height }} className="relative w-full overflow-hidden rounded-lg border border-line" data-testid="house-3d">
+    <div style={{ height }} className="relative w-full overflow-hidden rounded-lg border border-line" data-testid="house-3d" data-editing={editing ? "on" : "off"} data-looking-down={lookingDown ? "on" : "off"}>
       <Canvas shadows frameloop="demand" dpr={[1, 2]} gl={{ antialias: true, preserveDrawingBuffer: true }}>
         <color attach="background" args={[SKY]} />
         <fog attach="fog" args={[SKY, span * 6, span * 18]} />
-        {mode === "3d" ? (
-          <>
-            <PerspectiveCamera makeDefault fov={40} near={0.5} far={4000} position={[center[0] + span * 1.05, span * 0.85, center[2] + span * 1.25]} />
-            <OrbitControls makeDefault target={center} maxPolarAngle={Math.PI * 0.495} minDistance={6} maxDistance={span * 10} enableDamping={false} />
-          </>
-        ) : (
-          <TopCamera center={center} span={span} height={height} />
-        )}
-        {/* From above, a high summer sun keeps shadows short; in 3D, a mid-afternoon sun shows the shape. */}
-        <Lights span={span} day={mode === "birdseye" ? SUMMER : EQUINOX} hour={mode === "birdseye" ? 12.5 : 15} />
-        <Ground site={site} frame={frame} plans={settled} ctx={ctx} heights={heights} onEmpty={() => props.onSelect(levelId, [])} />
-        {levels.map((l, i) => (i <= showUpTo ? <LevelMeshes key={l.id} parts={levelParts[l.id]} {...props} frame={frame} heights={heights} onDragging={setDragging} /> : null))}
-        {levels.map((l, i) =>
-          showUpTo === Infinity || i < showUpTo ? (
-            <LevelMeshes key={`roof-${l.id}`} parts={roofs.parts.filter((p) => p.levelId === l.id)} {...props} frame={frame} heights={heights} onDragging={setDragging} />
-          ) : null,
-        )}
-        <Highlight parts={levels.flatMap((l, i) => (i <= showUpTo ? levelParts[l.id] : []))} selection={props.selection} />
-        {mode === "birdseye" && <LabelPlacer labels={labels} refs={labelRefs} />}
+        <PerspectiveCamera makeDefault fov={FOV} near={0.5} far={4000} position={[center[0] + span * 1.05, span * 0.85, center[2] + span * 1.25]} />
+        <OrbitControls makeDefault target={center} minPolarAngle={0} maxPolarAngle={Math.PI * 0.495} minDistance={6} maxDistance={span * 10} enableDamping={false} />
+        <CameraRig topRequest={topRequest} goal={topViewOrbit(center, span, FOV)} onLookingDown={setLookingDown} />
+        {/* A mid-afternoon sun shows the shape. */}
+        <Lights span={span} day={EQUINOX} hour={15} />
+        <Ground site={site} frame={frame} plans={settled} ctx={ctx} heights={heights} onEmpty={editing ? () => props.onSelect(levelId, []) : undefined} />
+        {levels.map((l, i) => {
+          if (i > showUpTo) return null;
+          const g = groupsOf(levelParts[l.id]);
+          return (Object.keys(g) as (keyof Groups)[]).map((k) => <LevelMeshes key={`${l.id}:${k}`} parts={g[k]} visible={shown[k]} {...drag} />);
+        })}
+        {props.roof &&
+          levels.map((l, i) =>
+            showUpTo === Infinity || i < showUpTo ? <LevelMeshes key={`roof-${l.id}`} parts={roofs.parts.filter((p) => p.levelId === l.id)} visible {...drag} /> : null,
+          )}
+        <Highlight parts={visibleParts} selection={props.selection} />
+        {lookingDown && <LabelPlacer labels={labels} refs={labelRefs} />}
       </Canvas>
-      {mode === "birdseye" &&
+      {lookingDown &&
         labels.map((l, i) => (
           <div
             key={l.id}
@@ -152,34 +192,86 @@ export default function House3DView(props: Props) {
             }}
             className="pointer-events-none absolute top-0 left-0 rounded bg-white/80 px-1.5 py-0.5 text-center text-[11px] leading-tight whitespace-nowrap text-ink shadow-sm"
             style={{ visibility: "hidden" }}
+            data-testid="room-label"
           >
             {l.name}
             <span className="block text-[10px] text-muted">{l.sqft} sq ft</span>
           </div>
         ))}
-      {roofs.fellBack && (
+      <div className="absolute top-2 right-2 flex items-center gap-2">
+        {editing && <span className="rounded-full bg-accent px-2 py-0.5 text-xs font-semibold text-white shadow-sm">Editing</span>}
+        <button
+          className="rounded-md border border-line bg-white/95 px-3 py-1.5 text-sm font-medium shadow-sm hover:bg-white"
+          title="Look straight down on the house, north at the top"
+          onClick={() => setTopRequest((n) => n + 1)}
+        >
+          Top view
+        </button>
+        <button
+          className={`rounded-md px-3 py-1.5 text-sm font-semibold shadow-sm ${editing ? "bg-ink text-white hover:bg-stone-700" : "bg-accent text-white hover:opacity-90"}`}
+          aria-pressed={editing}
+          onClick={() => props.onEditing(!editing)}
+        >
+          {editing ? "Done editing" : "Edit"}
+        </button>
+      </div>
+      {roofs.fellBack && props.roof && (
         <p className="absolute bottom-2 left-2 rounded bg-white/90 px-2 py-1 text-xs text-muted">This outline was too tricky for a sloped roof, so part of it has a flat one.</p>
       )}
     </div>
   );
 }
 
-/** Straight down from above, north at the top of the screen. */
-function TopCamera({ center, span, height }: { center: [number, number, number]; span: number; height: number }) {
-  const ref = useRef<THREE.OrthographicCamera>(null);
+/** The bits of the orbit controls the camera rig uses. */
+type OrbitControlsImpl = THREE.EventDispatcher<{ change: object; start: object }> & { target: THREE.Vector3; getPolarAngle(): number; update(): void };
+
+/**
+ * Watches the camera's tilt (to tell when it's looking straight down) and
+ * glides it to the Top view when asked. Any drag of the view stops the glide.
+ */
+function CameraRig({ topRequest, goal, onLookingDown }: { topRequest: number; goal: Orbit; onLookingDown: (on: boolean) => void }) {
+  const { camera, controls, invalidate } = useThree();
+  const glide = useRef<{ from: Orbit; to: Orbit; start: number } | null>(null);
+  const goalRef = useRef(goal);
+  goalRef.current = goal;
+
   useEffect(() => {
-    const cam = ref.current;
-    if (!cam) return;
-    cam.up.set(0, 0, -1);
-    cam.lookAt(center[0], 0, center[2]);
-    cam.updateProjectionMatrix();
-  }, [center]);
-  return (
-    <>
-      <OrthographicCamera ref={ref} makeDefault position={[center[0], 400, center[2]]} zoom={height / (span * 1.35)} near={1} far={2000} up={[0, 0, -1]} />
-      <MapControls makeDefault target={[center[0], 0, center[2]]} enableRotate={false} screenSpacePanning minZoom={1} maxZoom={200} />
-    </>
-  );
+    const c = controls as unknown as OrbitControlsImpl | null;
+    if (!c) return;
+    const check = () => onLookingDown(isLookingDown(c.getPolarAngle()));
+    const stop = () => {
+      glide.current = null;
+    };
+    check();
+    c.addEventListener("change", check);
+    c.addEventListener("start", stop);
+    return () => {
+      c.removeEventListener("change", check);
+      c.removeEventListener("start", stop);
+    };
+  }, [controls, onLookingDown]);
+
+  useEffect(() => {
+    const c = controls as unknown as OrbitControlsImpl | null;
+    if (!topRequest || !c) return;
+    const from = orbitOf(camera.position.toArray() as [number, number, number], c.target.toArray() as [number, number, number]);
+    glide.current = { from, to: goalRef.current, start: performance.now() };
+    invalidate();
+  }, [topRequest]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  useFrame(() => {
+    const g = glide.current;
+    const c = controls as unknown as OrbitControlsImpl | null;
+    if (!g || !c) return;
+    const t = (performance.now() - g.start) / 700;
+    const o = tweenOrbit(g.from, g.to, t);
+    c.target.set(...o.target);
+    camera.position.set(...orbitPosition(o));
+    c.update();
+    if (t >= 1) glide.current = null;
+    else invalidate();
+  });
+  return null;
 }
 
 function Lights({ span, day, hour }: { span: number; day: number; hour: number }) {
@@ -278,20 +370,28 @@ export function Ground({ site, frame, plans, ctx, heights, onEmpty }: { site: Si
 
 const groundMaterial = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 1, metalness: 0 });
 
-type LevelProps = Props & { parts: Part[]; frame: Frame; heights: LevelHeights; onDragging: (on: boolean) => void };
+type DragProps = Props & { frame: Frame; heights: LevelHeights; onDragging: (on: boolean) => void };
+type LevelProps = DragProps & { parts: Part[]; visible: boolean };
 
-/** One floor's parts as a few big meshes (solid, glass), which can be clicked and dragged. */
+/**
+ * One group of a floor's parts as a few big meshes (solid, glass), which can
+ * be clicked and dragged in edit mode. Stays mounted while hidden, so showing
+ * it again doesn't rebuild it.
+ */
 function LevelMeshes(props: LevelProps) {
-  const { parts } = props;
+  const { parts, visible, editing } = props;
   const solid = useMemo(() => mergeParts(parts.filter((p) => !p.glass && p.layer !== "ceilings")), [parts]);
   const glass = useMemo(() => mergeParts(parts.filter((p) => p.glass)), [parts]);
   useEffect(() => () => solid?.geometry.dispose(), [solid]);
   useEffect(() => () => glass?.geometry.dispose(), [glass]);
   const handlers = useDrag(props);
+  if (!visible) return null;
+  // Out of edit mode the house can't be clicked, so every drag turns the view.
+  const on = (picks: (Pick | undefined)[]) => (editing ? handlers(picks) : {});
   return (
     <>
-      {solid && <mesh geometry={solid.geometry} material={solidMaterial} castShadow receiveShadow {...handlers(solid.picks)} />}
-      {glass && <mesh geometry={glass.geometry} material={glassMaterial} {...handlers(glass.picks)} />}
+      {solid && <mesh geometry={solid.geometry} material={solidMaterial} castShadow receiveShadow {...on(solid.picks)} />}
+      {glass && <mesh geometry={glass.geometry} material={glassMaterial} {...on(glass.picks)} />}
     </>
   );
 }
@@ -340,7 +440,7 @@ type Session = {
  * their floor (snapping to other rooms' corners and the 6" grid); doors and
  * windows slide along walls and hop to the nearest wall.
  */
-function useDrag(props: LevelProps) {
+function useDrag(props: DragProps) {
   const { camera, gl, controls, invalidate } = useThree();
   const session = useRef<Session | null>(null);
   const latest = useRef(props);

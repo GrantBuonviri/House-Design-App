@@ -248,9 +248,9 @@ export default function Walkthrough({ project, onClose }: { project: Project; on
   );
 }
 
-/** The whole house, ceilings included, as one solid mesh and one glass mesh. */
+/** The whole house, ceilings included, as one solid mesh and one glass mesh. Walls are always up, so no footprint strips. */
 function HouseMeshes({ parts }: { parts: ReturnType<typeof buildHouse>["parts"] }) {
-  const solid = useMemo(() => mergeParts(parts.filter((p) => !p.glass)), [parts]);
+  const solid = useMemo(() => mergeParts(parts.filter((p) => !p.glass && p.layer !== "footprints")), [parts]);
   const glass = useMemo(() => mergeParts(parts.filter((p) => p.glass)), [parts]);
   useEffect(() => () => solid?.geometry.dispose(), [solid]);
   useEffect(() => () => glass?.geometry.dispose(), [glass]);

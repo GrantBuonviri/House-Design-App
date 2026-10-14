@@ -27,7 +27,7 @@ import PlanAlternativesView from "./PlanAlternativesView";
 import PlanChecks from "./PlanChecks";
 import PlanSidePanel from "./PlanSidePanel";
 import House3DPanel from "@/components/house3d/House3DPanel";
-import type { View3DMode } from "@/components/house3d/House3DView";
+import type { WallsShown } from "@/components/house3d/House3DView";
 import { PLAN_TOOLS, type PlanSelection, type PlanTool } from "./types";
 
 const PlanCanvas = dynamic(() => import("./PlanCanvas"), {
@@ -42,11 +42,10 @@ const House3DView = dynamic(() => import("@/components/house3d/House3DView"), {
 
 const CANVAS_HEIGHT = 640;
 
-type Display = "plan" | View3DMode;
+type Display = "plan" | "3d";
 
 const DISPLAYS: { id: Display; label: string; hint: string }[] = [
   { id: "plan", label: "2D plan", hint: "The floor plan editor" },
-  { id: "birdseye", label: "Bird's-eye", hint: "A rendered view of the current floor from straight above" },
   { id: "3d", label: "3D", hint: "The whole house on your land" },
 ];
 const FT = 12;
@@ -89,6 +88,10 @@ export default function PlanStage({ onContinue, onGoToSketch }: { onContinue: ()
   const [comparing, setComparing] = useState(false);
   const [display, setDisplay] = useState<Display>("plan");
   const [cutAway, setCutAway] = useState(false);
+  // 3D view settings, just for looking (not saved).
+  const [editing3d, setEditing3d] = useState(false);
+  const [showRoof, setShowRoof] = useState(true);
+  const [walls3d, setWalls3d] = useState<WallsShown>("all");
 
   // Only the latest request to Claude may land, and none once you've left the page.
   const gate = useRef(createRequestGate()).current;
@@ -193,7 +196,9 @@ export default function PlanStage({ onContinue, onGoToSketch }: { onContinue: ()
     function onKey(e: KeyboardEvent) {
       const t = e.target as HTMLElement;
       if (e.metaKey || e.ctrlKey || e.altKey || t.closest("input, textarea, select, [contenteditable]")) return;
-      const removable = sel.filter((s) => s.kind !== "edge");
+      // In 3D, nothing can be deleted or moved outside edit mode.
+      const locked = display === "3d" && !editing3d;
+      const removable = locked ? [] : sel.filter((s) => s.kind !== "edge");
       if ((e.key === "Delete" || e.key === "Backspace") && removable.length) {
         e.preventDefault();
         setLevelPlan(removeMany(plan, removable.map((s) => s.id)));
@@ -201,7 +206,7 @@ export default function PlanStage({ onContinue, onGoToSketch }: { onContinue: ()
         return;
       }
       const nudge = { ArrowLeft: [-1, 0], ArrowRight: [1, 0], ArrowUp: [0, -1], ArrowDown: [0, 1] }[e.key];
-      const movable = sel.filter((s) => s.kind === "room" || s.kind === "wall" || s.kind === "stairs" || s.kind === "fixture");
+      const movable = locked ? [] : sel.filter((s) => s.kind === "room" || s.kind === "wall" || s.kind === "stairs" || s.kind === "fixture");
       if (nudge && movable.length) {
         e.preventDefault();
         const step = e.shiftKey ? 12 : 1;
@@ -223,7 +228,7 @@ export default function PlanStage({ onContinue, onGoToSketch }: { onContinue: ()
     }
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [choosing, editingBasics, comparing, basics, sel, plan, drafting, lotOn, setLevelPlan, display]);
+  }, [choosing, editingBasics, comparing, basics, sel, plan, drafting, lotOn, setLevelPlan, display, editing3d]);
 
   /** The sketch as a plan, plus hallways, closets, windows and doors from the built-in rules. */
   function suggest() {
@@ -317,6 +322,8 @@ export default function PlanStage({ onContinue, onGoToSketch }: { onContinue: ()
   function pickWarning(w: PlanWarning) {
     setLevelId(w.levelId);
     setSelection(w.roomIds.map((id) => ({ kind: "room" as const, id })));
+    // Picking a warning in 3D selects its rooms, which needs edit mode.
+    if (display === "3d" && w.roomIds.length) setEditing3d(true);
     setTool("select");
     setLotMode(false);
     if (w.at) setFocus({ at: w.at, key: Date.now() });
@@ -461,6 +468,11 @@ export default function PlanStage({ onContinue, onGoToSketch }: { onContinue: ()
               aria-selected={display === d.id}
               title={d.hint}
               onClick={() => {
+                if (d.id !== display) {
+                  // 3D always opens out of edit mode, with nothing selected.
+                  setEditing3d(false);
+                  if (d.id === "3d") setSelection([]);
+                }
                 setDisplay(d.id);
                 setTool("select");
                 setLotMode(false);
@@ -477,8 +489,6 @@ export default function PlanStage({ onContinue, onGoToSketch }: { onContinue: ()
         <div className="grid grid-cols-[1fr_260px] items-start gap-3">
           <div className="min-w-0">
             <House3DView
-              key={display}
-              mode={display}
               plans={plans}
               levels={levels}
               basics={basics}
@@ -487,6 +497,13 @@ export default function PlanStage({ onContinue, onGoToSketch }: { onContinue: ()
               offset={offset}
               levelId={level.id}
               cutAway={cutAway}
+              roof={showRoof}
+              walls={walls3d}
+              editing={editing3d}
+              onEditing={(on) => {
+                setEditing3d(on);
+                if (!on) setSelection([]);
+              }}
               selection={sel}
               snap={snap}
               height={CANVAS_HEIGHT}
@@ -497,17 +514,23 @@ export default function PlanStage({ onContinue, onGoToSketch }: { onContinue: ()
               onChange={(id, pl, coalesce) => setPlans((ps) => ({ ...ps, [id]: pl }), coalesce)}
             />
             <p className="mt-2 text-xs text-muted">
-              Changes here change the 2D plan too, and Undo works the same. Delete removes what&apos;s selected and the arrow keys nudge it.
+              {editing3d
+                ? "Changes here change the 2D plan too, and Undo works the same. Delete removes what's selected and the arrow keys nudge it."
+                : "Press Edit to select and move things in 3D. Changes there change the 2D plan too."}
             </p>
           </div>
           <div className="space-y-3">
             <House3DPanel
-              mode={display}
+              editing={editing3d}
               roof={project.house3d.roof}
               levelName={level.name}
               canCutAway={levels.some((l) => l.elevationIn > level.elevationIn && (plans[l.id]?.rooms.length ?? 0) > 0)}
               cutAway={cutAway}
+              showRoof={showRoof}
+              walls={walls3d}
               onCutAway={setCutAway}
+              onShowRoof={setShowRoof}
+              onWalls={setWalls3d}
               onRoof={setRoof}
             />
             {sel.length > 0 && (
