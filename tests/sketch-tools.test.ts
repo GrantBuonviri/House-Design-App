@@ -25,7 +25,7 @@ import {
   type Bubble,
 } from "@/lib/bubbles/shapes";
 import { addFlow, cleanDiagram, connected, moveBubblesToLevel, moveMany, removeMany, toggleFlow } from "@/lib/bubbles/edit";
-import { blankSketch, createRequestGate, hasContent, ifCurrent } from "@/lib/bubbles/start";
+import { blankSketch, hasContent } from "@/lib/bubbles/start";
 import { contours, defaultLotOffset, houseCenter, landDrawing, lotCenter, sunPaths } from "@/lib/bubbles/land";
 
 const FT = 12;
@@ -223,48 +223,6 @@ describe("Start blank", () => {
     expect(Object.keys(ds)).toEqual(["main", "upper", "basement"]);
     expect(hasContent(ds)).toBe(false);
     for (const d of Object.values(ds)) expect(d).toEqual(emptyDiagram());
-  });
-
-  it("isn't undone by a suggestion that was still on its way", async () => {
-    // The bug: Suggest, leave the page, come back and Start blank. The slow
-    // suggestion then arrived and filled the empty sketch with rooms.
-    const gate = createRequestGate();
-    let sketch: Diagrams = {};
-    let arrive!: (d: Diagrams) => void;
-    let aborted = false;
-    const pending = ifCurrent(gate, (signal) => {
-      signal.addEventListener("abort", () => (aborted = true));
-      return new Promise<Diagrams>((resolve) => (arrive = resolve));
-    }).then((res) => {
-      if (res) sketch = res.value;
-    });
-
-    // Start blank.
-    gate.cancel();
-    sketch = blankSketch(levels);
-
-    arrive({ main: diagram([circle("kitchen", 0, 0)]) });
-    await pending;
-    expect(aborted).toBe(true);
-    expect(hasContent(sketch)).toBe(false);
-  });
-
-  it("only lets the latest request change the sketch", async () => {
-    const gate = createRequestGate();
-    let resolveFirst!: (v: string) => void;
-    const first = ifCurrent(gate, () => new Promise<string>((r) => (resolveFirst = r)));
-    const second = ifCurrent(gate, async () => "second");
-    resolveFirst("first");
-    expect(await first).toBeNull();
-    expect(await second).toEqual({ value: "second" });
-  });
-
-  it("drops errors from requests that were cancelled, and passes on the rest", async () => {
-    const gate = createRequestGate();
-    const stale = ifCurrent(gate, (signal) => new Promise((_, reject) => signal.addEventListener("abort", () => reject(new Error("aborted")))));
-    gate.cancel();
-    expect(await stale).toBeNull();
-    await expect(ifCurrent(gate, async () => Promise.reject(new Error("server down")))).rejects.toThrow("server down");
   });
 });
 

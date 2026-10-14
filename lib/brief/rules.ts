@@ -59,14 +59,14 @@ const FEEL_WORDS: [RegExp, string][] = [
   [/\bsimple|\bunfussy/, "Simple"],
 ];
 
-/** Where a room goes when the user left it to Claude and there's no Claude. */
+/** Where a room goes when the user left its floor to the app. */
 export function ruleLevel(type: string, above: number, below: number): string {
   if (below > 0 && DOWNSTAIRS.has(type)) return "basement-1";
   if (above > 1 && (SLEEPING.has(type) || type === "bonus" || type === "laundry")) return "floor-2";
   return MAIN_LEVEL_ID;
 }
 
-/** The size of a room without Claude: its dimensions if given, otherwise a typical size. */
+/** The size of a room: its dimensions if given, otherwise a typical size. */
 export function ruleSqft(room: Pick<ChosenRoom, "type" | "lengthIn" | "widthIn">, garageCars: number): number {
   const fromDims = sqftFromDims(room.lengthIn, room.widthIn);
   if (fromDims) return fromDims;
@@ -75,10 +75,9 @@ export function ruleSqft(room: Pick<ChosenRoom, "type" | "lengthIn" | "widthIn">
 }
 
 /**
- * A complete Design Brief from the rooms page, without AI. The user's rooms
- * are the brief's rooms: same ids, names and count. Used when no API key is
- * set, when Claude can't be reached, and as the starting draft Claude
- * refines.
+ * A complete Design Brief from the rooms page. The user's rooms are the
+ * brief's rooms: same ids, names and count. A smarter version can take this
+ * function's place later without changing the page.
  */
 export function buildRuleBrief(ctx: BriefContext): DesignBrief {
   const a = ctx.answers;

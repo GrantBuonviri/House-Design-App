@@ -6,7 +6,7 @@ import { exteriorWallIn } from "@/lib/plan/basics";
 import { planOf, type Plans } from "@/lib/plan/edit";
 import { boundsOf } from "@/lib/plan/geometry";
 import { stairsFootprints } from "@/lib/plan/suggest";
-import { Note, SourceBadge } from "@/components/brief/bits";
+import { Note } from "@/components/brief/bits";
 import LevelTabs from "@/components/bubbles/LevelTabs";
 import MiniPlan from "./MiniPlan";
 
@@ -16,12 +16,10 @@ const SIZE = 250;
 export default function PlanAlternativesView({
   mine,
   alternatives,
-  source,
   note,
   levels,
   level,
   basics,
-  busy,
   onLevel,
   onUse,
   onAgain,
@@ -29,12 +27,10 @@ export default function PlanAlternativesView({
 }: {
   mine: Plans;
   alternatives: PlanAlternative[];
-  source: "ai" | "rules";
   note?: string;
   levels: Level[];
   level: Level;
   basics: PlanBasics | null;
-  busy: boolean;
   onLevel: (id: string) => void;
   onUse: (index: number, levelOnly: boolean) => void;
   onAgain: () => void;
@@ -64,14 +60,11 @@ export default function PlanAlternativesView({
     <div className="space-y-4">
       <div className="flex items-start justify-between gap-6">
         <div>
-          <div className="flex items-center gap-3">
-            <h2 className="text-xl font-semibold tracking-tight">{alternatives.length === 3 ? "Three alternatives" : "Alternatives"}</h2>
-            <SourceBadge source={source} aiLabel="Suggested by Claude" />
-          </div>
+          <h2 className="text-xl font-semibold tracking-tight">{alternatives.length === 3 ? "Three alternatives" : "Alternatives"}</h2>
           <p className="mt-1 text-sm text-muted">Each one keeps your plan and tries one change. Rooms that changed have a purple outline.</p>
         </div>
         <div className="flex shrink-0 gap-2">
-          <button className="btn" onClick={onAgain} disabled={busy}>
+          <button className="btn" onClick={onAgain}>
             Show me different ones
           </button>
           <button className="btn-primary" onClick={onClose}>

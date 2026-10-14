@@ -3,24 +3,13 @@
 import { useState } from "react";
 import type { DesignBrief, DiscoveryAnswers } from "@/lib/model/schema";
 import { syncLevels } from "@/lib/brief/levels";
+import { buildRuleBrief } from "@/lib/brief/rules";
 import { plotFacts } from "@/components/land/plotText";
 import { useProjectStore } from "@/lib/store/projectStore";
 import BriefEditor from "./BriefEditor";
 import RoomsPage from "./RoomsPage";
-import { Note, SourceBadge, Working } from "./bits";
 
 type View = "rooms" | "brief";
-type Source = "ai" | "rules";
-
-async function post<T>(path: string, body: unknown): Promise<T> {
-  const res = await fetch(path, {
-    method: "POST",
-    headers: { "content-type": "application/json" },
-    body: JSON.stringify(body),
-  });
-  if (!res.ok) throw new Error((await res.json().catch(() => null))?.error ?? `The app's server answered ${res.status}.`);
-  return res.json() as Promise<T>;
-}
 
 /** Stage 3: choose the rooms on one page, then the Design Brief, which the user can edit. */
 export default function BriefStage({ onContinue, onPickLand }: { onContinue: () => void; onPickLand: () => void }) {
@@ -29,9 +18,6 @@ export default function BriefStage({ onContinue, onPickLand }: { onContinue: () 
   const { answers } = project.discovery;
 
   const [view, setView] = useState<View>(project.brief ? "brief" : "rooms");
-  const [busy, setBusy] = useState(false);
-  const [briefNote, setBriefNote] = useState<string>();
-  const [error, setError] = useState<string>();
 
   const setAnswers = (patch: Partial<DiscoveryAnswers>, key: string) =>
     update(
@@ -47,34 +33,14 @@ export default function BriefStage({ onContinue, onPickLand }: { onContinue: () 
       },
     );
 
-  const buildBrief = async () => {
+  const buildBrief = () => {
     if (project.brief && !window.confirm("Replace your current brief, including any edits you made to it?")) return;
-    setBusy(true);
-    setError(undefined);
-    try {
-      const p = useProjectStore.getState().project!;
-      const res = await post<{
-        brief: DesignBrief;
-        source: Source;
-        note?: string;
-      }>("/api/brief/generate", {
-        answers: p.discovery.answers,
-        profile: p.profile,
-        plot: p.plot,
-      });
-      update((p) => ({
-        ...p,
-        brief: res.brief,
-        levels: syncLevels(p.levels, res.brief),
-      }));
-      setBriefNote(res.note);
-      setView("brief");
-      window.scrollTo({ top: 0 });
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "Couldn't build the brief.");
-    } finally {
-      setBusy(false);
-    }
+    update((p) => {
+      const brief = buildRuleBrief({ answers: p.discovery.answers, profile: p.profile, plot: p.plot });
+      return { ...p, brief, levels: syncLevels(p.levels, brief) };
+    });
+    setView("brief");
+    window.scrollTo({ top: 0 });
   };
 
   const editBrief = (brief: DesignBrief, key: string) =>
@@ -87,10 +53,7 @@ export default function BriefStage({ onContinue, onPickLand }: { onContinue: () 
       <div className="space-y-6 pb-10">
         <div className="flex items-start justify-between gap-6">
           <div className="min-w-0">
-            <div className="flex items-center gap-3">
-              <h2 className="text-xl font-semibold tracking-tight">Your design brief</h2>
-              <SourceBadge source={project.brief.source} />
-            </div>
+            <h2 className="text-xl font-semibold tracking-tight">Your design brief</h2>
             <p className="mt-1 text-sm text-muted">Change anything. Every later step reads from this brief.</p>
           </div>
           <div className="flex shrink-0 items-center gap-2">
@@ -108,7 +71,6 @@ export default function BriefStage({ onContinue, onPickLand }: { onContinue: () 
             </button>
           </div>
         </div>
-        <Note text={briefNote} />
         <section className="card p-6">
           <label className="field-label" htmlFor="brief-summary">
             In a nutshell
@@ -136,7 +98,7 @@ export default function BriefStage({ onContinue, onPickLand }: { onContinue: () 
           <div>
             <h2 className="text-xl font-semibold tracking-tight">Choose your rooms</h2>
             <p className="mt-1 text-sm text-muted">
-              Pick the floors and rooms you want. Claude fills in the rest when it builds your brief.
+              Pick the floors and rooms you want. The app fills in the rest when it builds your brief.
             </p>
           </div>
           {project.brief && (
@@ -148,12 +110,10 @@ export default function BriefStage({ onContinue, onPickLand }: { onContinue: () 
 
         <RoomsPage answers={answers} setAnswers={setAnswers} plot={project.plot} />
 
-        {busy && <Working text="Writing your brief. With Claude this can take up to a minute…" />}
-        {error && <Note text={error} />}
 
         <div className="flex items-center justify-end gap-4">
           {!ready && <span className="text-sm text-muted">Check at least one room to continue.</span>}
-          <button className="btn-primary" disabled={busy || !ready} onClick={() => void buildBrief()}>
+          <button className="btn-primary" disabled={!ready} onClick={buildBrief}>
             {project.brief ? "Rebuild my brief" : "Build my brief"} →
           </button>
         </div>

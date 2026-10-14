@@ -1,10 +1,5 @@
-import { mkdtempSync } from "node:fs";
-import { tmpdir } from "node:os";
-import path from "node:path";
-import { beforeEach, describe, expect, it, vi } from "vitest";
-import type Anthropic from "@anthropic-ai/sdk";
+import { describe, expect, it } from "vitest";
 import { DiscoveryAnswers, type ChosenRoom, type DesignBrief, type FloorPlan, type PlanRoom, type Plot } from "@/lib/model/schema";
-import { MODELS } from "@/lib/ai/models";
 import { FLAT_PLOT_SEED, generatePlot } from "@/lib/land/generate";
 import { buildRuleBrief } from "@/lib/brief/rules";
 import { MAIN_LEVEL_ID, levelsFor } from "@/lib/brief/levels";
@@ -13,14 +8,12 @@ import { suggestDiagrams } from "@/lib/bubbles/arrange";
 import { defaultBasics } from "@/lib/plan/basics";
 import { OUTSIDE, addDoor, doorBetween, freeSpot, newOpening, openingRooms, reachable, roomLinks, sharedWall } from "@/lib/plan/connect";
 import { applyChange, applyChanges, mirrorPlans, pushWall, type PlanChange } from "@/lib/plan/changes";
-import { pickDistinct, ruleAlternatives, signature } from "@/lib/plan/alternatives";
-import { describePlan, planAlternativesPrompt } from "@/lib/plan/ai";
+import { pickDistinct, ruleAlternatives, signature, suggestPlanAlternatives } from "@/lib/plan/alternatives";
 import { planWarnings } from "@/lib/plan/checks";
 import { emptyPlan, makeRoom, moveEdge, planOf, type Plans } from "@/lib/plan/edit";
 import { closeGaps } from "@/lib/plan/fromSketch";
 import { collinearOverlap, dist, polygonArea, polygonsOverlap, rectangle } from "@/lib/plan/geometry";
 import { roomSqft } from "@/lib/plan/measure";
-import { suggestPlanAlternatives } from "@/lib/plan/service";
 import {
   addClosets,
   addHallways,
@@ -496,88 +489,12 @@ describe("built-in alternatives", () => {
     }
   });
 
-  it("describes the plan for Claude with room ids, sizes and what's on each side", () => {
+  it("tries new ideas for Show me different ones, and needs rooms first", () => {
     const { ctx, result } = house(RANCH);
-    const text = describePlan(result.plans, ctx);
-    const kitchen = planOf(result.plans, MAIN_LEVEL_ID).rooms.find((r) => r.type === "kitchen")!;
-    expect(text).toContain(`"id":"${kitchen.id}"`);
-    expect(text).toMatch(/"briefSqft":\d+/);
-    expect(text).toMatch(/"S":"[^"]*(outside|ft of wall)/);
-    expect(planAlternativesPrompt(result.plans, ctx, ["Bigger kitchen"])).toMatch(/already seen these ideas.*Bigger kitchen/);
-  });
-});
-
-// ---------- Claude ----------
-
-function fakeMessage(data: unknown): Anthropic.Message {
-  return {
-    id: "msg_test",
-    type: "message",
-    role: "assistant",
-    model: MODELS.best,
-    content: [{ type: "text", text: JSON.stringify(data), citations: null }],
-    stop_reason: "end_turn",
-    stop_sequence: null,
-    usage: { input_tokens: 1000, output_tokens: 2000 },
-  } as unknown as Anthropic.Message;
-}
-
-function fakeClient(...replies: Anthropic.Message[]) {
-  const create = vi.fn(async () => {
-    const r = replies.shift();
-    if (!r) throw new Error("no more replies");
-    return r;
-  });
-  return { create } as unknown as Pick<Anthropic["messages"], "create"> & { create: typeof create };
-}
-
-describe("asking Claude for alternatives", () => {
-  beforeEach(() => {
-    process.env.APP_DATA_DIR = mkdtempSync(path.join(tmpdir(), "house-plan-"));
-    delete process.env.ANTHROPIC_API_KEY;
-  });
-
-  it("uses the built-in ideas without a key, and tries new ones for Show me different ones", async () => {
-    const { ctx, result } = house(RANCH);
-    const r = await suggestPlanAlternatives(result.plans, ctx);
-    expect(r.source).toBe("rules");
-    expect(r.note).toMatch(/No API key/);
+    const r = suggestPlanAlternatives(result.plans, ctx);
     expect(r.alternatives).toHaveLength(3);
-    const again = await suggestPlanAlternatives(result.plans, ctx, { fresh: true, skip: r.alternatives.map((a) => a.title) });
+    const again = suggestPlanAlternatives(result.plans, ctx, r.alternatives.map((a) => a.title));
     expect(again.alternatives[0].title).not.toBe(r.alternatives[0].title);
-  });
-
-  it("applies Claude's changes with the most capable model, and fills in with built-in ideas", async () => {
-    process.env.ANTHROPIC_API_KEY = "sk-test";
-    const { ctx, result } = house(RANCH);
-    const main = planOf(result.plans, MAIN_LEVEL_ID);
-    const kitchen = main.rooms.find((r) => r.type === "kitchen")!;
-    const living = main.rooms.find((r) => r.type === "living")!;
-    const client = fakeClient(
-      fakeMessage({
-        alternatives: [
-          { title: "Kitchen opens up", why: "Cook while you talk.", changes: [{ op: "swap", room: kitchen.id, other: living.id, side: "none", feet: 0 }] },
-          { title: "Ghost room", why: "Doesn't exist.", changes: [{ op: "grow", room: "ghost", other: "", side: "N", feet: 2 }] },
-        ],
-      }),
-    );
-    const r = await suggestPlanAlternatives(result.plans, ctx, { client });
-    expect(r.source).toBe("ai");
-    expect(r.alternatives[0].title).toBe("Kitchen opens up");
-    expect(r.alternatives.map((a) => a.title)).not.toContain("Ghost room");
-    expect(r.alternatives).toHaveLength(3);
-    const sent = client.create.mock.calls[0] as unknown as [Anthropic.MessageCreateParams];
-    expect(sent[0].model).toBe(MODELS.best);
-    expect(JSON.stringify(sent[0].messages)).toContain(kitchen.id);
-  });
-
-  it("says so when none of Claude's changes fit", async () => {
-    process.env.ANTHROPIC_API_KEY = "sk-test";
-    const { ctx, result } = house(RANCH);
-    const client = fakeClient(fakeMessage({ alternatives: [{ title: "Nope", why: "", changes: [{ op: "grow", room: "ghost", other: "", side: "N", feet: 2 }] }] }));
-    const r = await suggestPlanAlternatives(result.plans, ctx, { client });
-    expect(r.source).toBe("rules");
-    expect(r.note).toMatch(/didn't fit/);
-    expect(r.alternatives).toHaveLength(3);
+    expect(suggestPlanAlternatives({}, ctx).note).toMatch(/rooms first/);
   });
 });

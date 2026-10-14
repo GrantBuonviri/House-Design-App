@@ -12,12 +12,12 @@ const SIDE: Record<string, string> = { N: "north", S: "south", E: "east", W: "we
 export const MIN_DIFFERENCE = 0.12;
 
 /**
- * Three alternatives without AI, each a variation on the user's current
- * sketch: rooms that don't change stay where the user put them, and the
- * brief's connections still hold. Variations that would barely look
- * different are skipped.
+ * Three alternatives, each a variation on the user's current sketch: rooms
+ * that don't change stay where the user put them, and the brief's
+ * connections still hold. Variations that would barely look different are
+ * skipped, and ideas whose titles are in `skip` (already shown) come last.
  */
-export function ruleAlternatives(ctx: SketchContext, current: Diagrams): Alternative[] {
+export function ruleAlternatives(ctx: SketchContext, current: Diagrams, skip: string[] = []): Alternative[] {
   const site = siteOf(ctx.plot);
   const now = currentSpots(ctx, current);
   const typeOf = new Map(ctx.brief.rooms.map((r) => [bubbleIdFor(r.id), r.type]));
@@ -96,7 +96,13 @@ export function ruleAlternatives(ctx: SketchContext, current: Diagrams): Alterna
     });
   }
 
-  return pickDistinct(current, candidates, 3);
+  if (!skip.length) return pickDistinct(current, candidates, 3);
+  // Show me different ones: ideas not shown yet first, even smaller changes, then the ones shown before.
+  const seen = new Set(skip.map((t) => t.toLowerCase()));
+  const unseen = candidates.filter((a) => !seen.has(a.title.toLowerCase()) && howDifferent(current, a.diagrams) >= MIN_DIFFERENCE / 2);
+  const picked = pickDistinct(current, unseen, 3);
+  for (const a of pickDistinct(current, candidates.filter((c) => !unseen.includes(c)), 3)) if (picked.length < 3) picked.push(a);
+  return picked;
 }
 
 /** How spread out a sketch is: each room's distance from the middle of its floor, added up. */

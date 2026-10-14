@@ -1,18 +1,19 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import type { BubbleDiagram, Level, Point } from "@/lib/model/schema";
 import { useProjectStore } from "@/lib/store/projectStore";
 import { addMissingRooms, missingRooms, type Diagrams, type SketchContext } from "@/lib/bubbles/arrange";
 import type { Alternative } from "@/lib/bubbles/alternatives";
 import { copyBubbleFrom, diagramOf, findBubble, moveBubblesToLevel, removeMany, takeAlternative, toggleFlow } from "@/lib/bubbles/edit";
 import { WINTER_RING, defaultLotOffset, houseCenter, houseReach, landDrawing } from "@/lib/bubbles/land";
-import { blankSketch, createRequestGate, hasContent, ifCurrent } from "@/lib/bubbles/start";
+import { blankSketch, hasContent } from "@/lib/bubbles/start";
+import { suggestAlternatives, suggestSketch } from "@/lib/bubbles/suggest";
 import { siteOf } from "@/lib/bubbles/site";
 import { MAIN_LEVEL_ID, isExtraLevel } from "@/lib/brief/levels";
 import { nearestSide } from "@/lib/land/generate";
-import { Note, SourceBadge, Working } from "@/components/brief/bits";
+import { Note } from "@/components/brief/bits";
 import AlternativesView from "./AlternativesView";
 import LevelTabs from "./LevelTabs";
 import SidePanel from "./SidePanel";
@@ -24,17 +25,10 @@ const SketchCanvas = dynamic(() => import("./SketchCanvas"), {
   loading: () => <div className="h-full w-full animate-pulse rounded-lg bg-stone-100" />,
 });
 
-type Source = "ai" | "rules";
-type Compare = { alternatives: Alternative[]; source: Source; note?: string };
+type Compare = { alternatives: Alternative[]; note?: string };
 
 const CANVAS_HEIGHT = 620;
 const FT = 12;
-
-async function post<T>(path: string, body: unknown, signal: AbortSignal): Promise<T> {
-  const res = await fetch(path, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body), signal });
-  if (!res.ok) throw new Error((await res.json().catch(() => null))?.error ?? `The app's server answered ${res.status}.`);
-  return res.json() as Promise<T>;
-}
 
 /** Stage 4: the flow sketch. Rooms as bubbles on each floor, how you move between them, and notes. */
 export default function BubbleStage({ onContinue, onGoToRooms }: { onContinue: () => void; onGoToRooms: () => void }) {
@@ -50,8 +44,7 @@ export default function BubbleStage({ onContinue, onGoToRooms }: { onContinue: (
   const [selection, setSelection] = useState<Selection>([]);
   const [focusNote, setFocusNote] = useState<string | null>(null);
   const [snap, setSnap] = useState(true);
-  const [busy, setBusy] = useState<null | "suggest" | "alternatives">(null);
-  const [made, setMade] = useState<{ source?: Source; idea?: string; note?: string }>({});
+  const [suggestNote, setSuggestNote] = useState<string>();
   const [error, setError] = useState<string>();
   const [compare, setCompare] = useState<Compare | null>(null);
   const [comparing, setComparing] = useState(false);
@@ -59,10 +52,6 @@ export default function BubbleStage({ onContinue, onGoToRooms }: { onContinue: (
   const [choosing, setChoosing] = useState(() => !hasContent(diagrams));
   const [connectFrom, setConnectFrom] = useState<string | null>(null);
   const [lotMode, setLotMode] = useState(false);
-
-  // Only the latest request to Claude may change the sketch, and none once you've left the page.
-  const gate = useRef(createRequestGate()).current;
-  useEffect(() => () => gate.cancel(), [gate]);
 
   // Back on the drawing whenever there's something to show (after Undo, say).
   const filled = hasContent(diagrams);
@@ -176,10 +165,8 @@ export default function BubbleStage({ onContinue, onGoToRooms }: { onContinue: (
 
   /** Leave the sketch completely empty: no rooms, lines, stairs, marks or notes. */
   function startBlank() {
-    gate.cancel();
-    setBusy(null);
     if (hasContent(diagrams)) setDiagrams(() => blankSketch(levels));
-    setMade({});
+    setSuggestNote(undefined);
     setCompare(null);
     setError(undefined);
     setSelection([]);
@@ -188,10 +175,8 @@ export default function BubbleStage({ onContinue, onGoToRooms }: { onContinue: (
 
   function startOver() {
     if (!window.confirm("Clear every floor and choose how to start again? Undo brings your sketch back.")) return;
-    gate.cancel();
-    setBusy(null);
     setDiagrams(() => blankSketch(levels));
-    setMade({});
+    setSuggestNote(undefined);
     setCompare(null);
     setComparing(false);
     setMessage(undefined);
@@ -202,62 +187,34 @@ export default function BubbleStage({ onContinue, onGoToRooms }: { onContinue: (
     setChoosing(true);
   }
 
-  async function suggest() {
+  function suggest() {
     if (!ctx) return;
     if (hasContent(diagrams) && !window.confirm("Replace the rooms on every floor with a new suggestion? Your pen marks and notes stay, and Undo brings your sketch back.")) {
       return;
     }
-    setBusy("suggest");
     setError(undefined);
-    let res;
-    try {
-      res = await ifCurrent(gate, (signal) =>
-        post<{ diagrams: Diagrams; source: Source; idea?: string; note?: string }>(
-          "/api/bubbles/suggest",
-          { brief: ctx.brief, plot: ctx.plot, levels: ctx.levels, fresh: Boolean(made.source), current: diagrams },
-          signal,
-        ),
-      );
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "Couldn't make a suggestion.");
-      setBusy(null);
-      return;
-    }
-    // Overtaken: Start blank, Start over or leaving the page cancelled it.
-    if (!res) return;
-    const { value } = res;
-    setBusy(null);
-    setDiagrams((ds) => takeAlternative(ds, value.diagrams));
-    setMade({ source: value.source, idea: value.idea, note: value.note });
+    const res = suggestSketch(ctx, diagrams);
+    setDiagrams((ds) => takeAlternative(ds, res.diagrams));
+    setSuggestNote(res.note);
     setChoosing(false);
     setSelection([]);
     setCompare(null);
   }
 
-  async function showAlternatives(fresh = false) {
+  function showAlternatives(again = false) {
     if (!ctx) return;
-    if (compare && !fresh) {
+    if (compare && !again) {
       setComparing(true);
       return;
     }
-    setBusy("alternatives");
     setError(undefined);
     setMessage(undefined);
-    let res;
-    try {
-      res = await ifCurrent(gate, (signal) => post<Compare>("/api/bubbles/alternatives", { brief: ctx.brief, plot: ctx.plot, levels: ctx.levels, current: diagrams, fresh }, signal));
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "Couldn't make alternatives.");
-      setBusy(null);
+    const res = suggestAlternatives(ctx, diagrams, again ? compare?.alternatives.map((a) => a.title) : undefined);
+    if (res.alternatives.length === 0) {
+      setError(res.note ?? "There were no alternatives to show.");
       return;
     }
-    if (!res) return;
-    setBusy(null);
-    if (res.value.alternatives.length === 0) {
-      setError(res.value.note ?? "There were no alternatives to show.");
-      return;
-    }
-    setCompare(res.value);
+    setCompare(res);
     setComparing(true);
     window.scrollTo({ top: 0 });
   }
@@ -308,23 +265,14 @@ export default function BubbleStage({ onContinue, onGoToRooms }: { onContinue: (
           garage toward the road, living spaces on the sunny side and bedrooms somewhere quieter. Or start with an empty page and draw it
           yourself.
         </p>
-        {busy ? (
-          <div className="flex flex-col items-center gap-2">
-            <Working text="Sketching your rooms…" />
-            <button className="text-sm text-muted hover:text-ink hover:underline" onClick={startBlank}>
-              Stop and start blank instead
-            </button>
-          </div>
-        ) : (
-          <div className="mt-6 flex justify-center gap-3">
-            <button className="btn" onClick={startBlank}>
-              Start blank
-            </button>
-            <button className="btn-primary" onClick={() => void suggest()}>
-              Suggest a starting sketch
-            </button>
-          </div>
-        )}
+        <div className="mt-6 flex justify-center gap-3">
+          <button className="btn" onClick={startBlank}>
+            Start blank
+          </button>
+          <button className="btn-primary" onClick={suggest}>
+            Suggest a starting sketch
+          </button>
+        </div>
         <div className="mt-4">
           <Note text={error} />
         </div>
@@ -339,12 +287,10 @@ export default function BubbleStage({ onContinue, onGoToRooms }: { onContinue: (
         <AlternativesView
           mine={diagrams}
           alternatives={compare.alternatives}
-          source={compare.source}
           note={compare.note}
           message={message}
           levels={levels}
           levelId={level.id}
-          busy={busy !== null}
           onLevel={setLevelId}
           onUse={(i, levelOnly) => {
             const alt = compare.alternatives[i];
@@ -359,13 +305,12 @@ export default function BubbleStage({ onContinue, onGoToRooms }: { onContinue: (
             setDiagrams((ds) => copyBubbleFrom(ds, alt.diagrams, id));
             setMessage(`${label} now sits where it does in “${alt.title}”.`);
           }}
-          onAgain={() => void showAlternatives(true)}
+          onAgain={() => showAlternatives(true)}
           onClose={() => {
             setComparing(false);
             setMessage(undefined);
           }}
         />
-        {busy === "alternatives" && <Working text="Thinking up three more…" />}
       </div>
     );
   }
@@ -380,23 +325,20 @@ export default function BubbleStage({ onContinue, onGoToRooms }: { onContinue: (
     <div className="space-y-4 pb-10">
       <div className="flex items-start justify-between gap-6">
         <div className="min-w-0">
-          <div className="flex items-center gap-3">
-            <h2 className="text-xl font-semibold tracking-tight">Flow sketch</h2>
-            <SourceBadge source={made.source} aiLabel="Suggested by Claude" />
-          </div>
+          <h2 className="text-xl font-semibold tracking-tight">Flow sketch</h2>
           <p className="mt-1 text-sm text-muted">Rooms as bubbles, sized to their area. No walls yet: just what goes where and how you move around.</p>
         </div>
         <div className="flex shrink-0 items-center gap-2">
-          <button className="btn" onClick={startOver} disabled={busy !== null} title="Clear the sketch and choose Start blank or a suggestion again">
+          <button className="btn" onClick={startOver} title="Clear the sketch and choose Start blank or a suggestion again">
             Start over
           </button>
           {brief && (
-            <button className="btn" onClick={() => void suggest()} disabled={busy !== null}>
+            <button className="btn" onClick={suggest}>
               New suggestion
             </button>
           )}
           {brief && (
-            <button className="btn" onClick={() => void showAlternatives()} disabled={busy !== null || !Object.values(diagrams).some((d) => d.bubbles.length)}>
+            <button className="btn" onClick={() => showAlternatives()} disabled={!Object.values(diagrams).some((d) => d.bubbles.length)}>
               Show me alternatives
             </button>
           )}
@@ -406,9 +348,7 @@ export default function BubbleStage({ onContinue, onGoToRooms }: { onContinue: (
         </div>
       </div>
 
-      {busy && <Working text={busy === "suggest" ? "Sketching your rooms…" : "Thinking up three alternatives. With Claude this can take a minute…"} />}
-      {made.idea && <p className="rounded-md bg-violet-50 px-3 py-2 text-sm text-violet-900">{made.idea}</p>}
-      <Note text={made.note} />
+      <Note text={suggestNote} />
       <Note text={error} />
       {message && <p className="rounded-md bg-accent-soft px-3 py-2 text-sm text-accent">{message}</p>}
       {missing.length > 0 && ctx && (

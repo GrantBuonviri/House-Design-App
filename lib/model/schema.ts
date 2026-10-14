@@ -107,7 +107,7 @@ export const ChosenRoom = z.object({
   /** Optional size, in inches. */
   lengthIn: z.number().positive().optional(),
   widthIn: z.number().positive().optional(),
-  /** Which floor. Empty means "let Claude decide". */
+  /** Which floor. Empty means "let the app decide". */
   levelId: z.string().optional(),
 });
 export type ChosenRoom = z.infer<typeof ChosenRoom>;
@@ -159,7 +159,7 @@ export const DesignBrief = z.object({
   freeText: z.string().optional(),
   /** A short paragraph describing the house in plain words. */
   summary: z.string().optional(),
-  /** Who wrote the first draft: Claude or the built-in rules. */
+  /** Who wrote the first draft. "ai" is only in projects from before the app stopped using Claude. */
   source: z.enum(["ai", "rules"]).optional(),
 });
 export type DesignBrief = z.infer<typeof DesignBrief>;

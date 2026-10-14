@@ -5,8 +5,8 @@ import { compassShort } from "@/lib/land/sun";
 /**
  * Where on a floor a room should sit, as one of nine spots: the eight
  * compass directions from the middle of the house, or the middle itself.
- * Claude and the built-in rules both answer in spots; code turns spots into
- * positions, so the geometry is always checked.
+ * The built-in rules answer in spots; code turns spots into positions, so
+ * the geometry is always checked.
  */
 
 export const SPOTS = ["N", "NE", "E", "SE", "S", "SW", "W", "NW", "center"] as const;

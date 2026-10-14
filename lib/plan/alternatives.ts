@@ -262,3 +262,17 @@ export function pickDistinct(current: Plans, list: PlanAlternative[], count = 3)
   }
   return out;
 }
+
+/**
+ * The floor plan's "Show me alternatives": three of the built-in ideas that
+ * change the plan in different ways. Titles in `skip` were shown already, so
+ * other ideas come first. A smarter version can take this function's place
+ * later without changing the page.
+ */
+export function suggestPlanAlternatives(plans: Plans, ctx: PlanContext, skip: string[] = []): { alternatives: PlanAlternative[]; note?: string } {
+  if (!Object.values(plans).some((p) => p.rooms.length > 0)) return { alternatives: [], note: "Draw some rooms first." };
+  const seen = new Set(skip.map((t) => t.toLowerCase()));
+  const all = ruleAlternatives(plans, ctx);
+  const unseen = all.filter((a) => !seen.has(a.title.toLowerCase()));
+  return { alternatives: pickDistinct(plans, [...unseen, ...all.filter((a) => !unseen.includes(a))]) };
+}

@@ -77,7 +77,7 @@ export default function RoomsPage({
       <section className="card p-6">
         <h3 className="font-semibold">Rooms</h3>
         <p className="mb-5 text-sm text-muted">
-          Check every kind of room you want. Sizes and floors are optional; leave them for Claude to suggest.
+          Check every kind of room you want. Sizes and floors are optional; leave them for the app to suggest.
         </p>
         <div className="space-y-7">
           {CATEGORIES.map((cat) => {
@@ -198,7 +198,7 @@ export default function RoomsPage({
         rooms={a.rooms}
         connections={a.connections}
         onChange={(connections, key) => setAnswers({ connections }, key)}
-        intro="Optional. Which rooms should sit together, and which should stay apart. Claude will suggest more."
+        intro="Optional. Which rooms should sit together, and which should stay apart. The app will suggest more."
         emptyText="Check at least two rooms above to connect them."
       />
 
@@ -266,7 +266,7 @@ function RoomRow({
           value={r.levelId && levels.includes(r.levelId) ? r.levelId : ""}
           onChange={(e) => onChange(r.id, { levelId: e.target.value || undefined }, "level")}
         >
-          <option value="">Let Claude decide</option>
+          <option value="">Let the app decide</option>
           {levels
             .slice()
             .reverse()
