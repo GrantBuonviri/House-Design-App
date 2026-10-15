@@ -9,7 +9,7 @@ import { z } from "zod";
  * Angles are degrees clockwise from north (0 = N, 90 = E).
  */
 
-export const SCHEMA_VERSION = 7;
+export const SCHEMA_VERSION = 8;
 
 export const Point = z.object({ x: z.number(), y: z.number() });
 export type Point = z.infer<typeof Point>;
@@ -320,12 +320,30 @@ export const Fixture = z.object({
 });
 export type Fixture = z.infer<typeof Fixture>;
 
+/** A piece of furniture (sofa, bed, table), placed in the walkthrough. Not part of the build cost. */
+export const FurnitureItem = z.object({
+  id: z.string(),
+  /** A furniture id from lib/plan/furniture.ts, such as "sofa" or "bed-queen". */
+  kind: z.string(),
+  x: z.number(),
+  y: z.number(),
+  rotation: z.number().default(0),
+  widthIn: z.number().positive(),
+  depthIn: z.number().positive(),
+  /** The main color, as "#rrggbb"; the style answers pick one when it's left out. */
+  color: z.string().optional(),
+  /** The room it was placed in; it moves with that room. */
+  roomId: z.string().optional(),
+});
+export type FurnitureItem = z.infer<typeof FurnitureItem>;
+
 export const FloorPlan = z.object({
   rooms: z.array(PlanRoom).default([]),
   walls: z.array(PlanWall).default([]),
   openings: z.array(Opening).default([]),
   stairs: z.array(PlanStairs).default([]),
   fixtures: z.array(Fixture).default([]),
+  furniture: z.array(FurnitureItem).default([]),
 });
 export type FloorPlan = z.infer<typeof FloorPlan>;
 
@@ -414,6 +432,11 @@ export const Selection = z.object({
    */
   targetId: z.string(),
   category: z.string(),
+  /**
+   * Paint for one wall of a room (an accent wall): the room edge's number,
+   * as "e3". Left out for a pick that covers the whole room.
+   */
+  wall: z.string().optional(),
   /** A copy of the product, so a pick keeps working if the catalog changes. */
   product: Product,
   quantity: z.number().min(0).optional(),

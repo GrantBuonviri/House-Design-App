@@ -1,7 +1,7 @@
 import type { FloorPlan, Opening, OpeningHost, Point } from "@/lib/model/schema";
 import { INTERIOR_WALL_IN } from "./basics";
 import { areaKind } from "./measure";
-import { add, collinearOverlap, dist, dot, edgesOf, leftNormal, lerp, project, scale, sub, subtractIntervals, unit } from "./geometry";
+import { add, collinearOverlap, dist, dot, edgesOf, leftNormal, lerp, polygonCenter, project, scale, sub, subtractIntervals, unit } from "./geometry";
 
 /**
  * Walls are worked out from the rooms. Every room edge is a wall; where two
@@ -195,4 +195,36 @@ export function clampOffset(offset: number, width: number, hostLength: number): 
   const half = width / 2;
   if (hostLength <= width) return hostLength / 2;
   return Math.min(hostLength - half, Math.max(half, offset));
+}
+
+/**
+ * The edge of a room's outline that a point on a wall lies along (within
+ * `maxD` inches), for telling which of the room's walls it is. Null when
+ * the point isn't on one of the room's own edges (a wall drawn inside it).
+ * With `facing` (the way the wall's face points), only edges along that wall count.
+ */
+export function roomEdgeAt(polygon: Point[], p: Point, maxD: number, facing?: Point): number | null {
+  let best: { i: number; d: number } | null = null;
+  polygon.forEach((a, i) => {
+    const b = polygon[(i + 1) % polygon.length];
+    // Only edges running across the way the wall faces (near a corner, the other wall is close too).
+    if (facing && Math.abs(dot(unit(sub(b, a)), facing)) > 0.4) return;
+    const pr = project(p, a, b);
+    if (pr.t < -1 || pr.t > pr.length + 1 || pr.d > maxD) return;
+    if (!best || pr.d < best.d) best = { i, d: pr.d };
+  });
+  return best ? (best as { i: number }).i : null;
+}
+
+const COMPASS = ["north", "northeast", "east", "southeast", "south", "southwest", "west", "northwest"];
+
+/** Which side of a room an edge is on, as a compass word ("north"), from the way it faces out. */
+export function edgeCompass(polygon: Point[], edge: number): string {
+  const a = polygon[edge];
+  const b = polygon[(edge + 1) % polygon.length];
+  // The side facing away from the room's middle is outside (y points south).
+  let out = { x: b.y - a.y, y: a.x - b.x };
+  if (dot(out, sub(lerp(a, b, 0.5), polygonCenter(polygon))) < 0) out = { x: -out.x, y: -out.y };
+  const deg = ((Math.atan2(out.x, -out.y) * 180) / Math.PI + 360) % 360;
+  return COMPASS[Math.round(deg / 45) % 8];
 }

@@ -18,7 +18,7 @@ function room(id: string, x: number, y: number, w: number, h: number, rotation =
   return { id, name: id, type: "living", polygon: rectangle(x + w / 2, y + h / 2, w, h, rotation) };
 }
 function plan(rooms: PlanRoom[], openings: Opening[] = []): FloorPlan {
-  return { rooms, walls: [], openings, stairs: [], fixtures: [] };
+  return { rooms, walls: [], openings, stairs: [], fixtures: [], furniture: [] };
 }
 function win(id: string, roomId: string, edge: number, offsetIn: number, style = "window"): Opening {
   const slider = style === "door-slider";

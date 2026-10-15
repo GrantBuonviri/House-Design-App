@@ -3,7 +3,8 @@
 import { useMemo, useState } from "react";
 import { WHOLE_HOUSE, type Selection } from "@/lib/model/schema";
 import { catalog, type CatalogProduct } from "@/lib/catalog/catalog";
-import { categoriesFor, effectivePick, pickFor, setPick, toProduct, type InteriorRoom } from "@/lib/interior/picks";
+import { categoriesFor, effectivePick, pickFor, setPick, setWallPick, toProduct, wallPicks, type InteriorRoom } from "@/lib/interior/picks";
+import { edgeCompass } from "@/lib/plan/walls";
 import { ranked, type Answers } from "@/lib/interior/style";
 import type { InteriorCategoryId } from "@/lib/catalog/categories";
 import ProductCard, { priceText } from "./ProductCard";
@@ -46,6 +47,7 @@ export default function FinishPicker({
 
   const pick = (p: CatalogProduct | null) => cat && onChange(setPick(selections, target, cat.id, p ? toProduct(p) : null));
   const ownPicks = (id: string) => selections.filter((s) => s.targetId === id).length;
+  const accents = room ? [...wallPicks(selections, room.id)] : [];
 
   return (
     <div className="grid grid-cols-[200px_1fr_240px] gap-5">
@@ -182,6 +184,29 @@ export default function FinishPicker({
             );
           })}
         </ul>
+        {room && accents.length > 0 && (
+          <div className="pt-2">
+            <p className="text-xs text-muted">Accent walls (picked in the walkthrough)</p>
+            <ul className="divide-y divide-line">
+              {accents.map(([key, s]) => {
+                const edge = Number(key.slice(1));
+                const where = room.polygon && edge < room.polygon.length ? `${edgeCompass(room.polygon, edge)} wall` : "One wall";
+                return (
+                  <li key={key} className="flex items-center gap-2 py-1.5">
+                    <Swatch product={s.product} className="size-6 shrink-0 rounded" />
+                    <span className="min-w-0 flex-1">
+                      <span className="block text-xs text-muted">{where.charAt(0).toUpperCase() + where.slice(1)}</span>
+                      <span className="block truncate text-xs">{s.product.name}</span>
+                    </span>
+                    <button className="text-xs text-accent underline" onClick={() => onChange(setWallPick(selections, room.id, key, null))}>
+                      Remove
+                    </button>
+                  </li>
+                );
+              })}
+            </ul>
+          </div>
+        )}
         <p className="pt-2 text-xs text-muted">The cost total at the top changes with every pick. Prices are from each product&apos;s page on the date shown and may have changed.</p>
         <p className="text-xs text-muted">{catalog().length} products in the catalog.</p>
       </aside>

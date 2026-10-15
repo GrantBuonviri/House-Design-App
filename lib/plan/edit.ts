@@ -11,7 +11,7 @@ import { clampOffset, hostSegment, nearestHost, sameHost } from "./walls";
 export type Plans = Record<string, FloorPlan>;
 
 export function emptyPlan(): FloorPlan {
-  return { rooms: [], walls: [], openings: [], stairs: [], fixtures: [] };
+  return { rooms: [], walls: [], openings: [], stairs: [], fixtures: [], furniture: [] };
 }
 
 export function planOf(plans: Plans, levelId: string): FloorPlan {
@@ -41,7 +41,7 @@ export function updateRoom(plan: FloorPlan, id: string, patch: Partial<PlanRoom>
   return { ...plan, rooms: plan.rooms.map((r) => (r.id === id ? { ...r, ...patch } : r)) };
 }
 
-/** Delete rooms, walls, doors and windows, stairs and fixtures. Doors and windows in deleted walls go too. */
+/** Delete rooms, walls, doors and windows, stairs, fixtures and furniture. Doors and windows in deleted walls go too. */
 export function removeMany(plan: FloorPlan, ids: string[]): FloorPlan {
   const gone = new Set(ids);
   const hostGone = (o: Opening) => ("roomId" in o.host ? gone.has(o.host.roomId) : gone.has(o.host.wallId));
@@ -52,6 +52,7 @@ export function removeMany(plan: FloorPlan, ids: string[]): FloorPlan {
     stairs: plan.stairs.filter((s) => !gone.has(s.id)),
     // Fixtures stay when their room goes; they just stop following it.
     fixtures: plan.fixtures.filter((f) => !gone.has(f.id)).map((f) => (f.roomId && gone.has(f.roomId) ? { ...f, roomId: undefined } : f)),
+    furniture: plan.furniture.filter((f) => !gone.has(f.id)).map((f) => (f.roomId && gone.has(f.roomId) ? { ...f, roomId: undefined } : f)),
   };
 }
 
@@ -69,6 +70,7 @@ export function moveMany(plan: FloorPlan, ids: string[], dx: number, dy: number)
     walls: plan.walls.map((w) => (ids_.has(w.id) ? { ...w, a: mv(w.a), b: mv(w.b) } : w)),
     stairs: plan.stairs.map((s) => (ids_.has(s.id) ? { ...s, ...mv(s) } : s)),
     fixtures: plan.fixtures.map((f) => (ids_.has(f.id) || (f.roomId && ids_.has(f.roomId)) ? { ...f, ...mv(f) } : f)),
+    furniture: plan.furniture.map((f) => (f.roomId && ids_.has(f.roomId) ? { ...f, ...mv(f) } : f)),
   };
 }
 
@@ -83,6 +85,7 @@ export function rotateMany(plan: FloorPlan, ids: string[], deg: number, about: P
     walls: plan.walls.map((w) => (ids_.has(w.id) ? { ...w, a: rt(w.a), b: rt(w.b) } : w)),
     stairs: plan.stairs.map((s) => (ids_.has(s.id) ? { ...s, ...rt(s), rotation: turn(s.rotation) } : s)),
     fixtures: plan.fixtures.map((f) => (ids_.has(f.id) || (f.roomId && ids_.has(f.roomId)) ? { ...f, ...rt(f), rotation: turn(f.rotation) } : f)),
+    furniture: plan.furniture.map((f) => (f.roomId && ids_.has(f.roomId) ? { ...f, ...rt(f), rotation: turn(f.rotation) } : f)),
   };
 }
 

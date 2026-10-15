@@ -144,7 +144,7 @@ export default function ProjectWorkspace({ id }: { id: string }) {
         <ComingSoon stage={project.stage} />
       )}
 
-      {walking && canWalk && <Walkthrough project={project} onClose={() => setWalking(false)} />}
+      {walking && canWalk && <Walkthrough project={project} cost={cost} onClose={() => setWalking(false)} />}
     </main>
       {costOpen && cost && (
         <CostPanel estimate={cost} onClose={() => setCostOpen(false)} onUtilities={(utilities) => update((p) => ({ ...p, cost: { ...p.cost, utilities } }))} />

@@ -180,6 +180,7 @@ export function mirrorPlans(plans: Plans, axis: "x" | "y"): Plans {
       }),
       stairs: plan.stairs.map((s) => ({ ...s, ...flip({ x: s.x, y: s.y }), rotation: turn(s.rotation), flip: !s.flip })),
       fixtures: plan.fixtures.map((f) => ({ ...f, ...flip({ x: f.x, y: f.y }), rotation: turn(f.rotation) })),
+      furniture: plan.furniture.map((f) => ({ ...f, ...flip({ x: f.x, y: f.y }), rotation: turn(f.rotation) })),
     };
   }
   return out;
@@ -211,7 +212,7 @@ function sharedLengths(plan: FloorPlan): Map<string, number> {
   return out;
 }
 
-/** Windows that now look into another room, and fixtures pushed out of their room, are taken away. */
+/** Windows that now look into another room, and fixtures and furniture pushed out of their room, are taken away. */
 function tidy(plan: FloorPlan): FloorPlan {
   const indoors = new Set(plan.rooms.filter((r) => areaKind(r) !== "outdoor").map((r) => r.id));
   const openings = plan.openings.filter((o) => {
@@ -225,7 +226,14 @@ function tidy(plan: FloorPlan): FloorPlan {
     const r = plan.rooms.find((x) => x.id === f.roomId);
     return !r || pointInPolygon({ x: f.x, y: f.y }, r.polygon);
   });
-  return openings.length === plan.openings.length && fixtures.length === plan.fixtures.length ? plan : { ...plan, openings, fixtures };
+  const furniture = plan.furniture.filter((f) => {
+    if (!f.roomId) return true;
+    const r = plan.rooms.find((x) => x.id === f.roomId);
+    return !r || pointInPolygon({ x: f.x, y: f.y }, r.polygon);
+  });
+  return openings.length === plan.openings.length && fixtures.length === plan.fixtures.length && furniture.length === plan.furniture.length
+    ? plan
+    : { ...plan, openings, fixtures, furniture };
 }
 
 /** Rooms keep a sensible size and shape: not folded over, not too narrow, and not far under the smallest size for their type. */
@@ -338,6 +346,9 @@ export function applyChange(plan: FloorPlan, c: PlanChange, ctx: { exteriorIn: n
         rooms: plan.rooms.map((r) => (r.id === room.id ? { ...r, ...wb } : r.id === other.id ? { ...r, ...wa } : r)),
         // Fixtures go with what the room is for; ones that don't fit the new room are left out.
         fixtures: plan.fixtures.map((f) =>
+          f.roomId === room.id ? { ...f, x: f.x + da.x, y: f.y + da.y, roomId: other.id } : f.roomId === other.id ? { ...f, x: f.x - da.x, y: f.y - da.y, roomId: room.id } : f,
+        ),
+        furniture: plan.furniture.map((f) =>
           f.roomId === room.id ? { ...f, x: f.x + da.x, y: f.y + da.y, roomId: other.id } : f.roomId === other.id ? { ...f, x: f.x - da.x, y: f.y - da.y, roomId: room.id } : f,
         ),
       };

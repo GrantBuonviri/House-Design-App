@@ -1,5 +1,5 @@
 import type { PlanRoom, Product, Selection } from "@/lib/model/schema";
-import { roomFinishes } from "@/lib/interior/picks";
+import { roomFinishes, wallPicks } from "@/lib/interior/picks";
 import { TILE_ROOMS } from "@/lib/catalog/categories";
 import { floorColor, COLORS } from "./colors";
 import { hex, type RGB } from "./mesh";
@@ -26,6 +26,8 @@ export type RoomLook = {
   dishwasher: RGB;
   door: RGB;
   trim: RGB;
+  /** Accent walls: paint for one wall of the room, by wall key ("e3"). */
+  accents: Map<string, RGB>;
 };
 
 const patternOf = (p: Product | undefined): PatternId => {
@@ -66,5 +68,6 @@ export function roomLook(selections: Selection[] | undefined, room: Pick<PlanRoo
     dishwasher: colorOf(picks.get("dishwashers"), COLORS.steel),
     door: colorOf(picks.get("interior-doors"), COLORS.door),
     trim: colorOf(picks.get("trim"), COLORS.trim),
+    accents: new Map([...(selections?.length ? wallPicks(selections, room.id) : new Map())].map(([k, s]) => [k, colorOf(s.product, COLORS.drywall)])),
   };
 }

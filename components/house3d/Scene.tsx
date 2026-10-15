@@ -13,15 +13,31 @@ import { mergeParts } from "./geometry";
  * its walls up and ceilings in, and the sky and sunlight for a time of day.
  */
 
-/** The whole house (or a floor of it), ceilings included, as one solid mesh and one glass mesh. Walls are always up, so no footprint strips. */
-export function HouseMeshes({ parts }: { parts: Part[] }) {
+/** What you can aim at: the solid mesh, and the part each of its triangles came from. */
+export type AimTarget = { mesh: THREE.Mesh; owners: Part[] };
+
+/**
+ * The whole house (or a floor of it), ceilings included, as one solid mesh and one glass mesh. Walls are always up, so no footprint strips.
+ * `aimRef`, when given, gets the solid mesh for aiming at things.
+ */
+export function HouseMeshes({ parts, aimRef }: { parts: Part[]; aimRef?: React.MutableRefObject<AimTarget | null> }) {
   const solid = useMemo(() => mergeParts(parts.filter((p) => !p.glass && p.layer !== "footprints")), [parts]);
   const glass = useMemo(() => mergeParts(parts.filter((p) => p.glass)), [parts]);
   useEffect(() => () => solid?.geometry.dispose(), [solid]);
   useEffect(() => () => glass?.geometry.dispose(), [glass]);
   return (
     <>
-      {solid && <mesh geometry={solid.geometry} material={solidMaterial} castShadow receiveShadow />}
+      {solid && (
+        <mesh
+          geometry={solid.geometry}
+          material={solidMaterial}
+          castShadow
+          receiveShadow
+          ref={(m) => {
+            if (aimRef) aimRef.current = m ? { mesh: m, owners: solid.owners } : null;
+          }}
+        />
+      )}
       {glass && <mesh geometry={glass.geometry} material={glassMaterial} />}
     </>
   );

@@ -13,6 +13,7 @@ import { levelHeights } from "@/lib/house3d/levels";
 import { roofShape, type RoofShape } from "@/lib/house3d/roof";
 import { lotOffsetFor, siteFor, type Site } from "@/lib/house3d/site";
 import { lightsFor } from "@/lib/catalog/categories";
+import { wallKey } from "@/lib/interior/picks";
 import type { RateId } from "./rates";
 
 /**
@@ -113,6 +114,8 @@ export type RoomFinish = {
   type: string;
   sqft: number;
   amounts: Partial<Record<RateId, number>>;
+  /** Each wall's share of the room's walls, by wall key ("e3"), for accent wall paint. */
+  walls?: Record<string, number>;
 };
 
 const sqft = (sqIn: number) => sqIn / SQ_IN_PER_SQ_FT;
@@ -328,7 +331,7 @@ function toRoad(p: Ctx, pt: Point, offset: Point): number {
   return Math.max(20 * 12, d);
 }
 
-type MeasuredRoom = { id: string; name: string; type: string; sqft: number; fixtures: { kind: string; widthIn: number; depthIn: number }[] };
+type MeasuredRoom = { id: string; name: string; type: string; sqft: number; fixtures: { kind: string; widthIn: number; depthIn: number }[]; edgesIn?: number[] };
 
 /**
  * Plumbing, cabinets, tile, lights and finishes for rooms, using what's
@@ -407,7 +410,9 @@ function roomFixtures(q: Quantities, rooms: MeasuredRoom[]) {
     const lights = lightsFor(r.type, r.sqft);
     q.lightFixtures += lights;
     add("lighting-fixtures", lights);
-    q.rooms.push({ id: r.id, name: r.name, type: r.type, sqft: r.sqft, amounts: a });
+    const around = (r.edgesIn ?? []).reduce((t, x) => t + x, 0);
+    const walls = around > 0 ? Object.fromEntries(r.edgesIn!.map((len, i) => [wallKey(i), len / around])) : undefined;
+    q.rooms.push({ id: r.id, name: r.name, type: r.type, sqft: r.sqft, amounts: a, ...(walls ? { walls } : {}) });
   }
   q.counterSqft += q.vanities * 4;
   q.cabinetHardware = Math.round(q.cabinetLf * 1.5 + q.vanities * 4);
@@ -512,7 +517,8 @@ export function measurePlan(p: Ctx): Quantities | null {
       else if (kind === "garage") q.garageSqft += a;
       else if (r.type === "deck") q.deckSqft += a;
       else q.porchSqft += a;
-      allRooms.push({ id: r.id, name: r.name, type: r.type ?? "other", sqft: a, fixtures: plan.fixtures.filter((f) => f.roomId === r.id) });
+      const edgesIn = r.polygon.map((p, i) => dist(p, r.polygon[(i + 1) % r.polygon.length]));
+      allRooms.push({ id: r.id, name: r.name, type: r.type ?? "other", sqft: a, fixtures: plan.fixtures.filter((f) => f.roomId === r.id), edgesIn });
     }
     // Floors framed over something: upper floors, and lower basements' upper floors.
     if (!groundLevels.includes(l) && floorIn > lowestUsed + 12) q.floorFramingSqft += sqft(floorFootprint(plan).reduce((s, r) => s + regionArea(r), 0));
