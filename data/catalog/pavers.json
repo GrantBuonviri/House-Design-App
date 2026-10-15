@@ -1,0 +1,244 @@
+[
+  {
+    "id": "pavestone-holland-60mm-3-tone-brown",
+    "name": "Pavestone Holland 7.87 in. L x 3.94 in. W x 2.36 in. H 60 mm 3 Tone Brown Concrete Paver (480 Pieces/103 sq. ft./Pallet)",
+    "brand": "Pavestone",
+    "line": "Holland",
+    "sku": "21778.TTTB",
+    "url": "https://homedepot.com/p/Pavestone-Holland-7-87-in-L-x-3-94-in-W-x-2-36-in-H-60-mm-3-Tone-Brown-Concrete-Paver-480-Pieces-103-sq-ft-Pallet-21778-TTTB/310128158",
+    "price": 9.6,
+    "unit": "sqft",
+    "priceSource": "listed",
+    "priceNote": "$988.72 per 103 sq ft pallet at Home Depot (pallet price likely includes delivery)",
+    "lastChecked": "2026-10-15",
+    "kind": "driveway",
+    "styles": [
+      "traditional",
+      "craftsman",
+      "ranch"
+    ],
+    "tags": [
+      "warm",
+      "earthy",
+      "red"
+    ],
+    "color": "#8a5a44",
+    "pattern": "tile"
+  },
+  {
+    "id": "belgard-holland-60mm-charcoal",
+    "name": "BELGARD 8 in. L x 4 in. W x 2.25 in. H 60mm Charcoal Concrete Holland Pavers",
+    "brand": "Belgard",
+    "line": "Holland",
+    "sku": "10507175",
+    "url": "https://www.homedepot.com/p/BELGARD-8-in-L-x-4-in-W-x-2-25-in-H-60mm-Charcoal-Concrete-Holland-Pavers-10507175/315187121",
+    "price": 4.75,
+    "unit": "sqft",
+    "priceSource": "estimated",
+    "priceNote": "Price not shown on page; est. from similar 60 mm Holland pavers (~$4-6/sq ft)",
+    "lastChecked": "2026-10-15",
+    "kind": "driveway",
+    "styles": [
+      "contemporary",
+      "modern-farmhouse",
+      "mountain-modern"
+    ],
+    "tags": [
+      "dark",
+      "gray"
+    ],
+    "color": "#4a4a4a",
+    "pattern": "tile"
+  },
+  {
+    "id": "techo-bloc-blu-60-smooth",
+    "name": "TECHO-BLOC Blu 60mm Smooth Accent Pavers",
+    "brand": "Techo-Bloc",
+    "line": "Blu 60",
+    "url": "https://www.gertens.com/techo-bloc-blu-60mm-smooth-accent-pavers",
+    "price": 8.29,
+    "unit": "sqft",
+    "priceSource": "listed",
+    "priceNote": "$8.29 at Gertens (MN), sold by 116 sq ft pallet; page doesn't say per sq ft, assumed so",
+    "lastChecked": "2026-10-15",
+    "kind": "driveway",
+    "styles": [
+      "contemporary",
+      "mountain-modern"
+    ],
+    "tags": [
+      "gray",
+      "neutral"
+    ],
+    "color": "#9a958c",
+    "pattern": "tile"
+  },
+  {
+    "id": "belgard-cambridge-cobble-danville-beige",
+    "name": "BELGARD Cambridge Cobble 3-Piece 15.75 in. x 15.75 in. x 2.25 in. Danville Beige Concrete Paver (480 Piece/120 sq. ft./Pallet)",
+    "brand": "Belgard",
+    "line": "Cambridge Cobble",
+    "sku": "10151383",
+    "url": "https://www.homedepot.com/p/BELGARD-Cambridge-Cobble-3-Piece-15-75-in-x-15-75-in-x-2-25-in-Danville-Beige-Concrete-Paver-480-Piece-120-sq-ft-Pallet-10151383/315541430",
+    "price": 5.5,
+    "unit": "sqft",
+    "priceSource": "estimated",
+    "priceNote": "Price not shown on page; est. from similar Belgard/Pavestone patio pavers (~$5-6/sq ft)",
+    "lastChecked": "2026-10-15",
+    "kind": "patio",
+    "styles": [
+      "traditional",
+      "craftsman",
+      "modern-farmhouse"
+    ],
+    "tags": [
+      "light",
+      "warm",
+      "neutral"
+    ],
+    "color": "#c2ad8c",
+    "pattern": "tile"
+  },
+  {
+    "id": "pavestone-rumblestone-rec-greystone",
+    "name": "Pavestone RumbleStone Rec 10.5 in. x 7 in. x 1.75 in. Greystone Concrete Paver (192 Pcs. / 98 Sq. ft. / Pallet)",
+    "brand": "Pavestone",
+    "line": "RumbleStone",
+    "sku": "90934",
+    "url": "https://homedepot.com/p/Pavestone-RumbleStone-Rec-10-5-in-x-7-in-x-1-75-in-Greystone-Concrete-Paver-192-Pcs-98-Sq-ft-Pallet-90934/203647910",
+    "price": 8.93,
+    "unit": "sqft",
+    "priceSource": "listed",
+    "priceNote": "$874.92 per 98 sq ft pallet at Home Depot (pallet price likely includes delivery)",
+    "lastChecked": "2026-10-15",
+    "kind": "patio",
+    "styles": [
+      "ranch",
+      "mountain-modern",
+      "modern-farmhouse"
+    ],
+    "tags": [
+      "gray",
+      "neutral"
+    ],
+    "color": "#8f8d88",
+    "pattern": "tile"
+  },
+  {
+    "id": "unilock-beacon-hill-flagstone",
+    "name": "BEACON HILL Flagstone",
+    "brand": "Unilock",
+    "line": "Beacon Hill",
+    "url": "https://unilock.com/product/beacon-hill-flagstone-ohio/",
+    "price": 7.0,
+    "unit": "sqft",
+    "priceSource": "estimated",
+    "priceNote": "No price on Unilock site (dealer quote); est. from 2026 Unilock price guides (~$6-8/sq ft material)",
+    "lastChecked": "2026-10-15",
+    "kind": "patio",
+    "styles": [
+      "mountain-modern",
+      "craftsman",
+      "traditional"
+    ],
+    "tags": [
+      "earthy",
+      "warm"
+    ],
+    "color": "#a89580",
+    "pattern": "stone"
+  },
+  {
+    "id": "oldcastle-16in-gray-square-stepping-stone",
+    "name": "Oldcastle 16 in. Gray Square Concrete Stepping Stone (90-Piece Pallet)",
+    "brand": "Oldcastle",
+    "sku": "10051080",
+    "url": "https://www.homedepot.com/p/Oldcastle-16-in-Gray-Square-Concrete-Stepping-Stone-90-Piece-Pallet-10051080/327671476",
+    "price": 7.67,
+    "unit": "sqft",
+    "priceSource": "listed",
+    "priceNote": "$1,222.14 per 159.3 sq ft pallet at Home Depot ($7.67/sq ft as listed)",
+    "lastChecked": "2026-10-15",
+    "kind": "walk",
+    "styles": [
+      "ranch",
+      "traditional",
+      "contemporary"
+    ],
+    "tags": [
+      "gray",
+      "neutral"
+    ],
+    "color": "#9e9e9a",
+    "pattern": "tile"
+  },
+  {
+    "id": "pavestone-24x16-rectangular-grey-step-stone",
+    "name": "Pavestone 24 in. x 16 in. x 2 in. Rectangular Grey Concrete Step Stone (56-Pieces/148.96 sq. ft./Pallet)",
+    "brand": "Pavestone",
+    "sku": "73400",
+    "url": "https://homedepot.com/p/Pavestone-24-in-x-16-in-x-2-in-Rectangular-Grey-Concrete-Step-Stone-56-Pieces-148-96-sq-ft-Pallet-73400/332055256",
+    "price": 10.85,
+    "unit": "sqft",
+    "priceSource": "listed",
+    "priceNote": "$1,616.44 per 148.96 sq ft pallet at Home Depot (pallet price likely includes delivery)",
+    "lastChecked": "2026-10-15",
+    "kind": "walk",
+    "styles": [
+      "contemporary",
+      "modern-farmhouse",
+      "mountain-modern"
+    ],
+    "tags": [
+      "gray",
+      "light"
+    ],
+    "color": "#8e8e8a",
+    "pattern": "tile"
+  },
+  {
+    "id": "zamzows-road-mix-gravel",
+    "name": "Road Mix (bulk)",
+    "brand": "Zamzows",
+    "url": "https://zamzows.com/pages/bulk-soil-compost-and-bark",
+    "price": 0.56,
+    "unit": "sqft",
+    "priceSource": "listed",
+    "priceNote": "$44.99/cu yd at Zamzows (Boise); 1 yd covers ~81 sq ft at 4 in deep",
+    "lastChecked": "2026-10-15",
+    "kind": "gravel",
+    "styles": [
+      "ranch",
+      "mountain-modern"
+    ],
+    "tags": [
+      "gray",
+      "earthy"
+    ],
+    "color": "#8b8378",
+    "pattern": "stone"
+  },
+  {
+    "id": "zamzows-3-4-round-rock",
+    "name": "3/4 inch Round Rock (bulk)",
+    "brand": "Zamzows",
+    "url": "https://zamzows.com/pages/bulk-soil-compost-and-bark",
+    "price": 0.74,
+    "unit": "sqft",
+    "priceSource": "listed",
+    "priceNote": "$59.99/cu yd at Zamzows (Boise); 1 yd covers ~81 sq ft at 4 in deep",
+    "lastChecked": "2026-10-15",
+    "kind": "gravel",
+    "styles": [
+      "ranch",
+      "mountain-modern",
+      "modern-farmhouse"
+    ],
+    "tags": [
+      "neutral",
+      "earthy"
+    ],
+    "color": "#a39a8a",
+    "pattern": "stone"
+  }
+]

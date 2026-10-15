@@ -1,0 +1,226 @@
+[
+  {
+    "id": "trex-enhance-naturals-rocky-harbor",
+    "name": "Trex Enhance Naturals 1 in. x 6 in. x 16 ft. Rocky Harbor Grooved Edge Composite Deck Board",
+    "brand": "Trex",
+    "line": "Enhance Naturals",
+    "sku": "RH010616E2G01",
+    "url": "https://www.homedepot.com/p/Trex-Enhance-Naturals-1-in-x-6-in-x-16-ft-Rocky-Harbor-Grooved-Edge-Composite-Deck-Board-RH010616E2G01/310569119",
+    "price": 5.72,
+    "unit": "sqft",
+    "priceSource": "listed",
+    "priceNote": "$41.58 per 16 ft board at Home Depot = $2.60/linft x 2.2",
+    "lastChecked": "2026-10-15",
+    "kind": "composite",
+    "styles": [
+      "modern-farmhouse",
+      "contemporary",
+      "ranch"
+    ],
+    "tags": [
+      "gray",
+      "neutral"
+    ],
+    "color": "#8a8580",
+    "pattern": "plank"
+  },
+  {
+    "id": "trex-enhance-naturals-cinnamon-cove",
+    "name": "Trex Enhance Naturals 1 in. x 6 in. x 16 ft. Cinnamon Cove Grooved Edge Composite Deck Board",
+    "brand": "Trex",
+    "line": "Enhance Naturals",
+    "sku": "CC010616E2G01",
+    "url": "https://www.homedepot.com/p/Trex-Enhance-Naturals-1-in-x-6-in-x-16-ft-Cinnamon-Cove-Grooved-Edge-Composite-Deck-Board-CC010616E2G01/333973198",
+    "price": 5.72,
+    "unit": "sqft",
+    "priceSource": "listed",
+    "priceNote": "$41.58 per 16 ft board at Home Depot = $2.60/linft x 2.2",
+    "lastChecked": "2026-10-15",
+    "kind": "composite",
+    "styles": [
+      "craftsman",
+      "traditional",
+      "ranch"
+    ],
+    "tags": [
+      "warm",
+      "wood-tone"
+    ],
+    "color": "#8b5a3c",
+    "pattern": "plank"
+  },
+  {
+    "id": "trex-select-pebble-grey",
+    "name": "Trex Select 1 in. x 6 in. x 16 ft. Grooved Pebble Grey Composite Decking Board",
+    "brand": "Trex",
+    "line": "Select",
+    "sku": "PG010616SG01",
+    "url": "https://www.homedepot.com/p/Trex-Select-1-in-x-6-in-x-16-ft-Grooved-Pebble-Grey-Composite-Decking-Board-PG010616SG01/204516800",
+    "price": 11.0,
+    "unit": "sqft",
+    "priceSource": "listed",
+    "priceNote": "$79.98 per 16 ft board at Home Depot = $5.00/linft x 2.2",
+    "lastChecked": "2026-10-15",
+    "kind": "composite",
+    "styles": [
+      "contemporary",
+      "modern-farmhouse",
+      "traditional"
+    ],
+    "tags": [
+      "gray",
+      "light"
+    ],
+    "color": "#9c9a94",
+    "pattern": "plank"
+  },
+  {
+    "id": "trex-transcend-lineage-biscayne",
+    "name": "Trex Transcend Lineage 1 in. x 6 in. x 16 ft. Biscayne Grooved Edge Composite Deck Board",
+    "brand": "Trex",
+    "line": "Transcend Lineage",
+    "sku": "BC010616TLG01",
+    "url": "https://www.homedepot.com/p/Trex-Transcend-Lineage-1-in-x-6-in-x-16-ft-Biscayne-Grooved-Edge-Composite-Deck-Board-BC010616TLG01/330530884",
+    "price": 12.5,
+    "unit": "sqft",
+    "priceSource": "listed",
+    "priceNote": "$90.90 per 16 ft board at Home Depot (sale, reg. $101) = $5.68/linft x 2.2",
+    "lastChecked": "2026-10-15",
+    "kind": "composite",
+    "styles": [
+      "modern-farmhouse",
+      "mountain-modern",
+      "craftsman"
+    ],
+    "tags": [
+      "wood-tone",
+      "warm",
+      "light"
+    ],
+    "color": "#a88a6a",
+    "pattern": "plank"
+  },
+  {
+    "id": "timbertech-pro-terrain-brown-oak",
+    "name": "Terrain Collection by TimberTech (Brown Oak)",
+    "brand": "TimberTech",
+    "line": "PRO Terrain",
+    "sku": "TT-TERRAIN",
+    "url": "https://www.thedeckstoreonline.com/terrain-collection-by-timbertech.html",
+    "price": 9.79,
+    "unit": "sqft",
+    "priceSource": "listed",
+    "priceNote": "$4.45/linft at The Deck Store Online x 2.2; also sold in Rustic Elm, Silver Maple, Stone Ash",
+    "lastChecked": "2026-10-15",
+    "kind": "composite",
+    "styles": [
+      "mountain-modern",
+      "craftsman",
+      "ranch"
+    ],
+    "tags": [
+      "wood-tone",
+      "earthy"
+    ],
+    "color": "#7a5a40",
+    "pattern": "plank"
+  },
+  {
+    "id": "timbertech-azek-vintage-english-walnut",
+    "name": "Azek Decking Vintage Collection (English Walnut)",
+    "brand": "TimberTech",
+    "line": "AZEK Vintage",
+    "url": "https://www.thedeckstoreonline.com/azek-decking-vintage-collection.html",
+    "price": 17.6,
+    "unit": "sqft",
+    "priceSource": "listed",
+    "priceNote": "$8.00/linft at The Deck Store Online x 2.2 (PVC); other colors Mahogany, Dark Hickory, Weathered Teak, Cypress, Coastline",
+    "lastChecked": "2026-10-15",
+    "kind": "composite",
+    "styles": [
+      "mountain-modern",
+      "contemporary",
+      "craftsman"
+    ],
+    "tags": [
+      "dark",
+      "wood-tone"
+    ],
+    "color": "#5a3e2b",
+    "pattern": "plank"
+  },
+  {
+    "id": "fiberon-sanctuary-latte",
+    "name": "Fiberon 1x6-20' Sanctuary Composite Deck Board-Latte Grooved Edge",
+    "brand": "Fiberon",
+    "line": "Sanctuary",
+    "sku": "BRDSAN2G LATTE 20",
+    "url": "https://www.homedepot.com/p/Fiberon-1x6-20-Sanctuary-Composite-Deck-Board-Latte-Grooved-Edge-Actual-Size-925-x-5-25-BRDSAN2G-LATTE-20-BRDSAN2G-LATTE-20/313565741",
+    "price": 10.98,
+    "unit": "sqft",
+    "priceSource": "listed",
+    "priceNote": "$99.80 per 20 ft board at Home Depot = $4.99/linft x 2.2",
+    "lastChecked": "2026-10-15",
+    "kind": "composite",
+    "styles": [
+      "modern-farmhouse",
+      "traditional",
+      "contemporary"
+    ],
+    "tags": [
+      "light",
+      "warm",
+      "wood-tone"
+    ],
+    "color": "#b39a7c",
+    "pattern": "plank"
+  },
+  {
+    "id": "weathershield-pressure-treated-pine-5-4x6x16",
+    "name": "WeatherShield 5/4 in. x 6 in. x 16 ft. Pressure-Treated Premium Pine Decking Board",
+    "brand": "WeatherShield",
+    "sku": "540616MCGXPD",
+    "url": "https://www.homedepot.com/p/5-4-in-x-6-in-x-16-ft-pressure-treated-premium-pine-decking-board-540616mcgxpd/206947456",
+    "price": 2.48,
+    "unit": "sqft",
+    "priceSource": "estimated",
+    "priceNote": "Price not shown on page; est. ~$18/board (~$1.13/linft x 2.2) from typical 2026 PT decking prices",
+    "lastChecked": "2026-10-15",
+    "kind": "wood",
+    "styles": [
+      "ranch",
+      "traditional",
+      "craftsman"
+    ],
+    "tags": [
+      "wood-tone",
+      "neutral"
+    ],
+    "color": "#a8916a",
+    "pattern": "plank"
+  },
+  {
+    "id": "premium-radius-edge-cedar-5-4x6x16",
+    "name": "5/4 in. x 6 in. x 16 ft. Premium Radius Edge Cedar Decking Board",
+    "brand": "Home Depot (unbranded)",
+    "sku": "731934",
+    "url": "https://www.homedepot.com/p/5-4-in-x-6-in-x-16-ft-Premium-Radius-Edge-Cedar-Decking-Board-731934/202047688",
+    "price": 6.6,
+    "unit": "sqft",
+    "priceSource": "estimated",
+    "priceNote": "Price not shown on page; est. ~$48/board (~$3.00/linft x 2.2) from typical 2026 cedar decking prices",
+    "lastChecked": "2026-10-15",
+    "kind": "wood",
+    "styles": [
+      "mountain-modern",
+      "craftsman",
+      "modern-farmhouse"
+    ],
+    "tags": [
+      "wood-tone",
+      "warm"
+    ],
+    "color": "#b5764a",
+    "pattern": "plank"
+  }
+]

@@ -14,6 +14,7 @@ import BriefStage from "@/components/brief/BriefStage";
 import BubbleStage from "@/components/bubbles/BubbleStage";
 import PlanStage from "@/components/plan/PlanStage";
 import InteriorStage from "@/components/interior/InteriorStage";
+import ExteriorStage from "@/components/exterior/ExteriorStage";
 import CostPanel, { CostBadge } from "@/components/cost/CostPanel";
 import { estimate as estimateCost } from "@/lib/cost/estimate";
 
@@ -140,6 +141,8 @@ export default function ProjectWorkspace({ id }: { id: string }) {
         <PlanStage onContinue={() => setStage("interior")} onGoToSketch={() => setStage("bubbles")} />
       ) : project.stage === "interior" ? (
         <InteriorStage onContinue={() => setStage("exterior")} onGoToPlan={() => setStage("plan")} />
+      ) : project.stage === "exterior" ? (
+        <ExteriorStage onGoToPlan={() => setStage("plan")} onWalk={canWalk ? () => setWalking(true) : undefined} />
       ) : stageAvailable(project.stage) ? null : (
         <ComingSoon stage={project.stage} />
       )}

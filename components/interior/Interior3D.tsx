@@ -41,6 +41,7 @@ export default function Interior3D({ project, roomId }: { project: Project; room
         basics={project.plan.basics}
         house3d={project.house3d}
         interior={project.interior.selections}
+        exterior={project.exterior}
         plot={project.plot}
         offset={offset}
         levelId={levelId}

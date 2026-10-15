@@ -144,7 +144,7 @@ export class MeshBuilder {
     thickness: number,
     z0: number,
     z1: number,
-    colors: { left: RGB; right: RGB; ends: RGB; top: RGB; bottom?: RGB },
+    colors: { left: RGB; right: RGB; ends: RGB; top: RGB; bottom?: RGB; leftPattern?: number },
   ) {
     const dx = b.x - a.x;
     const dy = b.y - a.y;
@@ -158,7 +158,10 @@ export class MeshBuilder {
     const bL = pl(b, 1);
     const aR = pl(a, -1);
     const bR = pl(b, -1);
+    const was = this.pattern;
+    if (colors.leftPattern !== undefined) this.pattern = colors.leftPattern;
     this.upright(f, aL, bL, z0, z1, z0, z1, n, colors.left);
+    this.pattern = was;
     this.upright(f, aR, bR, z0, z1, z0, z1, { x: -n.x, y: -n.y }, colors.right);
     this.upright(f, aL, aR, z0, z1, z0, z1, { x: -u.x, y: -u.y }, colors.ends);
     this.upright(f, bL, bR, z0, z1, z0, z1, u, colors.ends);

@@ -1,0 +1,195 @@
+[
+  {
+    "id": "hampton-bay-grangehill-barn-light-black",
+    "name": "Grangehill 1-Light Large Barn Light Wall Lantern Sconce",
+    "brand": "Hampton Bay",
+    "line": "Grangehill",
+    "sku": "HDP00818",
+    "url": "https://homedepot.com/p/Hampton-Bay-Grangehill-1-Light-Large-Barn-Light-Wall-Lantern-Sconce-HDP00818/319393020",
+    "price": 51.63,
+    "unit": "each",
+    "priceSource": "listed",
+    "priceNote": "$51.63 at Home Depot",
+    "lastChecked": "2026-10-15",
+    "kind": "wall-lantern",
+    "styles": [
+      "modern-farmhouse",
+      "ranch"
+    ],
+    "tags": [
+      "black"
+    ],
+    "color": "#1b1b1b",
+    "pattern": "metal"
+  },
+  {
+    "id": "generation-lighting-barn-light-white-large",
+    "name": "Generation Lighting Barn Light 1-Light White Modern Farmhouse Outdoor Large Wall Lantern Sconce",
+    "brand": "Generation Lighting",
+    "line": "Barn Light",
+    "sku": "8737401EN3-15",
+    "url": "https://homedepot.com/p/Generation-Lighting-Barn-Light-1-Light-White-Modern-Farmhouse-Outdoor-Large-Wall-Lantern-Sconce-8737401EN3-15/318078798",
+    "price": 124.0,
+    "unit": "each",
+    "priceSource": "listed",
+    "priceNote": "$124 at Home Depot",
+    "lastChecked": "2026-10-15",
+    "kind": "wall-lantern",
+    "styles": [
+      "modern-farmhouse",
+      "traditional"
+    ],
+    "tags": [
+      "white",
+      "light"
+    ],
+    "color": "#f2f2ee",
+    "pattern": "metal"
+  },
+  {
+    "id": "hampton-bay-hurley-matte-black",
+    "name": "Hampton Bay Hurley 19.25 in. Matte Black Modern Outdoor 2-Light Wall Sconce",
+    "brand": "Hampton Bay",
+    "line": "Hurley",
+    "sku": "44811",
+    "url": "https://homedepot.com/p/Hampton-Bay-19-25-in-Matte-Black-Modern-Outdoor-2-Light-Wall-Sconce-44811/319964367",
+    "price": 93.07,
+    "unit": "each",
+    "priceSource": "listed",
+    "priceNote": "$93.07 at Home Depot",
+    "lastChecked": "2026-10-15",
+    "kind": "wall-lantern",
+    "styles": [
+      "contemporary",
+      "modern-farmhouse",
+      "mountain-modern"
+    ],
+    "tags": [
+      "black"
+    ],
+    "color": "#1e1e1e",
+    "pattern": "metal"
+  },
+  {
+    "id": "kichler-cylinder-7-wall-light-black",
+    "name": "Cylinder 3000K LED 7\" Wall Light",
+    "brand": "Kichler",
+    "line": "Cylinder",
+    "sku": "11250BKT30",
+    "url": "https://www.kichler.com/sku/11250BKT30",
+    "price": 164.97,
+    "unit": "each",
+    "priceSource": "listed",
+    "priceNote": "$164.97 on kichler.com",
+    "lastChecked": "2026-10-15",
+    "kind": "wall-lantern",
+    "styles": [
+      "contemporary",
+      "mountain-modern"
+    ],
+    "tags": [
+      "black"
+    ],
+    "color": "#222222",
+    "pattern": "metal"
+  },
+  {
+    "id": "progress-oakcliff-craftsman-lantern-bronze",
+    "name": "Oakcliff Collection 1-Light Antique Bronze Etched Seeded Glass Craftsman Outdoor Large Wall Lantern Light",
+    "brand": "Progress Lighting",
+    "line": "Oakcliff",
+    "sku": "P560152-020",
+    "url": "https://www.homedepot.com/p/Progress-Lighting-Oakcliff-Collection-1-Light-Antique-Bronze-Etched-Seeded-Glass-Craftsman-Outdoor-Large-Wall-Lantern-Light-P560152-020/312501581",
+    "price": 55.17,
+    "unit": "each",
+    "priceSource": "listed",
+    "priceNote": "$55.17 at Home Depot",
+    "lastChecked": "2026-10-15",
+    "kind": "wall-lantern",
+    "styles": [
+      "craftsman",
+      "traditional",
+      "ranch"
+    ],
+    "tags": [
+      "bronze",
+      "dark"
+    ],
+    "color": "#4a3b2c",
+    "pattern": "metal"
+  },
+  {
+    "id": "hinkley-porter-22-bronze",
+    "name": "Hinkley Porter 22\" High Bronze LED Outdoor Wall Light",
+    "brand": "Hinkley",
+    "line": "Porter",
+    "sku": "015E2",
+    "url": "https://LampsPlus.com/products/hinkley-porter-22-inch-high-oil-rubbed-bronze-led-outdoor-wall-light__015e2.html",
+    "price": 395.0,
+    "unit": "each",
+    "priceSource": "listed",
+    "priceNote": "$395 at Lamps Plus (style # 015E2 is the retailer item number)",
+    "lastChecked": "2026-10-15",
+    "kind": "wall-lantern",
+    "styles": [
+      "mountain-modern",
+      "craftsman",
+      "traditional"
+    ],
+    "tags": [
+      "bronze",
+      "dark"
+    ],
+    "color": "#3d2f24",
+    "pattern": "metal"
+  },
+  {
+    "id": "designers-fountain-belmont-flush-black",
+    "name": "Designers Fountain Belmont 2-Light Black Outdoor Ceiling Flush Mount Ceiling Light with Clear Glass Shade",
+    "brand": "Designers Fountain",
+    "line": "Belmont",
+    "sku": "34835-BK",
+    "url": "https://www.homedepot.com/p/309454668",
+    "price": 60,
+    "unit": "each",
+    "priceSource": "estimated",
+    "priceNote": "HD page showed no price; est. from similar 2-light outdoor flush mounts at Home Depot ($45-75)",
+    "lastChecked": "2026-10-15",
+    "kind": "porch-ceiling",
+    "styles": [
+      "traditional",
+      "modern-farmhouse",
+      "ranch"
+    ],
+    "tags": [
+      "black"
+    ],
+    "color": "#1c1c1c",
+    "pattern": "metal"
+  },
+  {
+    "id": "kichler-beacon-square-flush-olde-bronze",
+    "name": "Beacon Square Climates 2 Light Flush Mount (Olde Bronze)",
+    "brand": "Kichler",
+    "line": "Beacon Square",
+    "sku": "49834OZ",
+    "url": "https://www.supplyhouse.com/Kichler-49834OZ-Beacon-Square-Climates-2-Light-Flush-Mount-Olde-Bronze",
+    "price": 254.99,
+    "unit": "each",
+    "priceSource": "listed",
+    "priceNote": "$254.99 at SupplyHouse",
+    "lastChecked": "2026-10-15",
+    "kind": "porch-ceiling",
+    "styles": [
+      "craftsman",
+      "mountain-modern",
+      "traditional"
+    ],
+    "tags": [
+      "bronze",
+      "dark"
+    ],
+    "color": "#40332a",
+    "pattern": "metal"
+  }
+]

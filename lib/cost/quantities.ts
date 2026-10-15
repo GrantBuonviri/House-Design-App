@@ -14,6 +14,7 @@ import { roofShape, type RoofShape } from "@/lib/house3d/roof";
 import { lotOffsetFor, siteFor, type Site } from "@/lib/house3d/site";
 import { lightsFor } from "@/lib/catalog/categories";
 import { wallKey } from "@/lib/interior/picks";
+import { yardAmounts, yardLayout } from "@/lib/exterior/yard";
 import type { RateId } from "./rates";
 
 /**
@@ -31,6 +32,8 @@ export type Quantities = {
   /** Porch and covered patio floors (a slab), and decks. */
   porchSqft: number;
   deckSqft: number;
+  /** Open patios (part of porchSqft): concrete, or pavers when picked. */
+  patioSqft: number;
   floorsAbove: number;
   floorsBelow: number;
 
@@ -52,12 +55,23 @@ export type Quantities = {
   driveSqft: number;
   trenchLf: number;
 
+  // The yard (see lib/exterior/yard.ts)
+  walkSqft: number;
+  lawnSqft: number;
+  bedSqft: number;
+  shrubs: number;
+  trees: number;
+  /** Outdoor wall lights by the doors. */
+  extLights: number;
+
   // Structure and shell
   floorFramingSqft: number;
   /** Framed outside walls above ground, less doors and windows. */
   extWallSqft: number;
   /** Gable ends and the tall side of a shed roof. */
   gableSqft: number;
+  /** Outside walls of the floors on the ground, for a stone or brick band along the base. */
+  baseWallLf: number;
   intWallLf: number;
   intWallSqft: number;
   /** All roof surface, sloped and flat. */
@@ -256,6 +270,14 @@ function empty(source: Quantities["source"]): Quantities {
     garageSqft: 0,
     porchSqft: 0,
     deckSqft: 0,
+    patioSqft: 0,
+    walkSqft: 0,
+    lawnSqft: 0,
+    bedSqft: 0,
+    shrubs: 0,
+    trees: 0,
+    extLights: 0,
+    baseWallLf: 0,
     floorsAbove: 1,
     floorsBelow: 0,
     foundation: "slab",
@@ -517,6 +539,7 @@ export function measurePlan(p: Ctx): Quantities | null {
       else if (kind === "garage") q.garageSqft += a;
       else if (r.type === "deck") q.deckSqft += a;
       else q.porchSqft += a;
+      if (r.type === "patio") q.patioSqft += a;
       const edgesIn = r.polygon.map((p, i) => dist(p, r.polygon[(i + 1) % r.polygon.length]));
       allRooms.push({ id: r.id, name: r.name, type: r.type ?? "other", sqft: a, fixtures: plan.fixtures.filter((f) => f.roomId === r.id), edgesIn });
     }
@@ -528,6 +551,7 @@ export function measurePlan(p: Ctx): Quantities | null {
       const L = dist(w.a, w.b);
       if (w.open) continue;
       if (w.exterior) extLen += L;
+      if (w.exterior && groundLevels.includes(l)) q.baseWallLf += ft(L);
       else q.intWallLf += ft(L);
       if (!w.exterior) q.intWallSqft += sqft(L * ceilingIn);
     }
@@ -569,6 +593,19 @@ export function measurePlan(p: Ctx): Quantities | null {
   const garageWidth = garagePolys.length ? Math.min(30, Math.max(12, q.garageDoorLf + 4 || 20)) : 12;
   q.driveSqft = toStreet * garageWidth;
   q.trenchLf = toStreet;
+
+  // The yard as laid out for the 3D view: driveway, walk, beds, lawn, plants and outdoor lights.
+  const yard = yardLayout(plans, p.levels, basics, p.plot, offset);
+  if (yard) {
+    const y = yardAmounts(yard);
+    if (y.driveSqft > 0) q.driveSqft = y.driveSqft;
+    q.walkSqft = y.walkSqft;
+    q.lawnSqft = y.lawnSqft;
+    q.bedSqft = y.bedSqft;
+    q.shrubs = y.shrubs;
+    q.trees = y.trees;
+    q.extLights = y.lights;
+  }
   return q;
 }
 
@@ -672,6 +709,15 @@ export function measureRough(p: Ctx): Quantities | null {
   q.drywallSqft = q.extWallSqft + q.intWallSqft * 2 + heated + garage;
   q.driveSqft = 40 * (garage ? 20 : 12);
   q.trenchLf = 60;
+  q.patioSqft = outdoor.filter((r) => r.type === "patio").reduce((s, r) => s + r.sqft, 0);
+  q.baseWallLf = perimeter(mainArea);
+  // A typical yard: a front walk, beds along the front and sides, lawn around the house, a few trees.
+  q.walkSqft = 30 * 4;
+  q.bedSqft = perimeter(mainArea) * 0.6 * 4;
+  q.shrubs = Math.round((perimeter(mainArea) * 0.6) / 6);
+  q.lawnSqft = Math.max(0, (Math.sqrt(mainArea) + 60) ** 2 - mainArea - q.driveSqft - q.bedSqft - q.walkSqft - q.porchSqft - q.deckSqft) * 0.8;
+  q.trees = 4;
+  q.extLights = q.entryDoors + (garage ? 2 : 0) + q.patioDoors;
   return q;
 }
 

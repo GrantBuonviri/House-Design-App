@@ -1,0 +1,127 @@
+[
+  {
+    "id": "amerimax-5in-k-style-aluminum-gutter-white",
+    "name": "Amerimax Home Products 5 in. x 10 ft. White Aluminum K-Style Gutter",
+    "brand": "Amerimax Home Products",
+    "line": "K-Style 5 in",
+    "sku": "2600600120",
+    "url": "https://homedepot.com/p/Amerimax-Home-Products-5-in-x-10-ft-White-Aluminum-K-Style-Gutter-2600600120/100061750",
+    "price": 1.3,
+    "unit": "linft",
+    "priceSource": "listed",
+    "priceNote": "Home Depot lists $12.98 per 10 ft section (sectional, light gauge; seamless runs ~$10-13/ft material per homegnome)",
+    "lastChecked": "2026-10-15",
+    "kind": "gutter",
+    "styles": [
+      "modern-farmhouse",
+      "traditional",
+      "ranch",
+      "craftsman"
+    ],
+    "tags": [
+      "white"
+    ],
+    "color": "#F4F4F2",
+    "pattern": "metal"
+  },
+  {
+    "id": "amerimax-6in-k-style-aluminum-gutter-black",
+    "name": "Amerimax Home Products 6 in. x 10 ft. Black Aluminum K-Style Gutter",
+    "brand": "Amerimax Home Products",
+    "line": "K-Style 6 in",
+    "sku": "44002025120",
+    "url": "https://homedepot.com/p/Amerimax-Home-Products-6-in-x-10-ft-Black-Aluminum-K-Style-Gutter-44002025120/205629203",
+    "price": 5.2,
+    "unit": "linft",
+    "priceSource": "listed",
+    "priceNote": "Home Depot lists $51.98 per 10 ft section",
+    "lastChecked": "2026-10-15",
+    "kind": "gutter",
+    "styles": [
+      "modern-farmhouse",
+      "contemporary",
+      "mountain-modern"
+    ],
+    "tags": [
+      "black",
+      "dark"
+    ],
+    "color": "#1F1F20",
+    "pattern": "metal"
+  },
+  {
+    "id": "amerimax-6in-k-style-aluminum-gutter-royal-brown",
+    "name": "Amerimax Home Products 6 in. x 10 ft. Royal Brown Aluminum K-Style Gutter",
+    "brand": "Amerimax Home Products",
+    "line": "K-Style 6 in",
+    "sku": "44002015120",
+    "url": "https://www.homedepot.com/p/Amerimax-Home-Products-6-in-x-10-ft-Royal-Brown-Aluminum-K-Style-Gutter-44002015120/205629202",
+    "price": 5.1,
+    "unit": "linft",
+    "priceSource": "listed",
+    "priceNote": "Home Depot lists $50.98 per 10 ft section",
+    "lastChecked": "2026-10-15",
+    "kind": "gutter",
+    "styles": [
+      "craftsman",
+      "mountain-modern",
+      "ranch"
+    ],
+    "tags": [
+      "bronze",
+      "dark",
+      "earthy"
+    ],
+    "color": "#4A3A2E",
+    "pattern": "metal"
+  },
+  {
+    "id": "amerimax-6in-half-round-aluminum-gutter-white",
+    "name": "Amerimax Home Products 6 in. x 10 ft. High Gloss 80 White Aluminum Half Round Gutter",
+    "brand": "Amerimax Home Products",
+    "line": "Half Round 6 in",
+    "sku": "L10HG6",
+    "url": "https://homedepot.com/p/Amerimax-Home-Products-6-in-x-10-ft-High-Gloss-80-White-Aluminum-Half-Round-Gutter-L10HG6/205667213",
+    "price": 8.9,
+    "unit": "linft",
+    "priceSource": "listed",
+    "priceNote": "Home Depot lists $88.98 per 10 ft section",
+    "lastChecked": "2026-10-15",
+    "kind": "gutter",
+    "styles": [
+      "traditional",
+      "modern-farmhouse"
+    ],
+    "tags": [
+      "white"
+    ],
+    "color": "#F5F5F3",
+    "pattern": "metal"
+  },
+  {
+    "id": "km-sheet-metal-reverse-bead-copper-half-round-gutter",
+    "name": "Half Round Copper Gutter Reverse Bead - 16 oz. & 20 oz.",
+    "brand": "K&M Sheet Metal",
+    "line": "Reverse Bead Half Round",
+    "sku": "GR-10",
+    "url": "https://www.kmsheetmetal.com/shop/Reverse-Bead-Copper-Half-Round-Gutter-p56180591",
+    "price": 18.5,
+    "unit": "linft",
+    "priceSource": "estimated",
+    "priceNote": "Estimated: page shows $156.95 base price (option unclear, 10 ft pieces); 6 in 16 oz assumed ~$185 per 10 ft",
+    "lastChecked": "2026-10-15",
+    "kind": "gutter",
+    "styles": [
+      "traditional",
+      "craftsman",
+      "mountain-modern"
+    ],
+    "tags": [
+      "bronze",
+      "warm",
+      "bold"
+    ],
+    "color": "#B87333",
+    "pattern": "metal"
+  }
+]

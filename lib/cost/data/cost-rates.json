@@ -1135,6 +1135,240 @@
       "url": "https://www.cityofboise.org/media/4308/plumbing-fees.pdf",
       "checked": "2026-10-14",
       "note": "Flat per-dwelling by sqft: plumbing $180 (1,501-2,500) / $250 (2,501-3,500); mechanical same; electrical $135 (<=2,500) / $155. ~$495-$655 for 1,500-3,500 sqft. Schedules are several years old; range padded for updates. Electrical: https://www.cityofboise.org/media/8322/final-electrical-code-fee-schedule-7-17-19.pdf ; Mechanical: https://www.cityofboise.org/media/8323/final-mechanical-code-and-fuel-gas-code-fee-schedule-10-1-21.pdf"
+    },
+    "roof-metal": {
+      "label": "Standing-seam metal roof",
+      "unit": "sqft",
+      "material": [
+        5.5,
+        7,
+        9
+      ],
+      "labor": [
+        5,
+        6.5,
+        8.5
+      ],
+      "source": "Roof Observations standing seam cost guide 2026 (steel $12.75/sq ft basic, $15.90 Kynar, installed)",
+      "url": "https://roofobservations.com/standing-seam-metal-roof-cost-guide/",
+      "checked": "2026-10-15",
+      "note": "Painted steel panels with clips, underlayment, trim and flashing. Split about 52/48 material/labor (judgment; the guide gives installed totals only). Used when a metal roof is picked."
+    },
+    "siding-stucco": {
+      "label": "Stucco (three-coat)",
+      "unit": "sqft",
+      "material": [
+        3,
+        4.5,
+        6.5
+      ],
+      "labor": [
+        6,
+        8.5,
+        11
+      ],
+      "source": "Bob Vila stucco vs siding cost (stucco averages $14.50/sq ft installed)",
+      "url": "https://www.bobvila.com/articles/cost-of-stucco-vs-siding/",
+      "checked": "2026-10-15",
+      "note": "Lath, scratch, brown and finish coats over house wrap. Mostly labor; split is judgment. Used when stucco siding is picked."
+    },
+    "siding-brick": {
+      "label": "Brick veneer",
+      "unit": "sqft",
+      "material": [
+        5,
+        7,
+        10
+      ],
+      "labor": [
+        8,
+        11,
+        15
+      ],
+      "source": "HomeServe stone veneer siding cost (citing HomeGuide: $10-$45/sq ft installed) and Bob Vila brick veneer notes",
+      "url": "https://www.homeserve.com/en-us/blog/cost-guide/stone-veneer-siding/",
+      "checked": "2026-10-15",
+      "note": "Full-size brick on a ledge with ties, weep screed and mortar. Judgment within the masonry veneer ranges; brick is laid by a mason, so labor is over half. Used when brick siding is picked."
+    },
+    "stone-veneer": {
+      "label": "Stone or thin brick veneer",
+      "unit": "sqft",
+      "material": [
+        4,
+        8,
+        14
+      ],
+      "labor": [
+        6,
+        10,
+        16
+      ],
+      "source": "HomeServe stone veneer siding cost (citing HomeGuide: materials $4-$21, labor $6-$24 per sq ft)",
+      "url": "https://www.homeserve.com/en-us/blog/cost-guide/stone-veneer-siding/",
+      "checked": "2026-10-15",
+      "note": "Manufactured stone or thin brick over lath and scratch coat. Used for a stone or brick accent."
+    },
+    "pavers": {
+      "label": "Paver patio or walk",
+      "unit": "sqft",
+      "material": [
+        4,
+        6,
+        10
+      ],
+      "labor": [
+        4,
+        6,
+        10
+      ],
+      "source": "Bob Vila paver patio cost ($8-$25/sq ft installed, labor about half)",
+      "url": "https://www.bobvila.com/articles/paver-patio-cost/",
+      "checked": "2026-10-15",
+      "note": "Concrete pavers on compacted gravel and sand with edge restraint. Used when pavers are picked for the patio or the front walk."
+    },
+    "front-walk": {
+      "label": "Concrete front walk",
+      "unit": "sqft",
+      "material": [
+        3,
+        4,
+        5.5
+      ],
+      "labor": [
+        3,
+        4.5,
+        6
+      ],
+      "source": "HomeGuide concrete slab cost (walkways about $6-$12/sq ft installed)",
+      "url": "https://homeguide.com/costs/concrete-slab-cost",
+      "checked": "2026-10-15",
+      "note": "4 in broom-finish concrete on gravel, from the front door to the driveway. Judgment based on the driveway rate; walks are narrower so labor runs a little higher."
+    },
+    "driveway-pavers": {
+      "label": "Paver driveway",
+      "unit": "sqft",
+      "material": [
+        5,
+        7,
+        11
+      ],
+      "labor": [
+        5,
+        7.5,
+        11
+      ],
+      "source": "Bob Vila paver patio cost ($8-$25/sq ft installed), raised for a driveway's deeper base",
+      "url": "https://www.bobvila.com/articles/paver-patio-cost/",
+      "checked": "2026-10-15",
+      "note": "Driveway-rated pavers (80 mm) on about 8 in of compacted base. Judgment: patio rates plus about 20% for the thicker base. Used when driveway pavers are picked."
+    },
+    "driveway-gravel": {
+      "label": "Gravel driveway",
+      "unit": "sqft",
+      "material": [
+        1,
+        1.6,
+        2.5
+      ],
+      "labor": [
+        0.5,
+        1,
+        2
+      ],
+      "source": "HomeServe gravel driveway cost ($1.25-$3/sq ft installed)",
+      "url": "https://homeserve.com/en-us/blog/cost-guide/gravel-driveway",
+      "checked": "2026-10-15",
+      "note": "About 4 in of crushed rock over a graded base and fabric. Used when gravel is picked for the driveway."
+    },
+    "lawn": {
+      "label": "Lawn (sod and sprinklers)",
+      "unit": "sqft",
+      "material": [
+        0.6,
+        0.95,
+        1.4
+      ],
+      "labor": [
+        1,
+        1.5,
+        2.2
+      ],
+      "source": "HomeServe sod installation cost (sod $0.31-$0.82/sq ft, install and soil prep $1-$2/sq ft); sprinkler parts are judgment",
+      "url": "https://homeserve.com/en-us/blog/cost-guide/sod-installation",
+      "checked": "2026-10-15",
+      "note": "Soil prep, sod and an in-ground sprinkler system (needed in Boise's dry summers). The sod is about half the material; a seed or sod pick replaces that half."
+    },
+    "planting-beds": {
+      "label": "Planting beds (mulch, edging, drip)",
+      "unit": "sqft",
+      "material": [
+        1,
+        1.5,
+        2.5
+      ],
+      "labor": [
+        1.5,
+        2.5,
+        3.5
+      ],
+      "source": "Judgment based on landscaping cost guides (mulch about $0.50-$1/sq ft installed, plus edging and drip lines)",
+      "url": null,
+      "checked": "2026-10-15",
+      "note": "Beds about 4 ft deep along the house: soil, edging, drip irrigation and 3 in of bark or rock mulch. A mulch pick replaces the mulch part (about 40%)."
+    },
+    "shrub": {
+      "label": "Shrubs (3 or 5 gallon)",
+      "unit": "each",
+      "material": [
+        20,
+        35,
+        60
+      ],
+      "labor": [
+        15,
+        25,
+        40
+      ],
+      "source": "Bob Vila cost to plant a tree (shrub planting averages about $40)",
+      "url": "https://www.bobvila.com/articles/cost-to-plant-a-tree/",
+      "checked": "2026-10-15",
+      "note": "One shrub every 6 ft or so along the beds. A shrub pick replaces the plant price."
+    },
+    "tree": {
+      "label": "Trees (15 gallon)",
+      "unit": "each",
+      "material": [
+        120,
+        180,
+        300
+      ],
+      "labor": [
+        60,
+        80,
+        130
+      ],
+      "source": "Bob Vila cost to plant a tree (a tree up to 10 ft about $255 planted, labor about 30%)",
+      "url": "https://www.bobvila.com/articles/cost-to-plant-a-tree/",
+      "checked": "2026-10-15",
+      "note": "About four trees, front and back. A tree pick replaces the tree price."
+    },
+    "exterior-lights": {
+      "label": "Outdoor wall lights",
+      "unit": "each",
+      "material": [
+        60,
+        120,
+        250
+      ],
+      "labor": [
+        60,
+        90,
+        130
+      ],
+      "source": "Judgment based on light fixture installation cost guides (a fixture hung on an existing box is about $60-$130 of electrician time)",
+      "url": null,
+      "checked": "2026-10-15",
+      "note": "One light by each outside door and one each side of a garage door. The wiring is in the electrical line."
     }
   },
   "percents": {

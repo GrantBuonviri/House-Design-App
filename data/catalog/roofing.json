@@ -1,0 +1,299 @@
+[
+  {
+    "id": "gaf-timberline-hdz-charcoal",
+    "name": "GAF Timberline HDZ Charcoal Algae Resistant Laminated High Definition Shingles (33.33 sq. ft. per Bundle)",
+    "brand": "GAF",
+    "line": "Timberline HDZ",
+    "sku": "0489180",
+    "url": "https://www.homedepot.com/p/GAF-Timberline-HDZ-Charcoal-Algae-Resistant-Laminated-High-Definition-Shingles-33-33-sq-ft-per-Bundle-0489180/309755006",
+    "price": 1.38,
+    "unit": "sqft",
+    "priceSource": "estimated",
+    "priceNote": "Estimated: HD page shows no price; $45.97/bundle regular (Home Depot-sourced listing on shop.gosource.us) / 33.33 sq ft",
+    "lastChecked": "2026-10-15",
+    "kind": "shingle",
+    "styles": [
+      "modern-farmhouse",
+      "craftsman",
+      "contemporary",
+      "ranch"
+    ],
+    "tags": [
+      "dark",
+      "gray"
+    ],
+    "color": "#3F4042",
+    "pattern": "shingle"
+  },
+  {
+    "id": "gaf-timberline-hdz-weathered-wood",
+    "name": "GAF Timberline HDZ Weathered Wood Algae Resistant Laminated High Definition Shingles (33.33 sq. ft. per Bundle)",
+    "brand": "GAF",
+    "line": "Timberline HDZ",
+    "sku": "0487900",
+    "url": "https://www.homedepot.com/p/GAF-Timberline-HDZ-Weathered-Wood-Algae-Resistant-Laminated-High-Definition-Shingles-33-33-sq-ft-per-Bundle-0487900/309755323",
+    "price": 1.38,
+    "unit": "sqft",
+    "priceSource": "estimated",
+    "priceNote": "Estimated: HD page shows no price; $45.97/bundle regular (Home Depot-sourced listing on shop.gosource.us) / 33.33 sq ft",
+    "lastChecked": "2026-10-15",
+    "kind": "shingle",
+    "styles": [
+      "craftsman",
+      "ranch",
+      "traditional",
+      "mountain-modern"
+    ],
+    "tags": [
+      "earthy",
+      "warm",
+      "neutral"
+    ],
+    "color": "#6B6257",
+    "pattern": "shingle"
+  },
+  {
+    "id": "gaf-timberline-hdz-pewter-gray",
+    "name": "GAF Timberline HDZ Pewter Gray Laminated High Definition Shingles (33.33 sq. ft. per Bundle)",
+    "brand": "GAF",
+    "line": "Timberline HDZ",
+    "sku": "0483552",
+    "url": "https://homedepot.com/p/GAF-Timberline-HDZ-Pewter-Gray-Laminated-High-Definition-Shingles-33-33-sq-ft-per-Bundle-21-Pieces-0483552/313656700",
+    "price": 1.38,
+    "unit": "sqft",
+    "priceSource": "estimated",
+    "priceNote": "Estimated: HD page shows no price; $45.97/bundle regular (Home Depot-sourced listing on shop.gosource.us) / 33.33 sq ft",
+    "lastChecked": "2026-10-15",
+    "kind": "shingle",
+    "styles": [
+      "traditional",
+      "ranch",
+      "modern-farmhouse"
+    ],
+    "tags": [
+      "gray",
+      "neutral"
+    ],
+    "color": "#77787A",
+    "pattern": "shingle"
+  },
+  {
+    "id": "owens-corning-duration-onyx-black",
+    "name": "Owens Corning TruDefinition Duration Onyx Black Algae Resistant Architectural Roof Shingles (32.8 sq. ft. per Bundle)",
+    "brand": "Owens Corning",
+    "line": "TruDefinition Duration",
+    "sku": "TD01",
+    "url": "https://www.homedepot.com/p/Owens-Corning-TruDefinition-Duration-Onyx-Black-Algae-Resistant-Architectural-Roof-Shingles-32-8-sq-ft-per-Bundle-TD01/205655965",
+    "price": 1.37,
+    "unit": "sqft",
+    "priceSource": "estimated",
+    "priceNote": "Estimated: HD page shows no price; priced on par with Timberline HDZ (~$45/bundle) / 32.8 sq ft",
+    "lastChecked": "2026-10-15",
+    "kind": "shingle",
+    "styles": [
+      "modern-farmhouse",
+      "contemporary",
+      "traditional"
+    ],
+    "tags": [
+      "black",
+      "dark"
+    ],
+    "color": "#2B2B2D",
+    "pattern": "shingle"
+  },
+  {
+    "id": "owens-corning-duration-estate-gray",
+    "name": "Owens Corning TruDefinition Duration Estate Gray Algae Resistant Laminate Architectural Roofing Shingles (32.8 sq. ft. Per Bundle)",
+    "brand": "Owens Corning",
+    "line": "TruDefinition Duration",
+    "sku": "TD20",
+    "url": "https://homedepot.com/p/Owens-Corning-TruDefinition-Duration-Estate-Gray-Algae-Resistant-Laminate-Architectural-Roofing-Shingles-32-8-sq-ft-Per-Bundle-TD20/205655964",
+    "price": 1.37,
+    "unit": "sqft",
+    "priceSource": "estimated",
+    "priceNote": "Estimated: HD page shows no price; priced on par with Timberline HDZ (~$45/bundle) / 32.8 sq ft",
+    "lastChecked": "2026-10-15",
+    "kind": "shingle",
+    "styles": [
+      "traditional",
+      "ranch",
+      "craftsman"
+    ],
+    "tags": [
+      "gray",
+      "neutral"
+    ],
+    "color": "#5F6062",
+    "pattern": "shingle"
+  },
+  {
+    "id": "owens-corning-duration-driftwood",
+    "name": "Owens Corning TruDefinition Duration Driftwood Algae Resistant Laminate Architectural Roofing Shingles (32.8 sq. ft. Per Bundle)",
+    "brand": "Owens Corning",
+    "line": "TruDefinition Duration",
+    "sku": "TD30",
+    "url": "https://homedepot.com/p/Owens-Corning-TruDefinition-Duration-Driftwood-Algae-Resistant-Laminate-Architectural-Roofing-Shingles-32-8-sq-ft-Per-Bundle-TD30/205655963",
+    "price": 1.37,
+    "unit": "sqft",
+    "priceSource": "estimated",
+    "priceNote": "Estimated: HD page shows no price; priced on par with Timberline HDZ (~$45/bundle) / 32.8 sq ft",
+    "lastChecked": "2026-10-15",
+    "kind": "shingle",
+    "styles": [
+      "craftsman",
+      "ranch",
+      "mountain-modern"
+    ],
+    "tags": [
+      "earthy",
+      "warm"
+    ],
+    "color": "#76695C",
+    "pattern": "shingle"
+  },
+  {
+    "id": "certainteed-landmark-pewter",
+    "name": "CertainTeed Landmark Pewter Algae Resistant Architectural Roof Shingles (33.33-sq ft per Bundle)",
+    "brand": "CertainTeed",
+    "line": "Landmark",
+    "url": "https://www.lowes.com/search?searchTerm=CertainTeed+Landmark+Pewter+shingles",
+    "price": 1.48,
+    "unit": "sqft",
+    "priceSource": "estimated",
+    "priceNote": "Estimated: Lowe's page did not load; superarbor.io lists Landmark at $58.50/bundle (reseller markup), big-box ~ $48-50 / 33.3 sq ft",
+    "lastChecked": "2026-10-15",
+    "kind": "shingle",
+    "styles": [
+      "traditional",
+      "ranch",
+      "modern-farmhouse"
+    ],
+    "tags": [
+      "gray",
+      "neutral"
+    ],
+    "color": "#6F7174",
+    "pattern": "shingle"
+  },
+  {
+    "id": "certainteed-landmark-heather-blend",
+    "name": "CertainTeed Landmark Heather Blend Algae Resistant Architectural Roof Shingles (33.33-sq ft per Bundle)",
+    "brand": "CertainTeed",
+    "line": "Landmark",
+    "url": "https://www.lowes.com/search?searchTerm=CertainTeed+Landmark+Heather+Blend+shingles",
+    "price": 1.48,
+    "unit": "sqft",
+    "priceSource": "estimated",
+    "priceNote": "Estimated: Lowe's page did not load; superarbor.io lists Landmark at $58.50/bundle (reseller markup), big-box ~ $48-50 / 33.3 sq ft",
+    "lastChecked": "2026-10-15",
+    "kind": "shingle",
+    "styles": [
+      "craftsman",
+      "traditional"
+    ],
+    "tags": [
+      "warm",
+      "earthy"
+    ],
+    "color": "#6C5D55",
+    "pattern": "shingle"
+  },
+  {
+    "id": "western-states-western-lock-black-zinc-matte",
+    "name": "Western Lock Standing Seam - Black Zinc Matte",
+    "brand": "Western States Metal Roofing",
+    "line": "Western Lock Snap Lock 1.75 in",
+    "url": "https://www.westernstatesmetalroofing.com/black-zinc-matte-standing-seam",
+    "price": 4.75,
+    "unit": "sqft",
+    "priceSource": "estimated",
+    "priceNote": "Estimated: no price shown (quote only, $3,000 job min); matte specialty finish ~$4.00-5.00/sq ft per Western States 24 ga cost guide",
+    "lastChecked": "2026-10-15",
+    "kind": "metal",
+    "styles": [
+      "mountain-modern",
+      "modern-farmhouse",
+      "contemporary"
+    ],
+    "tags": [
+      "black",
+      "dark"
+    ],
+    "color": "#2D2E30",
+    "pattern": "seam"
+  },
+  {
+    "id": "western-states-western-lock-dark-bronze",
+    "name": "Western Lock Standing Seam - Dark Bronze",
+    "brand": "Western States Metal Roofing",
+    "line": "Western Lock Snap Lock 1.75 in",
+    "url": "https://www.westernstatesmetalroofing.com/dark-bronze.html",
+    "price": 4.1,
+    "unit": "sqft",
+    "priceSource": "estimated",
+    "priceNote": "Estimated: Western States shows no price (quote only); its cost guide gives 24 ga PVDF panels $3.00-4.00/sq ft (2022), +~10% for 2026",
+    "lastChecked": "2026-10-15",
+    "kind": "metal",
+    "styles": [
+      "mountain-modern",
+      "craftsman",
+      "ranch"
+    ],
+    "tags": [
+      "bronze",
+      "dark",
+      "earthy"
+    ],
+    "color": "#3D3229",
+    "pattern": "seam"
+  },
+  {
+    "id": "western-states-western-lock-charcoal-gray",
+    "name": "Western Lock Standing Seam - Charcoal Gray",
+    "brand": "Western States Metal Roofing",
+    "line": "Western Lock Snap Lock 1.75 in",
+    "url": "https://www.westernstatesmetalroofing.com/standing-seam-roofing",
+    "price": 4.1,
+    "unit": "sqft",
+    "priceSource": "estimated",
+    "priceNote": "Estimated: Western States shows no price (quote only); its cost guide gives 24 ga PVDF panels $3.00-4.00/sq ft (2022), +~10% for 2026",
+    "lastChecked": "2026-10-15",
+    "kind": "metal",
+    "styles": [
+      "contemporary",
+      "mountain-modern",
+      "modern-farmhouse"
+    ],
+    "tags": [
+      "gray",
+      "dark"
+    ],
+    "color": "#4A4C4F",
+    "pattern": "seam"
+  },
+  {
+    "id": "western-states-western-seam-nail-strip-galvalume",
+    "name": "1.5\" Nail Strip - Western Seam-1.5 Standing Seam (Galvalume)",
+    "brand": "Western States Metal Roofing",
+    "line": "Western Seam Nail Strip 1.5 in",
+    "url": "https://www.westernstatesmetalroofing.com/nail-strip-standing-seam",
+    "price": 3.1,
+    "unit": "sqft",
+    "priceSource": "estimated",
+    "priceNote": "Estimated: no price shown; guide gives 24 ga Galvalume $2.50-3.50/sq ft (2022) and nail strip ~$0.50/sq ft below clip systems",
+    "lastChecked": "2026-10-15",
+    "kind": "metal",
+    "styles": [
+      "modern-farmhouse",
+      "mountain-modern",
+      "ranch"
+    ],
+    "tags": [
+      "gray",
+      "light"
+    ],
+    "color": "#A8ABAD",
+    "pattern": "seam"
+  }
+]

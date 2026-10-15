@@ -1,0 +1,272 @@
+[
+  {
+    "id": "andersen-100-series-black-single-hung",
+    "name": "Andersen 35-1/2 in. x 59-1/2 in. 100 Series Black Single-Hung Composite Window with Black Int, SmartSun Glass and Black Hardware",
+    "brand": "Andersen",
+    "line": "100 Series",
+    "sku": "9188701",
+    "url": "https://homedepot.com/p/reviews/Andersen-35-1-2-in-x-59-1-2-in-100-Series-Black-Single-Hung-Composite-Window-with-Black-Int-SmartSun-Glass-and-Black-Hardware-9188701/318849653/1",
+    "price": 499.0,
+    "unit": "each",
+    "priceSource": "listed",
+    "priceNote": "$499 at Home Depot for 35-1/2 x 59-1/2 in; single-hung (closest kind: double-hung)",
+    "lastChecked": "2026-10-15",
+    "kind": "double-hung",
+    "styles": [
+      "modern-farmhouse",
+      "contemporary",
+      "mountain-modern"
+    ],
+    "tags": [
+      "black",
+      "dark"
+    ],
+    "color": "#1c1c1c",
+    "pattern": "solid"
+  },
+  {
+    "id": "andersen-100-series-double-hung",
+    "name": "100 Series Double-Hung Window",
+    "brand": "Andersen",
+    "line": "100 Series",
+    "url": "https://www.andersenwindows.com/windows-and-doors/windows/single-hung-and-double-hung-windows/100-series-double-hung-window",
+    "price": 650,
+    "unit": "each",
+    "priceSource": "estimated",
+    "priceNote": "No list price (quote only); est. ~36 x 60 in from HD 100 Series single-hung ($499) plus double-hung premium",
+    "lastChecked": "2026-10-15",
+    "kind": "double-hung",
+    "styles": [
+      "craftsman",
+      "mountain-modern",
+      "ranch"
+    ],
+    "tags": [
+      "bronze",
+      "dark"
+    ],
+    "color": "#3b3128",
+    "pattern": "solid"
+  },
+  {
+    "id": "andersen-100-series-gliding-white",
+    "name": "Andersen 59-1/2 in. x 35-1/2 in. 100 Series XO (Active Left) White Gliding Composite Window w/White Int & Hdw, Smartsun Glass",
+    "brand": "Andersen",
+    "line": "100 Series",
+    "sku": "100GXO5030 SmartSun",
+    "url": "https://www.homedepot.com/p/Andersen-59-1-2-in-x-35-1-2-in-100-Series-XO-Active-Left-White-Gliding-Composite-Window-w-White-Int-Hdw-Smartsun-Glass-100GXO5030-SmartSun/202937422",
+    "price": 438.0,
+    "unit": "each",
+    "priceSource": "listed",
+    "priceNote": "$438 at Home Depot for 59-1/2 x 35-1/2 in slider",
+    "lastChecked": "2026-10-15",
+    "kind": "slider",
+    "styles": [
+      "ranch",
+      "contemporary"
+    ],
+    "tags": [
+      "white",
+      "light"
+    ],
+    "color": "#f4f4f1",
+    "pattern": "solid"
+  },
+  {
+    "id": "andersen-400-series-double-hung-white",
+    "name": "Andersen 400 Series 37-5/8 in. x 56-7/8 in. Clad Wood Double-Hung Window w/ Low-E Glass, White Ext/Int, White Hardware",
+    "brand": "Andersen",
+    "line": "400 Series Tilt-Wash",
+    "sku": "9142360",
+    "url": "https://www.homedepot.com/p/questions/Andersen-400-Series-37-5-8-in-x-56-7-8-in-Clad-Wood-Double-Hung-Window-w-Low-E-Glass-White-Ext-Int-White-Hardware-9142360/206922015/0",
+    "price": 1050,
+    "unit": "each",
+    "priceSource": "estimated",
+    "priceNote": "No price on HD page; est. for 37-5/8 x 56-7/8 in from typical 400 Series unit prices",
+    "lastChecked": "2026-10-15",
+    "kind": "double-hung",
+    "styles": [
+      "traditional",
+      "craftsman",
+      "modern-farmhouse"
+    ],
+    "tags": [
+      "white",
+      "light"
+    ],
+    "color": "#f6f5f0",
+    "pattern": "solid"
+  },
+  {
+    "id": "jeld-wen-v2500-double-hung-white",
+    "name": "JELD-WEN V-2500 Series 35.5 in. x 60 in. Double Pane Double Hung Vinyl Low-E White Nail Fin Frame Brickmould Window",
+    "brand": "JELD-WEN",
+    "line": "V-2500",
+    "sku": "THDJW245800018",
+    "url": "https://homedepot.com/p/JELD-WEN-V-2500-Series-35-5-in-x-60-in-Double-Pane-Double-Hung-Vinyl-Low-E-White-Nail-Fin-Frame-Brickmould-Window-THDJW245800018/332713285",
+    "price": 414.8,
+    "unit": "each",
+    "priceSource": "listed",
+    "priceNote": "$414.80 sale (reg $488) at Home Depot for 35.5 x 60 in",
+    "lastChecked": "2026-10-15",
+    "kind": "double-hung",
+    "styles": [
+      "ranch",
+      "traditional",
+      "craftsman"
+    ],
+    "tags": [
+      "white",
+      "light"
+    ],
+    "color": "#f5f5f2",
+    "pattern": "solid"
+  },
+  {
+    "id": "jeld-wen-v4500-casement-black",
+    "name": "JELD-WEN 36 in. x 60 in. V-4500 Series Black Exterior/White Interior FiniShield Vinyl Left-Handed Casement Window w/Mesh Screen",
+    "brand": "JELD-WEN",
+    "line": "V-4500",
+    "sku": "THDJW140000409",
+    "url": "https://homedepot.com/p/JELD-WEN-36-in-x-60-in-V-4500-Series-Black-Exterior-White-Interior-FiniShield-Vinyl-Left-Handed-Casement-Window-w-Mesh-Screen-THDJW140000409/205719942",
+    "price": 1008.39,
+    "unit": "each",
+    "priceSource": "listed",
+    "priceNote": "$1,008.39 sale (reg $1,186.34) at Home Depot for 36 x 60 in",
+    "lastChecked": "2026-10-15",
+    "kind": "casement",
+    "styles": [
+      "modern-farmhouse",
+      "contemporary",
+      "mountain-modern"
+    ],
+    "tags": [
+      "black",
+      "dark"
+    ],
+    "color": "#1e1e1e",
+    "pattern": "solid"
+  },
+  {
+    "id": "pella-250-series-double-hung-black",
+    "name": "Pella 250 Series Vinyl Double-Hung Window",
+    "brand": "Pella",
+    "line": "250 Series",
+    "url": "https://www.pella.com/shop/windows/250-series/double-hung-windows/",
+    "price": 600,
+    "unit": "each",
+    "priceSource": "estimated",
+    "priceNote": "Quote only; est. for ~36 x 60 in with black exterior (dual-color) from vinyl DH retail ranges",
+    "lastChecked": "2026-10-15",
+    "kind": "double-hung",
+    "styles": [
+      "modern-farmhouse",
+      "ranch",
+      "traditional"
+    ],
+    "tags": [
+      "black",
+      "dark"
+    ],
+    "color": "#222222",
+    "pattern": "solid"
+  },
+  {
+    "id": "pella-impervia-double-hung",
+    "name": "Pella Impervia Fiberglass Double-Hung Window",
+    "brand": "Pella",
+    "line": "Impervia",
+    "url": "https://www.pella.com/shop/windows/pella-impervia/double-hung-windows/",
+    "price": 900,
+    "unit": "each",
+    "priceSource": "estimated",
+    "priceNote": "Quote only (Lowe's also hides price); est. for ~36 x 60 in fiberglass DH, brown exterior",
+    "lastChecked": "2026-10-15",
+    "kind": "double-hung",
+    "styles": [
+      "craftsman",
+      "mountain-modern",
+      "traditional"
+    ],
+    "tags": [
+      "bronze",
+      "dark",
+      "earthy"
+    ],
+    "color": "#4a3a2c",
+    "pattern": "solid"
+  },
+  {
+    "id": "pella-lifestyle-double-hung-wood",
+    "name": "Pella Lifestyle Series Wood Double-Hung Window",
+    "brand": "Pella",
+    "line": "Lifestyle Series",
+    "url": "https://pella.com/shop/windows/lifestyle-series/double-hung-windows",
+    "price": 1100,
+    "unit": "each",
+    "priceSource": "estimated",
+    "priceNote": "Quote only; est. for ~36 x 60 in aluminum-clad wood DH with natural wood interior, brown exterior",
+    "lastChecked": "2026-10-15",
+    "kind": "double-hung",
+    "styles": [
+      "craftsman",
+      "mountain-modern",
+      "traditional"
+    ],
+    "tags": [
+      "wood-tone",
+      "warm",
+      "earthy"
+    ],
+    "color": "#8a5f3c",
+    "pattern": "solid"
+  },
+  {
+    "id": "milgard-tuscany-v400-double-hung-bronze",
+    "name": "V400 Tuscany Series Double-Hung Windows",
+    "brand": "Milgard",
+    "line": "Tuscany (V400)",
+    "url": "https://www.milgard.com/windows/V400/double-hung",
+    "price": 650,
+    "unit": "each",
+    "priceSource": "estimated",
+    "priceNote": "Quote only; est. for ~36 x 60 in vinyl DH with Bronze exterior",
+    "lastChecked": "2026-10-15",
+    "kind": "double-hung",
+    "styles": [
+      "craftsman",
+      "ranch",
+      "mountain-modern"
+    ],
+    "tags": [
+      "bronze",
+      "dark"
+    ],
+    "color": "#4b3d2f",
+    "pattern": "solid"
+  },
+  {
+    "id": "milgard-trinsic-v300-casement-black",
+    "name": "V300 Trinsic Series Casement Windows",
+    "brand": "Milgard",
+    "line": "Trinsic (V300)",
+    "url": "https://milgard.com/windows/V300/casement",
+    "price": 750,
+    "unit": "each",
+    "priceSource": "estimated",
+    "priceNote": "Quote only; est. for ~36 x 60 in vinyl casement in Black (int/ext)",
+    "lastChecked": "2026-10-15",
+    "kind": "casement",
+    "styles": [
+      "contemporary",
+      "mountain-modern",
+      "modern-farmhouse"
+    ],
+    "tags": [
+      "black",
+      "dark"
+    ],
+    "color": "#1b1b1b",
+    "pattern": "solid"
+  }
+]

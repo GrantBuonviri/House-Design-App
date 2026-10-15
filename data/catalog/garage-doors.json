@@ -1,0 +1,250 @@
+[
+  {
+    "id": "clopay-classic-long-panel-white-windows",
+    "name": "Clopay Classic Steel Long Panel 16 ft x 7 ft Insulated 12.9 R-Value White Garage Door with Windows",
+    "brand": "Clopay",
+    "line": "Classic Collection",
+    "sku": "HDPL13_SW_Plain",
+    "url": "https://homedepot.com/p/reviews/Clopay-Classic-Steel-Long-Panel-16-ft-x-7-ft-Insulated-12-9-R-Value-White-Garage-Door-with-Windows-HDPL13-SW-Plain/204598363/1",
+    "price": 143.75,
+    "unit": "linft",
+    "priceSource": "estimated",
+    "priceNote": "HD page showed no price; est. $2,300 for 16x7 (similar Classic doors list ~$2,330-2,400) / 16",
+    "lastChecked": "2026-10-15",
+    "kind": "garage",
+    "styles": [
+      "traditional",
+      "ranch"
+    ],
+    "tags": [
+      "white",
+      "light"
+    ],
+    "color": "#f3f3ef",
+    "pattern": "solid"
+  },
+  {
+    "id": "clopay-classic-long-panel-black",
+    "name": "Clopay Classic Steel Long Panel 16 ft. x 7 ft. Insulated 6.5 R-Value Black Garage Door without windows",
+    "brand": "Clopay",
+    "line": "Classic Collection",
+    "sku": "GDU266",
+    "url": "https://homedepot.com/p/Clopay-Classic-Steel-Long-Panel-16-ft-x-7-ft-Insulated-6-5-R-Value-Black-Garage-Door-without-windows-GDU266/333516307",
+    "price": 145.87,
+    "unit": "linft",
+    "priceSource": "listed",
+    "priceNote": "$2,333.91 at Home Depot for 16x7 / 16",
+    "lastChecked": "2026-10-15",
+    "kind": "garage",
+    "styles": [
+      "modern-farmhouse",
+      "ranch",
+      "traditional"
+    ],
+    "tags": [
+      "black",
+      "dark"
+    ],
+    "color": "#1d1d1d",
+    "pattern": "solid"
+  },
+  {
+    "id": "clopay-classic-long-panel-mocha-brown",
+    "name": "Clopay Classic Steel Long Panel 16 ft. x 7 ft. Insulated 12.9 R-Value Mocha Brown Garage Door without windows",
+    "brand": "Clopay",
+    "line": "Classic Collection",
+    "sku": "GDU284",
+    "url": "https://homedepot.com/p/Clopay-Classic-Steel-Long-Panel-16-ft-x-7-ft-Insulated-12-9-R-Value-Mocha-Brown-Garage-Door-without-windows-GDU284/333516331",
+    "price": 149.93,
+    "unit": "linft",
+    "priceSource": "listed",
+    "priceNote": "$2,398.84 at Home Depot for 16x7 / 16",
+    "lastChecked": "2026-10-15",
+    "kind": "garage",
+    "styles": [
+      "ranch",
+      "craftsman",
+      "traditional"
+    ],
+    "tags": [
+      "bronze",
+      "earthy",
+      "dark"
+    ],
+    "color": "#4a3a2e",
+    "pattern": "solid"
+  },
+  {
+    "id": "clopay-gallery-wood-look-medium-arch",
+    "name": "Clopay Gallery Steel Long Panel 16 ft x 7 ft Insulated 18.4 R-Value Wood Look Medium Garage Door with Arch Windows",
+    "brand": "Clopay",
+    "line": "Gallery Collection",
+    "sku": "GR2LU_MO_GRLA1",
+    "url": "https://www.homedepot.com/p/reviews/Clopay-Gallery-Steel-Long-Panel-16-ft-x-7-ft-Insulated-18-4-R-Value-Wood-Look-Medium-Garage-Door-with-Arch-Windows-GR2LU-MO-GRLA1/204598460/1",
+    "price": 225.0,
+    "unit": "linft",
+    "priceSource": "estimated",
+    "priceNote": "HD page showed no price; est. $3,600 for 16x7 (between Classic and Modern Steel list prices) / 16",
+    "lastChecked": "2026-10-15",
+    "kind": "garage",
+    "styles": [
+      "craftsman",
+      "traditional",
+      "mountain-modern"
+    ],
+    "tags": [
+      "wood-tone",
+      "warm"
+    ],
+    "color": "#8a5a35",
+    "pattern": "solid"
+  },
+  {
+    "id": "clopay-modern-steel-matte-black-windows",
+    "name": "Clopay Modern Steel 16 ft. x 7 ft. 18.4 R-Value Insulated Matte Lustra Black Garage Door with Windows",
+    "brand": "Clopay",
+    "line": "Modern Steel",
+    "sku": "GDU425",
+    "url": "https://www.homedepot.com/p/Clopay-Modern-Steel-16-ft-x-7-ft-18-4-R-Value-Insulated-Matte-Lustra-Black-Garage-Door-with-Windows-GDU425/332885170",
+    "price": 278.77,
+    "unit": "linft",
+    "priceSource": "listed",
+    "priceNote": "$4,460.28 at Home Depot for 16x7 / 16",
+    "lastChecked": "2026-10-15",
+    "kind": "garage",
+    "styles": [
+      "contemporary",
+      "mountain-modern",
+      "modern-farmhouse"
+    ],
+    "tags": [
+      "black",
+      "dark"
+    ],
+    "color": "#202020",
+    "pattern": "solid"
+  },
+  {
+    "id": "clopay-modern-steel-coastal-gray-plank",
+    "name": "Clopay Modern Steel 16 ft. x 7 ft. 18.4 R-Value Insulated Wood Look Plank Coastal Gray Garage Door with Windows",
+    "brand": "Clopay",
+    "line": "Modern Steel",
+    "sku": "GDU424",
+    "url": "https://homedepot.com/p/Clopay-Modern-Steel-16-ft-x-7-ft-18-4-R-Value-Insulated-Wood-Look-Plank-Coastal-Gray-Garage-Door-with-Windows-GDU424/332885169",
+    "price": 271.68,
+    "unit": "linft",
+    "priceSource": "listed",
+    "priceNote": "$4,346.89 at Home Depot for 16x7 / 16",
+    "lastChecked": "2026-10-15",
+    "kind": "garage",
+    "styles": [
+      "contemporary",
+      "mountain-modern"
+    ],
+    "tags": [
+      "gray",
+      "wood-tone",
+      "neutral"
+    ],
+    "color": "#8c8a84",
+    "pattern": "solid"
+  },
+  {
+    "id": "clopay-coachman-linear-white",
+    "name": "Clopay Coachman Linear Design 16 ft x 7 ft Insulated 18.4 R-Value White Garage Door with Solid TOP13",
+    "brand": "Clopay",
+    "line": "Coachman Collection",
+    "sku": "CXU13_SW_TOP13",
+    "url": "https://homedepot.com/p/Clopay-Coachman-Linear-Design-16-ft-x-7-ft-Insulated-18-4-R-Value-White-Garage-Door-with-Solid-TOP13-CXU13-SW-TOP13/204598560",
+    "price": 390.32,
+    "unit": "linft",
+    "priceSource": "listed",
+    "priceNote": "$6,245.19 at Home Depot for 16x7 / 16; carriage-house style",
+    "lastChecked": "2026-10-15",
+    "kind": "garage",
+    "styles": [
+      "modern-farmhouse",
+      "craftsman",
+      "traditional"
+    ],
+    "tags": [
+      "white",
+      "light"
+    ],
+    "color": "#f4f4f0",
+    "pattern": "solid"
+  },
+  {
+    "id": "clopay-canyon-ridge-carriage-house",
+    "name": "Canyon Ridge Collection Faux Wood Carriage House Garage Door",
+    "brand": "Clopay",
+    "line": "Canyon Ridge Collection",
+    "url": "https://www.clopaydoor.com/residential-garage-doors/canyonridge",
+    "price": 500.0,
+    "unit": "linft",
+    "priceSource": "estimated",
+    "priceNote": "Dealer-quote only; est. $8,000 for 16x7 composite faux-wood carriage door / 16",
+    "lastChecked": "2026-10-15",
+    "kind": "garage",
+    "styles": [
+      "mountain-modern",
+      "craftsman",
+      "modern-farmhouse"
+    ],
+    "tags": [
+      "wood-tone",
+      "warm",
+      "earthy"
+    ],
+    "color": "#7a4e2d",
+    "pattern": "solid"
+  },
+  {
+    "id": "wayne-dalton-9100-sandstone",
+    "name": "Wayne Dalton Classic Steel Model 9100 9-ft x 7-ft 9 R-Value Insulated Sandstone Single Garage Door",
+    "brand": "Wayne Dalton",
+    "line": "Classic Steel Model 9100",
+    "sku": "WD9100ST97",
+    "url": "https://www.lowes.com/pd/Wayne-Dalton-Classic-Steel-Model-9100-9-ft-x-7-ft-Taupe-Sonoma-Panel-Single-Garage-Door/5003101979",
+    "price": 150.0,
+    "unit": "linft",
+    "priceSource": "estimated",
+    "priceNote": "Lowe's hides price; est. $1,350 for the 9x7 single door / 9 ft (only 9 ft confirmed)",
+    "lastChecked": "2026-10-15",
+    "kind": "garage",
+    "styles": [
+      "ranch",
+      "traditional"
+    ],
+    "tags": [
+      "neutral",
+      "light",
+      "warm"
+    ],
+    "color": "#cbbba0",
+    "pattern": "solid"
+  },
+  {
+    "id": "amarr-classica-full-view-charcoal",
+    "name": "Classica Full View",
+    "brand": "Amarr",
+    "line": "Classica",
+    "url": "https://www.amarr.com/us/en/garage-doors/explore-products/view-all-doors/classica-full-view",
+    "price": 343.75,
+    "unit": "linft",
+    "priceSource": "estimated",
+    "priceNote": "Dealer-quote only; est. $5,500 for 16x7 full-view glass door / 16, Charcoal Gray with Frost glass",
+    "lastChecked": "2026-10-15",
+    "kind": "garage",
+    "styles": [
+      "contemporary",
+      "mountain-modern"
+    ],
+    "tags": [
+      "gray",
+      "dark"
+    ],
+    "color": "#3a3c3e",
+    "pattern": "solid"
+  }
+]

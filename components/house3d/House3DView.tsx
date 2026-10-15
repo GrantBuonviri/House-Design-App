@@ -12,6 +12,7 @@ import { IN_PER_UNIT, toScene, type Frame } from "@/lib/house3d/mesh";
 import { planBounds, siteFor, type Site } from "@/lib/house3d/site";
 import { EQUINOX, sunDirection } from "@/lib/house3d/sun";
 import { groundMesh, lineOnGround, waterIn3D } from "@/lib/house3d/terrain";
+import { buildYard } from "@/lib/house3d/yard";
 import { landView } from "@/lib/land/view";
 import { roadLine } from "@/lib/land/mesh";
 import type { Plans } from "@/lib/plan/edit";
@@ -34,6 +35,8 @@ type Props = {
   house3d: House3D;
   /** Interior picks, for finishes. */
   interior?: Selection[];
+  /** Exterior picks: siding, roof, windows, doors and the yard. */
+  exterior?: HouseContext["exterior"];
   plot: Plot | null;
   offset: Point;
   levelId: string;
@@ -96,7 +99,7 @@ function shownGroups(walls: WallsShown): Record<keyof Groups, boolean> {
  * with its room names, like a plan.
  */
 export default function House3DView(props: Props) {
-  const { plans, levels, basics, house3d, interior, plot, offset, levelId, height, editing, walls } = props;
+  const { plans, levels, basics, house3d, interior, exterior, plot, offset, levelId, height, editing, walls } = props;
   const [lookingDown, setLookingDown] = useState(false);
   const [topRequest, setTopRequest] = useState(0);
   const cutAway = props.cutAway || lookingDown;
@@ -115,7 +118,7 @@ export default function House3DView(props: Props) {
 
   const heights = useMemo(() => levelHeights(levels, basics), [levels, basics]);
   const site = useMemo(() => siteFor(plot, offset, settled), [plot, offset, settled]);
-  const ctx = useMemo(() => ({ levels, basics, house3d, site, frame, heights, interior }), [levels, basics, house3d, site, frame, heights, interior]);
+  const ctx = useMemo(() => ({ levels, basics, house3d, site, frame, heights, interior, exterior }), [levels, basics, house3d, site, frame, heights, interior, exterior]);
 
   // Each floor is rebuilt only when it (or a floor next to it) changes.
   const cache = useRef(new Map<string, { key: unknown[]; parts: Part[] }>());
@@ -306,7 +309,24 @@ function Lights({ span, day, hour }: { span: number; day: number; hour: number }
   );
 }
 
-export function Ground({ site, frame, plans, ctx, heights, onEmpty }: { site: Site; frame: Frame; plans: Plans; ctx: HouseContext; heights: LevelHeights; onEmpty?: () => void }) {
+export function Ground({
+  site,
+  frame,
+  plans,
+  ctx,
+  heights,
+  onEmpty,
+  yard = true,
+}: {
+  site: Site;
+  frame: Frame;
+  plans: Plans;
+  ctx: HouseContext;
+  heights: LevelHeights;
+  onEmpty?: () => void;
+  /** Draw the yard (driveway, walk, lawn, plants). The walkthrough draws its own, so it can be aimed at. */
+  yard?: boolean;
+}) {
   const geometry = useMemo(() => {
     const m = groundMesh(site, frame, { house: planBounds(plans), holes: dugOut(plans, { ...ctx, heights }) });
     const g = new THREE.BufferGeometry();
@@ -317,6 +337,8 @@ export function Ground({ site, frame, plans, ctx, heights, onEmpty }: { site: Si
     return g;
   }, [site, frame, plans, ctx, heights]);
   useEffect(() => () => geometry.dispose(), [geometry]);
+  const yardMesh = useMemo(() => (yard ? mergeParts(buildYard(plans, { ...ctx, heights })) : null), [yard, plans, ctx, heights]);
+  useEffect(() => () => yardMesh?.geometry.dispose(), [yardMesh]);
 
   const water = useMemo(
     () =>
@@ -357,6 +379,7 @@ export function Ground({ site, frame, plans, ctx, heights, onEmpty }: { site: Si
           down.current = null;
         }}
       />
+      {yardMesh && <mesh geometry={yardMesh.geometry} material={solidMaterial} castShadow receiveShadow />}
       {water.map((w, i) => (
         <mesh key={i} geometry={w.geometry} rotation={[-Math.PI / 2, 0, 0]} position={[0, w.level, 0]} receiveShadow>
           <meshStandardMaterial color="#5b93bd" roughness={0.2} transparent opacity={0.9} />
@@ -495,7 +518,9 @@ function useDrag(props: DragProps) {
     onPointerDown: (e: ThreeEvent<PointerEvent>) => {
       e.stopPropagation();
       if (e.button !== 0) return;
-      const pick = e.faceIndex != null ? picks[e.faceIndex] : undefined;
+      const hit = e.faceIndex != null ? picks[e.faceIndex] : undefined;
+      // The yard isn't part of the plan, so it can't be selected here.
+      const pick = hit && hit.kind !== "yard" ? { ...hit, kind: hit.kind } : undefined;
       const { selection, onSelect, levelId, plans, heights } = latest.current;
       if (!pick) {
         // A wall or the roof: let go of the selection on a plain click.

@@ -1,0 +1,314 @@
+[
+  {
+    "id": "scotts-turf-builder-tall-fescue-mix-20lb",
+    "name": "Scotts Turf Builder 20 lbs. Grass Seed Tall Fescue Mix Grows Deep Roots for a Durable, Livable Lawn",
+    "brand": "Scotts",
+    "line": "Turf Builder",
+    "sku": "18242",
+    "url": "https://www.homedepot.com/p/Scotts-Turf-Builder-20-lbs-Grass-Seed-Tall-Fescue-Mix-Grows-Deep-Roots-for-a-Durable-Livable-Lawn-18242/203760995",
+    "price": 0.0135,
+    "unit": "sqft",
+    "priceSource": "listed",
+    "priceNote": "$67.37 per 20 lb bag at Home Depot / 5,000 sq ft coverage (page's single figure)",
+    "lastChecked": "2026-10-15",
+    "kind": "lawn",
+    "styles": [
+      "modern-farmhouse",
+      "mountain-modern",
+      "craftsman",
+      "contemporary",
+      "ranch",
+      "traditional"
+    ],
+    "tags": [
+      "green"
+    ],
+    "color": "#3f7a35",
+    "pattern": "solid"
+  },
+  {
+    "id": "scotts-turf-builder-kentucky-bluegrass-mix-3lb",
+    "name": "Scotts Turf Builder 3 lbs. Grass Seed Kentucky Bluegrass Mix",
+    "brand": "Scotts",
+    "line": "Turf Builder",
+    "sku": "18266",
+    "url": "https://www.homedepot.com/p/Scotts-3-lb-Turf-Builder-Kentucky-Bluegrass-Mix-Seed-18266/203760935",
+    "price": 0.0367,
+    "unit": "sqft",
+    "priceSource": "listed",
+    "priceNote": "$24.43 per 3 lb bag at Home Depot / 665 sq ft new-lawn coverage",
+    "lastChecked": "2026-10-15",
+    "kind": "lawn",
+    "styles": [
+      "modern-farmhouse",
+      "mountain-modern",
+      "craftsman",
+      "contemporary",
+      "ranch",
+      "traditional"
+    ],
+    "tags": [
+      "green"
+    ],
+    "color": "#3b7d3a",
+    "pattern": "solid"
+  },
+  {
+    "id": "green-velvet-boxwood-3gal",
+    "name": "3 Gal. Boxwood (Buxus) Green Velvet Shrub",
+    "brand": "Home Depot (unbranded)",
+    "sku": "02772",
+    "url": "https://www.homedepot.com/p/3-Gal-Boxwood-Buxus-Green-Velvet-Shrub-02772/319165609",
+    "price": 35.0,
+    "unit": "each",
+    "priceSource": "estimated",
+    "priceNote": "Price not shown on page; est. from other 3 gal boxwoods at Home Depot (~$30-45)",
+    "lastChecked": "2026-10-15",
+    "kind": "shrub",
+    "styles": [
+      "traditional",
+      "modern-farmhouse",
+      "craftsman"
+    ],
+    "tags": [
+      "green",
+      "dark"
+    ],
+    "color": "#2f5d2a",
+    "pattern": "solid"
+  },
+  {
+    "id": "direct-gardening-blue-star-juniper-3gal",
+    "name": "DIRECT GARDENING 3 Gal. Pot, Blue Star Juniper, Evergreen Shrub (1-Pack)",
+    "brand": "Direct Gardening",
+    "sku": "89643",
+    "url": "https://www.homedepot.com/p/3-Gal-Pot-Blue-Star-Juniper-Evergreen-Shrub-1-Pack-89643/323833862",
+    "price": 49.38,
+    "unit": "each",
+    "priceSource": "listed",
+    "priceNote": "$49.38 at Home Depot",
+    "lastChecked": "2026-10-15",
+    "kind": "shrub",
+    "styles": [
+      "contemporary",
+      "mountain-modern",
+      "ranch"
+    ],
+    "tags": [
+      "blue",
+      "gray"
+    ],
+    "color": "#7c9aa3",
+    "pattern": "solid"
+  },
+  {
+    "id": "bell-nursery-phenomenal-lavender-3gal",
+    "name": "BELL NURSERY 3 Gal. Phenomenal Lavender (Lavandula augustifolia) Live Flowering Perennial Plant",
+    "brand": "Bell Nursery",
+    "sku": "LAVDR3PHL1PK",
+    "url": "https://www.homedepot.com/p/BELL-NURSERY-3-Gal-Phenomenal-Lavender-Lavandula-augustifolia-Live-Flowering-Perennial-Plant-with-Fragrant-Blue-Flowers-1-Pack-LAVDR3PHL1PK/324584607",
+    "price": 29.16,
+    "unit": "each",
+    "priceSource": "listed",
+    "priceNote": "$29.16 at Home Depot",
+    "lastChecked": "2026-10-15",
+    "kind": "shrub",
+    "styles": [
+      "modern-farmhouse",
+      "traditional",
+      "ranch"
+    ],
+    "tags": [
+      "green",
+      "light"
+    ],
+    "color": "#8a9a7b",
+    "pattern": "solid"
+  },
+  {
+    "id": "online-orchards-karl-foerster-feather-reed-grass-5gal",
+    "name": "Online Orchards 5 Gal. Karl Foerster Feather Reed Grass",
+    "brand": "Online Orchards",
+    "sku": "GROR516",
+    "url": "https://www.homedepot.com/p/Online-Orchards-5-Gal-Karl-Foerster-Feather-Reed-Grass-GROR516/329231192",
+    "price": 79.27,
+    "unit": "each",
+    "priceSource": "listed",
+    "priceNote": "$79.27 at Home Depot",
+    "lastChecked": "2026-10-15",
+    "kind": "shrub",
+    "styles": [
+      "contemporary",
+      "mountain-modern",
+      "modern-farmhouse"
+    ],
+    "tags": [
+      "earthy",
+      "warm"
+    ],
+    "color": "#b8a46a",
+    "pattern": "solid"
+  },
+  {
+    "id": "bell-nursery-magic-carpet-spirea-3gal",
+    "name": "3 Gal. Magic Carpet Spirea (Spiraea japonica 'Walbuma') Live Flowering Shrub with Small Pink Flowers",
+    "brand": "Bell Nursery",
+    "sku": "SPIRA3SPC1PK",
+    "url": "https://homedepot.com/p/BELL-NURSERY-3-Gal-Magic-Carpet-Spirea-Spiraea-japonica-Walbuma-Live-Flowering-Shrub-with-Small-Pink-Flowers-SPIRA3SPC1PK/321455072",
+    "price": 39.86,
+    "unit": "each",
+    "priceSource": "listed",
+    "priceNote": "$39.86 at Home Depot",
+    "lastChecked": "2026-10-15",
+    "kind": "shrub",
+    "styles": [
+      "craftsman",
+      "ranch",
+      "traditional"
+    ],
+    "tags": [
+      "warm",
+      "bold"
+    ],
+    "color": "#c9a23a",
+    "pattern": "solid"
+  },
+  {
+    "id": "watters-autumn-blaze-maple-15gal",
+    "name": "MAPLE AUTUMN BLAZE - 15 GAL",
+    "brand": "Watters Garden Center",
+    "url": "https://shop.wattersgardencenter.com/products/watters/plants/trees/shade_trees/tr-de-15-mapl-aut-bl",
+    "price": 399.0,
+    "unit": "each",
+    "priceSource": "listed",
+    "priceNote": "$399 for 15 gal at Watters Garden Center (Prescott, AZ); Boise nurseries don't list prices online",
+    "lastChecked": "2026-10-15",
+    "kind": "tree",
+    "styles": [
+      "craftsman",
+      "traditional",
+      "ranch",
+      "modern-farmhouse"
+    ],
+    "tags": [
+      "green",
+      "red"
+    ],
+    "color": "#4a7a33",
+    "pattern": "solid"
+  },
+  {
+    "id": "moana-shademaster-honeylocust-15",
+    "name": "Shademaster Honeylocust #15",
+    "brand": "Moana Nursery",
+    "url": "https://store.moananursery.com/products/shademaster-honeylocust--15-br--i-gleditsia-triacanthos-shademaster--br---i--4161.html",
+    "price": 219.0,
+    "unit": "each",
+    "priceSource": "listed",
+    "priceNote": "$219 for #15 at Moana Nursery (Reno, NV, similar high-desert climate)",
+    "lastChecked": "2026-10-15",
+    "kind": "tree",
+    "styles": [
+      "contemporary",
+      "modern-farmhouse",
+      "ranch"
+    ],
+    "tags": [
+      "green",
+      "light"
+    ],
+    "color": "#8aa63c",
+    "pattern": "solid"
+  },
+  {
+    "id": "moana-quaking-aspen-15",
+    "name": "Quaking Aspen #15",
+    "brand": "Moana Nursery",
+    "url": "https://store.moananursery.com/products/aspen-quaking--15-209.html",
+    "price": 207.0,
+    "unit": "each",
+    "priceSource": "listed",
+    "priceNote": "$207 for #15 at Moana Nursery (Reno, NV, similar high-desert climate)",
+    "lastChecked": "2026-10-15",
+    "kind": "tree",
+    "styles": [
+      "mountain-modern",
+      "contemporary"
+    ],
+    "tags": [
+      "green"
+    ],
+    "color": "#6f9a3e",
+    "pattern": "solid"
+  },
+  {
+    "id": "moana-austrian-pine-15",
+    "name": "Austrian Pine #15",
+    "brand": "Moana Nursery",
+    "url": "https://store.moananursery.com/products/austrian-pine--15-br--i-pinus-nigra--br---i--3504.html",
+    "price": 199.0,
+    "unit": "each",
+    "priceSource": "listed",
+    "priceNote": "$199 for #15 at Moana Nursery (Reno, NV, similar high-desert climate)",
+    "lastChecked": "2026-10-15",
+    "kind": "tree",
+    "styles": [
+      "mountain-modern",
+      "ranch",
+      "craftsman"
+    ],
+    "tags": [
+      "dark",
+      "green"
+    ],
+    "color": "#2e4a2b",
+    "pattern": "solid"
+  },
+  {
+    "id": "zamzows-regular-grind-bark",
+    "name": "Regular Grind Bark (bulk)",
+    "brand": "Zamzows",
+    "url": "https://zamzows.com/pages/bulk-soil-compost-and-bark",
+    "price": 0.65,
+    "unit": "sqft",
+    "priceSource": "listed",
+    "priceNote": "$69.99/cu yd at Zamzows (Boise); 1 yd covers ~108 sq ft at 3 in deep",
+    "lastChecked": "2026-10-15",
+    "kind": "mulch",
+    "styles": [
+      "modern-farmhouse",
+      "craftsman",
+      "traditional",
+      "ranch"
+    ],
+    "tags": [
+      "earthy",
+      "wood-tone"
+    ],
+    "color": "#5a3a26",
+    "pattern": "solid"
+  },
+  {
+    "id": "zamzows-gemscape-basalt-medium-rock",
+    "name": "Gemscape Basalt Medium Rock (bulk)",
+    "brand": "Zamzows",
+    "url": "https://zamzows.com/pages/bulk-soil-compost-and-bark",
+    "price": 1.06,
+    "unit": "sqft",
+    "priceSource": "listed",
+    "priceNote": "$114.99/cu yd at Zamzows (Boise, Chinden only); 1 yd covers ~108 sq ft at 3 in deep",
+    "lastChecked": "2026-10-15",
+    "kind": "mulch",
+    "styles": [
+      "contemporary",
+      "mountain-modern"
+    ],
+    "tags": [
+      "dark",
+      "black",
+      "gray"
+    ],
+    "color": "#3a3a3a",
+    "pattern": "solid"
+  }
+]

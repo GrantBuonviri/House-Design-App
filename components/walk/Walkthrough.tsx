@@ -24,7 +24,8 @@ import { aimAt, type Aim } from "@/lib/interior/surfaces";
 import { Ground } from "@/components/house3d/House3DView";
 import { toGeometry } from "@/components/house3d/geometry";
 import { HouseMeshes, Sky, type AimTarget } from "@/components/house3d/Scene";
-import { AddFurniturePanel, FinishPanel, FurniturePanel } from "./DesignPanel";
+import { AddFurniturePanel, FinishPanel, FurniturePanel, OutsidePanel } from "./DesignPanel";
+import { effectiveExterior } from "@/lib/exterior/style";
 
 const LOOK_PER_PX = 0.0022;
 
@@ -35,7 +36,11 @@ const LOOK_PER_PX = 0.0022;
  * down, and you can walk out onto the land.
  */
 /** What the panel on the right shows: what you clicked, or the list of furniture to add. */
-type Panel = { kind: "finish"; aim: Extract<Aim, { kind: "finish" }> } | { kind: "furniture"; levelId: string; id: string } | { kind: "add" };
+type Panel =
+  | { kind: "finish"; aim: Extract<Aim, { kind: "finish" }> }
+  | { kind: "outside"; aim: Extract<Aim, { kind: "outside" }> }
+  | { kind: "furniture"; levelId: string; id: string }
+  | { kind: "add" };
 
 /** Furniture being carried: it follows where you look until you click to put it down. */
 type Carry = { item: FurnitureItem; levelId: string; isNew: boolean; check: PlaceCheck };
@@ -98,8 +103,8 @@ export default function Walkthrough({ project, cost, onClose }: { project: Proje
   const heights = useMemo(() => levelHeights(levels, basics), [levels, basics]);
   const site = useMemo(() => siteFor(project.plot, offset, plans), [project.plot, offset, plans]);
   const ctx: HouseContext = useMemo(
-    () => ({ levels, basics, house3d: project.house3d, site, frame, interior: project.interior.selections }),
-    [levels, basics, project.house3d, site, frame, project.interior.selections],
+    () => ({ levels, basics, house3d: project.house3d, site, frame, interior: project.interior.selections, exterior: project.exterior }),
+    [levels, basics, project.house3d, site, frame, project.interior.selections, project.exterior],
   );
   const model = useMemo(() => buildHouse(plans, ctx), [plans, ctx]);
   const world = useMemo(() => walkWorld(plans, { ...ctx, heights }), [plans, ctx, heights]);
@@ -148,6 +153,8 @@ export default function Walkthrough({ project, cost, onClose }: { project: Proje
     [update],
   );
   const setSelections = (selections: Selection[]) => update((p) => ({ ...p, interior: { ...p.interior, selections } }));
+  const setOutside = (selections: Selection[]) => update((p) => ({ ...p, exterior: { ...p.exterior, selections } }));
+  const outsideAnswers = useMemo(() => effectiveExterior(project.exterior.answers, answers), [project.exterior.answers, answers]);
 
   /** Pick up a piece (or a new one) and carry it, with the mouse captured so it follows where you look. */
   const pickUp = (item: FurnitureItem, levelId: string, isNew: boolean) => {
@@ -302,6 +309,9 @@ export default function Walkthrough({ project, cost, onClose }: { project: Proje
       if (a.kind === "finish") {
         setPanel({ kind: "finish", aim: a });
         stopWalking();
+      } else if (a.kind === "outside") {
+        setPanel({ kind: "outside", aim: a });
+        stopWalking();
       } else if (a.kind === "furniture") {
         setPanel({ kind: "furniture", levelId: a.levelId, id: a.id });
         stopWalking();
@@ -361,7 +371,7 @@ export default function Walkthrough({ project, cost, onClose }: { project: Proje
       >
         <PerspectiveCamera makeDefault fov={70} near={0.3} far={6000} />
         <Sky day={seasonInfo.day} hour={shownHour} span={span} version={model} center={model.bounds ? [(model.bounds.min[0] + model.bounds.max[0]) / 2, 0, (model.bounds.min[2] + model.bounds.max[2]) / 2] : [0, 0, 0]} />
-        <Ground site={site} frame={frame} plans={plans} ctx={ctx} heights={heights} />
+        <Ground site={site} frame={frame} plans={plans} ctx={ctx} heights={heights} yard={false} />
         <HouseMeshes parts={model.parts} aimRef={aimTarget} />
         {carry && <FurnitureGhost item={carry.item} floorIn={heights[carry.levelId]?.floorIn ?? 0} frame={frame} ok={carry.check.ok} />}
         <Player
@@ -461,7 +471,7 @@ export default function Walkthrough({ project, cost, onClose }: { project: Proje
               <li>Move the mouse to look around</li>
               <li>W A S D or the arrow keys to walk</li>
               <li>Hold Shift to walk faster</li>
-              <li>E turns Design on: aim at a floor, wall, counter or furniture and click to change it</li>
+              <li>E turns Design on: aim at a floor, wall, counter, furniture, or outside at the siding, roof, doors and yard, and click to change it</li>
               <li>With Design on, F adds furniture</li>
               <li>Esc to stop, and Esc again to close</li>
             </ul>
@@ -487,6 +497,7 @@ export default function Walkthrough({ project, cost, onClose }: { project: Proje
           </div>
           <div className="flex-1 overflow-y-auto p-4">
             {panel.kind === "finish" && <FinishPanel key={panel.aim.label} aim={panel.aim} selections={project.interior.selections} answers={answers} onChange={setSelections} />}
+            {panel.kind === "outside" && <OutsidePanel key={panel.aim.label} aim={panel.aim} selections={project.exterior.selections} answers={outsideAnswers} onChange={setOutside} />}
             {panel.kind === "furniture" && openFurniture && (
               <FurniturePanel
                 item={openFurniture}
@@ -693,10 +704,13 @@ function Player({
       const t = aimTarget.current;
       const h = t ? ray.intersectObject(t.mesh, false)[0] : undefined;
       const owner = h && h.faceIndex != null ? t!.owners[h.faceIndex] : undefined;
+      // The side you're looking at, whichever way the triangle happens to be wound.
+      const normal = h?.face ? h.face.normal.clone() : undefined;
+      if (normal && normal.dot(ray.ray.direction) > 0) normal.negate();
       onLook({
         origin: ray.ray.origin.clone(),
         dir: ray.ray.direction.clone(),
-        hit: h && h.face && owner ? { point: h.point.clone(), normal: h.face.normal.clone(), owner } : null,
+        hit: h && normal && owner ? { point: h.point.clone(), normal, owner } : null,
       });
     }
   });

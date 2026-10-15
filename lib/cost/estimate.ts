@@ -1,5 +1,8 @@
-import { WHOLE_HOUSE, type CostSettings, type Project, type Selection } from "@/lib/model/schema";
+import { WHOLE_HOUSE, type CostSettings, type DesignChoices, type Project, type Selection } from "@/lib/model/schema";
 import { interiorCategory } from "@/lib/catalog/categories";
+import { exteriorCategory, paintable, rateFor } from "@/lib/catalog/exterior";
+import { ACCENT_BAND_FT, accentPlaceFor } from "@/lib/exterior/picks";
+import { productTitle } from "@/lib/interior/picks";
 import { measureHouse, type Quantities } from "./quantities";
 import { rates as loadRates, type Range, type RateId, type RatesFile } from "./rates";
 
@@ -49,6 +52,8 @@ export type CostLine = {
   note?: string;
   /** A picked product that replaced the allowance on this line. */
   product?: string;
+  /** The rate it's priced at, for lines from the rates file. */
+  rate?: RateId;
 };
 
 export type CostCategory = { id: CategoryId; label: string; cost: Money; lines: CostLine[] };
@@ -71,18 +76,16 @@ const sumMoney = (ms: Money[]) => ms.reduce(addMoney, ZERO);
 const times = (r: Range, k: number): Money => ({ low: r[0] * k, likely: r[1] * k, high: r[2] * k });
 
 /**
- * Exterior product categories (milestone 10) and the line whose allowance
- * each replaces for the whole house. Interior categories are in
- * lib/catalog/categories.ts and can be picked room by room.
+ * Sq ft of wall the accent siding covers: a band along the base of the
+ * ground floor's walls (less doors), or the gable ends. At most half the siding.
  */
-export const ALLOWANCE_FOR: Record<string, RateId> = {
-  windows: "window",
-  "entry-doors": "entry-door",
-  "garage-doors": "garage-door",
-  siding: "siding",
-  roofing: "roof-shingle",
-  gutters: "gutters",
-};
+export function accentArea(ext: Pick<DesignChoices, "selections" | "accentPlace">, q: Quantities): number {
+  const pick = ext.selections.find((s) => s.targetId === WHOLE_HOUSE && s.category === "accent");
+  if (!pick) return 0;
+  const place = accentPlaceFor(ext, q.gableSqft > 0);
+  const area = place === "gables" ? q.gableSqft : q.baseWallLf * ACCENT_BAND_FT * 0.9;
+  return Math.min(area, (q.extWallSqft + q.gableSqft) * 0.5);
+}
 
 /** Boise's building permit fee for a building value. */
 export function permitFee(value: number, permit: RatesFile["permit"]): number {
@@ -99,11 +102,12 @@ export function estimate(
   const utilities = p.cost.utilities;
   const lines: CostLine[] = [];
 
-  const line = (category: CategoryId, id: RateId, qty: number, label?: string, note?: string) => {
+  const line = (category: CategoryId, id: RateId, qty: number, label?: string, note?: string, lineId?: string) => {
     if (!(qty > 0.01)) return;
     const r = file.rates[id];
     lines.push({
-      id,
+      id: lineId ?? id,
+      rate: id,
       category,
       label: label ?? r.label,
       qty,
@@ -127,12 +131,18 @@ export function estimate(
   if (q.drainage === "major") line("site", "drainage-major", 1);
   line("site", "retaining-wall", q.retainingWallSqft);
   line("site", "utility-trench", q.trenchLf);
+  line("site", "front-walk", q.walkSqft);
+  line("site", "lawn", q.lawnSqft);
+  line("site", "planting-beds", q.bedSqft);
+  line("site", "shrub", q.shrubs, undefined, undefined, "shrubs");
+  line("site", "tree", q.trees, undefined, undefined, "trees");
 
   // Foundation
   line("foundation", "slab", q.slabSqft);
   line("foundation", "slab", q.basementSlabSqft, "Basement floor slab");
   line("foundation", "garage-slab", q.garageSlabSqft);
-  line("foundation", "garage-slab", q.porchSqft, "Porch and patio slabs");
+  line("foundation", "garage-slab", q.porchSqft - q.patioSqft, "Porch slabs");
+  line("foundation", "garage-slab", q.patioSqft, "Patio (concrete)", undefined, "patio");
   line("foundation", "footing", q.footingLf);
   line("foundation", "stem-wall", q.stemWallSqft);
   line("foundation", "basement-wall", q.basementWallSqft);
@@ -161,8 +171,10 @@ export function estimate(
   line("windows-doors", "barn-door", q.barnDoors);
   line("windows-doors", "garage-door", q.garageDoorLf);
 
-  // Exterior
-  line("exterior", "siding", q.extWallSqft + q.gableSqft);
+  // Exterior: siding, with an accent (stone, brick or wood) taking its part of the walls when one is picked.
+  const accent = accentArea(p.exterior, q);
+  line("exterior", "siding", q.extWallSqft + q.gableSqft - accent);
+  line("exterior", "siding", accent, "Accent siding", undefined, "accent");
   line("exterior", "ext-trim", q.eaveLf);
 
   // Insulation and drywall
@@ -179,6 +191,7 @@ export function estimate(
   line("electrical", "electrical", q.livingSqft + q.garageSqft * 0.5);
   line("electrical", "electrical-service", 1);
   line("electrical", "lighting-fixtures", q.lightFixtures);
+  line("electrical", "exterior-lights", q.extLights);
   line("hvac", "hvac", q.livingSqft);
 
   // Interior finishes (mid-range allowances until products are picked)
@@ -201,7 +214,8 @@ export function estimate(
   line("fixtures", "appliance-package", q.kitchens);
   line("fixtures", "laundry-hookup", q.laundries);
 
-  applySelections(lines, [...p.interior.selections, ...p.exterior.selections], q, file);
+  applySelections(lines, p.interior.selections, q, file);
+  applyExterior(lines, p.exterior.selections, file);
 
   // Permits and fees
   const permit = file.permit;
@@ -293,7 +307,7 @@ export function applySelections(lines: CostLine[], selections: Selection[], q?: 
   const byLine = new Map<string, Selection[]>();
   for (const s of selections) {
     if (s.product.price === undefined) continue;
-    const lineId = interiorCategory(s.category)?.line ?? ALLOWANCE_FOR[s.category];
+    const lineId = interiorCategory(s.category)?.line;
     if (!lineId) continue;
     byLine.set(lineId, [...(byLine.get(lineId) ?? []), s]);
   }
@@ -306,9 +320,6 @@ export function applySelections(lines: CostLine[], selections: Selection[], q?: 
     const roomWalls = new Map((q?.rooms ?? []).map((room) => [room.id, room.walls]));
     const sum = parts.reduce((s, x) => s + x.amount, 0);
     const shares = sum > 0 ? parts.map((x) => ({ id: x.id, amount: (x.amount * l.qty) / sum })) : [{ id: WHOLE_HOUSE, amount: l.qty }];
-    // An exterior pick with its own quantity prices that quantity.
-    const fixedQty = picks.length === 1 && !interiorCategory(picks[0].category) ? picks[0].quantity : undefined;
-    if (fixedQty !== undefined) shares.splice(0, shares.length, { id: WHOLE_HOUSE, amount: fixedQty });
 
     let cost: Money = ZERO;
     let pickedAmount = 0;
@@ -328,7 +339,7 @@ export function applySelections(lines: CostLine[], selections: Selection[], q?: 
         const c = interiorCategory(s.category);
         replaced += (c?.share ?? 1) * cover;
         productCost += s.product.price! * (c?.perUnit ?? 1) * part.amount * cover;
-        used.add(`${s.product.brand} ${s.product.name}`);
+        used.add(productTitle(s.product));
       };
       for (const s of cats.values()) price(s, s.category === "paint" ? 1 - accentShare : 1);
       for (const s of accents) price(s, walls![s.wall!]);
@@ -351,6 +362,65 @@ export function applySelections(lines: CostLine[], selections: Selection[], q?: 
     // The per-unit material shown is what it averages out to.
     l.material = l.qty > 0 ? Math.max(0, cost.likely / l.qty - (l.labor ?? 0)) : l.material;
     l.note = `Picked: ${names.join(", ")}.${everywhere ? "" : " Rooms without a pick use the mid-range allowance."} ${l.note ?? ""}`.trim();
+  }
+}
+
+/**
+ * Exterior picks replace the mid-range allowance on their line for the whole
+ * house. Some change what it costs to put up too (a metal roof, brick,
+ * pavers): the line then uses that kind's rate for labor and for the parts
+ * the product doesn't cover. Siding paint only counts on paintable siding.
+ */
+export function applyExterior(lines: CostLine[], selections: Selection[], file: RatesFile = loadRates()) {
+  const picks = selections.filter((s) => s.targetId === WHOLE_HOUSE && exteriorCategory(s.category));
+  const siding = picks.find((s) => s.category === "siding");
+  const byLine = new Map<string, Selection[]>();
+  for (const s of picks) {
+    if (s.category === "siding-paint" && !paintable(siding?.product.kind)) continue;
+    const c = exteriorCategory(s.category)!;
+    byLine.set(c.line, [...(byLine.get(c.line) ?? []), s]);
+  }
+  for (const [lineId, ps] of byLine) {
+    const l = lines.find((x) => x.id === lineId);
+    if (!l) continue;
+    // The rate: the first pick whose kind has its own, else the line's.
+    let rateId = l.rate;
+    for (const s of ps) {
+      const c = exteriorCategory(s.category)!;
+      const k = rateFor(c, s.product.kind);
+      if (k !== c.rate) {
+        rateId = k;
+        break;
+      }
+    }
+    const r = rateId ? file.rates[rateId] : undefined;
+    if (!r) continue;
+    let replaced = 0;
+    let productCost = 0;
+    const names: string[] = [];
+    for (const s of ps) {
+      if (s.product.price === undefined) continue;
+      const c = exteriorCategory(s.category)!;
+      replaced += c.share;
+      productCost += s.product.price * c.perUnit * l.qty;
+      names.push(productTitle(s.product));
+    }
+    replaced = Math.min(1, replaced);
+    const allowance = addMoney(times(r.material, l.qty * (1 - replaced)), times(r.labor, l.qty));
+    l.cost = addMoney(allowance, { low: productCost * 0.95, likely: productCost, high: productCost * 1.1 });
+    l.labor = r.labor[1];
+    l.material = l.qty > 0 ? Math.max(0, l.cost.likely / l.qty - r.labor[1]) : l.material;
+    if (rateId !== l.rate) {
+      l.label = lineId === "accent" ? `Accent: ${r.label.charAt(0).toLowerCase()}${r.label.slice(1)}` : r.label;
+      l.rate = rateId;
+      l.source = r.source;
+      l.url = r.url;
+      l.checked = r.checked;
+    }
+    if (names.length) {
+      l.product = names.length === 1 ? names[0] : `${names.length} picks`;
+      l.note = `Picked: ${names.join(", ")}. ${r.note ?? ""}`.trim();
+    } else l.note = r.note;
   }
 }
 

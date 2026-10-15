@@ -5,6 +5,7 @@ import { dist, dot, leftNormal, project, scale, sub, unit } from "@/lib/plan/geo
 import { offsetRing, type Region } from "./footprint";
 import { COLORS } from "./colors";
 import { MeshBuilder, toScene, type Frame, type Vec3 } from "./mesh";
+import type { ExteriorLook } from "./exterior";
 
 /**
  * Roofs, made from the house outline. A hip roof is the "straight skeleton"
@@ -201,14 +202,20 @@ function triangulate(r: Region, h: (p: Point) => number): RoofTri[] {
  * Draw a roof: the top in roofing, the underside (soffit) a roof's thickness
  * lower, a fascia board around the open edges, and siding for gable ends.
  */
-export function drawRoof(mb: { roof: MeshBuilder; trim: MeshBuilder; siding: MeshBuilder }, f: Frame, shape: RoofShape, thick: number) {
+export function drawRoof(mb: { roof: MeshBuilder; trim: MeshBuilder; siding: MeshBuilder }, f: Frame, shape: RoofShape, thick: number, look?: ExteriorLook) {
+  const roof = look?.roof ?? { color: COLORS.roof, pattern: 0 };
+  const fascia = look?.trim ?? COLORS.fascia;
+  // Gable ends: the siding, or the accent when it goes on the gables.
+  const gable = look ? (look.accent?.place === "gables" ? look.accent : look.siding) : { color: COLORS.siding, pattern: 0 };
   const edges = new Map<string, { a: Point; b: Point; ha: number; hb: number; other: Point; n: number }>();
   const k = (p: Point) => `${Math.round(p.x * 10)},${Math.round(p.y * 10)}`;
   for (const t of shape.tris) {
     const [A, B, C] = t.p.map((p, i) => toScene(f, p, t.h[i])) as [Vec3, Vec3, Vec3];
-    mb.roof.tri(A, B, C, COLORS.roof, [0, 1, 0]);
+    mb.roof.pattern = roof.pattern;
+    mb.roof.tri(A, B, C, roof.color, [0, 1, 0]);
+    mb.roof.pattern = 0;
     const lower = (v: Vec3): Vec3 => [v[0], v[1] - thick / 12, v[2]];
-    mb.trim.tri(lower(A), lower(B), lower(C), COLORS.fascia, [0, -1, 0]);
+    mb.trim.tri(lower(A), lower(B), lower(C), fascia, [0, -1, 0]);
     for (let i = 0; i < 3; i++) {
       const a = t.p[i];
       const b = t.p[(i + 1) % 3];
@@ -223,16 +230,20 @@ export function drawRoof(mb: { roof: MeshBuilder; trim: MeshBuilder; siding: Mes
     const u = unit(sub(e.b, e.a));
     let out = leftNormal(u);
     if (dot(sub(e.other, e.a), out) > 0) out = scale(out, -1);
-    mb.trim.upright(f, e.a, e.b, e.ha - thick, e.ha, e.hb - thick, e.hb, out, COLORS.fascia);
+    mb.trim.upright(f, e.a, e.b, e.ha - thick, e.ha, e.hb - thick, e.hb, out, fascia);
   }
   for (const w of shape.walls) {
     if (w.p.length === 3) {
       const [A, B, C] = w.p.map((p, i) => toScene(f, p, w.h[i])) as [Vec3, Vec3, Vec3];
-      mb.siding.tri(A, B, C, COLORS.siding, [w.out.x, 0, w.out.y]);
+      mb.siding.pattern = gable.pattern;
+      mb.siding.tri(A, B, C, gable.color, [w.out.x, 0, w.out.y]);
+      mb.siding.pattern = 0;
       // The attic side, so the gable isn't see-through from inside.
       mb.siding.tri(A, B, C, COLORS.drywall, [-w.out.x, 0, -w.out.y]);
     } else {
-      mb.siding.upright(f, w.p[0], w.p[1], w.h[0], w.h[3], w.h[1], w.h[2], w.out, COLORS.siding);
+      mb.siding.pattern = gable.pattern;
+      mb.siding.upright(f, w.p[0], w.p[1], w.h[0], w.h[3], w.h[1], w.h[2], w.out, gable.color);
+      mb.siding.pattern = 0;
       mb.siding.upright(f, w.p[0], w.p[1], w.h[0], w.h[3], w.h[1], w.h[2], scale(w.out, -1), COLORS.drywall);
     }
   }

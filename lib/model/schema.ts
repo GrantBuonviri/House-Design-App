@@ -9,7 +9,7 @@ import { z } from "zod";
  * Angles are degrees clockwise from north (0 = N, 90 = E).
  */
 
-export const SCHEMA_VERSION = 8;
+export const SCHEMA_VERSION = 9;
 
 export const Point = z.object({ x: z.number(), y: z.number() });
 export type Point = z.infer<typeof Point>;
@@ -401,6 +401,9 @@ export type CostSettings = z.infer<typeof CostSettings>;
 
 // ---------- 6 & 7. Interior / exterior selections ----------
 
+/** How a finish is drawn: on swatches and in 3D. The outside ones (siding, roofs, brick) came with exterior design. */
+export const PATTERNS = ["plank", "tile", "stone", "carpet", "solid", "metal", "shingle", "seam", "lap", "batten", "shake", "brick", "stucco", "grass", "mulch"] as const;
+
 export const Product = z.object({
   /** The catalog id, when it came from the built-in catalog. */
   id: z.string().optional(),
@@ -416,7 +419,7 @@ export const Product = z.object({
   lastChecked: z.string(),
   /** Display color for swatches and the 3D view, like "#c8a77e". */
   color: z.string().optional(),
-  pattern: z.enum(["plank", "tile", "stone", "carpet", "solid", "metal"]).optional(),
+  pattern: z.enum(PATTERNS).optional(),
   kind: z.string().optional(),
 });
 export type Product = z.infer<typeof Product>;
@@ -450,6 +453,8 @@ export const DesignChoices = z.object({
   /** How many times the mood board was shuffled (0 shows the best matches). */
   shuffle: z.number().int().min(0).default(0),
   selections: z.array(Selection).default([]),
+  /** Exterior only: where the accent siding goes, a band along the base of the walls or the gable ends. */
+  accentPlace: z.enum(["base", "gables"]).optional(),
 });
 export type DesignChoices = z.infer<typeof DesignChoices>;
 

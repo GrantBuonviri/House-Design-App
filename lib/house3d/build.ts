@@ -1,4 +1,4 @@
-import type { FloorPlan, House3D, Level, PlanBasics, PlanRoom, Point, Selection } from "@/lib/model/schema";
+import type { DesignChoices, FloorPlan, House3D, Level, PlanBasics, PlanRoom, Point, Selection } from "@/lib/model/schema";
 import { exteriorWallIn, INTERIOR_WALL_IN } from "@/lib/plan/basics";
 import { planOf, type Plans } from "@/lib/plan/edit";
 import { add, collinearOverlap, dist, lerp, pointInPolygon, polygonArea, polygonCenter, project, scale, sub, subtractIntervals, unit } from "@/lib/plan/geometry";
@@ -9,6 +9,7 @@ import { wallKey } from "@/lib/interior/picks";
 import { COLORS, floorColor } from "./colors";
 import { drawFixture, drawFurniture } from "./fixtures";
 import { roomLook, type RoomLook } from "./finishes";
+import { exteriorLook, type ExteriorLook } from "./exterior";
 import { COVERED, cutHoles, floorFootprint, offsetRing, roofFootprint, subtractRegions, type Region } from "./footprint";
 import { levelHeights, type LevelHeights } from "./levels";
 import { MeshBuilder, toScene, type Frame, type MeshData, type Vec3 } from "./mesh";
@@ -17,6 +18,7 @@ import { drawRoof, roofShape, roofTop, ROOF_THICK_IN } from "./roof";
 import type { Site } from "./site";
 import { entrySteps } from "./entry";
 import { drawStairs, prism } from "./stairs";
+import { buildYard } from "./yard";
 
 /**
  * The whole 3D house from the project: walls with doors and windows cut in,
@@ -25,10 +27,10 @@ import { drawStairs, prism } from "./stairs";
  * can all be tested.
  */
 
-export type PickKind = "room" | "opening" | "stairs" | "fixture";
+export type PickKind = "room" | "opening" | "stairs" | "fixture" | "yard";
 export type Pick = { kind: PickKind; id: string; levelId: string };
 
-export type Layer = "walls" | "footprints" | "floors" | "ceilings" | "openings" | "stairs" | "fixtures" | "furniture" | "roof" | "foundation";
+export type Layer = "walls" | "footprints" | "floors" | "ceilings" | "openings" | "stairs" | "fixtures" | "furniture" | "roof" | "foundation" | "yard";
 
 /** Which walls a part belongs to: outside (exterior) walls or inside ones. */
 export type WallGroup = "outside" | "inside";
@@ -59,7 +61,14 @@ export type HouseContext = {
   frame: Frame;
   /** Interior picks, for floor, wall, cabinet and appliance colors. */
   interior?: Selection[];
+  /** Exterior picks: siding, roof, trim, windows, doors, the deck and patio, the yard. */
+  exterior?: DesignChoices;
 };
+
+/** How the outside looks: gable ends only count for gable and shed roofs. */
+export function lookOutside(ctx: { exterior?: DesignChoices; house3d: House3D }): ExteriorLook {
+  return exteriorLook(ctx.exterior, ctx.house3d.roof.style === "gable" || ctx.house3d.roof.style === "shed");
+}
 
 const solidColor = (c: [number, number, number]) => ({ left: c, right: c, ends: c, top: c });
 const FOOTPRINT_COLOR = { outside: solidColor(COLORS.footprintOutside), inside: solidColor(COLORS.footprintInside) };
@@ -114,6 +123,9 @@ export function buildLevel(
   const parts: Part[] = [];
   const L = level.id;
   const looks = new Map<string, RoomLook>(plan.rooms.map((r) => [r.id, roomLook(ctx.interior, r)]));
+  const ext = lookOutside(ctx);
+  // A stone or brick band along the base of the outside walls, on floors on the ground.
+  const band = ext.accent?.place === "base" && level.kind !== "basement" && Math.abs(floorIn) <= 12 ? ext.accent : null;
   /** The room a point is in, for picking its finishes. */
   const roomAt = (pt: Point) => plan.rooms.find((r) => areaKind(r) !== "outdoor" && pointInPolygon(pt, r.polygon));
   const lookAt = (pt: Point) => {
@@ -145,8 +157,9 @@ export function buildLevel(
       return (edge !== null && look.accents.get(wallKey(edge))) || look.wall;
     };
     const color = p.exterior
-      ? { left: COLORS.siding, right: side(-1), ends: COLORS.siding, top: COLORS.wallTop }
+      ? { left: ext.siding.color, leftPattern: ext.siding.pattern, right: side(-1), ends: ext.siding.color, top: COLORS.wallTop }
       : { left: side(1), right: side(-1), ends: COLORS.drywall, top: COLORS.wallTop };
+    const bandColor = band && { ...color, left: band.color, leftPattern: band.pattern, ends: band.color };
     const tol = Math.max(2, p.thicknessIn / 2 + 0.5);
     const cuts: { t0: number; t1: number; og: OpeningGeometry }[] = [];
     for (const og of ogs) {
@@ -161,7 +174,11 @@ export function buildLevel(
     ];
     const piece = (t0: number, t1: number, z0: number, z1: number, capA: boolean, capB: boolean) => {
       const [a, b] = ends(t0, t1, capA, capB);
-      walls[group].box(f, a, b, p.thicknessIn, z0, z1, color);
+      const top = band && p.exterior ? floorIn + band.heightIn : -Infinity;
+      if (bandColor && z0 < top) {
+        walls[group].box(f, a, b, p.thicknessIn, z0, Math.min(z1, top), bandColor);
+        if (z1 > top) walls[group].box(f, a, b, p.thicknessIn, top, z1, color);
+      } else walls[group].box(f, a, b, p.thicknessIn, z0, z1, color);
     };
     for (const [t0, t1] of subtractIntervals(len, cuts.map((c) => [c.t0, c.t1]))) piece(t0, t1, floorIn, upTo, t0 < 0.01, t1 > len - 0.01);
     for (const c of cuts) {
@@ -201,7 +218,7 @@ export function buildLevel(
     const glass = new MeshBuilder();
     const host = hostPiece(pieces, og);
     const doorLook = host && !host.exterior ? (lookAt(add(og.center, scale(og.n, 10))) ?? lookAt(add(og.center, scale(og.n, -10)))) : undefined;
-    drawOpening(solid, glass, f, og, hostThickness(host), floorIn, ceilingIn, doorLook);
+    drawOpening(solid, glass, f, og, hostThickness(host), floorIn, ceilingIn, doorLook, host?.exterior ? ext : undefined);
     const pick: Pick = { kind: "opening", id: og.opening.id, levelId: L };
     // Doors and windows hide with the wall they're in (an opening in no wall counts as inside).
     const wall: WallGroup = host?.exterior ? "outside" : "inside";
@@ -223,7 +240,9 @@ export function buildLevel(
     const mb = new MeshBuilder();
     const thick = outdoor ? OUTDOOR_SLAB_IN : below || floorIn > 1 ? 13 : GROUND_SLAB_IN;
     const look = looks.get(room.id)!;
-    for (const r of cutHoles(room.polygon, stairHoles)) drawSlab(mb, f, r, floorIn, thick, outdoor ? floorColor(room) : look.floor, outdoor ? 0 : look.floorPattern);
+    // Decks and patios take the picked decking and pavers.
+    const out = room.type === "deck" ? ext.deck : room.type === "patio" ? ext.patio : { color: floorColor(room), pattern: 0 };
+    for (const r of cutHoles(room.polygon, stairHoles)) drawSlab(mb, f, r, floorIn, thick, outdoor ? out.color : look.floor, outdoor ? out.pattern : look.floorPattern);
     // Posts hold up the roof over a porch or covered patio, at its corners away from the house.
     if (outdoor && COVERED.has(room.type ?? "")) {
       const house = indoorPolys(plan);
@@ -329,6 +348,7 @@ export function buildRoofs(plans: Plans, ctx: HouseContext & { heights: LevelHei
     if (!exposed.length) return;
     const { floorIn, ceilingIn } = heights[level.id];
     const mb = { roof: new MeshBuilder(), trim: new MeshBuilder(), siding: new MeshBuilder() };
+    const ext = lookOutside(ctx);
     // Below ground floors that stick out get a flat top (usually a deck or patio over them).
     const flat = level.kind === "basement" || floorIn < 0;
     for (const found of exposed) {
@@ -337,7 +357,7 @@ export function buildRoofs(plans: Plans, ctx: HouseContext & { heights: LevelHei
       const shape = roofShape(r, floorIn + ceilingIn, exteriorIn, ctx.house3d.roof, flat);
       fellBack ||= shape.fellBack;
       topIn = Math.max(topIn, roofTop(shape));
-      drawRoof(mb, f, shape, ROOF_THICK_IN);
+      drawRoof(mb, f, shape, ROOF_THICK_IN, ext);
     }
     for (const [k, b] of Object.entries(mb)) if (!b.empty) parts.push({ key: `${level.id}:roof:${k}`, levelId: level.id, layer: "roof", mesh: b.build() });
   });
@@ -366,7 +386,8 @@ export function buildHouse(plans: Plans, ctx: HouseContext): HouseModel {
   const c = { ...ctx, heights };
   const parts = ctx.levels.flatMap((l) => buildLevel(plans, l, c));
   const roofs = buildRoofs(plans, c);
-  return { heights, parts: [...parts, ...roofs.parts], roofFellBack: roofs.fellBack, bounds: houseBounds(plans, c, roofs.topIn) };
+  const yard = ctx.exterior ? buildYard(plans, c) : [];
+  return { heights, parts: [...parts, ...roofs.parts, ...yard], roofFellBack: roofs.fellBack, bounds: houseBounds(plans, c, roofs.topIn) };
 }
 
 export function houseBounds(plans: Plans, ctx: HouseContext & { heights: LevelHeights }, roofTopIn: number): HouseModel["bounds"] {
