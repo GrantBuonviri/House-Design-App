@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import type { HouseSystems, PlansSettings, Project, Stage } from "@/lib/model/schema";
+import type { HouseStructure, HouseSystems, PlansSettings, Project, Stage } from "@/lib/model/schema";
 import { useProjectStore } from "@/lib/store/projectStore";
 import { canDraw, LABEL_REVIEW, readiness, SHEET_GROUPS, STATUS_LABEL, type Reason, type SheetEntry, type SheetStatus } from "@/lib/plans/catalog";
 import { buildSet, selectedIds } from "@/lib/plans/build";
@@ -26,7 +26,6 @@ const CHIP: Record<SheetStatus, string> = {
   needs: "bg-red-50 text-red-700",
   "not-needed": "bg-stone-100 text-muted",
   outside: "bg-sky-50 text-sky-800",
-  soon: "bg-stone-100 text-muted",
 };
 
 const RESULT_CHIP: Record<RuleStatus, string> = {
@@ -291,6 +290,19 @@ function CodeList({ report, onGo }: { report: RuleReport[]; onGo: (stage: Stage)
 function PlanDetails({ project, onSave, onClose }: { project: Project; onSave: (patch: Partial<PlansSettings>) => void; onClose: () => void }) {
   const [form, setForm] = useState({ address: project.plans.address, parcel: project.plans.parcel, designer: project.plans.designer });
   const [sys, setSys] = useState<HouseSystems>(project.plans.systems);
+  const [st, setSt] = useState<HouseStructure>(project.plans.structure);
+  const pickSt = <K extends keyof HouseStructure>(key: K, label: string, options: [HouseStructure[K], string][]) => (
+    <label className="block text-sm">
+      <span className="field-label">{label}</span>
+      <select className="input" value={String(st[key])} onChange={(e) => setSt({ ...st, [key]: options.find(([v]) => String(v) === e.target.value)![0] })} data-testid={`struct-${key}`}>
+        {options.map(([v, l]) => (
+          <option key={String(v)} value={String(v)}>
+            {l}
+          </option>
+        ))}
+      </select>
+    </label>
+  );
   const pick = <K extends keyof HouseSystems>(key: K, label: string, options: [HouseSystems[K], string][]) => (
     <label className="block text-sm">
       <span className="field-label">{label}</span>
@@ -310,7 +322,7 @@ function PlanDetails({ project, onSave, onClose }: { project: Project; onSave: (
         className="card max-h-full w-full max-w-lg overflow-y-auto p-5"
         onSubmit={(e) => {
           e.preventDefault();
-          onSave({ address: form.address.trim(), parcel: form.parcel.trim(), designer: form.designer.trim(), systems: sys });
+          onSave({ address: form.address.trim(), parcel: form.parcel.trim(), designer: form.designer.trim(), systems: sys, structure: st });
           onClose();
         }}
       >
@@ -342,6 +354,13 @@ function PlanDetails({ project, onSave, onClose }: { project: Project; onSave: (
           {pick("foundation", "Under the lowest floor", [["crawlspace", "Crawlspace"], ["slab", "Concrete slab"], ["basement", "Basement"]])}
           {pick("freshAir", "Fresh air", [["bath-fan", "Bath fan, always on"], ["erv", "ERV"]])}
           {pick("panelAmps", "Electrical panel", [[200, "200 amp"], [100, "100 amp"], [150, "150 amp"], [225, "225 amp"], [400, "400 amp"]])}
+        </div>
+        <h4 className="mb-1 font-semibold">Structure</h4>
+        <p className="field-hint mb-2">For the foundation, framing and bracing sheets. Leave these as they are unless a soils report or your builder says otherwise.</p>
+        <div className="mb-4 grid grid-cols-2 gap-3">
+          {pickSt("soilPsf", "Soil can carry", [[1500, "1,500 psf (assumed)"], [2000, "2,000 psf"], [3000, "3,000 psf"]])}
+          {pickSt("windExposure", "Wind exposure", [["B", "B: houses and trees around"], ["C", "C: open fields"]])}
+          {pickSt("lumber", "Framing lumber", [["df-l", "Douglas fir-larch #2"], ["hem-fir", "Hem-fir #2"]])}
         </div>
         <div className="flex justify-end gap-2">
           <button type="button" className="btn" onClick={onClose}>

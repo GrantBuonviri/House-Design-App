@@ -50,6 +50,8 @@ export function migrateProject(raw: unknown): Project {
   // changes on each floor plan (none by default).
   // Version 12 to 13 added the house systems (fuel, foundation, panel) to the
   // plan details, with defaults, and device changes on each floor plan (none).
+  // Version 13 to 14 added the structure settings (soil, wind exposure,
+  // lumber) to the plan details, with defaults.
   return Project.parse({ ...migrated, schemaVersion: SCHEMA_VERSION });
 }
 

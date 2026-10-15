@@ -7,7 +7,8 @@ import raw from "./data/boise-2018.json";
  * Only numbers and section references are kept, never the code's own text.
  */
 
-export type CodeValue = number | string | boolean | string[];
+/** A number, a yes/no, short text, or a table as the code prints it (keyed by its rows and columns). */
+export type CodeValue = number | string | boolean | string[] | { [key: string]: unknown };
 
 export type CodeEntry = {
   value: CodeValue;
@@ -61,6 +62,13 @@ export function codeNum(key: string): number {
 export function codeText(key: string): string {
   const v = codeEntry(key).value;
   return Array.isArray(v) ? v.join(", ") : String(v);
+}
+
+/** A table kept as the code prints it. */
+export function codeTable<T>(key: string): Record<string, T> {
+  const v = codeEntry(key).value;
+  if (typeof v !== "object" || v === null || Array.isArray(v)) throw new Error(`Code value "${key}" isn't a table`);
+  return v as Record<string, T>;
 }
 
 /** "IRC R310.2.1", for printing next to a rule. */

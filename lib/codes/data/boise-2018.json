@@ -2745,6 +2745,2564 @@
         "verdict": "agree",
         "source": "https://files.dfm.idaho.gov/dfm-admin-website/rules/current/24/243930.pdf"
       }
+    },
+    "struct.windSpeedBasis": {
+      "value": 115,
+      "unit": "mph (Vult)",
+      "code": "Boise design criteria",
+      "section": "R301.2.1.3; Table R602.10.3(1)",
+      "amendment": null,
+      "source": "https://www.cityofboise.org/media/18749/currently-adopted-building-codes-4-26-24.pdf",
+      "checked": "2026-10-15",
+      "note": "Boise lists 90 mph from the older IRC wind figure, which is an allowable-stress (Vasd) style speed; the page does not label Vult/Vasd. 90 Vasd is about 116 Vult, so the table row for up to 115 mph Vult applies. 2018 table rows are banded (up to 110, up to 115, ...). Conversion reasoning is mine, not printed on the Boise sheet.",
+      "secondCheck": {
+        "verdict": "agree",
+        "source": "https://fema.gov/sites/default/files/2020-08/2018_IRC_Compliation_of_wind_resist_provisions_20191211.pdf ; https://www.cityofboise.org/media/18749/currently-adopted-building-codes-4-26-24.pdf"
+      }
+    },
+    "struct.windExposureDefault": {
+      "value": "B",
+      "unit": "category",
+      "code": "IRC 2018",
+      "section": "R301.2.1.4",
+      "amendment": null,
+      "source": "https://seattle.gov/Documents/Departments/SDCI/Codes/SeattleResidentialCode/2018SRCChapter3.pdf",
+      "checked": "2026-10-15",
+      "note": "Exposure B applies wherever Exposure C does not. C applies on open terrain with scattered obstructions under 30 ft over more than 1 mile (open flat land, shorelines); the building official decides.",
+      "secondCheck": {
+        "verdict": "agree",
+        "source": "https://fema.gov/sites/default/files/2020-08/2018_IRC_Compliation_of_wind_resist_provisions_20191211.pdf"
+      }
+    },
+    "struct.seismicBracingExempt": {
+      "value": true,
+      "unit": "boolean",
+      "code": "IRC 2018",
+      "section": "R301.2.2; Table R602.10.1.3",
+      "amendment": "Idaho amends R602.10 to allow R602.12 or APA SR-102 as alternatives.",
+      "source": "https://seattle.gov/Documents/Departments/SDCI/Codes/SeattleResidentialCode/2018SRCChapter3.pdf",
+      "checked": "2026-10-15",
+      "note": "Seismic provisions list detached one- and two-family dwellings only in D0, D1, D2 (townhouses are covered in C), so a detached house in SDC C is braced for wind alone. Exemption exception wording not read directly; inferred from the applicability list and Table R602.10.1.3 giving SDC C spacing only for townhouses.",
+      "secondCheck": {
+        "verdict": "agree",
+        "source": "https://seattle.gov/documents/Departments/SDCI/Codes/SeattleResidentialCode/2018SRCChapter3.pdf ; https://fema.gov/sites/default/files/2020-08/2018_IRC_Compliation_of_wind_resist_provisions_20191211.pdf"
+      }
+    },
+    "struct.liveLoads": {
+      "value": {
+        "floorLiving": 40,
+        "floorSleeping": 30,
+        "atticNoStorage": 10,
+        "atticLimitedStorage": 20,
+        "stairs": 40,
+        "balcony": 40
+      },
+      "unit": "psf",
+      "code": "IRC 2018",
+      "section": "Table R301.5",
+      "amendment": null,
+      "source": "https://seattle.gov/Documents/Departments/SDCI/Codes/SeattleResidentialCode/2018SRCChapter3.pdf",
+      "checked": "2026-10-15",
+      "note": "Habitable attics 30. Exterior balconies and decks 40 in the 2018 IRC (Seattle's reprint strikes the 40 and amends it to 60; that amendment does not apply in Idaho).",
+      "secondCheck": {
+        "verdict": "disagree",
+        "source": "https://seattle.gov/documents/Departments/SDCI/Codes/SeattleResidentialCode/2018SRCChapter3.pdf"
+      },
+      "resolved": "First gather read 60 psf for balconies from Seattle's reprint; the second check read 40. The reprint shows ((40)) struck through and 60 as a Seattle amendment, so the base 2018 IRC value is 40. Settled 2026-10-15."
+    },
+    "struct.floorDeadLoad": {
+      "value": 10,
+      "unit": "psf",
+      "code": "IRC 2018",
+      "section": "Table R502.3.1(2)",
+      "amendment": null,
+      "source": "https://seattle.gov/Documents/Departments/SDCI/Codes/SeattleResidentialCode/2018SRCChapter5.pdf",
+      "checked": "2026-10-15",
+      "note": "Heading of the 10 psf columns used for floors without heavy finishes; the other columns use 20 psf.",
+      "secondCheck": {
+        "verdict": "agree",
+        "source": "https://seattle.gov/documents/Departments/SDCI/Codes/SeattleResidentialCode/2018SRCChapter5.pdf"
+      }
+    },
+    "struct.joistSpans40": {
+      "value": {
+        "Douglas fir-larch #2": {
+          "2x8": {
+            "12": "14-2",
+            "16": "12-9",
+            "19.2": "11-8",
+            "24": "10-5"
+          },
+          "2x10": {
+            "12": "18-0",
+            "16": "15-7",
+            "19.2": "14-3",
+            "24": "12-9"
+          },
+          "2x12": {
+            "12": "20-11",
+            "16": "18-1",
+            "19.2": "16-6",
+            "24": "14-9"
+          }
+        },
+        "Hem-fir #2": {
+          "2x8": {
+            "12": "13-2",
+            "16": "12-0",
+            "19.2": "11-3",
+            "24": "10-2"
+          },
+          "2x10": {
+            "12": "16-10",
+            "16": "15-2",
+            "19.2": "13-10",
+            "24": "12-5"
+          },
+          "2x12": {
+            "12": "20-4",
+            "16": "17-7",
+            "19.2": "16-1",
+            "24": "14-4"
+          }
+        }
+      },
+      "unit": "ft-in",
+      "code": "IRC 2018",
+      "section": "Table R502.3.1(2)",
+      "amendment": null,
+      "source": "https://seattle.gov/Documents/Departments/SDCI/Codes/SeattleResidentialCode/2018SRCChapter5.pdf",
+      "checked": "2026-10-15",
+      "note": "Residential living areas, 40 psf live, L/360, 10 psf dead. Source is Seattle's printing of the 2018 IRC table (no Seattle change flagged); the 2018 DF-L 2x10 at 16 in value 15-7 matches the example given. Table R502.3.1(2) is not amended by Idaho.",
+      "secondCheck": {
+        "verdict": "agree",
+        "source": "https://seattle.gov/documents/Departments/SDCI/Codes/SeattleResidentialCode/2018SRCChapter5.pdf"
+      }
+    },
+    "struct.joistBearingWood": {
+      "value": 1.5,
+      "unit": "in",
+      "code": "IRC 2018",
+      "section": "R502.6",
+      "amendment": null,
+      "source": "https://seattle.gov/Documents/Departments/SDCI/Codes/SeattleResidentialCode/2018SRCChapter5.pdf",
+      "checked": "2026-10-15",
+      "note": "Minimum end bearing on wood or metal.",
+      "secondCheck": {
+        "verdict": "agree",
+        "source": "https://Mybuildingpermit.com/sites/default/files/inline-files/IC_Residential_Underfloor_Final.pdf"
+      }
+    },
+    "struct.joistBearingConcrete": {
+      "value": 3,
+      "unit": "in",
+      "code": "IRC 2018",
+      "section": "R502.6",
+      "amendment": null,
+      "source": "https://seattle.gov/Documents/Departments/SDCI/Codes/SeattleResidentialCode/2018SRCChapter5.pdf",
+      "checked": "2026-10-15",
+      "note": "Minimum end bearing on masonry or concrete.",
+      "secondCheck": {
+        "verdict": "agree",
+        "source": "https://Mybuildingpermit.com/sites/default/files/inline-files/IC_Residential_Underfloor_Final.pdf"
+      }
+    },
+    "struct.joistLapOverSupport": {
+      "value": 3,
+      "unit": "in",
+      "code": "IRC 2018",
+      "section": "R502.6.1",
+      "amendment": null,
+      "source": "https://seattle.gov/Documents/Departments/SDCI/Codes/SeattleResidentialCode/2018SRCChapter5.pdf",
+      "checked": "2026-10-15",
+      "note": "Minimum lap of joists from opposite sides over a support; three 10d face nails.",
+      "secondCheck": {
+        "verdict": "agree",
+        "source": "https://seattle.gov/documents/Departments/SDCI/Codes/SeattleResidentialCode/2018SRCChapter5.pdf"
+      }
+    },
+    "struct.headersExterior": {
+      "value": {
+        "roof-ceiling": {
+          "1-2x6": {
+            "12": {
+              "span": "4-0",
+              "jacks": 1
+            },
+            "24": {
+              "span": "3-1",
+              "jacks": 2
+            },
+            "36": {
+              "span": "2-7",
+              "jacks": 2
+            }
+          },
+          "1-2x8": {
+            "12": {
+              "span": "5-1",
+              "jacks": 2
+            },
+            "24": {
+              "span": "3-11",
+              "jacks": 2
+            },
+            "36": {
+              "span": "3-3",
+              "jacks": 2
+            }
+          },
+          "1-2x10": {
+            "12": {
+              "span": "6-0",
+              "jacks": 2
+            },
+            "24": {
+              "span": "4-8",
+              "jacks": 2
+            },
+            "36": {
+              "span": "3-11",
+              "jacks": 2
+            }
+          },
+          "1-2x12": {
+            "12": {
+              "span": "7-1",
+              "jacks": 2
+            },
+            "24": {
+              "span": "5-5",
+              "jacks": 2
+            },
+            "36": {
+              "span": "4-7",
+              "jacks": 3
+            }
+          },
+          "2-2x4": {
+            "12": {
+              "span": "4-0",
+              "jacks": 1
+            },
+            "24": {
+              "span": "3-1",
+              "jacks": 1
+            },
+            "36": {
+              "span": "2-7",
+              "jacks": 1
+            }
+          },
+          "2-2x6": {
+            "12": {
+              "span": "6-0",
+              "jacks": 1
+            },
+            "24": {
+              "span": "4-7",
+              "jacks": 1
+            },
+            "36": {
+              "span": "3-10",
+              "jacks": 1
+            }
+          },
+          "2-2x8": {
+            "12": {
+              "span": "7-7",
+              "jacks": 1
+            },
+            "24": {
+              "span": "5-9",
+              "jacks": 1
+            },
+            "36": {
+              "span": "4-10",
+              "jacks": 2
+            }
+          },
+          "2-2x10": {
+            "12": {
+              "span": "9-0",
+              "jacks": 1
+            },
+            "24": {
+              "span": "6-10",
+              "jacks": 2
+            },
+            "36": {
+              "span": "5-9",
+              "jacks": 2
+            }
+          },
+          "2-2x12": {
+            "12": {
+              "span": "10-7",
+              "jacks": 2
+            },
+            "24": {
+              "span": "8-1",
+              "jacks": 2
+            },
+            "36": {
+              "span": "6-10",
+              "jacks": 2
+            }
+          },
+          "3-2x8": {
+            "12": {
+              "span": "9-5",
+              "jacks": 1
+            },
+            "24": {
+              "span": "7-3",
+              "jacks": 1
+            },
+            "36": {
+              "span": "6-1",
+              "jacks": 1
+            }
+          },
+          "3-2x10": {
+            "12": {
+              "span": "11-3",
+              "jacks": 1
+            },
+            "24": {
+              "span": "8-7",
+              "jacks": 1
+            },
+            "36": {
+              "span": "7-3",
+              "jacks": 2
+            }
+          },
+          "3-2x12": {
+            "12": {
+              "span": "13-2",
+              "jacks": 1
+            },
+            "24": {
+              "span": "10-1",
+              "jacks": 2
+            },
+            "36": {
+              "span": "8-6",
+              "jacks": 2
+            }
+          },
+          "4-2x8": {
+            "12": {
+              "span": "10-11",
+              "jacks": 1
+            },
+            "24": {
+              "span": "8-4",
+              "jacks": 1
+            },
+            "36": {
+              "span": "7-0",
+              "jacks": 1
+            }
+          },
+          "4-2x10": {
+            "12": {
+              "span": "12-11",
+              "jacks": 1
+            },
+            "24": {
+              "span": "9-11",
+              "jacks": 1
+            },
+            "36": {
+              "span": "8-4",
+              "jacks": 1
+            }
+          },
+          "4-2x12": {
+            "12": {
+              "span": "15-3",
+              "jacks": 1
+            },
+            "24": {
+              "span": "11-8",
+              "jacks": 1
+            },
+            "36": {
+              "span": "9-10",
+              "jacks": 2
+            }
+          }
+        },
+        "roof-ceiling-1-center-bearing-floor": {
+          "1-2x6": {
+            "12": {
+              "span": "3-3",
+              "jacks": 1
+            },
+            "24": {
+              "span": "2-7",
+              "jacks": 2
+            },
+            "36": {
+              "span": "2-2",
+              "jacks": 2
+            }
+          },
+          "1-2x8": {
+            "12": {
+              "span": "4-1",
+              "jacks": 2
+            },
+            "24": {
+              "span": "3-3",
+              "jacks": 2
+            },
+            "36": {
+              "span": "2-9",
+              "jacks": 2
+            }
+          },
+          "1-2x10": {
+            "12": {
+              "span": "4-11",
+              "jacks": 2
+            },
+            "24": {
+              "span": "3-10",
+              "jacks": 2
+            },
+            "36": {
+              "span": "3-3",
+              "jacks": 3
+            }
+          },
+          "1-2x12": {
+            "12": {
+              "span": "5-9",
+              "jacks": 2
+            },
+            "24": {
+              "span": "4-6",
+              "jacks": 3
+            },
+            "36": {
+              "span": "3-10",
+              "jacks": 3
+            }
+          },
+          "2-2x4": {
+            "12": {
+              "span": "3-3",
+              "jacks": 1
+            },
+            "24": {
+              "span": "2-6",
+              "jacks": 1
+            },
+            "36": {
+              "span": "2-2",
+              "jacks": 1
+            }
+          },
+          "2-2x6": {
+            "12": {
+              "span": "4-10",
+              "jacks": 1
+            },
+            "24": {
+              "span": "3-9",
+              "jacks": 1
+            },
+            "36": {
+              "span": "3-3",
+              "jacks": 2
+            }
+          },
+          "2-2x8": {
+            "12": {
+              "span": "6-1",
+              "jacks": 1
+            },
+            "24": {
+              "span": "4-10",
+              "jacks": 2
+            },
+            "36": {
+              "span": "4-1",
+              "jacks": 2
+            }
+          },
+          "2-2x10": {
+            "12": {
+              "span": "7-3",
+              "jacks": 2
+            },
+            "24": {
+              "span": "5-8",
+              "jacks": 2
+            },
+            "36": {
+              "span": "4-10",
+              "jacks": 2
+            }
+          },
+          "2-2x12": {
+            "12": {
+              "span": "8-6",
+              "jacks": 2
+            },
+            "24": {
+              "span": "6-8",
+              "jacks": 2
+            },
+            "36": {
+              "span": "5-8",
+              "jacks": 2
+            }
+          },
+          "3-2x8": {
+            "12": {
+              "span": "7-8",
+              "jacks": 1
+            },
+            "24": {
+              "span": "6-0",
+              "jacks": 1
+            },
+            "36": {
+              "span": "5-1",
+              "jacks": 2
+            }
+          },
+          "3-2x10": {
+            "12": {
+              "span": "9-1",
+              "jacks": 1
+            },
+            "24": {
+              "span": "7-2",
+              "jacks": 2
+            },
+            "36": {
+              "span": "6-1",
+              "jacks": 2
+            }
+          },
+          "3-2x12": {
+            "12": {
+              "span": "10-8",
+              "jacks": 2
+            },
+            "24": {
+              "span": "8-5",
+              "jacks": 2
+            },
+            "36": {
+              "span": "7-2",
+              "jacks": 2
+            }
+          },
+          "4-2x8": {
+            "12": {
+              "span": "8-10",
+              "jacks": 1
+            },
+            "24": {
+              "span": "6-11",
+              "jacks": 1
+            },
+            "36": {
+              "span": "5-11",
+              "jacks": 1
+            }
+          },
+          "4-2x10": {
+            "12": {
+              "span": "10-6",
+              "jacks": 1
+            },
+            "24": {
+              "span": "8-3",
+              "jacks": 2
+            },
+            "36": {
+              "span": "7-0",
+              "jacks": 2
+            }
+          },
+          "4-2x12": {
+            "12": {
+              "span": "12-4",
+              "jacks": 1
+            },
+            "24": {
+              "span": "9-8",
+              "jacks": 2
+            },
+            "36": {
+              "span": "8-3",
+              "jacks": 2
+            }
+          }
+        },
+        "roof-ceiling-1-clear-span-floor": {
+          "1-2x6": {
+            "12": {
+              "span": "2-11",
+              "jacks": 2
+            },
+            "24": {
+              "span": "2-3",
+              "jacks": 2
+            },
+            "36": {
+              "span": "1-11",
+              "jacks": 2
+            }
+          },
+          "1-2x8": {
+            "12": {
+              "span": "3-9",
+              "jacks": 2
+            },
+            "24": {
+              "span": "2-10",
+              "jacks": 2
+            },
+            "36": {
+              "span": "2-5",
+              "jacks": 3
+            }
+          },
+          "1-2x10": {
+            "12": {
+              "span": "4-5",
+              "jacks": 2
+            },
+            "24": {
+              "span": "3-5",
+              "jacks": 3
+            },
+            "36": {
+              "span": "2-10",
+              "jacks": 3
+            }
+          },
+          "1-2x12": {
+            "12": {
+              "span": "5-2",
+              "jacks": 2
+            },
+            "24": {
+              "span": "4-0",
+              "jacks": 3
+            },
+            "36": {
+              "span": "3-4",
+              "jacks": 3
+            }
+          },
+          "2-2x4": {
+            "12": {
+              "span": "2-11",
+              "jacks": 1
+            },
+            "24": {
+              "span": "2-3",
+              "jacks": 1
+            },
+            "36": {
+              "span": "1-10",
+              "jacks": 1
+            }
+          },
+          "2-2x6": {
+            "12": {
+              "span": "4-4",
+              "jacks": 1
+            },
+            "24": {
+              "span": "3-4",
+              "jacks": 2
+            },
+            "36": {
+              "span": "2-10",
+              "jacks": 2
+            }
+          },
+          "2-2x8": {
+            "12": {
+              "span": "5-6",
+              "jacks": 2
+            },
+            "24": {
+              "span": "4-3",
+              "jacks": 2
+            },
+            "36": {
+              "span": "3-7",
+              "jacks": 2
+            }
+          },
+          "2-2x10": {
+            "12": {
+              "span": "6-7",
+              "jacks": 2
+            },
+            "24": {
+              "span": "5-0",
+              "jacks": 2
+            },
+            "36": {
+              "span": "4-2",
+              "jacks": 2
+            }
+          },
+          "2-2x12": {
+            "12": {
+              "span": "7-9",
+              "jacks": 2
+            },
+            "24": {
+              "span": "5-11",
+              "jacks": 2
+            },
+            "36": {
+              "span": "4-11",
+              "jacks": 3
+            }
+          },
+          "3-2x8": {
+            "12": {
+              "span": "6-11",
+              "jacks": 1
+            },
+            "24": {
+              "span": "5-3",
+              "jacks": 2
+            },
+            "36": {
+              "span": "4-5",
+              "jacks": 2
+            }
+          },
+          "3-2x10": {
+            "12": {
+              "span": "8-3",
+              "jacks": 2
+            },
+            "24": {
+              "span": "6-3",
+              "jacks": 2
+            },
+            "36": {
+              "span": "5-3",
+              "jacks": 2
+            }
+          },
+          "3-2x12": {
+            "12": {
+              "span": "9-8",
+              "jacks": 2
+            },
+            "24": {
+              "span": "7-5",
+              "jacks": 2
+            },
+            "36": {
+              "span": "6-2",
+              "jacks": 2
+            }
+          },
+          "4-2x8": {
+            "12": {
+              "span": "8-0",
+              "jacks": 1
+            },
+            "24": {
+              "span": "6-1",
+              "jacks": 1
+            },
+            "36": {
+              "span": "5-1",
+              "jacks": 2
+            }
+          },
+          "4-2x10": {
+            "12": {
+              "span": "9-6",
+              "jacks": 1
+            },
+            "24": {
+              "span": "7-3",
+              "jacks": 2
+            },
+            "36": {
+              "span": "6-1",
+              "jacks": 2
+            }
+          },
+          "4-2x12": {
+            "12": {
+              "span": "11-2",
+              "jacks": 2
+            },
+            "24": {
+              "span": "8-6",
+              "jacks": 2
+            },
+            "36": {
+              "span": "7-2",
+              "jacks": 2
+            }
+          }
+        },
+        "roof-ceiling-2-center-bearing-floors": {
+          "1-2x6": {
+            "12": {
+              "span": "2-8",
+              "jacks": 2
+            },
+            "24": {
+              "span": "2-1",
+              "jacks": 2
+            },
+            "36": {
+              "span": "1-10",
+              "jacks": 2
+            }
+          },
+          "1-2x8": {
+            "12": {
+              "span": "3-5",
+              "jacks": 2
+            },
+            "24": {
+              "span": "2-8",
+              "jacks": 2
+            },
+            "36": {
+              "span": "2-4",
+              "jacks": 3
+            }
+          },
+          "1-2x10": {
+            "12": {
+              "span": "4-0",
+              "jacks": 2
+            },
+            "24": {
+              "span": "3-2",
+              "jacks": 3
+            },
+            "36": {
+              "span": "2-9",
+              "jacks": 3
+            }
+          },
+          "1-2x12": {
+            "12": {
+              "span": "4-9",
+              "jacks": 3
+            },
+            "24": {
+              "span": "3-9",
+              "jacks": 3
+            },
+            "36": {
+              "span": "3-2",
+              "jacks": 4
+            }
+          },
+          "2-2x4": {
+            "12": {
+              "span": "2-8",
+              "jacks": 1
+            },
+            "24": {
+              "span": "2-1",
+              "jacks": 1
+            },
+            "36": {
+              "span": "1-9",
+              "jacks": 1
+            }
+          },
+          "2-2x6": {
+            "12": {
+              "span": "4-0",
+              "jacks": 1
+            },
+            "24": {
+              "span": "3-2",
+              "jacks": 2
+            },
+            "36": {
+              "span": "2-8",
+              "jacks": 2
+            }
+          },
+          "2-2x8": {
+            "12": {
+              "span": "5-0",
+              "jacks": 2
+            },
+            "24": {
+              "span": "4-0",
+              "jacks": 2
+            },
+            "36": {
+              "span": "3-5",
+              "jacks": 2
+            }
+          },
+          "2-2x10": {
+            "12": {
+              "span": "6-0",
+              "jacks": 2
+            },
+            "24": {
+              "span": "4-9",
+              "jacks": 2
+            },
+            "36": {
+              "span": "4-0",
+              "jacks": 2
+            }
+          },
+          "2-2x12": {
+            "12": {
+              "span": "7-0",
+              "jacks": 2
+            },
+            "24": {
+              "span": "5-7",
+              "jacks": 2
+            },
+            "36": {
+              "span": "4-9",
+              "jacks": 3
+            }
+          },
+          "3-2x8": {
+            "12": {
+              "span": "6-4",
+              "jacks": 1
+            },
+            "24": {
+              "span": "5-0",
+              "jacks": 2
+            },
+            "36": {
+              "span": "4-3",
+              "jacks": 2
+            }
+          },
+          "3-2x10": {
+            "12": {
+              "span": "7-6",
+              "jacks": 2
+            },
+            "24": {
+              "span": "5-11",
+              "jacks": 2
+            },
+            "36": {
+              "span": "5-1",
+              "jacks": 2
+            }
+          },
+          "3-2x12": {
+            "12": {
+              "span": "8-10",
+              "jacks": 2
+            },
+            "24": {
+              "span": "7-0",
+              "jacks": 2
+            },
+            "36": {
+              "span": "5-11",
+              "jacks": 2
+            }
+          },
+          "4-2x8": {
+            "12": {
+              "span": "7-3",
+              "jacks": 1
+            },
+            "24": {
+              "span": "5-9",
+              "jacks": 1
+            },
+            "36": {
+              "span": "4-11",
+              "jacks": 2
+            }
+          },
+          "4-2x10": {
+            "12": {
+              "span": "8-8",
+              "jacks": 1
+            },
+            "24": {
+              "span": "6-10",
+              "jacks": 2
+            },
+            "36": {
+              "span": "5-10",
+              "jacks": 2
+            }
+          },
+          "4-2x12": {
+            "12": {
+              "span": "10-2",
+              "jacks": 2
+            },
+            "24": {
+              "span": "8-1",
+              "jacks": 2
+            },
+            "36": {
+              "span": "6-10",
+              "jacks": 2
+            }
+          }
+        }
+      },
+      "unit": "ft-in; jacks = NJ",
+      "code": "IRC 2018",
+      "section": "Table R602.7(1)",
+      "amendment": null,
+      "source": "https://seattle.gov/Documents/Departments/SDCI/Codes/SeattleResidentialCode/2018SRCChapter6.pdf",
+      "checked": "2026-10-15",
+      "note": "Ground snow 30 psf column (columns are 30, 50, 70 psf; there is no 20 psf column). Footnote says use the 30 psf column when ground snow is under 30 psf and roof live load is 20 psf or less, so it applies to Boise's 20 psf. Building width is perpendicular to the ridge; interpolation allowed. Unbraced header top: multiply 2x8-2x12 spans by 0.70. NJ of 1 may be a framing anchor. Cells were read by an extraction tool from Seattle's copy; spot-check before relying.",
+      "secondCheck": {
+        "verdict": "agree",
+        "source": "https://seattle.gov/documents/Departments/SDCI/Codes/SeattleResidentialCode/2018SRCChapter6.pdf"
+      }
+    },
+    "struct.headersInterior": {
+      "value": {
+        "one-floor-only": {
+          "2-2x4": {
+            "12": {
+              "span": "4-1",
+              "jacks": 1
+            },
+            "24": {
+              "span": "2-10",
+              "jacks": 1
+            },
+            "36": {
+              "span": "2-4",
+              "jacks": 1
+            }
+          },
+          "2-2x6": {
+            "12": {
+              "span": "6-1",
+              "jacks": 1
+            },
+            "24": {
+              "span": "4-4",
+              "jacks": 1
+            },
+            "36": {
+              "span": "3-6",
+              "jacks": 1
+            }
+          },
+          "2-2x8": {
+            "12": {
+              "span": "7-9",
+              "jacks": 1
+            },
+            "24": {
+              "span": "5-5",
+              "jacks": 1
+            },
+            "36": {
+              "span": "4-5",
+              "jacks": 2
+            }
+          },
+          "2-2x10": {
+            "12": {
+              "span": "9-2",
+              "jacks": 1
+            },
+            "24": {
+              "span": "6-6",
+              "jacks": 2
+            },
+            "36": {
+              "span": "5-3",
+              "jacks": 2
+            }
+          },
+          "2-2x12": {
+            "12": {
+              "span": "10-9",
+              "jacks": 1
+            },
+            "24": {
+              "span": "7-7",
+              "jacks": 2
+            },
+            "36": {
+              "span": "6-3",
+              "jacks": 2
+            }
+          },
+          "3-2x8": {
+            "12": {
+              "span": "9-8",
+              "jacks": 1
+            },
+            "24": {
+              "span": "6-10",
+              "jacks": 1
+            },
+            "36": {
+              "span": "5-7",
+              "jacks": 1
+            }
+          },
+          "3-2x10": {
+            "12": {
+              "span": "11-5",
+              "jacks": 1
+            },
+            "24": {
+              "span": "8-1",
+              "jacks": 1
+            },
+            "36": {
+              "span": "6-7",
+              "jacks": 2
+            }
+          },
+          "3-2x12": {
+            "12": {
+              "span": "13-6",
+              "jacks": 1
+            },
+            "24": {
+              "span": "9-6",
+              "jacks": 2
+            },
+            "36": {
+              "span": "7-9",
+              "jacks": 2
+            }
+          },
+          "4-2x8": {
+            "12": {
+              "span": "11-2",
+              "jacks": 1
+            },
+            "24": {
+              "span": "7-11",
+              "jacks": 1
+            },
+            "36": {
+              "span": "6-5",
+              "jacks": 1
+            }
+          },
+          "4-2x10": {
+            "12": {
+              "span": "13-3",
+              "jacks": 1
+            },
+            "24": {
+              "span": "9-4",
+              "jacks": 1
+            },
+            "36": {
+              "span": "7-8",
+              "jacks": 1
+            }
+          },
+          "4-2x12": {
+            "12": {
+              "span": "15-7",
+              "jacks": 1
+            },
+            "24": {
+              "span": "11-0",
+              "jacks": 1
+            },
+            "36": {
+              "span": "9-0",
+              "jacks": 2
+            }
+          }
+        },
+        "two-floors": {
+          "2-2x4": {
+            "12": {
+              "span": "2-7",
+              "jacks": 1
+            },
+            "24": {
+              "span": "1-11",
+              "jacks": 1
+            },
+            "36": {
+              "span": "1-7",
+              "jacks": 1
+            }
+          },
+          "2-2x6": {
+            "12": {
+              "span": "3-11",
+              "jacks": 1
+            },
+            "24": {
+              "span": "2-11",
+              "jacks": 2
+            },
+            "36": {
+              "span": "2-5",
+              "jacks": 2
+            }
+          },
+          "2-2x8": {
+            "12": {
+              "span": "5-0",
+              "jacks": 1
+            },
+            "24": {
+              "span": "3-8",
+              "jacks": 2
+            },
+            "36": {
+              "span": "3-1",
+              "jacks": 2
+            }
+          },
+          "2-2x10": {
+            "12": {
+              "span": "5-11",
+              "jacks": 2
+            },
+            "24": {
+              "span": "4-4",
+              "jacks": 2
+            },
+            "36": {
+              "span": "3-7",
+              "jacks": 2
+            }
+          },
+          "2-2x12": {
+            "12": {
+              "span": "6-11",
+              "jacks": 2
+            },
+            "24": {
+              "span": "5-2",
+              "jacks": 2
+            },
+            "36": {
+              "span": "4-3",
+              "jacks": 3
+            }
+          },
+          "3-2x8": {
+            "12": {
+              "span": "6-3",
+              "jacks": 1
+            },
+            "24": {
+              "span": "4-7",
+              "jacks": 2
+            },
+            "36": {
+              "span": "3-10",
+              "jacks": 2
+            }
+          },
+          "3-2x10": {
+            "12": {
+              "span": "7-5",
+              "jacks": 1
+            },
+            "24": {
+              "span": "5-6",
+              "jacks": 2
+            },
+            "36": {
+              "span": "4-6",
+              "jacks": 2
+            }
+          },
+          "3-2x12": {
+            "12": {
+              "span": "8-8",
+              "jacks": 2
+            },
+            "24": {
+              "span": "6-5",
+              "jacks": 2
+            },
+            "36": {
+              "span": "5-4",
+              "jacks": 2
+            }
+          },
+          "4-2x8": {
+            "12": {
+              "span": "7-2",
+              "jacks": 1
+            },
+            "24": {
+              "span": "5-4",
+              "jacks": 1
+            },
+            "36": {
+              "span": "4-5",
+              "jacks": 2
+            }
+          },
+          "4-2x10": {
+            "12": {
+              "span": "8-6",
+              "jacks": 1
+            },
+            "24": {
+              "span": "6-4",
+              "jacks": 2
+            },
+            "36": {
+              "span": "5-3",
+              "jacks": 2
+            }
+          },
+          "4-2x12": {
+            "12": {
+              "span": "10-1",
+              "jacks": 1
+            },
+            "24": {
+              "span": "7-5",
+              "jacks": 2
+            },
+            "36": {
+              "span": "6-2",
+              "jacks": 2
+            }
+          }
+        }
+      },
+      "unit": "ft-in; jacks = NJ",
+      "code": "IRC 2018",
+      "section": "Table R602.7(2)",
+      "amendment": null,
+      "source": "https://seattle.gov/Documents/Departments/SDCI/Codes/SeattleResidentialCode/2018SRCChapter6.pdf",
+      "checked": "2026-10-15",
+      "note": "Girder and header spans for interior bearing walls; the table has no 1-2x rows. Same footnotes as R602.7(1). Cells read by extraction tool; spot-check.",
+      "secondCheck": {
+        "verdict": "agree",
+        "source": "https://seattle.gov/documents/Departments/SDCI/Codes/SeattleResidentialCode/2018SRCChapter6.pdf"
+      }
+    },
+    "struct.headerTableSpecies": {
+      "value": "No. 2 grade Douglas fir-larch, hem-fir, southern pine or spruce-pine-fir (minimum properties)",
+      "unit": "text",
+      "code": "IRC 2018",
+      "section": "Table R602.7(1)/(2) footnote b",
+      "amendment": null,
+      "source": "https://seattle.gov/Documents/Departments/SDCI/Codes/SeattleResidentialCode/2018SRCChapter6.pdf",
+      "checked": "2026-10-15",
+      "note": "Short paraphrase of the species footnote.",
+      "secondCheck": {
+        "verdict": "agree",
+        "source": "https://seattle.gov/documents/Departments/SDCI/Codes/SeattleResidentialCode/2018SRCChapter6.pdf"
+      }
+    },
+    "struct.headerKingStuds": {
+      "value": {
+        "4": 1,
+        "6": 1,
+        "8": 1,
+        "10": 2,
+        "12": 2,
+        "14": 2,
+        "16": 2,
+        "18": 2
+      },
+      "unit": "full-height studs each end, by max header span ft",
+      "code": "IRC 2018",
+      "section": "Table R602.7.5",
+      "amendment": null,
+      "source": "https://seattle.gov/Documents/Departments/SDCI/Codes/SeattleResidentialCode/2018SRCChapter6.pdf",
+      "checked": "2026-10-15",
+      "note": "Column for up to 115 mph Exposure B (the other column, under 140 mph B, gives 1,2,2,3,3,3,4,4). Table is keyed by 4,6,8,10,12,14,16,18 ft spans; for spans between, use the larger. Column heading read from an extraction; verify.",
+      "secondCheck": {
+        "verdict": "agree",
+        "source": "https://seattle.gov/documents/Departments/SDCI/Codes/SeattleResidentialCode/2018SRCChapter6.pdf"
+      }
+    },
+    "struct.studSpacing": {
+      "value": {
+        "2x4": {
+          "roofCeilingOnly": 24,
+          "oneFloorRoofCeiling": 16,
+          "twoFloorsRoofCeiling": null
+        },
+        "2x6": {
+          "roofCeilingOnly": 24,
+          "oneFloorRoofCeiling": 24,
+          "twoFloorsRoofCeiling": 16
+        }
+      },
+      "unit": "in",
+      "code": "IRC 2018",
+      "section": "Table R602.3(5)",
+      "amendment": null,
+      "source": "https://seattle.gov/Documents/Departments/SDCI/Codes/SeattleResidentialCode/2018SRCChapter6.pdf",
+      "checked": "2026-10-15",
+      "note": "Bearing walls. 2x4 not permitted with two floors. Walls need sheathing on one side or bridging within 4 ft vertically. Habitable attic on 2x4 limited to 32 ft roof span.",
+      "secondCheck": {
+        "verdict": "agree",
+        "source": "https://seattle.gov/documents/Departments/SDCI/Codes/SeattleResidentialCode/2018SRCChapter6.pdf"
+      }
+    },
+    "struct.studMaxHeight": {
+      "value": 10,
+      "unit": "ft",
+      "code": "IRC 2018",
+      "section": "Table R602.3(5)",
+      "amendment": null,
+      "source": "https://seattle.gov/Documents/Departments/SDCI/Codes/SeattleResidentialCode/2018SRCChapter6.pdf",
+      "checked": "2026-10-15",
+      "note": "Maximum laterally unsupported stud height for 2x4 and 2x6 bearing walls (taller needs engineering or larger studs).",
+      "secondCheck": {
+        "verdict": "agree",
+        "source": "https://seattle.gov/documents/Departments/SDCI/Codes/SeattleResidentialCode/2018SRCChapter6.pdf"
+      }
+    },
+    "struct.soilBearing": {
+      "value": {
+        "crystallineBedrock": 12000,
+        "sedimentaryRock": 4000,
+        "sandyGravel": 3000,
+        "sandSiltyClayeyGravel": 2000,
+        "clayEtc": 1500
+      },
+      "unit": "psf",
+      "code": "IRC 2018",
+      "section": "Table R401.4.1",
+      "amendment": null,
+      "source": "https://seattle.gov/Documents/Departments/SDCI/Codes/SeattleResidentialCode/2018SRCChapter4.pdf",
+      "checked": "2026-10-15",
+      "note": "Classes: crystalline bedrock; sedimentary and foliated rock; sandy gravel and gravel (GW, GP); sand, silty sand, clayey sand, silty gravel, clayey gravel (SW SP SM SC GM GC); clay, sandy clay, silty clay, clayey silt, silt (CL ML MH CH). Clay row has a footnote: a soils investigation is needed if soils below 1500 psf are likely.",
+      "secondCheck": {
+        "verdict": "agree",
+        "source": "https://seattle.gov/documents/Departments/SDCI/Codes/SeattleResidentialCode/2018SRCChapter4.pdf"
+      }
+    },
+    "struct.soilBearingDefault": {
+      "value": 1500,
+      "unit": "psf",
+      "code": "IRC 2018",
+      "section": "R401.4; Table R401.4.1",
+      "amendment": null,
+      "source": "https://seattle.gov/Documents/Departments/SDCI/Codes/SeattleResidentialCode/2018SRCChapter4.pdf",
+      "checked": "2026-10-15",
+      "note": "Official decides whether a soil test is required where data suggest expansive, compressible, shifting or questionable soils; tests done by an approved agency.",
+      "secondCheck": {
+        "verdict": "agree",
+        "source": "https://seattle.gov/documents/Departments/SDCI/Codes/SeattleResidentialCode/2018SRCChapter4.pdf"
+      }
+    },
+    "struct.footingsLightFrame": {
+      "value": {
+        "1500": {
+          "1": {
+            "slab": {
+              "width": 12,
+              "thickness": 6
+            },
+            "crawl": {
+              "width": 12,
+              "thickness": 6
+            },
+            "basement": {
+              "width": 12,
+              "thickness": 6
+            }
+          },
+          "2": {
+            "slab": {
+              "width": 15,
+              "thickness": 6
+            },
+            "crawl": {
+              "width": 15,
+              "thickness": 6
+            },
+            "basement": {
+              "width": 15,
+              "thickness": 6
+            }
+          },
+          "3": {
+            "slab": {
+              "width": 23,
+              "thickness": 6
+            },
+            "crawl": {
+              "width": 23,
+              "thickness": 6
+            },
+            "basement": {
+              "width": 23,
+              "thickness": 6
+            }
+          }
+        },
+        "2000": {
+          "1": {
+            "slab": {
+              "width": 12,
+              "thickness": 6
+            },
+            "crawl": {
+              "width": 12,
+              "thickness": 6
+            },
+            "basement": {
+              "width": 12,
+              "thickness": 6
+            }
+          },
+          "2": {
+            "slab": {
+              "width": 12,
+              "thickness": 6
+            },
+            "crawl": {
+              "width": 12,
+              "thickness": 6
+            },
+            "basement": {
+              "width": 12,
+              "thickness": 6
+            }
+          },
+          "3": {
+            "slab": {
+              "width": 17,
+              "thickness": 6
+            },
+            "crawl": {
+              "width": 17,
+              "thickness": 6
+            },
+            "basement": {
+              "width": 17,
+              "thickness": 6
+            }
+          }
+        },
+        "3000": {
+          "1": {
+            "slab": {
+              "width": 12,
+              "thickness": 6
+            },
+            "crawl": {
+              "width": 12,
+              "thickness": 6
+            },
+            "basement": {
+              "width": 12,
+              "thickness": 6
+            }
+          },
+          "2": {
+            "slab": {
+              "width": 12,
+              "thickness": 6
+            },
+            "crawl": {
+              "width": 12,
+              "thickness": 6
+            },
+            "basement": {
+              "width": 12,
+              "thickness": 6
+            }
+          },
+          "3": {
+            "slab": {
+              "width": 12,
+              "thickness": 6
+            },
+            "crawl": {
+              "width": 12,
+              "thickness": 6
+            },
+            "basement": {
+              "width": 12,
+              "thickness": 6
+            }
+          }
+        },
+        "4000": {
+          "1": {
+            "slab": {
+              "width": 12,
+              "thickness": 6
+            },
+            "crawl": {
+              "width": 12,
+              "thickness": 6
+            },
+            "basement": {
+              "width": 12,
+              "thickness": 6
+            }
+          },
+          "2": {
+            "slab": {
+              "width": 12,
+              "thickness": 6
+            },
+            "crawl": {
+              "width": 12,
+              "thickness": 6
+            },
+            "basement": {
+              "width": 12,
+              "thickness": 6
+            }
+          },
+          "3": {
+            "slab": {
+              "width": 12,
+              "thickness": 6
+            },
+            "crawl": {
+              "width": 12,
+              "thickness": 6
+            },
+            "basement": {
+              "width": 12,
+              "thickness": 6
+            }
+          }
+        }
+      },
+      "unit": "in",
+      "code": "IRC 2018",
+      "section": "Idaho Table R403.1 (replaces IRC Table R403.1(1)-(3))",
+      "amendment": "IDAPA 24.39.30.600: R403.1(1)-(3) deleted, Table R403.1 added",
+      "source": "https://regulations.justia.com/states/idaho/24/24-39-30/section-24-39-30-600/",
+      "checked": "2026-10-15",
+      "note": "Idaho deletes IRC Tables R403.1(1)-(3) and adds a width table by soil bearing (1500, 2000, 3000, 4000+ psf) with no split by slab, crawl or basement, so the same width is copied to all three; the Idaho table gives conventional light-frame widths only. Thickness set to the 6 in minimum of Idaho R403.1.1 because Idaho prints no thickness table. A 4000 key was added. IRC's own Table R403.1(1) (20 psf snow, 2 story crawl 1500 psf: 16 in) would be wider on some cells, e.g. 1500 psf basement: 18 to 22 in; Idaho's table has no basement rows, so tall basement loads may need an engineer.",
+      "secondCheck": {
+        "verdict": "agree",
+        "source": "https://seattle.gov/documents/Departments/SDCI/Codes/SeattleResidentialCode/2018SRCChapter4.pdf"
+      },
+      "resolved": "The second check gave the IRC table as its main value (Idaho deletes it) and Idaho's Table R403.1 separately; Idaho's widths match the gathered ones exactly."
+    },
+    "struct.footingMinWidth": {
+      "value": 12,
+      "unit": "in",
+      "code": "IRC 2018",
+      "section": "Idaho Table R403.1",
+      "amendment": "Idaho Table R403.1",
+      "source": "https://regulations.justia.com/states/idaho/24/24-39-30/section-24-39-30-600/",
+      "checked": "2026-10-15",
+      "note": "Smallest width anywhere in Idaho's footing table.",
+      "secondCheck": {
+        "verdict": "agree",
+        "source": "https://seattle.gov/documents/Departments/SDCI/Codes/SeattleResidentialCode/2018SRCChapter4.pdf ; https://regulations.justia.com/states/idaho/24/24-39-30/section-24-39-30-600"
+      }
+    },
+    "struct.footingMinThickness": {
+      "value": 6,
+      "unit": "in",
+      "code": "IRC 2018",
+      "section": "R403.1.1",
+      "amendment": "Idaho R403.1.1 rewrite",
+      "source": "https://regulations.justia.com/states/idaho/24/24-39-30/section-24-39-30-600/",
+      "checked": "2026-10-15",
+      "note": "Idaho text (and IRC) require footings at least 6 in thick.",
+      "secondCheck": {
+        "verdict": "agree",
+        "source": "https://seattle.gov/documents/Departments/SDCI/Codes/SeattleResidentialCode/2018SRCChapter4.pdf ; https://regulations.justia.com/states/idaho/24/24-39-30/section-24-39-30-600"
+      }
+    },
+    "struct.footingProjectionMin": {
+      "value": 2,
+      "unit": "in",
+      "code": "IRC 2018",
+      "section": "R403.1.1",
+      "amendment": "Idaho R403.1.1 rewrite",
+      "source": "https://regulations.justia.com/states/idaho/24/24-39-30/section-24-39-30-600/",
+      "checked": "2026-10-15",
+      "note": "Projection beyond the wall face at least 2 in and not more than the footing thickness.",
+      "secondCheck": {
+        "verdict": "agree",
+        "source": "https://seattle.gov/documents/Departments/SDCI/Codes/SeattleResidentialCode/2018SRCChapter4.pdf ; https://regulations.justia.com/states/idaho/24/24-39-30/section-24-39-30-600"
+      }
+    },
+    "struct.anchorBoltDiameter": {
+      "value": 0.5,
+      "unit": "in",
+      "code": "IRC 2018",
+      "section": "R403.1.6",
+      "amendment": null,
+      "source": "https://seattle.gov/Documents/Departments/SDCI/Codes/SeattleResidentialCode/2018SRCChapter4.pdf",
+      "checked": "2026-10-15",
+      "note": "Anchor bolts or approved straps giving equivalent anchorage; nut and washer each bolt; in middle third of plate width.",
+      "secondCheck": {
+        "verdict": "agree",
+        "source": "https://seattle.gov/documents/Departments/SDCI/Codes/SeattleResidentialCode/2018SRCChapter4.pdf"
+      }
+    },
+    "struct.anchorBoltEmbed": {
+      "value": 7,
+      "unit": "in",
+      "code": "IRC 2018",
+      "section": "R403.1.6",
+      "amendment": null,
+      "source": "https://seattle.gov/Documents/Departments/SDCI/Codes/SeattleResidentialCode/2018SRCChapter4.pdf",
+      "checked": "2026-10-15",
+      "note": "Into concrete or grouted masonry cells.",
+      "secondCheck": {
+        "verdict": "agree",
+        "source": "https://seattle.gov/documents/Departments/SDCI/Codes/SeattleResidentialCode/2018SRCChapter4.pdf"
+      }
+    },
+    "struct.anchorBoltSpacing": {
+      "value": 6,
+      "unit": "ft",
+      "code": "IRC 2018",
+      "section": "R403.1.6",
+      "amendment": null,
+      "source": "https://seattle.gov/Documents/Departments/SDCI/Codes/SeattleResidentialCode/2018SRCChapter4.pdf",
+      "checked": "2026-10-15",
+      "note": "Maximum on center. SDC C townhouses and D0-D2 have extra rules (R403.1.6.1); not needed for a detached house in SDC C.",
+      "secondCheck": {
+        "verdict": "agree",
+        "source": "https://seattle.gov/documents/Departments/SDCI/Codes/SeattleResidentialCode/2018SRCChapter4.pdf"
+      }
+    },
+    "struct.anchorBoltFromEnd": {
+      "value": 12,
+      "unit": "in",
+      "code": "IRC 2018",
+      "section": "R403.1.6",
+      "amendment": null,
+      "source": "https://seattle.gov/Documents/Departments/SDCI/Codes/SeattleResidentialCode/2018SRCChapter4.pdf",
+      "checked": "2026-10-15",
+      "note": "One bolt within 12 in of each plate section end (and at least 7 bolt diameters from the end).",
+      "secondCheck": {
+        "verdict": "agree",
+        "source": "https://seattle.gov/documents/Departments/SDCI/Codes/SeattleResidentialCode/2018SRCChapter4.pdf"
+      }
+    },
+    "struct.anchorBoltMinPerPiece": {
+      "value": 2,
+      "unit": "count",
+      "code": "IRC 2018",
+      "section": "R403.1.6",
+      "amendment": null,
+      "source": "https://seattle.gov/Documents/Departments/SDCI/Codes/SeattleResidentialCode/2018SRCChapter4.pdf",
+      "checked": "2026-10-15",
+      "note": "At least two bolts per plate section.",
+      "secondCheck": {
+        "verdict": "agree",
+        "source": "https://seattle.gov/documents/Departments/SDCI/Codes/SeattleResidentialCode/2018SRCChapter4.pdf"
+      }
+    },
+    "struct.plainConcreteWall": {
+      "value": {
+        "8": {
+          "4": {
+            "GW-GP-SW-SP": "PC",
+            "GM-GC-SM-SMSC-ML": "PC",
+            "SC-MH-MLCL-CL": "PC"
+          },
+          "5": {
+            "GW-GP-SW-SP": "PC",
+            "GM-GC-SM-SMSC-ML": "PC",
+            "SC-MH-MLCL-CL": "PC"
+          },
+          "6": {
+            "GW-GP-SW-SP": "PC",
+            "GM-GC-SM-SMSC-ML": "PC",
+            "SC-MH-MLCL-CL": "#6 @ 37"
+          },
+          "7": {
+            "GW-GP-SW-SP": "PC",
+            "GM-GC-SM-SMSC-ML": "#6 @ 36",
+            "SC-MH-MLCL-CL": "#6 @ 35"
+          },
+          "8": {
+            "GW-GP-SW-SP": "#6 @ 41",
+            "GM-GC-SM-SMSC-ML": "#6 @ 35",
+            "SC-MH-MLCL-CL": "#6 @ 26"
+          }
+        },
+        "9": {
+          "4": {
+            "GW-GP-SW-SP": "PC",
+            "GM-GC-SM-SMSC-ML": "PC",
+            "SC-MH-MLCL-CL": "PC"
+          },
+          "5": {
+            "GW-GP-SW-SP": "PC",
+            "GM-GC-SM-SMSC-ML": "PC",
+            "SC-MH-MLCL-CL": "PC"
+          },
+          "6": {
+            "GW-GP-SW-SP": "PC",
+            "GM-GC-SM-SMSC-ML": "PC",
+            "SC-MH-MLCL-CL": "#6 @ 35"
+          },
+          "7": {
+            "GW-GP-SW-SP": "PC",
+            "GM-GC-SM-SMSC-ML": "#6 @ 35",
+            "SC-MH-MLCL-CL": "#6 @ 32"
+          },
+          "8": {
+            "GW-GP-SW-SP": "#6 @ 36",
+            "GM-GC-SM-SMSC-ML": "#6 @ 32",
+            "SC-MH-MLCL-CL": "#6 @ 23"
+          },
+          "9": {
+            "GW-GP-SW-SP": "#6 @ 35",
+            "GM-GC-SM-SMSC-ML": "#6 @ 25",
+            "SC-MH-MLCL-CL": "#6 @ 18"
+          }
+        },
+        "10": {
+          "4": {
+            "GW-GP-SW-SP": "PC",
+            "GM-GC-SM-SMSC-ML": "PC",
+            "SC-MH-MLCL-CL": "PC"
+          },
+          "5": {
+            "GW-GP-SW-SP": "PC",
+            "GM-GC-SM-SMSC-ML": "PC",
+            "SC-MH-MLCL-CL": "PC"
+          },
+          "6": {
+            "GW-GP-SW-SP": "PC",
+            "GM-GC-SM-SMSC-ML": "PC",
+            "SC-MH-MLCL-CL": "#6 @ 35"
+          },
+          "7": {
+            "GW-GP-SW-SP": "PC",
+            "GM-GC-SM-SMSC-ML": "#6 @ 35",
+            "SC-MH-MLCL-CL": "#6 @ 29"
+          },
+          "8": {
+            "GW-GP-SW-SP": "#6 @ 35",
+            "GM-GC-SM-SMSC-ML": "#6 @ 29",
+            "SC-MH-MLCL-CL": "#6 @ 21"
+          },
+          "9": {
+            "GW-GP-SW-SP": "#6 @ 34",
+            "GM-GC-SM-SMSC-ML": "#6 @ 22",
+            "SC-MH-MLCL-CL": "#6 @ 16"
+          },
+          "10": {
+            "GW-GP-SW-SP": "#6 @ 27",
+            "GM-GC-SM-SMSC-ML": "#6 @ 17",
+            "SC-MH-MLCL-CL": "#6 @ 13"
+          }
+        }
+      },
+      "unit": "text per cell",
+      "code": "IRC 2018",
+      "section": "Table R404.1.2(3) (8-inch flat basement wall, vertical reinforcement)",
+      "amendment": null,
+      "source": "https://seattle.gov/Documents/Departments/SDCI/Codes/SeattleResidentialCode/2018SRCChapter4.pdf",
+      "checked": "2026-10-15",
+      "note": "The 2018 IRC has no plain-concrete table shaped like the request: Table R404.1.2(1) is horizontal reinforcement only (one No. 4 bar near top and mid-height for 8 ft or less). Cells here come from Table R404.1.2(3) for 8-inch nominal flat walls: 'PC' stands for NR (no vertical bar required, treated as plain concrete OK); otherwise the bar size and maximum spacing in inches ('#6 @ 41'). L/240, soil classes GW/GP/SW/SP (30 psf/ft), GM/GC/SM/SM-SC/ML (45), SC/ML-CL/CL (60). No interpolation. A 10 ft wall table also exists. Wall heights 8, 9 and 10 ft (the 10 ft rows from the second check).",
+      "secondCheck": {
+        "verdict": "agree",
+        "source": "https://seattle.gov/documents/Departments/SDCI/Codes/SeattleResidentialCode/2018SRCChapter4.pdf"
+      },
+      "resolved": "Both checks agree on the 8 and 9 ft rows; the 10 ft rows were added from the second check. Read through a PDF summarizer, so spot-check against the printed table."
+    },
+    "struct.foundationWallMinThickness": {
+      "value": 6,
+      "unit": "in",
+      "code": "IRC 2018",
+      "section": "R404.1.2 tables",
+      "amendment": null,
+      "source": "https://seattle.gov/Documents/Departments/SDCI/Codes/SeattleResidentialCode/2018SRCChapter4.pdf",
+      "checked": "2026-10-15",
+      "note": "Prescriptive concrete wall tables start at 6 in nominal flat walls; the thickness section (R404.1.5) was not found in the sources I could read, so this is my best value.",
+      "secondCheck": {
+        "verdict": "agree",
+        "source": "https://seattle.gov/documents/Departments/SDCI/Codes/SeattleResidentialCode/2018SRCChapter4.pdf"
+      }
+    },
+    "struct.unbalancedBackfillNoDesign": {
+      "value": 4,
+      "unit": "ft",
+      "code": "IRC 2018",
+      "section": "Table R404.1.2(3)",
+      "amendment": null,
+      "source": "https://seattle.gov/Documents/Departments/SDCI/Codes/SeattleResidentialCode/2018SRCChapter4.pdf",
+      "checked": "2026-10-15",
+      "note": "First rows (4 ft and 5 ft backfill) need no vertical bar in the 8-inch table; Table R404.1.2(2) note f requires lateral support top and bottom before backfilling 4 ft or more.",
+      "secondCheck": {
+        "verdict": "agree",
+        "source": "https://seattle.gov/documents/Departments/SDCI/Codes/SeattleResidentialCode/2018SRCChapter4.pdf"
+      }
+    },
+    "struct.concreteStrength": {
+      "value": {
+        "foundationsNotExposed": 2500,
+        "foundationsExposed": 3000,
+        "garageSlab": 3500
+      },
+      "unit": "psi at 28 days",
+      "code": "IRC 2018",
+      "section": "Table R402.2",
+      "amendment": null,
+      "source": "https://seattle.gov/Documents/Departments/SDCI/Codes/SeattleResidentialCode/2018SRCChapter4.pdf",
+      "checked": "2026-10-15",
+      "note": "Severe weathering. Exposed and garage/porch/steps need 5-7% air entrainment. Interior slabs on grade also 2500.",
+      "secondCheck": {
+        "verdict": "agree",
+        "source": "https://seattle.gov/documents/Departments/SDCI/Codes/SeattleResidentialCode/2018SRCChapter4.pdf"
+      }
+    },
+    "struct.slabMinThickness": {
+      "value": 3.5,
+      "unit": "in",
+      "code": "IRC 2018",
+      "section": "R506.1",
+      "amendment": null,
+      "source": "https://seattle.gov/Documents/Departments/SDCI/Codes/SeattleResidentialCode/2018SRCChapter5.pdf",
+      "checked": "2026-10-15",
+      "note": "Nominal.",
+      "secondCheck": {
+        "verdict": "agree",
+        "source": "https://seattle.gov/documents/Departments/SDCI/Codes/SeattleResidentialCode/2018SRCChapter5.pdf"
+      }
+    },
+    "struct.slabBaseCourse": {
+      "value": 4,
+      "unit": "in",
+      "code": "IRC 2018",
+      "section": "R506.2.2",
+      "amendment": null,
+      "source": "https://seattle.gov/Documents/Departments/SDCI/Codes/SeattleResidentialCode/2018SRCChapter5.pdf",
+      "checked": "2026-10-15",
+      "note": "Base course needed below grade; exception for well-drained soils.",
+      "secondCheck": {
+        "verdict": "agree",
+        "source": "https://seattle.gov/documents/Departments/SDCI/Codes/SeattleResidentialCode/2018SRCChapter5.pdf"
+      }
+    },
+    "struct.slabVaporRetarder": {
+      "value": 6,
+      "unit": "mil",
+      "code": "IRC 2018",
+      "section": "R506.2.3",
+      "amendment": null,
+      "source": "https://seattle.gov/Documents/Departments/SDCI/Codes/SeattleResidentialCode/2018SRCChapter5.pdf",
+      "checked": "2026-10-15",
+      "note": "Polyethylene, joints lapped at least 6 in.",
+      "secondCheck": {
+        "verdict": "agree",
+        "source": "https://seattle.gov/documents/Departments/SDCI/Codes/SeattleResidentialCode/2018SRCChapter5.pdf"
+      }
+    },
+    "struct.woodClearanceJoists": {
+      "value": 18,
+      "unit": "in",
+      "code": "IRC 2018",
+      "section": "R317.1",
+      "amendment": null,
+      "source": "https://Mybuildingpermit.com/sites/default/files/inline-files/IC_Residential_Underfloor_Final.pdf",
+      "checked": "2026-10-15",
+      "note": "Not found in sources I could read; from memory of R317.1: joists 18 in, girders 12 in above exposed ground in crawlspaces must be treated or durable. Please verify. First gather could not reach a source; the number is from the second check's reading of this source.",
+      "secondCheck": {
+        "verdict": "agree",
+        "source": "https://Mybuildingpermit.com/sites/default/files/inline-files/IC_Residential_Underfloor_Final.pdf"
+      }
+    },
+    "struct.woodClearanceGirders": {
+      "value": 12,
+      "unit": "in",
+      "code": "IRC 2018",
+      "section": "R317.1",
+      "amendment": null,
+      "source": "https://Mybuildingpermit.com/sites/default/files/inline-files/IC_Residential_Underfloor_Final.pdf",
+      "checked": "2026-10-15",
+      "note": "See joist note: memory value, unverified. First gather could not reach a source; the number is from the second check's reading of this source.",
+      "secondCheck": {
+        "verdict": "agree",
+        "source": "https://Mybuildingpermit.com/sites/default/files/inline-files/IC_Residential_Underfloor_Final.pdf"
+      }
+    },
+    "struct.crawlMinClearance": {
+      "value": "none",
+      "unit": "text",
+      "code": "IRC 2018",
+      "section": "R408",
+      "amendment": null,
+      "source": "https://gocodebook.com/library/us/ca/ca-residential-code/chapter-4-foundations/section-r408-under-floor-space",
+      "checked": "2026-10-15",
+      "note": "The IRC sets no minimum crawlspace height; access and ventilation apply, and R317.1 wood clearance (18 in joists, 12 in girders) governs in practice. Not read directly. First gather could not reach a source; the number is from the second check's reading of this source.",
+      "secondCheck": {
+        "verdict": "agree",
+        "source": "https://gocodebook.com/library/us/ca/ca-residential-code/chapter-4-foundations/section-r408-under-floor-space"
+      }
+    },
+    "struct.columnMinWood": {
+      "value": "4x4",
+      "unit": "text",
+      "code": "IRC 2018",
+      "section": "R407.3",
+      "amendment": null,
+      "source": "https://gocodebook.com/library/us/ca/ca-residential-code/chapter-4-foundations/section-r407-columns",
+      "checked": "2026-10-15",
+      "note": "Memory value; section not found in readable sources. 4x4 minimum wood column, 3 in diameter Schedule 40 steel. First gather could not reach a source; the number is from the second check's reading of this source.",
+      "secondCheck": {
+        "verdict": "agree",
+        "source": "https://gocodebook.com/library/us/ca/ca-residential-code/chapter-4-foundations/section-r407-columns"
+      }
+    },
+    "struct.columnSteel": {
+      "value": "3 in diameter Schedule 40 steel pipe",
+      "unit": "text",
+      "code": "IRC 2018",
+      "section": "R407.3",
+      "amendment": null,
+      "source": "https://gocodebook.com/library/us/ca/ca-residential-code/chapter-4-foundations/section-r407-columns",
+      "checked": "2026-10-15",
+      "note": "Memory value; verify against R407.3. First gather could not reach a source; the number is from the second check's reading of this source.",
+      "secondCheck": {
+        "verdict": "agree",
+        "source": "https://gocodebook.com/library/us/ca/ca-residential-code/chapter-4-foundations/section-r407-columns"
+      }
+    },
+    "struct.floorSheathing": {
+      "value": {
+        "16": "24/16 span rating, 7/16 in (15/32 in 32/16 also common)",
+        "19.2": "40/20 span rating, 19/32 in",
+        "24": "48/24 span rating, 23/32 in"
+      },
+      "unit": "span rating, nominal thickness",
+      "code": "IRC 2018",
+      "section": "Table R503.2.1.1(1)",
+      "amendment": null,
+      "source": "https://seattle.gov/Documents/Departments/SDCI/Codes/SeattleResidentialCode/2018SRCChapter5.pdf",
+      "checked": "2026-10-15",
+      "note": "Floor span columns: 24/16 and 32/16 span 16 in, 40/20 spans 20 in (covers 19.2), 48/24 spans 24 in. 19.2 in spacing is not a printed column. The extraction lost column headers, so the mapping uses the standard panel-rating floor spans.",
+      "secondCheck": {
+        "verdict": "agree",
+        "source": "https://seattle.gov/documents/Departments/SDCI/Codes/SeattleResidentialCode/2018SRCChapter5.pdf"
+      }
+    },
+    "struct.roofSheathing": {
+      "value": {
+        "16": "24/0 span rating, 3/8 in (24/16, 7/16 in is the common choice)",
+        "24": "24/0 span rating, 3/8 in with edge support (24/16, 7/16 in common)"
+      },
+      "unit": "span rating, nominal thickness",
+      "code": "IRC 2018",
+      "section": "Table R503.2.1.1(1)",
+      "amendment": null,
+      "source": "https://seattle.gov/Documents/Departments/SDCI/Codes/SeattleResidentialCode/2018SRCChapter5.pdf",
+      "checked": "2026-10-15",
+      "note": "24/0 panels are rated for 24 in roof spans with edge support (20 in unsupported). Live-load check at 25 psf roof snow not independently done. Column mapping uncertain from extraction.",
+      "secondCheck": {
+        "verdict": "agree",
+        "source": "https://seattle.gov/documents/Departments/SDCI/Codes/SeattleResidentialCode/2018SRCChapter5.pdf"
+      },
+      "resolved": "The second check lists 16/0 (3/8 in) as the least panel at 16 in rafters; the gathered 24/0 (3/8 in) also meets it and is what the note asks for."
+    },
+    "struct.trussDesign": {
+      "value": "R802.10.1 trusses designed per ANSI/TPI 1; R802.10.2 truss design drawings delivered with trusses to the job site and approved",
+      "unit": "text",
+      "code": "IRC 2018",
+      "section": "R802.10.1, R802.10.2",
+      "amendment": null,
+      "source": "https://fema.gov/sites/default/files/2020-08/2018_IRC_Compliation_of_wind_resist_provisions_20191211.pdf",
+      "checked": "2026-10-15",
+      "note": "Section numbers from the list; the chapter 8 text beyond rafter tables could not be read. First gather could not reach a source; the number is from the second check's reading of this source.",
+      "secondCheck": {
+        "verdict": "agree",
+        "source": "https://fema.gov/sites/default/files/2020-08/2018_IRC_Compliation_of_wind_resist_provisions_20191211.pdf"
+      }
+    },
+    "struct.trussBracing": {
+      "value": "R802.10.3 (truss member bracing per the design drawings / BCSI)",
+      "unit": "text",
+      "code": "IRC 2018",
+      "section": "R802.10.3",
+      "amendment": null,
+      "source": "https://www.structuremag.org/article/code-requirements-for-residential-roof-trusses/",
+      "checked": "2026-10-15",
+      "note": "Not read; section reference only.",
+      "secondCheck": {
+        "verdict": "agree",
+        "source": "https://www.structuremag.org/article/code-requirements-for-residential-roof-trusses/"
+      },
+      "resolved": "Neither check could read the code text; settled 2026-10-15 from STRUCTURE magazine's summary of 2018 IRC R802.10.3: trusses braced per the construction documents or truss drawings, otherwise per accepted industry practice (BCSI)."
+    },
+    "struct.roofUplift": {
+      "value": "R802.11: roof assemblies need uplift connections (hurricane ties or equivalent) from rafter/truss to wall; required uplift comes from Table R802.11 by wind speed, exposure, roof span, pitch and overhang, or from truss design drawings; deduct 0.60 dead load; plus continuous load path to foundation (R606/R403).",
+      "unit": "text",
+      "code": "IRC 2018",
+      "section": "R802.11, Table R802.11",
+      "amendment": null,
+      "source": "https://fema.gov/sites/default/files/2020-08/2018_IRC_Compliation_of_wind_resist_provisions_20191211.pdf",
+      "checked": "2026-10-15",
+      "note": "Not read directly; uplift connectors are expected at 115 mph Vult exposure B. Verify values in Table R802.11 and on truss drawings. First gather could not reach a source; the number is from the second check's reading of this source.",
+      "secondCheck": {
+        "verdict": "agree",
+        "source": "https://fema.gov/sites/default/files/2020-08/2018_IRC_Compliation_of_wind_resist_provisions_20191211.pdf"
+      }
+    },
+    "struct.bracingWind": {
+      "value": {
+        "one-story-or-top": {
+          "10": {
+            "LIB": 3.5,
+            "GB": 3.5,
+            "WSP": 2.0,
+            "CS-WSP": 2.0
+          },
+          "20": {
+            "LIB": 6.5,
+            "GB": 6.5,
+            "WSP": 3.5,
+            "CS-WSP": 3.5
+          },
+          "30": {
+            "LIB": 9.5,
+            "GB": 9.5,
+            "WSP": 5.5,
+            "CS-WSP": 4.5
+          },
+          "40": {
+            "LIB": 12.5,
+            "GB": 12.5,
+            "WSP": 7.0,
+            "CS-WSP": 6.0
+          },
+          "50": {
+            "LIB": 15.0,
+            "GB": 15.0,
+            "WSP": 9.0,
+            "CS-WSP": 7.5
+          },
+          "60": {
+            "LIB": 18.0,
+            "GB": 18.0,
+            "WSP": 10.5,
+            "CS-WSP": 9.0
+          }
+        },
+        "first-of-two": {
+          "10": {
+            "LIB": 7.0,
+            "GB": 7.0,
+            "WSP": 4.0,
+            "CS-WSP": 3.5
+          },
+          "20": {
+            "LIB": 12.5,
+            "GB": 12.5,
+            "WSP": 7.5,
+            "CS-WSP": 6.5
+          },
+          "30": {
+            "LIB": 18.0,
+            "GB": 18.0,
+            "WSP": 10.5,
+            "CS-WSP": 9.0
+          },
+          "40": {
+            "LIB": 23.5,
+            "GB": 23.5,
+            "WSP": 13.5,
+            "CS-WSP": 11.5
+          },
+          "50": {
+            "LIB": 29.0,
+            "GB": 29.0,
+            "WSP": 16.5,
+            "CS-WSP": 14.0
+          },
+          "60": {
+            "LIB": 34.5,
+            "GB": 34.5,
+            "WSP": 20.0,
+            "CS-WSP": 17.0
+          }
+        },
+        "first-of-three": {
+          "10": {
+            "LIB": null,
+            "GB": 10.0,
+            "WSP": 6.0,
+            "CS-WSP": 5.0
+          },
+          "20": {
+            "LIB": null,
+            "GB": 18.5,
+            "WSP": 11.0,
+            "CS-WSP": 9.0
+          },
+          "30": {
+            "LIB": null,
+            "GB": 27.0,
+            "WSP": 15.5,
+            "CS-WSP": 13.0
+          },
+          "40": {
+            "LIB": null,
+            "GB": 35.0,
+            "WSP": 20.0,
+            "CS-WSP": 17.0
+          },
+          "50": {
+            "LIB": null,
+            "GB": 43.0,
+            "WSP": 24.5,
+            "CS-WSP": 21.0
+          },
+          "60": {
+            "LIB": null,
+            "GB": 51.0,
+            "WSP": 29.0,
+            "CS-WSP": 25.0
+          }
+        }
+      },
+      "unit": "ft of braced panel per braced wall line",
+      "code": "IRC 2018",
+      "section": "Table R602.10.3(1), band up to 115 mph Vult",
+      "amendment": "Idaho allows R602.12 or APA SR-102 in place of R602.10 (IDAPA 24.39.30.600)",
+      "source": "https://seattle.gov/Documents/Departments/SDCI/Codes/SeattleResidentialCode/2018SRCChapter6.pdf",
+      "checked": "2026-10-15",
+      "note": "Exposure B, 30 ft mean roof height, 10 ft eave-to-ridge, 10 ft wall, 2 braced wall lines; linear interpolation allowed. Rows are banded (up to 110 mph and up to 115 mph); 115 band chosen. Values assembled from two extraction passes that agreed; the story-location order (top, first of two, first of three) was inferred from the pattern of NP in LIB, so verify the grouping against the printed table. LIB is NP for the first story of three.",
+      "secondCheck": {
+        "verdict": "agree",
+        "source": "https://seattle.gov/documents/Departments/SDCI/Codes/SeattleResidentialCode/2018SRCChapter6.pdf"
+      }
+    },
+    "struct.bracingAdjust": {
+      "value": {
+        "exposure": {
+          "B": {
+            "1": 1.0,
+            "2": 1.0,
+            "3": 1.0
+          },
+          "C": {
+            "1": 1.2,
+            "2": 1.3,
+            "3": 1.4
+          },
+          "D": {
+            "1": 1.5,
+            "2": 1.6,
+            "3": 1.7
+          }
+        },
+        "eaveToRidge": {
+          "5": {
+            "roofOnly": 0.7,
+            "roofPlusFloor": 0.85,
+            "roofPlus2Floors": 0.9
+          },
+          "10": {
+            "roofOnly": 1.0,
+            "roofPlusFloor": 1.0,
+            "roofPlus2Floors": 1.0
+          },
+          "15": {
+            "roofOnly": 1.3,
+            "roofPlusFloor": 1.15,
+            "roofPlus2Floors": 1.1
+          },
+          "20": {
+            "roofOnly": 1.6,
+            "roofPlusFloor": 1.3,
+            "roofPlus2Floors": null
+          }
+        },
+        "wallHeight": {
+          "8": 0.9,
+          "9": 0.95,
+          "10": 1.0,
+          "11": 1.05,
+          "12": 1.1
+        },
+        "bracedWallLines": {
+          "2": 1.0,
+          "3": 1.3,
+          "4": 1.45,
+          "5": 1.6
+        },
+        "noGypsum": 1.4
+      },
+      "unit": "factor",
+      "code": "IRC 2018",
+      "section": "Table R602.10.3(2)",
+      "amendment": null,
+      "source": "https://apawood.org/data/sites/1/documents/webinars/Simplifying-IRC-Wall-Bracing-Handout.pdf",
+      "checked": "2026-10-15",
+      "note": "Eave-to-ridge factor depends on stories supported (roof only, plus one floor, plus two floors); 5 means under 5 ft. Factor 1.6 applies to 5 or more lines. Other factors: 0.8 for an added 800 lb hold-down at each panel, top story, for DWB/WSP etc; 0.7 for GB with 4 in edge nailing and blocked joints; 2.0 for WSP/CS-WSP with horizontal blocking (this is how the printed table reads in the handout, check wording); noGypsum 1.4 applies to methods that rely on interior finish. Source is an APA handout reproducing the table, not the code itself.",
+      "secondCheck": {
+        "verdict": "agree",
+        "source": "https://seattle.gov/documents/Departments/SDCI/Codes/SeattleResidentialCode/2018SRCChapter6.pdf"
+      }
+    },
+    "struct.bwlMaxSpacing": {
+      "value": 60,
+      "unit": "ft",
+      "code": "IRC 2018",
+      "section": "R602.10.1.3; Table R602.10.1.3",
+      "amendment": null,
+      "source": "https://seattle.gov/Documents/Departments/SDCI/Codes/SeattleResidentialCode/2018SRCChapter6.pdf",
+      "checked": "2026-10-15",
+      "note": "Wind-only (100 to under 140 mph) spacing limit for detached houses; seismic spacing limits (25-35 ft) do not apply to a detached house in SDC C.",
+      "secondCheck": {
+        "verdict": "agree",
+        "source": "https://seattle.gov/documents/Departments/SDCI/Codes/SeattleResidentialCode/2018SRCChapter6.pdf"
+      }
+    },
+    "struct.bwlOffset": {
+      "value": 4,
+      "unit": "ft",
+      "code": "IRC 2018",
+      "section": "R602.10.1.2",
+      "amendment": null,
+      "source": "https://seattle.gov/Documents/Departments/SDCI/Codes/SeattleResidentialCode/2018SRCChapter6.pdf",
+      "checked": "2026-10-15",
+      "note": "Exterior walls parallel to a braced wall line may be offset up to 4 ft; interior braced walls up to 4 ft from a line through the interior.",
+      "secondCheck": {
+        "verdict": "agree",
+        "source": "https://seattle.gov/documents/Departments/SDCI/Codes/SeattleResidentialCode/2018SRCChapter6.pdf"
+      }
+    },
+    "struct.panelFromEnd": {
+      "value": 10,
+      "unit": "ft",
+      "code": "IRC 2018",
+      "section": "R602.10.2.2",
+      "amendment": null,
+      "source": "https://seattle.gov/Documents/Departments/SDCI/Codes/SeattleResidentialCode/2018SRCChapter6.pdf",
+      "checked": "2026-10-15",
+      "note": "Each panel must start within 10 ft of each end of the braced wall line. No separate combined limit found.",
+      "secondCheck": {
+        "verdict": "agree",
+        "source": "https://seattle.gov/documents/Departments/SDCI/Codes/SeattleResidentialCode/2018SRCChapter6.pdf"
+      }
+    },
+    "struct.panelMaxSpacing": {
+      "value": 20,
+      "unit": "ft",
+      "code": "IRC 2018",
+      "section": "R602.10.2.2",
+      "amendment": null,
+      "source": "https://seattle.gov/Documents/Departments/SDCI/Codes/SeattleResidentialCode/2018SRCChapter6.pdf",
+      "checked": "2026-10-15",
+      "note": "Adjacent panel edges along a line no more than 20 ft apart. A braced wall line over 16 ft needs two panels.",
+      "secondCheck": {
+        "verdict": "agree",
+        "source": "https://seattle.gov/documents/Departments/SDCI/Codes/SeattleResidentialCode/2018SRCChapter6.pdf"
+      }
+    },
+    "struct.panelMinLength": {
+      "value": {
+        "WSP": {
+          "8": 48,
+          "9": 48,
+          "10": 48
+        },
+        "CS-WSP": {
+          "64": {
+            "8": 24,
+            "9": 27,
+            "10": 30
+          },
+          "68": {
+            "8": 26,
+            "9": 27,
+            "10": 30
+          },
+          "72": {
+            "8": 27,
+            "9": 27,
+            "10": 30
+          },
+          "76": {
+            "8": 30,
+            "9": 29,
+            "10": 30
+          },
+          "80": {
+            "8": 32,
+            "9": 30,
+            "10": 30
+          },
+          "84": {
+            "8": 35,
+            "9": 32,
+            "10": 32
+          },
+          "88": {
+            "8": 38,
+            "9": 35,
+            "10": 33
+          },
+          "92": {
+            "8": 43,
+            "9": 37,
+            "10": 35
+          },
+          "96": {
+            "8": 48,
+            "9": 41,
+            "10": 38
+          },
+          "100": {
+            "8": null,
+            "9": 44,
+            "10": 40
+          },
+          "104": {
+            "8": null,
+            "9": 49,
+            "10": 43
+          },
+          "108": {
+            "8": null,
+            "9": 54,
+            "10": 46
+          },
+          "112": {
+            "8": null,
+            "9": null,
+            "10": 50
+          },
+          "116": {
+            "8": null,
+            "9": null,
+            "10": 55
+          },
+          "120": {
+            "8": null,
+            "9": null,
+            "10": 60
+          }
+        },
+        "PFH": {
+          "oneStory": 16,
+          "twoStory": 24
+        }
+      },
+      "unit": "in",
+      "code": "IRC 2018",
+      "section": "Table R602.10.5",
+      "amendment": null,
+      "source": "https://www.apawood.org/data/sites/1/documents/handouts/2018-IRC-wall-bracing-II-handout.pdf",
+      "checked": "2026-10-15",
+      "note": "WSP min is 48 in for 8-10 ft walls (53 in at 11 ft, 58 in at 12 ft). PFH 16 in supporting roof only, 24 in supporting one story and roof. CS-WSP minimum length by adjacent clear opening height (taller opening governs); 8 ft walls have no entries above 96 in. Source is an APA handout copy of the table; the extraction flagged blank cells in the 11 and 12 ft columns, which are not requested. Verify against the code.",
+      "secondCheck": {
+        "verdict": "agree",
+        "source": "https://www.apawood.org/data/sites/1/documents/handouts/2018-IRC-wall-bracing-II-handout.pdf"
+      },
+      "resolved": "Same numbers in both checks; the 112-120 in opening rows (10 ft walls only) were added from the second check."
+    },
+    "struct.csCornerReturn": {
+      "value": 24,
+      "unit": "in",
+      "code": "IRC 2018",
+      "section": "R602.10.7",
+      "amendment": null,
+      "source": "https://www.apawood.org/data/sites/1/documents/handouts/2018-IRC-wall-bracing-II-handout.pdf",
+      "checked": "2026-10-15",
+      "note": "Return panel at least 24 in for WSP (32 in for SFB). Alternatives: an 800 lb hold-down at the corner stud, or a 48 in actual-length panel at the corner with no return. value = return length.",
+      "secondCheck": {
+        "verdict": "agree",
+        "source": "https://www.apawood.org/data/sites/1/documents/handouts/2018-IRC-wall-bracing-II-handout.pdf"
+      }
+    },
+    "struct.csRequiresFullSheathing": {
+      "value": true,
+      "unit": "boolean",
+      "code": "IRC 2018",
+      "section": "R602.10.4.2",
+      "amendment": null,
+      "source": "https://www.apawood.org/data/sites/1/documents/handouts/2018-IRC-wall-bracing-II-handout.pdf",
+      "checked": "2026-10-15",
+      "note": "Continuous sheathing methods require sheathing on all sheathable surfaces of the braced wall line including above and below openings and gable ends (my memory of R602.10.4.2; not read in a source). First gather could not reach a source; the number is from the second check's reading of this source.",
+      "secondCheck": {
+        "verdict": "agree",
+        "source": "https://www.apawood.org/data/sites/1/documents/handouts/2018-IRC-wall-bracing-II-handout.pdf"
+      }
+    },
+    "struct.portalFrameNote": {
+      "value": "PFH (R602.10.6.2): panel at least 16 in (roof only) or 24 in (one story plus roof) wide, header span 6 to 18 ft, 3/8 in WSP nailed 3 in o.c., a 5/8 in anchor bolt plus 3500 lb hold-down at one side and a 1000 lb strap opposite; for walls up to 12 ft, portal height up to 10 ft, pony wall up to 4 ft with tension straps. CS-PF (R602.10.6.4): continuous-sheathing portal, tension strap capacity from Table R602.10.6.4 (example 1200 lbf at 115 mph Exp B).",
+      "unit": "text",
+      "code": "IRC 2018",
+      "section": "R602.10.6.2, R602.10.6.4",
+      "amendment": null,
+      "source": "https://www.apawood.org/data/sites/1/documents/handouts/2018-IRC-wall-bracing-II-handout.pdf",
+      "checked": "2026-10-15",
+      "note": "Summarized from APA handout; verify against the code text. CS-PF minimum width not captured.",
+      "secondCheck": {
+        "verdict": "agree",
+        "source": "https://www.apawood.org/data/sites/1/documents/handouts/2018-IRC-wall-bracing-II-handout.pdf"
+      }
+    },
+    "struct.panelCredit": {
+      "value": {
+        "WSP": "actual length",
+        "CS-WSP": "actual length",
+        "PFH": 48,
+        "CS-PF": "actual length"
+      },
+      "unit": "in or text",
+      "code": "IRC 2018",
+      "section": "Table R602.10.5 contributing length column",
+      "amendment": null,
+      "source": "https://www.apawood.org/data/sites/1/documents/handouts/2018-IRC-wall-bracing-II-handout.pdf",
+      "checked": "2026-10-15",
+      "note": "WSP counts its actual length; PFH always counts 48 in regardless of width. Only panels meeting the Table R602.10.5 minimum count at all. CS-PF credit is assumed actual length (not printed in what I read). Wall height beyond 10 ft raises minimums (11 ft: 53 in WSP, 12 ft: 58 in). PFH limited to 1 story plus roof support at 24 in.",
+      "secondCheck": {
+        "verdict": "could-not-confirm",
+        "source": "https://www.apawood.org/data/sites/1/documents/handouts/2018-IRC-wall-bracing-II-handout.pdf"
+      }
+    },
+    "struct.headerNonBearing": {
+      "value": "R602.7.4: load-bearing headers are not required in interior or exterior nonbearing walls; a single flat 2x4 may serve as the header for openings up to 8 ft wide when the distance to the nailing surface above is 24 in or less, and no cripples or blocking are needed above it.",
+      "unit": "text",
+      "code": "IRC 2018",
+      "section": "R602.7.4",
+      "amendment": null,
+      "source": "https://seattle.gov/Documents/Departments/SDCI/Codes/SeattleResidentialCode/2018SRCChapter6.pdf",
+      "checked": "2026-10-15",
+      "note": "Short paraphrase; the section is R602.7.4 'Nonbearing walls' in the 2018 text read here.",
+      "secondCheck": {
+        "verdict": "agree",
+        "source": "https://seattle.gov/documents/Departments/SDCI/Codes/SeattleResidentialCode/2018SRCChapter6.pdf"
+      }
     }
   }
 }

@@ -17,6 +17,8 @@ import { electricalSheet } from "./sheets/electrical";
 import { plumbingSheet } from "./sheets/plumbing";
 import { mechanicalSheet } from "./sheets/mechanical";
 import { energySheets } from "./sheets/energy";
+import { bracingSheet, floorFramingSheet, foundationSheet, roofFramingSheet, structuralNotesSheets } from "./sheets/structure";
+import { sectionSheets, stairSectionSheet } from "./sheets/sections";
 
 /**
  * Put a set of sheets together: draw each chosen sheet, then add the
@@ -80,6 +82,23 @@ export function buildSet(project: Project, opts: SetOptions = {}): Sheet[] {
       drafts.push({ entry, number: entry.number, title: entry.title, items: sp.items, scale: sp.scaleLabel });
     } else if (entry.id === "energy") {
       energySheets(project).forEach((items, i) => drafts.push({ entry, number: i ? `${entry.number}.${i}` : entry.number, title: i ? `${entry.title} (continued)` : entry.title, items }));
+    } else if (entry.id === "struct-notes") {
+      structuralNotesSheets(project).forEach((items, i) => drafts.push({ entry, number: i ? `${entry.number}.${i}` : entry.number, title: i ? `${entry.title} (continued)` : entry.title, items }));
+    } else if (entry.id === "foundation") {
+      const sp = foundationSheet(project);
+      drafts.push({ entry, number: entry.number, title: entry.title, items: sp.items, scale: sp.scaleLabel });
+    } else if (entry.id === "roof-framing") {
+      const sp = roofFramingSheet(project);
+      drafts.push({ entry, number: entry.number, title: entry.title, items: sp.items, scale: sp.scaleLabel });
+    } else if (entry.levelId && /^(floor-framing|bracing):/.test(entry.id)) {
+      const sp = entry.id.startsWith("bracing:") ? bracingSheet(project, entry.levelId) : floorFramingSheet(project, entry.levelId);
+      drafts.push({ entry, number: entry.number, title: entry.title, items: sp.items, scale: sp.scaleLabel });
+    } else if (entry.id === "sections") {
+      const pages = sectionSheets(project);
+      pages.forEach((pg, i) => drafts.push({ entry, number: i ? `A-${301 + i}` : entry.number, title: pages.length > 1 ? `${entry.title} (${i + 1} of ${pages.length})` : entry.title, items: pg.items, scale: pg.scaleLabel }));
+    } else if (entry.id === "stair-section") {
+      const sp = stairSectionSheet(project);
+      drafts.push({ entry, number: entry.number, title: entry.title, items: sp.items, scale: sp.scaleLabel });
     } else if (entry.levelId) {
       const level = h.levels.find((l) => l.id === entry.levelId)!;
       const fp = floorPlanSheet(project, level);

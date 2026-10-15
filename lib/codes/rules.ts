@@ -11,6 +11,7 @@ import { siteLayout } from "@/lib/plans/lot";
 import { codeNum, codeRef } from "./data";
 import { escapeCheck, glassSqft, openableSqft } from "./openings";
 import { alarmChecks, bathFanCheck, electricalChecks, mechanicalChecks } from "./systemsChecks";
+import { bracingChecks, floorFramingChecks, footingChecks, headerChecks, headroomChecks } from "./structureChecks";
 
 /**
  * The code check: a list of rules from the codes Boise uses, each with its
@@ -34,7 +35,7 @@ export type RuleResult = {
   stage?: Stage;
 };
 
-export type RuleGroup = "Rooms" | "Escape and exits" | "Stairs" | "Glass" | "Garage" | "Attic and foundation" | "Bathrooms" | "Systems" | "Site";
+export type RuleGroup = "Rooms" | "Escape and exits" | "Stairs" | "Glass" | "Garage" | "Attic and foundation" | "Bathrooms" | "Systems" | "Structure" | "Site";
 
 export type CodeRule = {
   id: string;
@@ -341,7 +342,7 @@ export const RULES: CodeRule[] = [
     group: "Stairs",
     title: `Stairs have ${formatFeetInches(codeNum("stairs.minHeadroom"))} of headroom`,
     ref: "stairs.minHeadroom",
-    check: (h) => stairsList(h).map(({ level }) => ({ status: "manual", text: `${level.name} stairs: headroom is shown on the stair section, coming in a later update.`, levelId: level.id })),
+    check: (h) => headroomChecks(h, codeNum("stairs.minHeadroom")),
   },
   {
     id: "safety-glass",
@@ -408,7 +409,7 @@ export const RULES: CodeRule[] = [
     group: "Attic and foundation",
     title: `Footings go ${codeNum("design.frostDepth")}" below the ground (frost depth)`,
     ref: "design.frostDepth",
-    check: () => [{ status: "pass", text: "In the general notes. The foundation plan comes in a later update." }],
+    check: (h) => (h.drawn.length ? [{ status: "pass", text: "In the general notes, the building sections (A-301) and the foundation plan (S-101)." }] : []),
   },
   {
     id: "toilet-room",
@@ -524,6 +525,34 @@ export const RULES: CodeRule[] = [
     },
   },
   {
+    id: "floor-framing",
+    group: "Structure",
+    title: "Floor joists and girders are sized from the IRC span tables",
+    ref: "struct.joistSpans40",
+    check: floorFramingChecks,
+  },
+  {
+    id: "headers",
+    group: "Structure",
+    title: "Headers over windows and doors are sized from the IRC header tables",
+    ref: "struct.headersExterior",
+    check: headerChecks,
+  },
+  {
+    id: "footings",
+    group: "Structure",
+    title: "Footings are sized from Idaho's footing table",
+    ref: "struct.footingsLightFrame",
+    check: footingChecks,
+  },
+  {
+    id: "wall-bracing",
+    group: "Structure",
+    title: "Outside walls have enough braced wall for Boise's wind",
+    ref: "struct.bracingWind",
+    check: bracingChecks,
+  },
+  {
     id: "soil",
     group: "Site",
     title: "Soil can carry the footings",
@@ -550,6 +579,10 @@ const SECTION: Record<string, string> = {
   "lot-fire": "IRC Table R302.1(1) as amended by Idaho",
   soil: "IRC R401.4",
   "stairs-handrail": "IRC R311.7.8",
+  "floor-framing": "IRC R502.3.1, R602.7",
+  headers: "IRC R602.7",
+  footings: "IRC R403.1 as amended by Idaho",
+  "wall-bracing": "IRC R602.10",
   "egress-bedroom": "IRC R310.1, R310.2",
   "egress-basement": "IRC R310.1",
   "exit-door": "IRC R311.2",
