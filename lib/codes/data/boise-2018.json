@@ -1,1302 +1,1751 @@
 {
- "meta": {
-  "jurisdiction": "Boise, Idaho",
-  "checked": "2026-10-15",
-  "editions": [
-   {
-    "code": "IRC",
-    "edition": "2018",
-    "amendments": "Idaho amendments (IDAPA 24.39.30) and Boise City Code Title 9; Parts I-IV, IX plus mechanical/gas Parts V-VI for 1-2 family",
-    "source": "https://regulations.justia.com/states/idaho/24/24-39-30/section-24-39-30-600"
-   },
-   {
-    "code": "IECC",
-    "edition": "2018",
-    "amendments": "Idaho residential amendments incl. Table R402.1.2 zone 5 (ceiling R-38), log home table, 20% air leakage testing",
-    "source": "https://regulations.justia.com/states/idaho/24/24-39-30/section-24-39-30-600"
-   },
-   {
-    "code": "NEC",
-    "edition": "2023",
-    "amendments": "IDAPA 24.39.10.600 (temporary rule effective 4/19/2024): 210.8, 210.12, 210.52 changes",
-    "source": "https://regulations.justia.com/states/idaho/24/24-39-10/section-24-39-10-600"
-   },
-   {
-    "code": "ISPC",
-    "edition": "2017",
-    "amendments": "Idaho State Plumbing Code, based on 2015 UPC",
-    "source": "https://www.cityofboise.org/media/18749/currently-adopted-building-codes-4-26-24.pdf"
-   },
-   {
-    "code": "Boise design criteria",
-    "edition": "IRC Table R301.2(1), rev 4/2024",
-    "amendments": "Boise local: 24 in frost depth; roof snow 25 psf",
-    "source": "https://www.cityofboise.org/media/18749/currently-adopted-building-codes-4-26-24.pdf"
-   }
-  ]
- },
- "values": {
-  "design.groundSnowLoad": {
-   "value": 20,
-   "unit": "psf",
-   "code": "Boise design criteria",
-   "section": "Table R301.2(1)",
-   "amendment": null,
-   "source": "https://www.cityofboise.org/media/18749/currently-adopted-building-codes-4-26-24.pdf",
-   "checked": "2026-10-15"
-  },
-  "design.roofSnowLoadMin": {
-   "value": 25,
-   "unit": "psf",
-   "code": "Boise design criteria",
-   "section": "Table R301.2(1)",
-   "amendment": null,
-   "source": "https://www.cityofboise.org/media/18749/currently-adopted-building-codes-4-26-24.pdf",
-   "checked": "2026-10-15"
-  },
-  "design.windSpeed": {
-   "value": 90,
-   "unit": "mph",
-   "code": "Boise design criteria",
-   "section": "Table R301.2(1)",
-   "amendment": null,
-   "source": "https://www.cityofboise.org/media/18749/currently-adopted-building-codes-4-26-24.pdf",
-   "checked": "2026-10-15",
-   "note": "As listed on Boise sheet; topographic effects: no"
-  },
-  "design.seismicCategory": {
-   "value": "C",
-   "unit": "",
-   "code": "Boise design criteria",
-   "section": "Table R301.2(1)",
-   "amendment": null,
-   "source": "https://www.cityofboise.org/media/18749/currently-adopted-building-codes-4-26-24.pdf",
-   "checked": "2026-10-15"
-  },
-  "design.frostDepth": {
-   "value": 24,
-   "unit": "in",
-   "code": "Boise design criteria",
-   "section": "Table R301.2(1)",
-   "amendment": "Boise local amendment: 24 in minimum frost depth",
-   "source": "https://www.cityofboise.org/media/18749/currently-adopted-building-codes-4-26-24.pdf",
-   "checked": "2026-10-15"
-  },
-  "design.weathering": {
-   "value": "Severe",
-   "unit": "",
-   "code": "Boise design criteria",
-   "section": "Table R301.2(1)",
-   "amendment": null,
-   "source": "https://www.cityofboise.org/media/18749/currently-adopted-building-codes-4-26-24.pdf",
-   "checked": "2026-10-15"
-  },
-  "design.termite": {
-   "value": "Slight to moderate",
-   "unit": "",
-   "code": "Boise design criteria",
-   "section": "Table R301.2(1)",
-   "amendment": null,
-   "source": "https://www.cityofboise.org/media/18749/currently-adopted-building-codes-4-26-24.pdf",
-   "checked": "2026-10-15"
-  },
-  "design.winterDesignTemp": {
-   "value": 10,
-   "unit": "°F",
-   "code": "Boise design criteria",
-   "section": "Table R301.2(1)",
-   "amendment": null,
-   "source": "https://www.cityofboise.org/media/18749/currently-adopted-building-codes-4-26-24.pdf",
-   "checked": "2026-10-15"
-  },
-  "design.iceBarrierRequired": {
-   "value": false,
-   "unit": "",
-   "code": "Boise design criteria",
-   "section": "Table R301.2(1)",
-   "amendment": null,
-   "source": "https://www.cityofboise.org/media/18749/currently-adopted-building-codes-4-26-24.pdf",
-   "checked": "2026-10-15"
-  },
-  "design.floodHazard": {
-   "value": "Floodplain ordinance 12/12/1983; FIS dated 6/19/2020 (panels per Boise sheet)",
-   "unit": "",
-   "code": "Boise design criteria",
-   "section": "Table R301.2(1)",
-   "amendment": null,
-   "source": "https://www.cityofboise.org/media/18749/currently-adopted-building-codes-4-26-24.pdf",
-   "checked": "2026-10-15"
-  },
-  "design.climateZone": {
-   "value": "5B",
-   "unit": "",
-   "code": "IECC 2018",
-   "section": "Table R301.1.1",
-   "amendment": null,
-   "source": "https://www.cityofboise.org/media/18749/currently-adopted-building-codes-4-26-24.pdf",
-   "checked": "2026-10-15",
-   "note": "Zone taken from the task brief; the Boise pages I read do not state it",
-   "unverified": true
-  },
-  "design.manualJWinter": {
-   "value": 11,
-   "unit": "°F",
-   "code": "Boise design criteria",
-   "section": "Manual J criteria",
-   "amendment": null,
-   "source": "https://www.cityofboise.org/media/18749/currently-adopted-building-codes-4-26-24.pdf",
-   "checked": "2026-10-15"
-  },
-  "design.manualJSummer": {
-   "value": 95,
-   "unit": "°F",
-   "code": "Boise design criteria",
-   "section": "Manual J criteria",
-   "amendment": null,
-   "source": "https://www.cityofboise.org/media/18749/currently-adopted-building-codes-4-26-24.pdf",
-   "checked": "2026-10-15"
-  },
-  "design.elevation": {
-   "value": 2867,
-   "unit": "ft",
-   "code": "Boise design criteria",
-   "section": "Manual J criteria",
-   "amendment": null,
-   "source": "https://www.cityofboise.org/media/18749/currently-adopted-building-codes-4-26-24.pdf",
-   "checked": "2026-10-15"
-  },
-  "rooms.minHabitableArea": {
-   "value": 70,
-   "unit": "sq ft",
-   "code": "IRC 2018",
-   "section": "R304.1",
-   "amendment": null,
-   "source": "https://www.greenlancer.com/post/irc-r305-1-basement-ceiling-height-code",
-   "checked": "2026-10-15",
-   "note": "Value from memory of base code; sources read did not show it",
-   "unverified": true
-  },
-  "rooms.minHabitableDimension": {
-   "value": 84,
-   "unit": "in",
-   "code": "IRC 2018",
-   "section": "R304.2",
-   "amendment": null,
-   "source": "https://www.greenlancer.com/post/irc-r305-1-basement-ceiling-height-code",
-   "checked": "2026-10-15",
-   "note": "7 ft; from memory of base code, not seen in a source",
-   "unverified": true
-  },
-  "rooms.minCeilingHabitable": {
-   "value": 84,
-   "unit": "in",
-   "code": "IRC 2018",
-   "section": "R305.1",
-   "amendment": null,
-   "source": "https://www.greenlancer.com/post/irc-r305-1-basement-ceiling-height-code",
-   "checked": "2026-10-15",
-   "note": "Sloped-ceiling exception: half the area at 7 ft, none under 5 ft"
-  },
-  "rooms.minCeilingBathroom": {
-   "value": 80,
-   "unit": "in",
-   "code": "IRC 2018",
-   "section": "R305.1",
-   "amendment": null,
-   "source": "https://www.thebuildingcodeforum.com/forum/threads/ceiling-height-exceptions.23572",
-   "checked": "2026-10-15",
-   "note": "6 ft 8 in at fixture/shower clearance; source quoted Florida text of the same IRC rule",
-   "unverified": true
-  },
-  "rooms.basementCeilingNonHabitable": {
-   "value": 80,
-   "unit": "in",
-   "code": "IRC 2018",
-   "section": "R305.1.1",
-   "amendment": null,
-   "source": "https://www.greenlancer.com/post/irc-r305-1-basement-ceiling-height-code",
-   "checked": "2026-10-15",
-   "note": "Beams, girders, ducts may drop to 76 in"
-  },
-  "light.glazingPctOfFloor": {
-   "value": 8,
-   "unit": "%",
-   "code": "IRC 2018",
-   "section": "R303.1",
-   "amendment": null,
-   "source": "https://cityofboise.org/media/3923/433-irc-code-section-r303-light-ventilation.pdf",
-   "checked": "2026-10-15"
-  },
-  "light.ventOpenablePctOfFloor": {
-   "value": 4,
-   "unit": "%",
-   "code": "IRC 2018",
-   "section": "R303.1",
-   "amendment": null,
-   "source": "https://cityofboise.org/media/3923/433-irc-code-section-r303-light-ventilation.pdf",
-   "checked": "2026-10-15"
-  },
-  "light.bathroomGlazingArea": {
-   "value": 3,
-   "unit": "sq ft",
-   "code": "IRC 2018",
-   "section": "R303.3",
-   "amendment": null,
-   "source": "https://cityofboise.org/media/3923/433-irc-code-section-r303-light-ventilation.pdf",
-   "checked": "2026-10-15",
-   "note": "Half openable; waived with light plus exhaust fan"
-  },
-  "egress.netClearOpening": {
-   "value": 5.7,
-   "unit": "sq ft",
-   "code": "IRC 2018",
-   "section": "R310.2.1",
-   "amendment": null,
-   "source": "https://www.dli.mn.gov/sites/default/files/pdf/fs-emergency-escapes.pdf",
-   "checked": "2026-10-15"
-  },
-  "egress.netClearOpeningGradeFloor": {
-   "value": 5.0,
-   "unit": "sq ft",
-   "code": "IRC 2018",
-   "section": "R310.2.1 exc.",
-   "amendment": null,
-   "source": "https://www.dli.mn.gov/sites/default/files/pdf/fs-emergency-escapes.pdf",
-   "checked": "2026-10-15"
-  },
-  "egress.minClearHeight": {
-   "value": 24,
-   "unit": "in",
-   "code": "IRC 2018",
-   "section": "R310.2.1",
-   "amendment": null,
-   "source": "https://www.dli.mn.gov/sites/default/files/pdf/fs-emergency-escapes.pdf",
-   "checked": "2026-10-15"
-  },
-  "egress.minClearWidth": {
-   "value": 20,
-   "unit": "in",
-   "code": "IRC 2018",
-   "section": "R310.2.1",
-   "amendment": null,
-   "source": "https://www.dli.mn.gov/sites/default/files/pdf/fs-emergency-escapes.pdf",
-   "checked": "2026-10-15"
-  },
-  "egress.maxSillHeight": {
-   "value": 44,
-   "unit": "in",
-   "code": "IRC 2018",
-   "section": "R310.2.2",
-   "amendment": null,
-   "source": "https://www.dli.mn.gov/sites/default/files/pdf/fs-emergency-escapes.pdf",
-   "checked": "2026-10-15"
-  },
-  "egress.windowWellArea": {
-   "value": 9,
-   "unit": "sq ft",
-   "code": "IRC 2018",
-   "section": "R310.2.3",
-   "amendment": null,
-   "source": "https://www.dli.mn.gov/sites/default/files/pdf/fs-emergency-escapes.pdf",
-   "checked": "2026-10-15"
-  },
-  "egress.windowWellProjection": {
-   "value": 36,
-   "unit": "in",
-   "code": "IRC 2018",
-   "section": "R310.2.3",
-   "amendment": null,
-   "source": "https://www.dli.mn.gov/sites/default/files/pdf/fs-emergency-escapes.pdf",
-   "checked": "2026-10-15"
-  },
-  "egress.windowWellLadderDepth": {
-   "value": 44,
-   "unit": "in",
-   "code": "IRC 2018",
-   "section": "R310.2.3.1",
-   "amendment": null,
-   "source": "https://www.dli.mn.gov/sites/default/files/pdf/fs-emergency-escapes.pdf",
-   "checked": "2026-10-15",
-   "note": "Ladder needed when well deeper than this"
-  },
-  "exit.doorClearWidth": {
-   "value": 32,
-   "unit": "in",
-   "code": "IRC 2018",
-   "section": "R311.2",
-   "amendment": null,
-   "source": "https://www.buttecounty.net/DocumentCenter/View/7831/DBP-26-2022-Residential-Standard-Plan-Notes-PDF",
-   "checked": "2026-10-15",
-   "note": "Source is the California residential code, which mirrors the IRC rule",
-   "unverified": true
-  },
-  "exit.doorClearHeight": {
-   "value": 78,
-   "unit": "in",
-   "code": "IRC 2018",
-   "section": "R311.2",
-   "amendment": null,
-   "source": "https://www.buttecounty.net/DocumentCenter/View/7831/DBP-26-2022-Residential-Standard-Plan-Notes-PDF",
-   "checked": "2026-10-15",
-   "note": "Same source caveat as width",
-   "unverified": true
-  },
-  "exit.hallwayMinWidth": {
-   "value": 36,
-   "unit": "in",
-   "code": "IRC 2018",
-   "section": "R311.6",
-   "amendment": null,
-   "source": "https://www.buttecounty.net/DocumentCenter/View/7831/DBP-26-2022-Residential-Standard-Plan-Notes-PDF",
-   "checked": "2026-10-15",
-   "note": "No source read stated it; base code value from memory",
-   "unverified": true
-  },
-  "exit.landingDepth": {
-   "value": 36,
-   "unit": "in",
-   "code": "IRC 2018",
-   "section": "R311.3.1",
-   "amendment": null,
-   "source": "https://www.buttecounty.net/DocumentCenter/View/7831/DBP-26-2022-Residential-Standard-Plan-Notes-PDF",
-   "checked": "2026-10-15",
-   "note": "Source is California code; mirrors IRC",
-   "unverified": true
-  },
-  "stairs.minWidth": {
-   "value": 36,
-   "unit": "in",
-   "code": "IRC 2018",
-   "section": "R311.7.1",
-   "amendment": null,
-   "source": "https://timnath.org/wp-content/uploads/2022/03/2018-RESIDENTIAL-STAIR-GUIDE.pdf",
-   "checked": "2026-10-15"
-  },
-  "stairs.minHeadroom": {
-   "value": 80,
-   "unit": "in",
-   "code": "IRC 2018",
-   "section": "R311.7.2",
-   "amendment": null,
-   "source": "https://timnath.org/wp-content/uploads/2022/03/2018-RESIDENTIAL-STAIR-GUIDE.pdf",
-   "checked": "2026-10-15"
-  },
-  "stairs.maxRiser": {
-   "value": 7.75,
-   "unit": "in",
-   "code": "IRC 2018",
-   "section": "R311.7.5.1",
-   "amendment": null,
-   "source": "https://timnath.org/wp-content/uploads/2022/03/2018-RESIDENTIAL-STAIR-GUIDE.pdf",
-   "checked": "2026-10-15"
-  },
-  "stairs.minTread": {
-   "value": 10,
-   "unit": "in",
-   "code": "IRC 2018",
-   "section": "R311.7.5.2",
-   "amendment": null,
-   "source": "https://timnath.org/wp-content/uploads/2022/03/2018-RESIDENTIAL-STAIR-GUIDE.pdf",
-   "checked": "2026-10-15"
-  },
-  "stairs.maxRiserVariation": {
-   "value": 0.375,
-   "unit": "in",
-   "code": "IRC 2018",
-   "section": "R311.7.5.1",
-   "amendment": null,
-   "source": "https://timnath.org/wp-content/uploads/2022/03/2018-RESIDENTIAL-STAIR-GUIDE.pdf",
-   "checked": "2026-10-15"
-  },
-  "stairs.nosingMin": {
-   "value": 0.75,
-   "unit": "in",
-   "code": "IRC 2018",
-   "section": "R311.7.5.3",
-   "amendment": null,
-   "source": "https://timnath.org/wp-content/uploads/2022/03/2018-RESIDENTIAL-STAIR-GUIDE.pdf",
-   "checked": "2026-10-15"
-  },
-  "stairs.nosingMax": {
-   "value": 1.25,
-   "unit": "in",
-   "code": "IRC 2018",
-   "section": "R311.7.5.3",
-   "amendment": null,
-   "source": "https://timnath.org/wp-content/uploads/2022/03/2018-RESIDENTIAL-STAIR-GUIDE.pdf",
-   "checked": "2026-10-15",
-   "note": "Nosing not needed if tread is 11 in or more"
-  },
-  "stairs.maxRiseBetweenLandings": {
-   "value": 151,
-   "unit": "in",
-   "code": "IRC 2018",
-   "section": "R311.7.3",
-   "amendment": null,
-   "source": "https://bouldercolorado.gov/media/1481/download",
-   "checked": "2026-10-15"
-  },
-  "stairs.landingMinDepth": {
-   "value": 36,
-   "unit": "in",
-   "code": "IRC 2018",
-   "section": "R311.7.6",
-   "amendment": null,
-   "source": "https://timnath.org/wp-content/uploads/2022/03/2018-RESIDENTIAL-STAIR-GUIDE.pdf",
-   "checked": "2026-10-15"
-  },
-  "stairs.handrailMinHeight": {
-   "value": 34,
-   "unit": "in",
-   "code": "IRC 2018",
-   "section": "R311.7.8.1",
-   "amendment": null,
-   "source": "https://timnath.org/wp-content/uploads/2022/03/2018-RESIDENTIAL-STAIR-GUIDE.pdf",
-   "checked": "2026-10-15"
-  },
-  "stairs.handrailMaxHeight": {
-   "value": 38,
-   "unit": "in",
-   "code": "IRC 2018",
-   "section": "R311.7.8.1",
-   "amendment": null,
-   "source": "https://timnath.org/wp-content/uploads/2022/03/2018-RESIDENTIAL-STAIR-GUIDE.pdf",
-   "checked": "2026-10-15"
-  },
-  "stairs.handrailRequiredRisers": {
-   "value": 4,
-   "unit": "count",
-   "code": "IRC 2018",
-   "section": "R311.7.8",
-   "amendment": null,
-   "source": "https://bouldercolorado.gov/media/1481/download",
-   "checked": "2026-10-15"
-  },
-  "guards.requiredDrop": {
-   "value": 30,
-   "unit": "in",
-   "code": "IRC 2018",
-   "section": "R312.1.1",
-   "amendment": null,
-   "source": "https://timnath.org/wp-content/uploads/2022/03/2018-RESIDENTIAL-STAIR-GUIDE.pdf",
-   "checked": "2026-10-15"
-  },
-  "guards.minHeight": {
-   "value": 36,
-   "unit": "in",
-   "code": "IRC 2018",
-   "section": "R312.1.2",
-   "amendment": null,
-   "source": "https://timnath.org/wp-content/uploads/2022/03/2018-RESIDENTIAL-STAIR-GUIDE.pdf",
-   "checked": "2026-10-15"
-  },
-  "guards.minHeightStairSides": {
-   "value": 34,
-   "unit": "in",
-   "code": "IRC 2018",
-   "section": "R312.1.2",
-   "amendment": null,
-   "source": "https://timnath.org/wp-content/uploads/2022/03/2018-RESIDENTIAL-STAIR-GUIDE.pdf",
-   "checked": "2026-10-15"
-  },
-  "guards.maxOpening": {
-   "value": 4,
-   "unit": "in",
-   "code": "IRC 2018",
-   "section": "R312.1.3",
-   "amendment": null,
-   "source": "https://timnath.org/wp-content/uploads/2022/03/2018-RESIDENTIAL-STAIR-GUIDE.pdf",
-   "checked": "2026-10-15",
-   "note": "Stair triangle opening 6 in; stair side openings 4 3/8 in"
-  },
-  "windowFall.heightAboveGrade": {
-   "value": 72,
-   "unit": "in",
-   "code": "IRC 2018",
-   "section": "R312.2.1",
-   "amendment": null,
-   "source": "https://www.buttecounty.net/DocumentCenter/View/7831/DBP-26-2022-Residential-Standard-Plan-Notes-PDF",
-   "checked": "2026-10-15",
-   "note": "Opening above this height over grade; California source mirrors IRC",
-   "unverified": true
-  },
-  "windowFall.minSillHeight": {
-   "value": 24,
-   "unit": "in",
-   "code": "IRC 2018",
-   "section": "R312.2.1",
-   "amendment": null,
-   "source": "https://www.buttecounty.net/DocumentCenter/View/7831/DBP-26-2022-Residential-Standard-Plan-Notes-PDF",
-   "checked": "2026-10-15",
-   "note": "Applies to sills below this height; same caveat",
-   "unverified": true
-  },
-  "glazing.doorAdjacentArc": {
-   "value": 24,
-   "unit": "in",
-   "code": "IRC 2018",
-   "section": "R308.4.2",
-   "amendment": null,
-   "source": "https://www.shastacounty.gov/sites/default/files/fileattachments/building/page/2658/safety_glazing.pdf",
-   "checked": "2026-10-15",
-   "note": "Source is 2022 California code; same hazardous-location numbers as IRC",
-   "unverified": true
-  },
-  "glazing.doorAdjacentMaxBottom": {
-   "value": 60,
-   "unit": "in",
-   "code": "IRC 2018",
-   "section": "R308.4.2",
-   "amendment": null,
-   "source": "https://www.shastacounty.gov/sites/default/files/fileattachments/building/page/2658/safety_glazing.pdf",
-   "checked": "2026-10-15",
-   "note": "Source is 2022 California code; same hazardous-location numbers as IRC",
-   "unverified": true
-  },
-  "glazing.largePaneArea": {
-   "value": 9,
-   "unit": "sq ft",
-   "code": "IRC 2018",
-   "section": "R308.4.3",
-   "amendment": null,
-   "source": "https://www.shastacounty.gov/sites/default/files/fileattachments/building/page/2658/safety_glazing.pdf",
-   "checked": "2026-10-15",
-   "note": "Source is 2022 California code; same hazardous-location numbers as IRC",
-   "unverified": true
-  },
-  "glazing.largePaneMaxBottom": {
-   "value": 18,
-   "unit": "in",
-   "code": "IRC 2018",
-   "section": "R308.4.3",
-   "amendment": null,
-   "source": "https://www.shastacounty.gov/sites/default/files/fileattachments/building/page/2658/safety_glazing.pdf",
-   "checked": "2026-10-15",
-   "note": "Source is 2022 California code; same hazardous-location numbers as IRC",
-   "unverified": true
-  },
-  "glazing.largePaneMinTop": {
-   "value": 36,
-   "unit": "in",
-   "code": "IRC 2018",
-   "section": "R308.4.3",
-   "amendment": null,
-   "source": "https://www.shastacounty.gov/sites/default/files/fileattachments/building/page/2658/safety_glazing.pdf",
-   "checked": "2026-10-15",
-   "note": "Source is 2022 California code; same hazardous-location numbers as IRC",
-   "unverified": true
-  },
-  "glazing.largePaneWalkway": {
-   "value": 36,
-   "unit": "in",
-   "code": "IRC 2018",
-   "section": "R308.4.3",
-   "amendment": null,
-   "source": "https://www.shastacounty.gov/sites/default/files/fileattachments/building/page/2658/safety_glazing.pdf",
-   "checked": "2026-10-15",
-   "note": "Source is 2022 California code; same hazardous-location numbers as IRC",
-   "unverified": true
-  },
-  "glazing.wetSurfaceMaxBottom": {
-   "value": 60,
-   "unit": "in",
-   "code": "IRC 2018",
-   "section": "R308.4.5",
-   "amendment": null,
-   "source": "https://www.shastacounty.gov/sites/default/files/fileattachments/building/page/2658/safety_glazing.pdf",
-   "checked": "2026-10-15",
-   "note": "Source is 2022 California code; same hazardous-location numbers as IRC",
-   "unverified": true
-  },
-  "glazing.stairMaxBottom": {
-   "value": 36,
-   "unit": "in",
-   "code": "IRC 2018",
-   "section": "R308.4.6/R308.4.7",
-   "amendment": null,
-   "source": "https://www.shastacounty.gov/sites/default/files/fileattachments/building/page/2658/safety_glazing.pdf",
-   "checked": "2026-10-15",
-   "note": "Source is 2022 California code; same hazardous-location numbers as IRC",
-   "unverified": true
-  },
-  "garage.doorSolidWoodThickness": {
-   "value": 1.375,
-   "unit": "in",
-   "code": "IRC 2018",
-   "section": "R302.5.1",
-   "amendment": null,
-   "source": "https://www.buttecounty.net/DocumentCenter/View/7831/DBP-26-2022-Residential-Standard-Plan-Notes-PDF",
-   "checked": "2026-10-15",
-   "note": "Or 20-min door; California source",
-   "unverified": true
-  },
-  "garage.doorFireRatingMinutes": {
-   "value": 20,
-   "unit": "min",
-   "code": "IRC 2018",
-   "section": "R302.5.1",
-   "amendment": null,
-   "source": "https://www.buttecounty.net/DocumentCenter/View/7831/DBP-26-2022-Residential-Standard-Plan-Notes-PDF",
-   "checked": "2026-10-15",
-   "note": "California source",
-   "unverified": true
-  },
-  "garage.gypsumGarageSide": {
-   "value": 0.625,
-   "unit": "in",
-   "code": "IRC 2018",
-   "section": "Table R302.6",
-   "amendment": "Idaho replaced Table R302.6 with 5/8 in Type X on garage side (base 2018 is 1/2 in)",
-   "source": "https://regulations.justia.com/states/idaho/24/24-39-30/section-24-39-30-600",
-   "checked": "2026-10-15",
-   "note": "Type X; also for garage walls closer than 3 ft to dwelling"
-  },
-  "garage.gypsumCeilingUnderHabitable": {
-   "value": 0.625,
-   "unit": "in",
-   "code": "IRC 2018",
-   "section": "Table R302.6",
-   "amendment": "Idaho Table R302.6 replacement: 5/8 in Type X",
-   "source": "https://regulations.justia.com/states/idaho/24/24-39-30/section-24-39-30-600",
-   "checked": "2026-10-15",
-   "note": "Type X; ceiling-specific value not separately stated in the Idaho summary",
-   "unverified": true
-  },
-  "smoke.inEachBedroom": {
-   "value": true,
-   "unit": "",
-   "code": "IRC 2018",
-   "section": "R314.3",
-   "amendment": null,
-   "source": "https://www.tfid.org/DocumentCenter/View/5400/SmokeDetectors-IRCConstructionTipSheet4-TFID--06042021ML",
-   "checked": "2026-10-15",
-   "note": "Source is a tip sheet for 2018 IRC with Idaho amendments",
-   "unverified": true
-  },
-  "smoke.outsideSleepingAreas": {
-   "value": true,
-   "unit": "",
-   "code": "IRC 2018",
-   "section": "R314.3",
-   "amendment": null,
-   "source": "https://www.tfid.org/DocumentCenter/View/5400/SmokeDetectors-IRCConstructionTipSheet4-TFID--06042021ML",
-   "checked": "2026-10-15",
-   "note": "Source is a tip sheet for 2018 IRC with Idaho amendments",
-   "unverified": true
-  },
-  "smoke.eachStory": {
-   "value": true,
-   "unit": "",
-   "code": "IRC 2018",
-   "section": "R314.3",
-   "amendment": null,
-   "source": "https://www.tfid.org/DocumentCenter/View/5400/SmokeDetectors-IRCConstructionTipSheet4-TFID--06042021ML",
-   "checked": "2026-10-15",
-   "note": "Source is a tip sheet for 2018 IRC with Idaho amendments",
-   "unverified": true
-  },
-  "smoke.minDistanceFromBathroom": {
-   "value": 36,
-   "unit": "in",
-   "code": "IRC 2018",
-   "section": "R314.3 item 4",
-   "amendment": null,
-   "source": "https://www.tfid.org/DocumentCenter/View/5400/SmokeDetectors-IRCConstructionTipSheet4-TFID--06042021ML",
-   "checked": "2026-10-15"
-  },
-  "smoke.minDistanceFromCookingAppliance": {
-   "value": 240,
-   "unit": "in",
-   "code": "IRC 2018",
-   "section": "R314.3.1",
-   "amendment": null,
-   "source": "https://www.tfid.org/DocumentCenter/View/5400/SmokeDetectors-IRCConstructionTipSheet4-TFID--06042021ML",
-   "checked": "2026-10-15",
-   "note": "20 ft ionization without silence; 10 ft with silence switch (120 in)"
-  },
-  "smoke.minDistanceFromCookingPhotoelectric": {
-   "value": 72,
-   "unit": "in",
-   "code": "IRC 2018",
-   "section": "R314.3.1",
-   "amendment": null,
-   "source": "https://www.tfid.org/DocumentCenter/View/5400/SmokeDetectors-IRCConstructionTipSheet4-TFID--06042021ML",
-   "checked": "2026-10-15"
-  },
-  "co.requiredWithFuelOrAttachedGarage": {
-   "value": true,
-   "unit": "",
-   "code": "IRC 2018",
-   "section": "R315.2.1",
-   "amendment": "Idaho deleted R315.2.2 exception 2 (alteration exemption)",
-   "source": "https://www.tfid.org/DocumentCenter/View/5400/SmokeDetectors-IRCConstructionTipSheet4-TFID--06042021ML",
-   "checked": "2026-10-15"
-  },
-  "attic.accessMinWidth": {
-   "value": 22,
-   "unit": "in",
-   "code": "IRC 2018",
-   "section": "R807.1",
-   "amendment": null,
-   "source": "https://mountain-home.us/media/bhdnlzpo/attic-and-crawl-space-access.pdf",
-   "checked": "2026-10-15"
-  },
-  "attic.accessMinLength": {
-   "value": 30,
-   "unit": "in",
-   "code": "IRC 2018",
-   "section": "R807.1",
-   "amendment": null,
-   "source": "https://mountain-home.us/media/bhdnlzpo/attic-and-crawl-space-access.pdf",
-   "checked": "2026-10-15"
-  },
-  "attic.accessRequiredArea": {
-   "value": 30,
-   "unit": "sq ft",
-   "code": "IRC 2018",
-   "section": "R807.1",
-   "amendment": null,
-   "source": "https://mountain-home.us/media/bhdnlzpo/attic-and-crawl-space-access.pdf",
-   "checked": "2026-10-15",
-   "note": "Access required when attic area exceeds this and height is at least 30 in"
-  },
-  "attic.accessRequiredHeight": {
-   "value": 30,
-   "unit": "in",
-   "code": "IRC 2018",
-   "section": "R807.1",
-   "amendment": null,
-   "source": "https://mountain-home.us/media/bhdnlzpo/attic-and-crawl-space-access.pdf",
-   "checked": "2026-10-15"
-  },
-  "attic.ventRatio": {
-   "value": 150,
-   "unit": "",
-   "code": "IRC 2018",
-   "section": "R806.2",
-   "amendment": null,
-   "source": "https://www.agr.georgia.gov/sites/default/files/documents/pest-control/international-residential-building-code-ventilation.pdf",
-   "checked": "2026-10-15",
-   "note": "Not read in any source; base code from memory",
-   "unverified": true
-  },
-  "attic.ventRatioReduced": {
-   "value": 300,
-   "unit": "",
-   "code": "IRC 2018",
-   "section": "R806.2 exc.",
-   "amendment": null,
-   "source": "https://www.agr.georgia.gov/sites/default/files/documents/pest-control/international-residential-building-code-ventilation.pdf",
-   "checked": "2026-10-15",
-   "note": "Not read in any source; base code from memory",
-   "unverified": true
-  },
-  "crawl.accessFloorWidth": {
-   "value": 18,
-   "unit": "in",
-   "code": "IRC 2018",
-   "section": "R408.4",
-   "amendment": null,
-   "source": "https://mountain-home.us/media/bhdnlzpo/attic-and-crawl-space-access.pdf",
-   "checked": "2026-10-15"
-  },
-  "crawl.accessFloorLength": {
-   "value": 24,
-   "unit": "in",
-   "code": "IRC 2018",
-   "section": "R408.4",
-   "amendment": null,
-   "source": "https://mountain-home.us/media/bhdnlzpo/attic-and-crawl-space-access.pdf",
-   "checked": "2026-10-15"
-  },
-  "crawl.accessWallWidth": {
-   "value": 16,
-   "unit": "in",
-   "code": "IRC 2018",
-   "section": "R408.4",
-   "amendment": null,
-   "source": "https://mountain-home.us/media/bhdnlzpo/attic-and-crawl-space-access.pdf",
-   "checked": "2026-10-15"
-  },
-  "crawl.accessWallLength": {
-   "value": 24,
-   "unit": "in",
-   "code": "IRC 2018",
-   "section": "R408.4",
-   "amendment": null,
-   "source": "https://mountain-home.us/media/bhdnlzpo/attic-and-crawl-space-access.pdf",
-   "checked": "2026-10-15"
-  },
-  "crawl.ventAreaPer": {
-   "value": 150,
-   "unit": "sq ft",
-   "code": "IRC 2018",
-   "section": "R408.1",
-   "amendment": null,
-   "source": "https://www.agr.georgia.gov/sites/default/files/documents/pest-control/international-residential-building-code-ventilation.pdf",
-   "checked": "2026-10-15",
-   "note": "Source is 2012 IRC; reduced to 1/1500 with Class 1 ground vapor retarder",
-   "unverified": true
-  },
-  "crawl.ventWithinCorner": {
-   "value": 3,
-   "unit": "ft",
-   "code": "IRC 2018",
-   "section": "R408.1",
-   "amendment": null,
-   "source": "https://www.agr.georgia.gov/sites/default/files/documents/pest-control/international-residential-building-code-ventilation.pdf",
-   "checked": "2026-10-15",
-   "note": "Source is 2012 IRC",
-   "unverified": true
-  },
-  "footing.minDepthBelowGrade": {
-   "value": 12,
-   "unit": "in",
-   "code": "IRC 2018",
-   "section": "R403.1.4",
-   "amendment": "Idaho replaced Table R403.1 footing widths and R403.1.1 sizes",
-   "source": "https://regulations.justia.com/states/idaho/24/24-39-30/section-24-39-30-600",
-   "checked": "2026-10-15",
-   "note": "Base value from memory; not seen in a source. Idaho replaced footing width tables (new Table R403.1; 6 in min thickness)",
-   "unverified": true
-  },
-  "footing.minDepthFrost": {
-   "value": 24,
-   "unit": "in",
-   "code": "IRC 2018",
-   "section": "R403.1.4.1",
-   "amendment": null,
-   "source": "https://www.cityofboise.org/media/18749/currently-adopted-building-codes-4-26-24.pdf",
-   "checked": "2026-10-15",
-   "note": "Equals Boise frost depth"
-  },
-  "vent.wholeHouseCfmPerSqFt": {
-   "value": 0.03,
-   "unit": "cfm",
-   "code": "IRC 2018",
-   "section": "M1505.4.3",
-   "amendment": "Idaho R303.4 requires whole-house mechanical ventilation per M1505.4",
-   "source": "https://www.larimer.gov/sites/default/files/uploads/2022/whole_house_mechanical_ventilation.pdf",
-   "checked": "2026-10-15",
-   "note": "2018 IRC uses Table M1505.4.3(1) by floor area and bedrooms, not a formula; 0.03 is the ASHRAE 62.2 style constant, use the table instead. Idaho R303.4 requires M1505.4 whole-house ventilation",
-   "unverified": true
-  },
-  "vent.wholeHouseCfmPerBedroomPlusOne": {
-   "value": 7.5,
-   "unit": "cfm",
-   "code": "IRC 2018",
-   "section": "M1505.4.3",
-   "amendment": null,
-   "source": "https://www.larimer.gov/sites/default/files/uploads/2022/whole_house_mechanical_ventilation.pdf",
-   "checked": "2026-10-15",
-   "note": "Same caveat: table governs",
-   "unverified": true
-  },
-  "vent.bathIntermittent": {
-   "value": 50,
-   "unit": "cfm",
-   "code": "IRC 2018",
-   "section": "Table M1505.4.4",
-   "amendment": null,
-   "source": "https://www.larimer.gov/sites/default/files/uploads/2022/whole_house_mechanical_ventilation.pdf",
-   "checked": "2026-10-15",
-   "note": "Read in 2024 IRC text; assumed same as 2018",
-   "unverified": true
-  },
-  "vent.bathContinuous": {
-   "value": 20,
-   "unit": "cfm",
-   "code": "IRC 2018",
-   "section": "Table M1505.4.4",
-   "amendment": null,
-   "source": "https://www.larimer.gov/sites/default/files/uploads/2022/whole_house_mechanical_ventilation.pdf",
-   "checked": "2026-10-15",
-   "note": "2024 IRC source",
-   "unverified": true
-  },
-  "vent.kitchenIntermittent": {
-   "value": 100,
-   "unit": "cfm",
-   "code": "IRC 2018",
-   "section": "Table M1505.4.4",
-   "amendment": null,
-   "source": "https://www.larimer.gov/sites/default/files/uploads/2022/whole_house_mechanical_ventilation.pdf",
-   "checked": "2026-10-15",
-   "note": "2024 IRC source",
-   "unverified": true
-  },
-  "vent.kitchenContinuous": {
-   "value": 25,
-   "unit": "cfm",
-   "code": "IRC 2018",
-   "section": "Table M1505.4.4",
-   "amendment": null,
-   "source": "https://www.larimer.gov/sites/default/files/uploads/2022/whole_house_mechanical_ventilation.pdf",
-   "checked": "2026-10-15",
-   "note": "2024 IRC source",
-   "unverified": true
-  },
-  "plumbing.wcSideClearance": {
-   "value": 15,
-   "unit": "in",
-   "code": "ISPC 2017",
-   "section": "UPC 402.5",
-   "amendment": null,
-   "source": "https://lawfilesext.leg.wa.gov/Law/WSR/2021/01/21-01-125.htm",
-   "checked": "2026-10-15",
-   "note": "Confirmed in 2021 UPC text via Washington rule; Idaho 2017 code is 2015 UPC and no Idaho change found",
-   "unverified": true
-  },
-  "plumbing.wcFrontClearance": {
-   "value": 21,
-   "unit": "in",
-   "code": "ISPC 2017",
-   "section": "UPC 402.5",
-   "amendment": null,
-   "source": "https://lawfilesext.leg.wa.gov/Law/WSR/2021/01/21-01-125.htm",
-   "checked": "2026-10-15",
-   "note": "21 in in dwelling units, 24 in elsewhere; 2021 UPC source",
-   "unverified": true
-  },
-  "plumbing.showerMinArea": {
-   "value": 900,
-   "unit": "sq in",
-   "code": "ISPC 2017",
-   "section": "UPC 408.6",
-   "amendment": null,
-   "source": "https://lawfilesext.leg.wa.gov/Law/WSR/2021/01/21-01-125.htm",
-   "checked": "2026-10-15",
-   "note": "2021 UPC source; 2015 section number may differ (408.5)",
-   "unverified": true
-  },
-  "plumbing.showerMinCircle": {
-   "value": 30,
-   "unit": "in",
-   "code": "ISPC 2017",
-   "section": "UPC 408.6",
-   "amendment": null,
-   "source": "https://lawfilesext.leg.wa.gov/Law/WSR/2021/01/21-01-125.htm",
-   "checked": "2026-10-15",
-   "note": "2021 UPC source",
-   "unverified": true
-  },
-  "plumbing.lavatorySideClearance": {
-   "value": 15,
-   "unit": "in",
-   "code": "ISPC 2017",
-   "section": "UPC 402.5",
-   "amendment": null,
-   "source": "https://open-exam-prep.com/study-guides/journeyman-plumber/fixtures-appliances-heaters/fixture-minimum-standards",
-   "checked": "2026-10-15",
-   "note": "Edition not stated in source",
-   "unverified": true
-  },
-  "plumbing.waterHeaterTPRDischarge": {
-   "value": "Discharge pipe to a safe visible spot; no valve in the line",
-   "unit": "",
-   "code": "ISPC 2017",
-   "section": "UPC 608.5",
-   "amendment": null,
-   "source": "https://open-exam-prep.com/study-guides/journeyman-plumber/fixtures-appliances-heaters/fixture-minimum-standards",
-   "checked": "2026-10-15",
-   "note": "Not read in any source; verify",
-   "unverified": true
-  },
-  "elec.wallReceptacleMaxDistance": {
-   "value": 6,
-   "unit": "ft",
-   "code": "NEC 2023",
-   "section": "210.52(A)(1)",
-   "amendment": null,
-   "source": "https://www.stpaul.gov/sites/default/files/2020-12/DSI.Bldg_Electrical_Checklist%20Dwelling%20Unit%20Rough%20In.pdf",
-   "checked": "2026-10-15",
-   "note": "Source is a 2020 NEC checklist",
-   "unverified": true
-  },
-  "elec.wallSpaceMinWidth": {
-   "value": 2,
-   "unit": "ft",
-   "code": "NEC 2023",
-   "section": "210.52(A)(2)",
-   "amendment": null,
-   "source": "https://www.stpaul.gov/sites/default/files/2020-12/DSI.Bldg_Electrical_Checklist%20Dwelling%20Unit%20Rough%20In.pdf",
-   "checked": "2026-10-15",
-   "note": "2020 NEC checklist",
-   "unverified": true
-  },
-  "elec.counterReceptacleMaxDistance": {
-   "value": 24,
-   "unit": "in",
-   "code": "NEC 2023",
-   "section": "210.52(C)(1)",
-   "amendment": "Idaho added 210.52(C)(4) for island/peninsula receptacle mounting",
-   "source": "https://www.stpaul.gov/sites/default/files/2020-12/DSI.Bldg_Electrical_Checklist%20Dwelling%20Unit%20Rough%20In.pdf",
-   "checked": "2026-10-15",
-   "note": "2020 NEC checklist. 2023 made island/peninsula receptacle optional (raceway needed); Idaho adds 210.52(C)(4) allowing island receptacles up to 12 in below the countertop",
-   "unverified": true
-  },
-  "elec.counterSpaceMinWidth": {
-   "value": 12,
-   "unit": "in",
-   "code": "NEC 2023",
-   "section": "210.52(C)(1)",
-   "amendment": null,
-   "source": "https://www.stpaul.gov/sites/default/files/2020-12/DSI.Bldg_Electrical_Checklist%20Dwelling%20Unit%20Rough%20In.pdf",
-   "checked": "2026-10-15",
-   "note": "2020 NEC checklist",
-   "unverified": true
-  },
-  "elec.counterReceptacleMaxAbove": {
-   "value": 20,
-   "unit": "in",
-   "code": "NEC 2023",
-   "section": "210.52(C)(3)",
-   "amendment": null,
-   "source": "https://www.stpaul.gov/sites/default/files/2020-12/DSI.Bldg_Electrical_Checklist%20Dwelling%20Unit%20Rough%20In.pdf",
-   "checked": "2026-10-15",
-   "note": "Not in the checklist; base NEC value from memory",
-   "unverified": true
-  },
-  "elec.smallApplianceCircuits": {
-   "value": 2,
-   "unit": "count",
-   "code": "NEC 2023",
-   "section": "210.11(C)(1)",
-   "amendment": null,
-   "source": "https://www.stpaul.gov/sites/default/files/2020-12/DSI.Bldg_Electrical_Checklist%20Dwelling%20Unit%20Rough%20In.pdf",
-   "checked": "2026-10-15",
-   "note": "2020 NEC checklist; Idaho did not amend 210.11",
-   "unverified": true
-  },
-  "elec.smallApplianceAmps": {
-   "value": 20,
-   "unit": "A",
-   "code": "NEC 2023",
-   "section": "210.11(C)(1)",
-   "amendment": null,
-   "source": "https://www.stpaul.gov/sites/default/files/2020-12/DSI.Bldg_Electrical_Checklist%20Dwelling%20Unit%20Rough%20In.pdf",
-   "checked": "2026-10-15",
-   "note": "2020 NEC checklist",
-   "unverified": true
-  },
-  "elec.laundryCircuits": {
-   "value": 1,
-   "unit": "count",
-   "code": "NEC 2023",
-   "section": "210.11(C)(2)",
-   "amendment": null,
-   "source": "https://www.stpaul.gov/sites/default/files/2020-12/DSI.Bldg_Electrical_Checklist%20Dwelling%20Unit%20Rough%20In.pdf",
-   "checked": "2026-10-15",
-   "note": "2020 NEC checklist",
-   "unverified": true
-  },
-  "elec.bathroomCircuitAmps": {
-   "value": 20,
-   "unit": "A",
-   "code": "NEC 2023",
-   "section": "210.11(C)(3)",
-   "amendment": null,
-   "source": "https://www.stpaul.gov/sites/default/files/2020-12/DSI.Bldg_Electrical_Checklist%20Dwelling%20Unit%20Rough%20In.pdf",
-   "checked": "2026-10-15",
-   "note": "2020 NEC checklist",
-   "unverified": true
-  },
-  "elec.outdoorReceptaclesFrontBack": {
-   "value": true,
-   "unit": "",
-   "code": "NEC 2023",
-   "section": "210.52(E)",
-   "amendment": "Idaho replaced 210.52(E)(3) (decks/balconies/porches)",
-   "source": "https://www.stpaul.gov/sites/default/files/2020-12/DSI.Bldg_Electrical_Checklist%20Dwelling%20Unit%20Rough%20In.pdf",
-   "checked": "2026-10-15",
-   "note": "2020 NEC checklist. Idaho replaced 210.52(E)(3): porches/decks/balconies of 20 sq ft or more reachable from inside need one receptacle",
-   "unverified": true
-  },
-  "elec.outdoorReceptacleMaxHeight": {
-   "value": 78,
-   "unit": "in",
-   "code": "NEC 2023",
-   "section": "210.52(E)",
-   "amendment": null,
-   "source": "https://www.stpaul.gov/sites/default/files/2020-12/DSI.Bldg_Electrical_Checklist%20Dwelling%20Unit%20Rough%20In.pdf",
-   "checked": "2026-10-15",
-   "note": "6.5 ft above grade; Idaho (E)(3) uses 6.5 ft above surface for decks",
-   "unverified": true
-  },
-  "elec.hallwayReceptacleLength": {
-   "value": 10,
-   "unit": "ft",
-   "code": "NEC 2023",
-   "section": "210.52(H)",
-   "amendment": null,
-   "source": "https://www.stpaul.gov/sites/default/files/2020-12/DSI.Bldg_Electrical_Checklist%20Dwelling%20Unit%20Rough%20In.pdf",
-   "checked": "2026-10-15",
-   "note": "2020 NEC checklist",
-   "unverified": true
-  },
-  "elec.gfciLocations": {
-   "value": [
-    "bathrooms",
-    "garages and accessory buildings",
-    "outdoors",
-    "crawl spaces (at/below grade)",
-    "unfinished basements",
-    "kitchens (all receptacles)",
-    "sinks outside kitchens (within 6 ft)",
-    "tub/shower areas (within 6 ft)",
-    "boathouses",
-    "indoor damp/wet locations"
-   ],
-   "unit": "",
-   "code": "NEC 2023",
-   "section": "210.8(A)",
-   "amendment": "IDAPA 24.39.10.600 amends 210.8(A): deletes (7) food-prep sinks and (11) laundry, limits basements to unfinished, drops 250 V",
-   "source": "https://regulations.justia.com/states/idaho/24/24-39-10/section-24-39-10-600",
-   "checked": "2026-10-15",
-   "note": "Base list read second-hand; Idaho removed laundry areas, finished basements, and the 250 V scope. Rule was a temporary one effective 4/19/2024, recheck status",
-   "unverified": true
-  },
-  "elec.afciLocations": {
-   "value": [
-    "bedrooms only (one- and two-family dwellings)"
-   ],
-   "unit": "",
-   "code": "NEC 2023",
-   "section": "210.12(B)",
-   "amendment": "IDAPA 24.39.10.600: AFCI only for bedroom circuits/outlets in 1- and 2-family dwellings",
-   "source": "https://regulations.justia.com/states/idaho/24/24-39-10/section-24-39-10-600",
-   "checked": "2026-10-15",
-   "note": "Temporary Idaho rule effective 4/19/2024; recheck status"
-  },
-  "elec.tamperResistant": {
-   "value": true,
-   "unit": "",
-   "code": "NEC 2023",
-   "section": "406.12",
-   "amendment": null,
-   "source": "https://regulations.justia.com/states/idaho/24/24-39-10/section-24-39-10-600",
-   "checked": "2026-10-15",
-   "note": "Idaho has no amendment to 406.12 per the rule; requirement itself from memory of base code",
-   "unverified": true
-  },
-  "elec.garageReceptaclePerBay": {
-   "value": 1,
-   "unit": "count",
-   "code": "NEC 2023",
-   "section": "210.52(G)",
-   "amendment": null,
-   "source": "https://www.stpaul.gov/sites/default/files/2020-12/DSI.Bldg_Electrical_Checklist%20Dwelling%20Unit%20Rough%20In.pdf",
-   "checked": "2026-10-15",
-   "note": "Source says one 20 A circuit for garage; per-bay count from base code memory",
-   "unverified": true
-  },
-  "energy.fenestrationU": {
-   "value": 0.32,
-   "unit": "",
-   "code": "IECC 2018",
-   "section": "Table R402.1.2",
-   "amendment": null,
-   "source": "https://regulations.justia.com/states/idaho/24/24-39-30/section-24-39-30-600",
-   "checked": "2026-10-15"
-  },
-  "energy.skylightU": {
-   "value": 0.55,
-   "unit": "",
-   "code": "IECC 2018",
-   "section": "Table R402.1.2",
-   "amendment": null,
-   "source": "https://regulations.justia.com/states/idaho/24/24-39-30/section-24-39-30-600",
-   "checked": "2026-10-15"
-  },
-  "energy.glazedSHGC": {
-   "value": "NR",
-   "unit": "",
-   "code": "IECC 2018",
-   "section": "Table R402.1.2",
-   "amendment": "Idaho table: SHGC not required in zones 5-6",
-   "source": "https://regulations.justia.com/states/idaho/24/24-39-30/section-24-39-30-600",
-   "checked": "2026-10-15"
-  },
-  "energy.ceilingR": {
-   "value": 38,
-   "unit": "",
-   "code": "IECC 2018",
-   "section": "Table R402.1.2",
-   "amendment": "Idaho replaced zone 5 ceiling R-49 (base 2018 IECC) with R-38",
-   "source": "https://regulations.justia.com/states/idaho/24/24-39-30/section-24-39-30-600",
-   "checked": "2026-10-15"
-  },
-  "energy.woodWallR": {
-   "value": "20 or 13+5",
-   "unit": "",
-   "code": "IECC 2018",
-   "section": "Table R402.1.2",
-   "amendment": null,
-   "source": "https://regulations.justia.com/states/idaho/24/24-39-30/section-24-39-30-600",
-   "checked": "2026-10-15"
-  },
-  "energy.massWallR": {
-   "value": "13/17",
-   "unit": "",
-   "code": "IECC 2018",
-   "section": "Table R402.1.2",
-   "amendment": null,
-   "source": "https://regulations.justia.com/states/idaho/24/24-39-30/section-24-39-30-600",
-   "checked": "2026-10-15"
-  },
-  "energy.floorR": {
-   "value": 30,
-   "unit": "",
-   "code": "IECC 2018",
-   "section": "Table R402.1.2",
-   "amendment": null,
-   "source": "https://regulations.justia.com/states/idaho/24/24-39-30/section-24-39-30-600",
-   "checked": "2026-10-15"
-  },
-  "energy.basementWallR": {
-   "value": "15/19",
-   "unit": "",
-   "code": "IECC 2018",
-   "section": "Table R402.1.2",
-   "amendment": null,
-   "source": "https://regulations.justia.com/states/idaho/24/24-39-30/section-24-39-30-600",
-   "checked": "2026-10-15"
-  },
-  "energy.slabR": {
-   "value": "R-10, 2 ft",
-   "unit": "",
-   "code": "IECC 2018",
-   "section": "Table R402.1.2",
-   "amendment": null,
-   "source": "https://regulations.justia.com/states/idaho/24/24-39-30/section-24-39-30-600",
-   "checked": "2026-10-15"
-  },
-  "energy.crawlWallR": {
-   "value": "15/19",
-   "unit": "",
-   "code": "IECC 2018",
-   "section": "Table R402.1.2",
-   "amendment": null,
-   "source": "https://regulations.justia.com/states/idaho/24/24-39-30/section-24-39-30-600",
-   "checked": "2026-10-15"
-  },
-  "energy.airLeakageACH50": {
-   "value": 5,
-   "unit": "",
-   "code": "IECC 2018",
-   "section": "R402.4.1.2",
-   "amendment": "Idaho: at least 20% of a builder's homes must be tested from 7/1/2021; visual inspection option added",
-   "source": "https://insulationinstitute.org/wp-content/uploads/2024/07/N140-ID-Energy-Code-0823.pdf",
-   "checked": "2026-10-15"
-  },
-  "energy.ductTestRequired": {
-   "value": "Duct leakage test required: 4 cfm25 per 100 sq ft at rough-in (total) or post-construction (to outside)",
-   "unit": "",
-   "code": "IECC 2018",
-   "section": "R403.3.3",
-   "amendment": null,
-   "source": "https://insulationinstitute.org/wp-content/uploads/2024/07/N140-ID-Energy-Code-0823.pdf",
-   "checked": "2026-10-15"
+  "meta": {
+    "jurisdiction": "Boise, Idaho",
+    "checked": "2026-10-15",
+    "editions": [
+      {
+        "code": "IRC",
+        "edition": "2018",
+        "amendments": "Idaho amendments (IDAPA 24.39.30) and Boise City Code Title 9; Parts I-IV, IX plus mechanical/gas Parts V-VI for 1-2 family",
+        "source": "https://regulations.justia.com/states/idaho/24/24-39-30/section-24-39-30-600"
+      },
+      {
+        "code": "IECC",
+        "edition": "2018",
+        "amendments": "Idaho residential amendments incl. Table R402.1.2 zone 5 (ceiling R-38), log home table, 20% air leakage testing",
+        "source": "https://regulations.justia.com/states/idaho/24/24-39-30/section-24-39-30-600"
+      },
+      {
+        "code": "NEC",
+        "edition": "2023",
+        "amendments": "IDAPA 24.39.10.600 (temporary rule effective 4/19/2024): 210.8, 210.12, 210.52 changes",
+        "source": "https://regulations.justia.com/states/idaho/24/24-39-10/section-24-39-10-600"
+      },
+      {
+        "code": "ISPC",
+        "edition": "2017",
+        "amendments": "Idaho State Plumbing Code, based on 2015 UPC",
+        "source": "https://www.cityofboise.org/media/18749/currently-adopted-building-codes-4-26-24.pdf"
+      },
+      {
+        "code": "Boise design criteria",
+        "edition": "IRC Table R301.2(1), rev 4/2024",
+        "amendments": "Boise local: 24 in frost depth; roof snow 25 psf",
+        "source": "https://www.cityofboise.org/media/18749/currently-adopted-building-codes-4-26-24.pdf"
+      }
+    ]
+  },
+  "values": {
+    "design.groundSnowLoad": {
+      "value": 20,
+      "unit": "psf",
+      "code": "Boise design criteria",
+      "section": "Table R301.2(1)",
+      "amendment": null,
+      "source": "https://www.cityofboise.org/media/18749/currently-adopted-building-codes-4-26-24.pdf",
+      "checked": "2026-10-15",
+      "secondCheck": {
+        "verdict": "agree",
+        "source": "https://www.cityofboise.org/media/18749/currently-adopted-building-codes-4-26-24.pdf"
+      }
+    },
+    "design.roofSnowLoadMin": {
+      "value": 25,
+      "unit": "psf",
+      "code": "Boise design criteria",
+      "section": "Table R301.2(1)",
+      "amendment": null,
+      "source": "https://www.cityofboise.org/media/18749/currently-adopted-building-codes-4-26-24.pdf",
+      "checked": "2026-10-15",
+      "secondCheck": {
+        "verdict": "agree",
+        "source": "https://www.cityofboise.org/media/18749/currently-adopted-building-codes-4-26-24.pdf"
+      }
+    },
+    "design.windSpeed": {
+      "value": 90,
+      "unit": "mph",
+      "code": "Boise design criteria",
+      "section": "Table R301.2(1)",
+      "amendment": null,
+      "source": "https://www.cityofboise.org/media/18749/currently-adopted-building-codes-4-26-24.pdf",
+      "checked": "2026-10-15",
+      "note": "As listed on Boise sheet; topographic effects: no",
+      "secondCheck": {
+        "verdict": "agree",
+        "source": "https://www.cityofboise.org/media/18749/currently-adopted-building-codes-4-26-24.pdf"
+      }
+    },
+    "design.seismicCategory": {
+      "value": "C",
+      "unit": "",
+      "code": "Boise design criteria",
+      "section": "Table R301.2(1)",
+      "amendment": null,
+      "source": "https://www.cityofboise.org/media/18749/currently-adopted-building-codes-4-26-24.pdf",
+      "checked": "2026-10-15",
+      "secondCheck": {
+        "verdict": "agree",
+        "source": "https://www.cityofboise.org/media/18749/currently-adopted-building-codes-4-26-24.pdf"
+      }
+    },
+    "design.frostDepth": {
+      "value": 24,
+      "unit": "in",
+      "code": "Boise design criteria",
+      "section": "Table R301.2(1)",
+      "amendment": "Boise local amendment: 24 in minimum frost depth",
+      "source": "https://www.cityofboise.org/media/18749/currently-adopted-building-codes-4-26-24.pdf",
+      "checked": "2026-10-15",
+      "secondCheck": {
+        "verdict": "agree",
+        "source": "https://www.cityofboise.org/media/18749/currently-adopted-building-codes-4-26-24.pdf"
+      }
+    },
+    "design.weathering": {
+      "value": "Severe",
+      "unit": "",
+      "code": "Boise design criteria",
+      "section": "Table R301.2(1)",
+      "amendment": null,
+      "source": "https://www.cityofboise.org/media/18749/currently-adopted-building-codes-4-26-24.pdf",
+      "checked": "2026-10-15",
+      "secondCheck": {
+        "verdict": "agree",
+        "source": "https://www.cityofboise.org/media/18749/currently-adopted-building-codes-4-26-24.pdf"
+      }
+    },
+    "design.termite": {
+      "value": "Slight to moderate",
+      "unit": "",
+      "code": "Boise design criteria",
+      "section": "Table R301.2(1)",
+      "amendment": null,
+      "source": "https://www.cityofboise.org/media/18749/currently-adopted-building-codes-4-26-24.pdf",
+      "checked": "2026-10-15",
+      "secondCheck": {
+        "verdict": "agree",
+        "source": "https://www.cityofboise.org/media/18749/currently-adopted-building-codes-4-26-24.pdf"
+      }
+    },
+    "design.winterDesignTemp": {
+      "value": 10,
+      "unit": "°F",
+      "code": "Boise design criteria",
+      "section": "Table R301.2(1)",
+      "amendment": null,
+      "source": "https://www.cityofboise.org/media/18749/currently-adopted-building-codes-4-26-24.pdf",
+      "checked": "2026-10-15",
+      "secondCheck": {
+        "verdict": "agree",
+        "source": "https://www.cityofboise.org/media/18749/currently-adopted-building-codes-4-26-24.pdf"
+      }
+    },
+    "design.iceBarrierRequired": {
+      "value": false,
+      "unit": "",
+      "code": "Boise design criteria",
+      "section": "Table R301.2(1)",
+      "amendment": null,
+      "source": "https://www.cityofboise.org/media/18749/currently-adopted-building-codes-4-26-24.pdf",
+      "checked": "2026-10-15",
+      "secondCheck": {
+        "verdict": "agree",
+        "source": "https://www.cityofboise.org/media/18749/currently-adopted-building-codes-4-26-24.pdf"
+      }
+    },
+    "design.floodHazard": {
+      "value": "Floodplain ordinance 12/12/1983; FIS dated 6/19/2020 (panels per Boise sheet)",
+      "unit": "",
+      "code": "Boise design criteria",
+      "section": "Table R301.2(1)",
+      "amendment": null,
+      "source": "https://www.cityofboise.org/media/18749/currently-adopted-building-codes-4-26-24.pdf",
+      "checked": "2026-10-15",
+      "secondCheck": {
+        "verdict": "agree",
+        "source": "https://www.cityofboise.org/media/18749/currently-adopted-building-codes-4-26-24.pdf"
+      }
+    },
+    "design.climateZone": {
+      "value": "5B",
+      "unit": "",
+      "code": "IECC 2018",
+      "section": "IECC Table R301.1 (IRC Table N1101.7)",
+      "amendment": null,
+      "source": "https://www.cityofboise.org/media/18749/currently-adopted-building-codes-4-26-24.pdf",
+      "checked": "2026-10-15",
+      "note": "Zone taken from the task brief; the Boise pages I read do not state it",
+      "secondCheck": {
+        "verdict": "agree",
+        "source": "https://insulationinstitute.org/wp-content/uploads/2015/12/ID-2012.pdf"
+      }
+    },
+    "design.manualJWinter": {
+      "value": 11,
+      "unit": "°F",
+      "code": "Boise design criteria",
+      "section": "Manual J criteria",
+      "amendment": null,
+      "source": "https://www.cityofboise.org/media/18749/currently-adopted-building-codes-4-26-24.pdf",
+      "checked": "2026-10-15",
+      "secondCheck": {
+        "verdict": "agree",
+        "source": "https://www.cityofboise.org/media/18749/currently-adopted-building-codes-4-26-24.pdf"
+      }
+    },
+    "design.manualJSummer": {
+      "value": 95,
+      "unit": "°F",
+      "code": "Boise design criteria",
+      "section": "Manual J criteria",
+      "amendment": null,
+      "source": "https://www.cityofboise.org/media/18749/currently-adopted-building-codes-4-26-24.pdf",
+      "checked": "2026-10-15",
+      "secondCheck": {
+        "verdict": "agree",
+        "source": "https://www.cityofboise.org/media/18749/currently-adopted-building-codes-4-26-24.pdf"
+      }
+    },
+    "design.elevation": {
+      "value": 2867,
+      "unit": "ft",
+      "code": "Boise design criteria",
+      "section": "Manual J criteria",
+      "amendment": null,
+      "source": "https://www.cityofboise.org/media/18749/currently-adopted-building-codes-4-26-24.pdf",
+      "checked": "2026-10-15",
+      "secondCheck": {
+        "verdict": "agree",
+        "source": "https://www.cityofboise.org/media/18749/currently-adopted-building-codes-4-26-24.pdf"
+      }
+    },
+    "rooms.minHabitableArea": {
+      "value": 70,
+      "unit": "sq ft",
+      "code": "IRC 2018",
+      "section": "R304.1",
+      "amendment": null,
+      "source": "https://www.greenlancer.com/post/irc-r305-1-basement-ceiling-height-code",
+      "checked": "2026-10-15",
+      "note": "Value from memory of base code; sources read did not show it",
+      "secondCheck": {
+        "verdict": "agree",
+        "source": "https://paysonaz.gov/home/showpublisheddocument/362/637902995569730000"
+      }
+    },
+    "rooms.minHabitableDimension": {
+      "value": 84,
+      "unit": "in",
+      "code": "IRC 2018",
+      "section": "R304.2",
+      "amendment": null,
+      "source": "https://www.greenlancer.com/post/irc-r305-1-basement-ceiling-height-code",
+      "checked": "2026-10-15",
+      "note": "7 ft; from memory of base code, not seen in a source",
+      "secondCheck": {
+        "verdict": "agree",
+        "source": "https://finehomebuilding.com/?p=519766"
+      }
+    },
+    "rooms.minCeilingHabitable": {
+      "value": 84,
+      "unit": "in",
+      "code": "IRC 2018",
+      "section": "R305.1",
+      "amendment": null,
+      "source": "https://www.greenlancer.com/post/irc-r305-1-basement-ceiling-height-code",
+      "checked": "2026-10-15",
+      "note": "Sloped-ceiling exception: half the area at 7 ft, none under 5 ft",
+      "secondCheck": {
+        "verdict": "agree",
+        "source": "https://www.cityofboise.org/media/3924/434-irc-code-section-r305-ceiling-height.pdf"
+      }
+    },
+    "rooms.minCeilingBathroom": {
+      "value": 80,
+      "unit": "in",
+      "code": "IRC 2018",
+      "section": "R305.1",
+      "amendment": null,
+      "source": "https://www.thebuildingcodeforum.com/forum/threads/ceiling-height-exceptions.23572",
+      "checked": "2026-10-15",
+      "note": "6 ft 8 in at fixture/shower clearance; source quoted Florida text of the same IRC rule",
+      "secondCheck": {
+        "verdict": "agree",
+        "source": "https://www.cityofboise.org/media/3924/434-irc-code-section-r305-ceiling-height.pdf"
+      }
+    },
+    "rooms.basementCeilingNonHabitable": {
+      "value": 80,
+      "unit": "in",
+      "code": "IRC 2018",
+      "section": "R305.1.1",
+      "amendment": null,
+      "source": "https://www.greenlancer.com/post/irc-r305-1-basement-ceiling-height-code",
+      "checked": "2026-10-15",
+      "note": "Beams, girders, ducts may drop to 76 in",
+      "secondCheck": {
+        "verdict": "agree",
+        "source": "https://www.cityofboise.org/media/3924/434-irc-code-section-r305-ceiling-height.pdf"
+      }
+    },
+    "light.glazingPctOfFloor": {
+      "value": 8,
+      "unit": "%",
+      "code": "IRC 2018",
+      "section": "R303.1",
+      "amendment": null,
+      "source": "https://cityofboise.org/media/3923/433-irc-code-section-r303-light-ventilation.pdf",
+      "checked": "2026-10-15",
+      "secondCheck": {
+        "verdict": "agree",
+        "source": "https://cityofboise.org/media/3923/433-irc-code-section-r303-light-ventilation.pdf"
+      }
+    },
+    "light.ventOpenablePctOfFloor": {
+      "value": 4,
+      "unit": "%",
+      "code": "IRC 2018",
+      "section": "R303.1",
+      "amendment": null,
+      "source": "https://cityofboise.org/media/3923/433-irc-code-section-r303-light-ventilation.pdf",
+      "checked": "2026-10-15",
+      "secondCheck": {
+        "verdict": "agree",
+        "source": "https://cityofboise.org/media/3923/433-irc-code-section-r303-light-ventilation.pdf"
+      }
+    },
+    "light.bathroomGlazingArea": {
+      "value": 3,
+      "unit": "sq ft",
+      "code": "IRC 2018",
+      "section": "R303.3",
+      "amendment": null,
+      "source": "https://cityofboise.org/media/3923/433-irc-code-section-r303-light-ventilation.pdf",
+      "checked": "2026-10-15",
+      "note": "Half openable; waived with light plus exhaust fan",
+      "secondCheck": {
+        "verdict": "agree",
+        "source": "https://cityofboise.org/media/3923/433-irc-code-section-r303-light-ventilation.pdf"
+      }
+    },
+    "egress.netClearOpening": {
+      "value": 5.7,
+      "unit": "sq ft",
+      "code": "IRC 2018",
+      "section": "R310.2.1",
+      "amendment": null,
+      "source": "https://www.dli.mn.gov/sites/default/files/pdf/fs-emergency-escapes.pdf",
+      "checked": "2026-10-15",
+      "secondCheck": {
+        "verdict": "agree",
+        "source": "https://www.cityofboise.org/media/14485/438_egress-windows-code-hand-out-2022_final.pdf"
+      }
+    },
+    "egress.netClearOpeningGradeFloor": {
+      "value": 5.0,
+      "unit": "sq ft",
+      "code": "IRC 2018",
+      "section": "R310.2.1 exc.",
+      "amendment": null,
+      "source": "https://www.dli.mn.gov/sites/default/files/pdf/fs-emergency-escapes.pdf",
+      "checked": "2026-10-15",
+      "secondCheck": {
+        "verdict": "agree",
+        "source": "https://www.cityofboise.org/media/14485/438_egress-windows-code-hand-out-2022_final.pdf"
+      }
+    },
+    "egress.minClearHeight": {
+      "value": 24,
+      "unit": "in",
+      "code": "IRC 2018",
+      "section": "R310.2.1",
+      "amendment": null,
+      "source": "https://www.dli.mn.gov/sites/default/files/pdf/fs-emergency-escapes.pdf",
+      "checked": "2026-10-15",
+      "secondCheck": {
+        "verdict": "agree",
+        "source": "https://www.cityofboise.org/media/14485/438_egress-windows-code-hand-out-2022_final.pdf"
+      }
+    },
+    "egress.minClearWidth": {
+      "value": 20,
+      "unit": "in",
+      "code": "IRC 2018",
+      "section": "R310.2.1",
+      "amendment": null,
+      "source": "https://www.dli.mn.gov/sites/default/files/pdf/fs-emergency-escapes.pdf",
+      "checked": "2026-10-15",
+      "secondCheck": {
+        "verdict": "agree",
+        "source": "https://www.cityofboise.org/media/14485/438_egress-windows-code-hand-out-2022_final.pdf"
+      }
+    },
+    "egress.maxSillHeight": {
+      "value": 44,
+      "unit": "in",
+      "code": "IRC 2018",
+      "section": "R310.2.2",
+      "amendment": null,
+      "source": "https://www.dli.mn.gov/sites/default/files/pdf/fs-emergency-escapes.pdf",
+      "checked": "2026-10-15",
+      "secondCheck": {
+        "verdict": "agree",
+        "source": "https://www.cityofboise.org/media/14485/438_egress-windows-code-hand-out-2022_final.pdf"
+      }
+    },
+    "egress.windowWellArea": {
+      "value": 9,
+      "unit": "sq ft",
+      "code": "IRC 2018",
+      "section": "R310.2.3",
+      "amendment": null,
+      "source": "https://www.dli.mn.gov/sites/default/files/pdf/fs-emergency-escapes.pdf",
+      "checked": "2026-10-15",
+      "secondCheck": {
+        "verdict": "agree",
+        "source": "https://www.cityofboise.org/media/14485/438_egress-windows-code-hand-out-2022_final.pdf"
+      }
+    },
+    "egress.windowWellProjection": {
+      "value": 36,
+      "unit": "in",
+      "code": "IRC 2018",
+      "section": "R310.2.3",
+      "amendment": null,
+      "source": "https://www.dli.mn.gov/sites/default/files/pdf/fs-emergency-escapes.pdf",
+      "checked": "2026-10-15",
+      "secondCheck": {
+        "verdict": "agree",
+        "source": "https://www.cityofboise.org/media/14485/438_egress-windows-code-hand-out-2022_final.pdf"
+      }
+    },
+    "egress.windowWellLadderDepth": {
+      "value": 44,
+      "unit": "in",
+      "code": "IRC 2018",
+      "section": "R310.2.3.1",
+      "amendment": null,
+      "source": "https://www.dli.mn.gov/sites/default/files/pdf/fs-emergency-escapes.pdf",
+      "checked": "2026-10-15",
+      "note": "Ladder needed when well deeper than this",
+      "secondCheck": {
+        "verdict": "agree",
+        "source": "https://www.cityofboise.org/media/14485/438_egress-windows-code-hand-out-2022_final.pdf"
+      }
+    },
+    "exit.doorClearWidth": {
+      "value": 32,
+      "unit": "in",
+      "code": "IRC 2018",
+      "section": "R311.2",
+      "amendment": null,
+      "source": "https://www.buttecounty.net/DocumentCenter/View/7831/DBP-26-2022-Residential-Standard-Plan-Notes-PDF",
+      "checked": "2026-10-15",
+      "note": "Source is the California residential code, which mirrors the IRC rule",
+      "secondCheck": {
+        "verdict": "agree",
+        "source": "https://dos.ny.gov/residential-exit-doors-stairways-landings-handrails-and-guards"
+      }
+    },
+    "exit.doorClearHeight": {
+      "value": 78,
+      "unit": "in",
+      "code": "IRC 2018",
+      "section": "R311.2",
+      "amendment": null,
+      "source": "https://www.buttecounty.net/DocumentCenter/View/7831/DBP-26-2022-Residential-Standard-Plan-Notes-PDF",
+      "checked": "2026-10-15",
+      "note": "Same source caveat as width",
+      "secondCheck": {
+        "verdict": "agree",
+        "source": "https://dos.ny.gov/residential-exit-doors-stairways-landings-handrails-and-guards"
+      }
+    },
+    "exit.hallwayMinWidth": {
+      "value": 36,
+      "unit": "in",
+      "code": "IRC 2018",
+      "section": "R311.6",
+      "amendment": null,
+      "source": "https://www.buttecounty.net/DocumentCenter/View/7831/DBP-26-2022-Residential-Standard-Plan-Notes-PDF",
+      "checked": "2026-10-15",
+      "note": "No source read stated it; base code value from memory",
+      "secondCheck": {
+        "verdict": "agree",
+        "source": "https://paysonaz.gov/home/showpublisheddocument/362/637902995569730000"
+      }
+    },
+    "exit.landingDepth": {
+      "value": 36,
+      "unit": "in",
+      "code": "IRC 2018",
+      "section": "R311.3",
+      "amendment": null,
+      "source": "https://www.buttecounty.net/DocumentCenter/View/7831/DBP-26-2022-Residential-Standard-Plan-Notes-PDF",
+      "checked": "2026-10-15",
+      "note": "Source is California code; mirrors IRC",
+      "secondCheck": {
+        "verdict": "agree",
+        "source": "https://dos.ny.gov/residential-exit-doors-stairways-landings-handrails-and-guards"
+      }
+    },
+    "stairs.minWidth": {
+      "value": 36,
+      "unit": "in",
+      "code": "IRC 2018",
+      "section": "R311.7.1",
+      "amendment": null,
+      "source": "https://timnath.org/wp-content/uploads/2022/03/2018-RESIDENTIAL-STAIR-GUIDE.pdf",
+      "checked": "2026-10-15",
+      "secondCheck": {
+        "verdict": "agree",
+        "source": "https://www.tfid.org/DocumentCenter/View/6771/2018-RESIDENTIAL-STAIR-GUIDE"
+      }
+    },
+    "stairs.minHeadroom": {
+      "value": 80,
+      "unit": "in",
+      "code": "IRC 2018",
+      "section": "R311.7.2",
+      "amendment": null,
+      "source": "https://timnath.org/wp-content/uploads/2022/03/2018-RESIDENTIAL-STAIR-GUIDE.pdf",
+      "checked": "2026-10-15",
+      "secondCheck": {
+        "verdict": "agree",
+        "source": "https://www.tfid.org/DocumentCenter/View/6771/2018-RESIDENTIAL-STAIR-GUIDE"
+      }
+    },
+    "stairs.maxRiser": {
+      "value": 7.75,
+      "unit": "in",
+      "code": "IRC 2018",
+      "section": "R311.7.5.1",
+      "amendment": null,
+      "source": "https://timnath.org/wp-content/uploads/2022/03/2018-RESIDENTIAL-STAIR-GUIDE.pdf",
+      "checked": "2026-10-15",
+      "secondCheck": {
+        "verdict": "agree",
+        "source": "https://www.tfid.org/DocumentCenter/View/6771/2018-RESIDENTIAL-STAIR-GUIDE"
+      }
+    },
+    "stairs.minTread": {
+      "value": 10,
+      "unit": "in",
+      "code": "IRC 2018",
+      "section": "R311.7.5.2",
+      "amendment": null,
+      "source": "https://timnath.org/wp-content/uploads/2022/03/2018-RESIDENTIAL-STAIR-GUIDE.pdf",
+      "checked": "2026-10-15",
+      "secondCheck": {
+        "verdict": "agree",
+        "source": "https://www.tfid.org/DocumentCenter/View/6771/2018-RESIDENTIAL-STAIR-GUIDE"
+      }
+    },
+    "stairs.maxRiserVariation": {
+      "value": 0.375,
+      "unit": "in",
+      "code": "IRC 2018",
+      "section": "R311.7.5.1",
+      "amendment": null,
+      "source": "https://timnath.org/wp-content/uploads/2022/03/2018-RESIDENTIAL-STAIR-GUIDE.pdf",
+      "checked": "2026-10-15",
+      "secondCheck": {
+        "verdict": "agree",
+        "source": "https://www.tfid.org/DocumentCenter/View/6771/2018-RESIDENTIAL-STAIR-GUIDE"
+      }
+    },
+    "stairs.nosingMin": {
+      "value": 0.75,
+      "unit": "in",
+      "code": "IRC 2018",
+      "section": "R311.7.5.3",
+      "amendment": null,
+      "source": "https://timnath.org/wp-content/uploads/2022/03/2018-RESIDENTIAL-STAIR-GUIDE.pdf",
+      "checked": "2026-10-15",
+      "secondCheck": {
+        "verdict": "agree",
+        "source": "https://www.tfid.org/DocumentCenter/View/6771/2018-RESIDENTIAL-STAIR-GUIDE"
+      }
+    },
+    "stairs.nosingMax": {
+      "value": 1.25,
+      "unit": "in",
+      "code": "IRC 2018",
+      "section": "R311.7.5.3",
+      "amendment": null,
+      "source": "https://timnath.org/wp-content/uploads/2022/03/2018-RESIDENTIAL-STAIR-GUIDE.pdf",
+      "checked": "2026-10-15",
+      "note": "Nosing not needed if tread is 11 in or more",
+      "secondCheck": {
+        "verdict": "agree",
+        "source": "https://www.tfid.org/DocumentCenter/View/6771/2018-RESIDENTIAL-STAIR-GUIDE"
+      }
+    },
+    "stairs.maxRiseBetweenLandings": {
+      "value": 151,
+      "unit": "in",
+      "code": "IRC 2018",
+      "section": "R311.7.3",
+      "amendment": null,
+      "source": "https://bouldercolorado.gov/media/1481/download",
+      "checked": "2026-10-15",
+      "secondCheck": {
+        "verdict": "agree",
+        "source": "https://paysonaz.gov/home/showpublisheddocument/362/637902995569730000"
+      }
+    },
+    "stairs.landingMinDepth": {
+      "value": 36,
+      "unit": "in",
+      "code": "IRC 2018",
+      "section": "R311.7.6",
+      "amendment": null,
+      "source": "https://timnath.org/wp-content/uploads/2022/03/2018-RESIDENTIAL-STAIR-GUIDE.pdf",
+      "checked": "2026-10-15",
+      "secondCheck": {
+        "verdict": "agree",
+        "source": "https://www.tfid.org/DocumentCenter/View/6771/2018-RESIDENTIAL-STAIR-GUIDE"
+      }
+    },
+    "stairs.handrailMinHeight": {
+      "value": 34,
+      "unit": "in",
+      "code": "IRC 2018",
+      "section": "R311.7.8.1",
+      "amendment": null,
+      "source": "https://timnath.org/wp-content/uploads/2022/03/2018-RESIDENTIAL-STAIR-GUIDE.pdf",
+      "checked": "2026-10-15",
+      "secondCheck": {
+        "verdict": "agree",
+        "source": "https://www.cityofboise.org/media/3926/436_handrails_dec2022.pdf"
+      }
+    },
+    "stairs.handrailMaxHeight": {
+      "value": 38,
+      "unit": "in",
+      "code": "IRC 2018",
+      "section": "R311.7.8.1",
+      "amendment": null,
+      "source": "https://timnath.org/wp-content/uploads/2022/03/2018-RESIDENTIAL-STAIR-GUIDE.pdf",
+      "checked": "2026-10-15",
+      "secondCheck": {
+        "verdict": "agree",
+        "source": "https://www.cityofboise.org/media/3926/436_handrails_dec2022.pdf"
+      }
+    },
+    "stairs.handrailRequiredRisers": {
+      "value": 4,
+      "unit": "count",
+      "code": "IRC 2018",
+      "section": "R311.7.8",
+      "amendment": null,
+      "source": "https://bouldercolorado.gov/media/1481/download",
+      "checked": "2026-10-15",
+      "secondCheck": {
+        "verdict": "agree",
+        "source": "https://www.cityofboise.org/media/3926/436_handrails_dec2022.pdf"
+      }
+    },
+    "guards.requiredDrop": {
+      "value": 30,
+      "unit": "in",
+      "code": "IRC 2018",
+      "section": "R312.1.1",
+      "amendment": null,
+      "source": "https://timnath.org/wp-content/uploads/2022/03/2018-RESIDENTIAL-STAIR-GUIDE.pdf",
+      "checked": "2026-10-15",
+      "secondCheck": {
+        "verdict": "agree",
+        "source": "https://www.tfid.org/DocumentCenter/View/6771/2018-RESIDENTIAL-STAIR-GUIDE"
+      }
+    },
+    "guards.minHeight": {
+      "value": 36,
+      "unit": "in",
+      "code": "IRC 2018",
+      "section": "R312.1.2",
+      "amendment": null,
+      "source": "https://timnath.org/wp-content/uploads/2022/03/2018-RESIDENTIAL-STAIR-GUIDE.pdf",
+      "checked": "2026-10-15",
+      "secondCheck": {
+        "verdict": "agree",
+        "source": "https://paysonaz.gov/home/showpublisheddocument/362/637902995569730000"
+      }
+    },
+    "guards.minHeightStairSides": {
+      "value": 34,
+      "unit": "in",
+      "code": "IRC 2018",
+      "section": "R312.1.2",
+      "amendment": null,
+      "source": "https://timnath.org/wp-content/uploads/2022/03/2018-RESIDENTIAL-STAIR-GUIDE.pdf",
+      "checked": "2026-10-15",
+      "secondCheck": {
+        "verdict": "agree",
+        "source": "https://www.tfid.org/DocumentCenter/View/6771/2018-RESIDENTIAL-STAIR-GUIDE"
+      }
+    },
+    "guards.maxOpening": {
+      "value": 4,
+      "unit": "in",
+      "code": "IRC 2018",
+      "section": "R312.1.3",
+      "amendment": null,
+      "source": "https://timnath.org/wp-content/uploads/2022/03/2018-RESIDENTIAL-STAIR-GUIDE.pdf",
+      "checked": "2026-10-15",
+      "note": "Stair triangle opening 6 in; stair side openings 4 3/8 in",
+      "secondCheck": {
+        "verdict": "agree",
+        "source": "https://www.tfid.org/DocumentCenter/View/6771/2018-RESIDENTIAL-STAIR-GUIDE"
+      }
+    },
+    "windowFall.heightAboveGrade": {
+      "value": 72,
+      "unit": "in",
+      "code": "IRC 2018",
+      "section": "R312.2.1",
+      "amendment": null,
+      "source": "https://www.buttecounty.net/DocumentCenter/View/7831/DBP-26-2022-Residential-Standard-Plan-Notes-PDF",
+      "checked": "2026-10-15",
+      "note": "Opening above this height over grade; California source mirrors IRC",
+      "secondCheck": {
+        "verdict": "agree",
+        "source": "https://paysonaz.gov/home/showpublisheddocument/362/637902995569730000"
+      }
+    },
+    "windowFall.minSillHeight": {
+      "value": 24,
+      "unit": "in",
+      "code": "IRC 2018",
+      "section": "R312.2.1",
+      "amendment": null,
+      "source": "https://www.buttecounty.net/DocumentCenter/View/7831/DBP-26-2022-Residential-Standard-Plan-Notes-PDF",
+      "checked": "2026-10-15",
+      "note": "Applies to sills below this height; same caveat",
+      "secondCheck": {
+        "verdict": "agree",
+        "source": "https://paysonaz.gov/home/showpublisheddocument/362/637902995569730000"
+      }
+    },
+    "glazing.doorAdjacentArc": {
+      "value": 24,
+      "unit": "in",
+      "code": "IRC 2018",
+      "section": "R308.4.2",
+      "amendment": null,
+      "source": "https://www.shastacounty.gov/sites/default/files/fileattachments/building/page/2658/safety_glazing.pdf",
+      "checked": "2026-10-15",
+      "note": "Source is 2022 California code; same hazardous-location numbers as IRC",
+      "secondCheck": {
+        "verdict": "agree",
+        "source": "https://www.tfid.org/DocumentCenter/View/5402/SafetyGlazing-ConstructionTipSheet19-TFID--06072021ML"
+      }
+    },
+    "glazing.doorAdjacentMaxBottom": {
+      "value": 60,
+      "unit": "in",
+      "code": "IRC 2018",
+      "section": "R308.4.2",
+      "amendment": null,
+      "source": "https://www.shastacounty.gov/sites/default/files/fileattachments/building/page/2658/safety_glazing.pdf",
+      "checked": "2026-10-15",
+      "note": "Source is 2022 California code; same hazardous-location numbers as IRC",
+      "secondCheck": {
+        "verdict": "agree",
+        "source": "https://www.tfid.org/DocumentCenter/View/5402/SafetyGlazing-ConstructionTipSheet19-TFID--06072021ML"
+      }
+    },
+    "glazing.largePaneArea": {
+      "value": 9,
+      "unit": "sq ft",
+      "code": "IRC 2018",
+      "section": "R308.4.3",
+      "amendment": null,
+      "source": "https://www.shastacounty.gov/sites/default/files/fileattachments/building/page/2658/safety_glazing.pdf",
+      "checked": "2026-10-15",
+      "note": "Source is 2022 California code; same hazardous-location numbers as IRC",
+      "secondCheck": {
+        "verdict": "agree",
+        "source": "https://www.tfid.org/DocumentCenter/View/5402/SafetyGlazing-ConstructionTipSheet19-TFID--06072021ML"
+      }
+    },
+    "glazing.largePaneMaxBottom": {
+      "value": 18,
+      "unit": "in",
+      "code": "IRC 2018",
+      "section": "R308.4.3",
+      "amendment": null,
+      "source": "https://www.shastacounty.gov/sites/default/files/fileattachments/building/page/2658/safety_glazing.pdf",
+      "checked": "2026-10-15",
+      "note": "Source is 2022 California code; same hazardous-location numbers as IRC",
+      "secondCheck": {
+        "verdict": "agree",
+        "source": "https://www.tfid.org/DocumentCenter/View/5402/SafetyGlazing-ConstructionTipSheet19-TFID--06072021ML"
+      }
+    },
+    "glazing.largePaneMinTop": {
+      "value": 36,
+      "unit": "in",
+      "code": "IRC 2018",
+      "section": "R308.4.3",
+      "amendment": null,
+      "source": "https://www.shastacounty.gov/sites/default/files/fileattachments/building/page/2658/safety_glazing.pdf",
+      "checked": "2026-10-15",
+      "note": "Source is 2022 California code; same hazardous-location numbers as IRC",
+      "secondCheck": {
+        "verdict": "agree",
+        "source": "https://www.tfid.org/DocumentCenter/View/5402/SafetyGlazing-ConstructionTipSheet19-TFID--06072021ML"
+      }
+    },
+    "glazing.largePaneWalkway": {
+      "value": 36,
+      "unit": "in",
+      "code": "IRC 2018",
+      "section": "R308.4.3",
+      "amendment": null,
+      "source": "https://www.shastacounty.gov/sites/default/files/fileattachments/building/page/2658/safety_glazing.pdf",
+      "checked": "2026-10-15",
+      "note": "Source is 2022 California code; same hazardous-location numbers as IRC",
+      "secondCheck": {
+        "verdict": "agree",
+        "source": "https://www.tfid.org/DocumentCenter/View/5402/SafetyGlazing-ConstructionTipSheet19-TFID--06072021ML"
+      }
+    },
+    "glazing.wetSurfaceMaxBottom": {
+      "value": 60,
+      "unit": "in",
+      "code": "IRC 2018",
+      "section": "R308.4.5",
+      "amendment": null,
+      "source": "https://www.shastacounty.gov/sites/default/files/fileattachments/building/page/2658/safety_glazing.pdf",
+      "checked": "2026-10-15",
+      "note": "Source is 2022 California code; same hazardous-location numbers as IRC",
+      "secondCheck": {
+        "verdict": "agree",
+        "source": "https://www.tfid.org/DocumentCenter/View/5402/SafetyGlazing-ConstructionTipSheet19-TFID--06072021ML"
+      }
+    },
+    "glazing.stairMaxBottom": {
+      "value": 36,
+      "unit": "in",
+      "code": "IRC 2018",
+      "section": "R308.4.6/R308.4.7",
+      "amendment": null,
+      "source": "https://www.shastacounty.gov/sites/default/files/fileattachments/building/page/2658/safety_glazing.pdf",
+      "checked": "2026-10-15",
+      "note": "Source is 2022 California code; same hazardous-location numbers as IRC",
+      "secondCheck": {
+        "verdict": "agree",
+        "source": "https://www.tfid.org/DocumentCenter/View/5402/SafetyGlazing-ConstructionTipSheet19-TFID--06072021ML"
+      }
+    },
+    "garage.doorSolidWoodThickness": {
+      "value": 1.375,
+      "unit": "in",
+      "code": "IRC 2018",
+      "section": "R302.5.1",
+      "amendment": null,
+      "source": "https://www.buttecounty.net/DocumentCenter/View/7831/DBP-26-2022-Residential-Standard-Plan-Notes-PDF",
+      "checked": "2026-10-15",
+      "note": "Or 20-min door; California source",
+      "secondCheck": {
+        "verdict": "agree",
+        "source": "https://paysonaz.gov/home/showpublisheddocument/362/637902995569730000"
+      }
+    },
+    "garage.doorFireRatingMinutes": {
+      "value": 20,
+      "unit": "min",
+      "code": "IRC 2018",
+      "section": "R302.5.1",
+      "amendment": null,
+      "source": "https://www.buttecounty.net/DocumentCenter/View/7831/DBP-26-2022-Residential-Standard-Plan-Notes-PDF",
+      "checked": "2026-10-15",
+      "note": "California source",
+      "secondCheck": {
+        "verdict": "agree",
+        "source": "https://paysonaz.gov/home/showpublisheddocument/362/637902995569730000"
+      }
+    },
+    "garage.gypsumGarageSide": {
+      "value": 0.625,
+      "unit": "in",
+      "code": "IRC 2018",
+      "section": "Table R302.6",
+      "amendment": "Idaho replaced Table R302.6 with 5/8 in Type X on garage side (base 2018 is 1/2 in)",
+      "source": "https://regulations.justia.com/states/idaho/24/24-39-30/section-24-39-30-600",
+      "checked": "2026-10-15",
+      "note": "Type X; also for garage walls closer than 3 ft to dwelling",
+      "secondCheck": {
+        "verdict": "agree",
+        "source": "https://cityofboise.org/media/19198/amendments_city_code_1-2_family_dwelling_building_code_articleb_9-20-24.pdf"
+      }
+    },
+    "garage.gypsumCeilingUnderHabitable": {
+      "value": 0.625,
+      "unit": "in",
+      "code": "IRC 2018",
+      "section": "Table R302.6",
+      "amendment": "Idaho Table R302.6 replacement: 5/8 in Type X",
+      "source": "https://regulations.justia.com/states/idaho/24/24-39-30/section-24-39-30-600",
+      "checked": "2026-10-15",
+      "note": "Type X; ceiling-specific value not separately stated in the Idaho summary",
+      "secondCheck": {
+        "verdict": "agree",
+        "source": "https://cityofboise.org/media/19198/amendments_city_code_1-2_family_dwelling_building_code_articleb_9-20-24.pdf"
+      }
+    },
+    "smoke.inEachBedroom": {
+      "value": true,
+      "unit": "",
+      "code": "IRC 2018",
+      "section": "R314.3",
+      "amendment": null,
+      "source": "https://www.tfid.org/DocumentCenter/View/5400/SmokeDetectors-IRCConstructionTipSheet4-TFID--06042021ML",
+      "checked": "2026-10-15",
+      "note": "Source is a tip sheet for 2018 IRC with Idaho amendments",
+      "secondCheck": {
+        "verdict": "agree",
+        "source": "https://www.tfid.org/DocumentCenter/View/5400/SmokeDetectors-IRCConstructionTipSheet4-TFID--06042021ML"
+      }
+    },
+    "smoke.outsideSleepingAreas": {
+      "value": true,
+      "unit": "",
+      "code": "IRC 2018",
+      "section": "R314.3",
+      "amendment": null,
+      "source": "https://www.tfid.org/DocumentCenter/View/5400/SmokeDetectors-IRCConstructionTipSheet4-TFID--06042021ML",
+      "checked": "2026-10-15",
+      "note": "Source is a tip sheet for 2018 IRC with Idaho amendments",
+      "secondCheck": {
+        "verdict": "agree",
+        "source": "https://www.tfid.org/DocumentCenter/View/5400/SmokeDetectors-IRCConstructionTipSheet4-TFID--06042021ML"
+      }
+    },
+    "smoke.eachStory": {
+      "value": true,
+      "unit": "",
+      "code": "IRC 2018",
+      "section": "R314.3",
+      "amendment": null,
+      "source": "https://www.tfid.org/DocumentCenter/View/5400/SmokeDetectors-IRCConstructionTipSheet4-TFID--06042021ML",
+      "checked": "2026-10-15",
+      "note": "Source is a tip sheet for 2018 IRC with Idaho amendments",
+      "secondCheck": {
+        "verdict": "agree",
+        "source": "https://www.tfid.org/DocumentCenter/View/5400/SmokeDetectors-IRCConstructionTipSheet4-TFID--06042021ML"
+      }
+    },
+    "smoke.minDistanceFromBathroom": {
+      "value": 36,
+      "unit": "in",
+      "code": "IRC 2018",
+      "section": "R314.3 item 4",
+      "amendment": null,
+      "source": "https://www.tfid.org/DocumentCenter/View/5400/SmokeDetectors-IRCConstructionTipSheet4-TFID--06042021ML",
+      "checked": "2026-10-15",
+      "secondCheck": {
+        "verdict": "agree",
+        "source": "https://www.tfid.org/DocumentCenter/View/5400/SmokeDetectors-IRCConstructionTipSheet4-TFID--06042021ML"
+      }
+    },
+    "smoke.minDistanceFromCookingAppliance": {
+      "value": 240,
+      "unit": "in",
+      "code": "IRC 2018",
+      "section": "R314.3.1",
+      "amendment": null,
+      "source": "https://www.tfid.org/DocumentCenter/View/5400/SmokeDetectors-IRCConstructionTipSheet4-TFID--06042021ML",
+      "checked": "2026-10-15",
+      "note": "20 ft ionization without silence; 10 ft with silence switch (120 in)",
+      "secondCheck": {
+        "verdict": "agree",
+        "source": "https://www.tfid.org/DocumentCenter/View/5400/SmokeDetectors-IRCConstructionTipSheet4-TFID--06042021ML"
+      }
+    },
+    "smoke.minDistanceFromCookingPhotoelectric": {
+      "value": 72,
+      "unit": "in",
+      "code": "IRC 2018",
+      "section": "R314.3.1",
+      "amendment": null,
+      "source": "https://www.tfid.org/DocumentCenter/View/5400/SmokeDetectors-IRCConstructionTipSheet4-TFID--06042021ML",
+      "checked": "2026-10-15",
+      "secondCheck": {
+        "verdict": "agree",
+        "source": "https://www.tfid.org/DocumentCenter/View/5400/SmokeDetectors-IRCConstructionTipSheet4-TFID--06042021ML"
+      }
+    },
+    "co.requiredWithFuelOrAttachedGarage": {
+      "value": true,
+      "unit": "",
+      "code": "IRC 2018",
+      "section": "R315.2.1",
+      "amendment": "Idaho deleted R315.2.2 exception 2 (alteration exemption)",
+      "source": "https://www.tfid.org/DocumentCenter/View/5400/SmokeDetectors-IRCConstructionTipSheet4-TFID--06042021ML",
+      "checked": "2026-10-15",
+      "secondCheck": {
+        "verdict": "agree",
+        "source": "https://www.tfid.org/DocumentCenter/View/5400/SmokeDetectors-IRCConstructionTipSheet4-TFID--06042021ML"
+      }
+    },
+    "attic.accessMinWidth": {
+      "value": 22,
+      "unit": "in",
+      "code": "IRC 2018",
+      "section": "R807.1",
+      "amendment": null,
+      "source": "https://mountain-home.us/media/bhdnlzpo/attic-and-crawl-space-access.pdf",
+      "checked": "2026-10-15",
+      "secondCheck": {
+        "verdict": "agree",
+        "source": "https://mountain-home.us/media/bhdnlzpo/attic-and-crawl-space-access.pdf"
+      }
+    },
+    "attic.accessMinLength": {
+      "value": 30,
+      "unit": "in",
+      "code": "IRC 2018",
+      "section": "R807.1",
+      "amendment": null,
+      "source": "https://mountain-home.us/media/bhdnlzpo/attic-and-crawl-space-access.pdf",
+      "checked": "2026-10-15",
+      "secondCheck": {
+        "verdict": "agree",
+        "source": "https://mountain-home.us/media/bhdnlzpo/attic-and-crawl-space-access.pdf"
+      }
+    },
+    "attic.accessRequiredArea": {
+      "value": 30,
+      "unit": "sq ft",
+      "code": "IRC 2018",
+      "section": "R807.1",
+      "amendment": null,
+      "source": "https://mountain-home.us/media/bhdnlzpo/attic-and-crawl-space-access.pdf",
+      "checked": "2026-10-15",
+      "note": "Access required when attic area exceeds this and height is at least 30 in",
+      "secondCheck": {
+        "verdict": "agree",
+        "source": "https://mountain-home.us/media/bhdnlzpo/attic-and-crawl-space-access.pdf"
+      }
+    },
+    "attic.accessRequiredHeight": {
+      "value": 30,
+      "unit": "in",
+      "code": "IRC 2018",
+      "section": "R807.1",
+      "amendment": null,
+      "source": "https://mountain-home.us/media/bhdnlzpo/attic-and-crawl-space-access.pdf",
+      "checked": "2026-10-15",
+      "secondCheck": {
+        "verdict": "agree",
+        "source": "https://mountain-home.us/media/bhdnlzpo/attic-and-crawl-space-access.pdf"
+      }
+    },
+    "attic.ventRatio": {
+      "value": 150,
+      "unit": "",
+      "code": "IRC 2018",
+      "section": "R806.2",
+      "amendment": null,
+      "source": "https://www.agr.georgia.gov/sites/default/files/documents/pest-control/international-residential-building-code-ventilation.pdf",
+      "checked": "2026-10-15",
+      "note": "Not read in any source; base code from memory",
+      "secondCheck": {
+        "verdict": "agree",
+        "source": "https://www.hansenpolebuildings.com/2023/06/274512"
+      }
+    },
+    "attic.ventRatioReduced": {
+      "value": 300,
+      "unit": "",
+      "code": "IRC 2018",
+      "section": "R806.2 exc.",
+      "amendment": null,
+      "source": "https://www.agr.georgia.gov/sites/default/files/documents/pest-control/international-residential-building-code-ventilation.pdf",
+      "checked": "2026-10-15",
+      "note": "Not read in any source; base code from memory",
+      "secondCheck": {
+        "verdict": "agree",
+        "source": "https://www.hansenpolebuildings.com/2023/06/274512"
+      }
+    },
+    "crawl.accessFloorWidth": {
+      "value": 18,
+      "unit": "in",
+      "code": "IRC 2018",
+      "section": "R408.4",
+      "amendment": null,
+      "source": "https://mountain-home.us/media/bhdnlzpo/attic-and-crawl-space-access.pdf",
+      "checked": "2026-10-15",
+      "secondCheck": {
+        "verdict": "agree",
+        "source": "https://mountain-home.us/media/bhdnlzpo/attic-and-crawl-space-access.pdf"
+      }
+    },
+    "crawl.accessFloorLength": {
+      "value": 24,
+      "unit": "in",
+      "code": "IRC 2018",
+      "section": "R408.4",
+      "amendment": null,
+      "source": "https://mountain-home.us/media/bhdnlzpo/attic-and-crawl-space-access.pdf",
+      "checked": "2026-10-15",
+      "secondCheck": {
+        "verdict": "agree",
+        "source": "https://mountain-home.us/media/bhdnlzpo/attic-and-crawl-space-access.pdf"
+      }
+    },
+    "crawl.accessWallWidth": {
+      "value": 16,
+      "unit": "in",
+      "code": "IRC 2018",
+      "section": "R408.4",
+      "amendment": null,
+      "source": "https://mountain-home.us/media/bhdnlzpo/attic-and-crawl-space-access.pdf",
+      "checked": "2026-10-15",
+      "secondCheck": {
+        "verdict": "agree",
+        "source": "https://mountain-home.us/media/bhdnlzpo/attic-and-crawl-space-access.pdf"
+      }
+    },
+    "crawl.accessWallLength": {
+      "value": 24,
+      "unit": "in",
+      "code": "IRC 2018",
+      "section": "R408.4",
+      "amendment": null,
+      "source": "https://mountain-home.us/media/bhdnlzpo/attic-and-crawl-space-access.pdf",
+      "checked": "2026-10-15",
+      "secondCheck": {
+        "verdict": "agree",
+        "source": "https://mountain-home.us/media/bhdnlzpo/attic-and-crawl-space-access.pdf"
+      }
+    },
+    "crawl.ventAreaPer": {
+      "value": 150,
+      "unit": "sq ft",
+      "code": "IRC 2018",
+      "section": "R408.1",
+      "amendment": null,
+      "source": "https://www.agr.georgia.gov/sites/default/files/documents/pest-control/international-residential-building-code-ventilation.pdf",
+      "checked": "2026-10-15",
+      "note": "Source is 2012 IRC; reduced to 1/1500 with Class 1 ground vapor retarder",
+      "secondCheck": {
+        "verdict": "agree",
+        "source": "https://www.KnoxCounty.org/codes/pdfs/construction_info/crawlspace.pdf"
+      }
+    },
+    "crawl.ventWithinCorner": {
+      "value": 3,
+      "unit": "ft",
+      "code": "IRC 2018",
+      "section": "R408.1",
+      "amendment": null,
+      "source": "https://www.agr.georgia.gov/sites/default/files/documents/pest-control/international-residential-building-code-ventilation.pdf",
+      "checked": "2026-10-15",
+      "note": "Source is 2012 IRC",
+      "secondCheck": {
+        "verdict": "agree",
+        "source": "https://www.KnoxCounty.org/codes/pdfs/construction_info/crawlspace.pdf"
+      }
+    },
+    "footing.minDepthBelowGrade": {
+      "value": 12,
+      "unit": "in",
+      "code": "IRC 2018",
+      "section": "R403.1.4",
+      "amendment": "Idaho replaced Table R403.1 footing widths and R403.1.1 sizes",
+      "source": "https://regulations.justia.com/states/idaho/24/24-39-30/section-24-39-30-600",
+      "checked": "2026-10-15",
+      "note": "Base value from memory; not seen in a source. Idaho replaced footing width tables (new Table R403.1; 6 in min thickness)",
+      "secondCheck": {
+        "verdict": "agree",
+        "source": "https://gocodebook.com/us/california/california-residential-code/foundations/footings/footing-depth-and-frost-protection"
+      }
+    },
+    "footing.minDepthFrost": {
+      "value": 24,
+      "unit": "in",
+      "code": "IRC 2018",
+      "section": "R403.1.4.1",
+      "amendment": null,
+      "source": "https://www.cityofboise.org/media/18749/currently-adopted-building-codes-4-26-24.pdf",
+      "checked": "2026-10-15",
+      "note": "Equals Boise frost depth",
+      "secondCheck": {
+        "verdict": "agree",
+        "source": "https://www.cityofboise.org/media/18749/currently-adopted-building-codes-4-26-24.pdf"
+      }
+    },
+    "vent.wholeHouseCfmPerSqFt": {
+      "value": 0.01,
+      "unit": "cfm",
+      "code": "IRC 2018",
+      "section": "M1505.4.3, Equation 15-1",
+      "amendment": "Idaho R303.4 requires whole-house mechanical ventilation per M1505.4",
+      "source": "https://www.phrc.psu.edu/assets/docs/Webinars/PHRC-Webinar_Balanced-Ventilation-Understanding-the-Options_Handouts.pdf",
+      "checked": "2026-10-15",
+      "note": "2018 IRC formula: 0.01 cfm per sq ft plus 7.5 cfm per (bedrooms + 1). Settled by reading the source.",
+      "secondCheck": {
+        "verdict": "disagree",
+        "source": "https://www.phrc.psu.edu/assets/docs/Webinars/PHRC-Webinar_Balanced-Ventilation-Understanding-the-Options_Handouts.pdf"
+      },
+      "resolved": "2026-10-15: helpers disagreed; settled by reading the source"
+    },
+    "vent.wholeHouseCfmPerBedroomPlusOne": {
+      "value": 7.5,
+      "unit": "cfm",
+      "code": "IRC 2018",
+      "section": "M1505.4.3",
+      "amendment": null,
+      "source": "https://www.larimer.gov/sites/default/files/uploads/2022/whole_house_mechanical_ventilation.pdf",
+      "checked": "2026-10-15",
+      "note": "Same caveat: table governs",
+      "secondCheck": {
+        "verdict": "agree",
+        "source": "https://www.phrc.psu.edu/assets/docs/Webinars/PHRC-Webinar_Balanced-Ventilation-Understanding-the-Options_Handouts.pdf"
+      }
+    },
+    "vent.bathIntermittent": {
+      "value": 50,
+      "unit": "cfm",
+      "code": "IRC 2018",
+      "section": "Table M1505.4.4",
+      "amendment": null,
+      "source": "https://www.larimer.gov/sites/default/files/uploads/2022/whole_house_mechanical_ventilation.pdf",
+      "checked": "2026-10-15",
+      "note": "Read in 2024 IRC text; assumed same as 2018",
+      "secondCheck": {
+        "verdict": "agree",
+        "source": "https://www.larimer.gov/sites/default/files/uploads/2022/whole_house_mechanical_ventilation.pdf"
+      }
+    },
+    "vent.bathContinuous": {
+      "value": 20,
+      "unit": "cfm",
+      "code": "IRC 2018",
+      "section": "Table M1505.4.4",
+      "amendment": null,
+      "source": "https://www.larimer.gov/sites/default/files/uploads/2022/whole_house_mechanical_ventilation.pdf",
+      "checked": "2026-10-15",
+      "note": "2024 IRC source",
+      "secondCheck": {
+        "verdict": "agree",
+        "source": "https://www.larimer.gov/sites/default/files/uploads/2022/whole_house_mechanical_ventilation.pdf"
+      }
+    },
+    "vent.kitchenIntermittent": {
+      "value": 100,
+      "unit": "cfm",
+      "code": "IRC 2018",
+      "section": "Table M1505.4.4",
+      "amendment": null,
+      "source": "https://www.larimer.gov/sites/default/files/uploads/2022/whole_house_mechanical_ventilation.pdf",
+      "checked": "2026-10-15",
+      "note": "2024 IRC source",
+      "secondCheck": {
+        "verdict": "agree",
+        "source": "https://www.larimer.gov/sites/default/files/uploads/2022/whole_house_mechanical_ventilation.pdf"
+      }
+    },
+    "vent.kitchenContinuous": {
+      "value": 25,
+      "unit": "cfm",
+      "code": "IRC 2018",
+      "section": "Table M1505.4.4",
+      "amendment": null,
+      "source": "https://www.larimer.gov/sites/default/files/uploads/2022/whole_house_mechanical_ventilation.pdf",
+      "checked": "2026-10-15",
+      "note": "2024 IRC source",
+      "secondCheck": {
+        "verdict": "agree",
+        "source": "https://www.larimer.gov/sites/default/files/uploads/2022/whole_house_mechanical_ventilation.pdf"
+      }
+    },
+    "plumbing.wcSideClearance": {
+      "value": 15,
+      "unit": "in",
+      "code": "ISPC 2017",
+      "section": "UPC 402.5",
+      "amendment": null,
+      "source": "https://lawfilesext.leg.wa.gov/Law/WSR/2021/01/21-01-125.htm",
+      "checked": "2026-10-15",
+      "note": "Confirmed in 2021 UPC text via Washington rule; Idaho 2017 code is 2015 UPC and no Idaho change found",
+      "secondCheck": {
+        "verdict": "agree",
+        "source": "https://open-exam-prep.com/study-guides/wa-plumber/fixtures-fittings-clearances/fixture-clearances-water-closets"
+      }
+    },
+    "plumbing.wcFrontClearance": {
+      "value": 24,
+      "unit": "in",
+      "code": "ISPC 2017",
+      "section": "UPC 402.5",
+      "amendment": null,
+      "source": "https://www.maine.gov/pfr/professionallicensing/sites/maine.gov.pfr.professionallicensing/files/inline-files/commonplumbingcodeissues2015.pdf",
+      "checked": "2026-10-15",
+      "note": "2015 UPC clear space in front of a water closet; Idaho does not amend 402.5 (checked IDAPA 24.39.20). 21 in is the IRC R307 figure.",
+      "secondCheck": {
+        "verdict": "disagree",
+        "source": "https://open-exam-prep.com/study-guides/wa-plumber/fixtures-fittings-clearances/fixture-clearances-water-closets"
+      },
+      "resolved": "2026-10-15: helpers disagreed; settled by reading the source"
+    },
+    "plumbing.showerMinArea": {
+      "value": 1024,
+      "unit": "sq in",
+      "code": "ISPC 2017",
+      "section": "UPC 408.6",
+      "amendment": null,
+      "source": "https://www.maine.gov/pfr/professionallicensing/sites/maine.gov.pfr.professionallicensing/files/inline-files/commonplumbingcodeissues2015.pdf",
+      "checked": "2026-10-15",
+      "note": "2015 UPC: 1024 sq in and a 30 in circle; Idaho amends only 408.5 and 408.7.5. 900 is the IRC P2708.1 figure.",
+      "secondCheck": {
+        "verdict": "disagree",
+        "source": "https://www.maine.gov/pfr/professionallicensing/sites/maine.gov.pfr.professionallicensing/files/inline-files/commonplumbingcodeissues2015.pdf"
+      },
+      "resolved": "2026-10-15: helpers disagreed; settled by reading the source"
+    },
+    "plumbing.showerMinCircle": {
+      "value": 30,
+      "unit": "in",
+      "code": "ISPC 2017",
+      "section": "UPC 408.6",
+      "amendment": null,
+      "source": "https://lawfilesext.leg.wa.gov/Law/WSR/2021/01/21-01-125.htm",
+      "checked": "2026-10-15",
+      "note": "2021 UPC source",
+      "secondCheck": {
+        "verdict": "agree",
+        "source": "https://www.maine.gov/pfr/professionallicensing/sites/maine.gov.pfr.professionallicensing/files/inline-files/commonplumbingcodeissues2015.pdf"
+      }
+    },
+    "plumbing.lavatorySideClearance": {
+      "value": 15,
+      "unit": "in",
+      "code": "ISPC 2017",
+      "section": "UPC 402.5",
+      "amendment": null,
+      "source": "https://open-exam-prep.com/study-guides/journeyman-plumber/fixtures-appliances-heaters/fixture-minimum-standards",
+      "checked": "2026-10-15",
+      "note": "UPC 402.5 sets side clearance only for water closets, bidets and urinals; not used by any check.",
+      "unverified": true,
+      "secondCheck": {
+        "verdict": "could-not-confirm",
+        "source": "https://files.dfm.idaho.gov/dfm-admin-website/rules/current/24/243920.pdf"
+      }
+    },
+    "plumbing.waterHeaterTPRDischarge": {
+      "value": "Discharge pipe to a safe visible spot; no valve in the line",
+      "unit": "",
+      "code": "ISPC 2017",
+      "section": "UPC 608.5",
+      "amendment": null,
+      "source": "https://open-exam-prep.com/study-guides/journeyman-plumber/fixtures-appliances-heaters/fixture-minimum-standards",
+      "checked": "2026-10-15",
+      "note": "Not read in any source; verify",
+      "secondCheck": {
+        "verdict": "agree",
+        "source": "https://www.thebuildingcodeforum.com/forum/threads/ptrv-piping-upc-608-5.3660/latest"
+      }
+    },
+    "elec.wallReceptacleMaxDistance": {
+      "value": 6,
+      "unit": "ft",
+      "code": "NEC 2023",
+      "section": "210.52(A)(1)",
+      "amendment": null,
+      "source": "https://www.stpaul.gov/sites/default/files/2020-12/DSI.Bldg_Electrical_Checklist%20Dwelling%20Unit%20Rough%20In.pdf",
+      "checked": "2026-10-15",
+      "note": "Source is a 2020 NEC checklist",
+      "secondCheck": {
+        "verdict": "agree",
+        "source": "https://www.mikeholt.com/files/PDF/23_UNEC1_210.52.pdf"
+      }
+    },
+    "elec.wallSpaceMinWidth": {
+      "value": 2,
+      "unit": "ft",
+      "code": "NEC 2023",
+      "section": "210.52(A)(2)",
+      "amendment": null,
+      "source": "https://www.stpaul.gov/sites/default/files/2020-12/DSI.Bldg_Electrical_Checklist%20Dwelling%20Unit%20Rough%20In.pdf",
+      "checked": "2026-10-15",
+      "note": "2020 NEC checklist",
+      "secondCheck": {
+        "verdict": "agree",
+        "source": "https://www.mikeholt.com/files/PDF/23_UNEC1_210.52.pdf"
+      }
+    },
+    "elec.counterReceptacleMaxDistance": {
+      "value": 24,
+      "unit": "in",
+      "code": "NEC 2023",
+      "section": "210.52(C)(1)",
+      "amendment": "Idaho added 210.52(C)(4) for island/peninsula receptacle mounting",
+      "source": "https://www.stpaul.gov/sites/default/files/2020-12/DSI.Bldg_Electrical_Checklist%20Dwelling%20Unit%20Rough%20In.pdf",
+      "checked": "2026-10-15",
+      "note": "2020 NEC checklist. 2023 made island/peninsula receptacle optional (raceway needed); Idaho adds 210.52(C)(4) allowing island receptacles up to 12 in below the countertop",
+      "secondCheck": {
+        "verdict": "agree",
+        "source": "https://www.mikeholt.com/files/PDF/23_UNEC1_210.52.pdf"
+      }
+    },
+    "elec.counterSpaceMinWidth": {
+      "value": 12,
+      "unit": "in",
+      "code": "NEC 2023",
+      "section": "210.52(C)(1)",
+      "amendment": null,
+      "source": "https://www.stpaul.gov/sites/default/files/2020-12/DSI.Bldg_Electrical_Checklist%20Dwelling%20Unit%20Rough%20In.pdf",
+      "checked": "2026-10-15",
+      "note": "2020 NEC checklist",
+      "secondCheck": {
+        "verdict": "agree",
+        "source": "https://www.mikeholt.com/files/PDF/23_UNEC1_210.52.pdf"
+      }
+    },
+    "elec.counterReceptacleMaxAbove": {
+      "value": 20,
+      "unit": "in",
+      "code": "NEC 2023",
+      "section": "210.52(C)(3)",
+      "amendment": null,
+      "source": "https://www.stpaul.gov/sites/default/files/2020-12/DSI.Bldg_Electrical_Checklist%20Dwelling%20Unit%20Rough%20In.pdf",
+      "checked": "2026-10-15",
+      "note": "Not in the checklist; base NEC value from memory",
+      "secondCheck": {
+        "verdict": "agree",
+        "source": "https://www.mikeholt.com/files/PDF/23_UNEC1_210.52.pdf"
+      }
+    },
+    "elec.smallApplianceCircuits": {
+      "value": 2,
+      "unit": "count",
+      "code": "NEC 2023",
+      "section": "210.11(C)(1)",
+      "amendment": null,
+      "source": "https://www.stpaul.gov/sites/default/files/2020-12/DSI.Bldg_Electrical_Checklist%20Dwelling%20Unit%20Rough%20In.pdf",
+      "checked": "2026-10-15",
+      "note": "2020 NEC checklist; Idaho did not amend 210.11",
+      "secondCheck": {
+        "verdict": "agree",
+        "source": "https://www.stpaul.gov/sites/default/files/2023-06/DSI.Bldg_Electrical_Checklist%20Dwelling%20Unit%20Rough%20In.pdf"
+      }
+    },
+    "elec.smallApplianceAmps": {
+      "value": 20,
+      "unit": "A",
+      "code": "NEC 2023",
+      "section": "210.11(C)(1)",
+      "amendment": null,
+      "source": "https://www.stpaul.gov/sites/default/files/2020-12/DSI.Bldg_Electrical_Checklist%20Dwelling%20Unit%20Rough%20In.pdf",
+      "checked": "2026-10-15",
+      "note": "2020 NEC checklist",
+      "secondCheck": {
+        "verdict": "agree",
+        "source": "https://www.stpaul.gov/sites/default/files/2023-06/DSI.Bldg_Electrical_Checklist%20Dwelling%20Unit%20Rough%20In.pdf"
+      }
+    },
+    "elec.laundryCircuits": {
+      "value": 1,
+      "unit": "count",
+      "code": "NEC 2023",
+      "section": "210.11(C)(2)",
+      "amendment": null,
+      "source": "https://www.stpaul.gov/sites/default/files/2020-12/DSI.Bldg_Electrical_Checklist%20Dwelling%20Unit%20Rough%20In.pdf",
+      "checked": "2026-10-15",
+      "note": "2020 NEC checklist",
+      "secondCheck": {
+        "verdict": "agree",
+        "source": "https://www.stpaul.gov/sites/default/files/2023-06/DSI.Bldg_Electrical_Checklist%20Dwelling%20Unit%20Rough%20In.pdf"
+      }
+    },
+    "elec.bathroomCircuitAmps": {
+      "value": 20,
+      "unit": "A",
+      "code": "NEC 2023",
+      "section": "210.11(C)(3)",
+      "amendment": null,
+      "source": "https://www.stpaul.gov/sites/default/files/2020-12/DSI.Bldg_Electrical_Checklist%20Dwelling%20Unit%20Rough%20In.pdf",
+      "checked": "2026-10-15",
+      "note": "2020 NEC checklist",
+      "secondCheck": {
+        "verdict": "agree",
+        "source": "https://www.stpaul.gov/sites/default/files/2023-06/DSI.Bldg_Electrical_Checklist%20Dwelling%20Unit%20Rough%20In.pdf"
+      }
+    },
+    "elec.outdoorReceptaclesFrontBack": {
+      "value": true,
+      "unit": "",
+      "code": "NEC 2023",
+      "section": "210.52(E)",
+      "amendment": "Idaho replaced 210.52(E)(3) (decks/balconies/porches)",
+      "source": "https://www.stpaul.gov/sites/default/files/2020-12/DSI.Bldg_Electrical_Checklist%20Dwelling%20Unit%20Rough%20In.pdf",
+      "checked": "2026-10-15",
+      "note": "2020 NEC checklist. Idaho replaced 210.52(E)(3): porches/decks/balconies of 20 sq ft or more reachable from inside need one receptacle",
+      "secondCheck": {
+        "verdict": "agree",
+        "source": "https://www.mikeholt.com/files/PDF/23_UNEC1_210.52.pdf"
+      }
+    },
+    "elec.outdoorReceptacleMaxHeight": {
+      "value": 78,
+      "unit": "in",
+      "code": "NEC 2023",
+      "section": "210.52(E)",
+      "amendment": null,
+      "source": "https://www.stpaul.gov/sites/default/files/2020-12/DSI.Bldg_Electrical_Checklist%20Dwelling%20Unit%20Rough%20In.pdf",
+      "checked": "2026-10-15",
+      "note": "6.5 ft above grade; Idaho (E)(3) uses 6.5 ft above surface for decks",
+      "secondCheck": {
+        "verdict": "agree",
+        "source": "https://www.mikeholt.com/files/PDF/23_UNEC1_210.52.pdf"
+      }
+    },
+    "elec.hallwayReceptacleLength": {
+      "value": 10,
+      "unit": "ft",
+      "code": "NEC 2023",
+      "section": "210.52(H)",
+      "amendment": null,
+      "source": "https://www.stpaul.gov/sites/default/files/2020-12/DSI.Bldg_Electrical_Checklist%20Dwelling%20Unit%20Rough%20In.pdf",
+      "checked": "2026-10-15",
+      "note": "2020 NEC checklist",
+      "secondCheck": {
+        "verdict": "agree",
+        "source": "https://www.mikeholt.com/files/PDF/23_UNEC1_210.52.pdf"
+      }
+    },
+    "elec.gfciLocations": {
+      "value": [
+        "bathrooms",
+        "garages and accessory buildings",
+        "outdoors",
+        "crawl spaces (at/below grade)",
+        "unfinished basements",
+        "kitchens (all receptacles)",
+        "sinks outside kitchens (within 6 ft)",
+        "tub/shower areas (within 6 ft)",
+        "boathouses",
+        "indoor damp/wet locations"
+      ],
+      "unit": "",
+      "code": "NEC 2023",
+      "section": "210.8(A)",
+      "amendment": "IDAPA 24.39.10.600 amends 210.8(A): deletes (7) food-prep sinks and (11) laundry, limits basements to unfinished, drops 250 V",
+      "source": "https://regulations.justia.com/states/idaho/24/24-39-10/section-24-39-10-600",
+      "checked": "2026-10-15",
+      "note": "Base list read second-hand; Idaho removed laundry areas, finished basements, and the 250 V scope. Rule was a temporary one effective 4/19/2024, recheck status",
+      "secondCheck": {
+        "verdict": "agree",
+        "source": "https://files.dfm.idaho.gov/dfm-admin-website/rules/current/24/243910.pdf"
+      }
+    },
+    "elec.afciLocations": {
+      "value": [
+        "bedrooms only (one- and two-family dwellings)"
+      ],
+      "unit": "",
+      "code": "NEC 2023",
+      "section": "210.12(B)",
+      "amendment": "IDAPA 24.39.10.600: AFCI only for bedroom circuits/outlets in 1- and 2-family dwellings",
+      "source": "https://regulations.justia.com/states/idaho/24/24-39-10/section-24-39-10-600",
+      "checked": "2026-10-15",
+      "note": "Temporary Idaho rule effective 4/19/2024; recheck status",
+      "secondCheck": {
+        "verdict": "agree",
+        "source": "https://files.dfm.idaho.gov/dfm-admin-website/rules/current/24/243910.pdf"
+      }
+    },
+    "elec.tamperResistant": {
+      "value": true,
+      "unit": "",
+      "code": "NEC 2023",
+      "section": "406.12",
+      "amendment": null,
+      "source": "https://regulations.justia.com/states/idaho/24/24-39-10/section-24-39-10-600",
+      "checked": "2026-10-15",
+      "note": "Idaho has no amendment to 406.12 per the rule; requirement itself from memory of base code",
+      "secondCheck": {
+        "verdict": "agree",
+        "source": "https://www.cityofboise.org/media/11038/homeowner-electrical-permit-guide-final.pdf"
+      }
+    },
+    "elec.garageReceptaclePerBay": {
+      "value": 1,
+      "unit": "count",
+      "code": "NEC 2023",
+      "section": "210.52(G)",
+      "amendment": null,
+      "source": "https://www.stpaul.gov/sites/default/files/2020-12/DSI.Bldg_Electrical_Checklist%20Dwelling%20Unit%20Rough%20In.pdf",
+      "checked": "2026-10-15",
+      "note": "Source says one 20 A circuit for garage; per-bay count from base code memory",
+      "secondCheck": {
+        "verdict": "agree",
+        "source": "https://www.mikeholt.com/files/PDF/23_UNEC1_210.52.pdf"
+      }
+    },
+    "energy.fenestrationU": {
+      "value": 0.32,
+      "unit": "",
+      "code": "IECC 2018",
+      "section": "Table R402.1.2",
+      "amendment": null,
+      "source": "https://regulations.justia.com/states/idaho/24/24-39-30/section-24-39-30-600",
+      "checked": "2026-10-15",
+      "secondCheck": {
+        "verdict": "agree",
+        "source": "https://files.dfm.idaho.gov/dfm-admin-website/rules/current/24/243930.pdf"
+      }
+    },
+    "energy.skylightU": {
+      "value": 0.55,
+      "unit": "",
+      "code": "IECC 2018",
+      "section": "Table R402.1.2",
+      "amendment": null,
+      "source": "https://regulations.justia.com/states/idaho/24/24-39-30/section-24-39-30-600",
+      "checked": "2026-10-15",
+      "secondCheck": {
+        "verdict": "agree",
+        "source": "https://files.dfm.idaho.gov/dfm-admin-website/rules/current/24/243930.pdf"
+      }
+    },
+    "energy.glazedSHGC": {
+      "value": "NR",
+      "unit": "",
+      "code": "IECC 2018",
+      "section": "Table R402.1.2",
+      "amendment": "Idaho table: SHGC not required in zones 5-6",
+      "source": "https://regulations.justia.com/states/idaho/24/24-39-30/section-24-39-30-600",
+      "checked": "2026-10-15",
+      "secondCheck": {
+        "verdict": "agree",
+        "source": "https://files.dfm.idaho.gov/dfm-admin-website/rules/current/24/243930.pdf"
+      }
+    },
+    "energy.ceilingR": {
+      "value": 38,
+      "unit": "",
+      "code": "IECC 2018",
+      "section": "Table R402.1.2",
+      "amendment": "Idaho replaced zone 5 ceiling R-49 (base 2018 IECC) with R-38",
+      "source": "https://regulations.justia.com/states/idaho/24/24-39-30/section-24-39-30-600",
+      "checked": "2026-10-15",
+      "secondCheck": {
+        "verdict": "agree",
+        "source": "https://files.dfm.idaho.gov/dfm-admin-website/rules/current/24/243930.pdf"
+      }
+    },
+    "energy.woodWallR": {
+      "value": "20 or 13+5",
+      "unit": "",
+      "code": "IECC 2018",
+      "section": "Table R402.1.2",
+      "amendment": null,
+      "source": "https://regulations.justia.com/states/idaho/24/24-39-30/section-24-39-30-600",
+      "checked": "2026-10-15",
+      "secondCheck": {
+        "verdict": "agree",
+        "source": "https://files.dfm.idaho.gov/dfm-admin-website/rules/current/24/243930.pdf"
+      }
+    },
+    "energy.massWallR": {
+      "value": "13/17",
+      "unit": "",
+      "code": "IECC 2018",
+      "section": "Table R402.1.2",
+      "amendment": null,
+      "source": "https://regulations.justia.com/states/idaho/24/24-39-30/section-24-39-30-600",
+      "checked": "2026-10-15",
+      "secondCheck": {
+        "verdict": "agree",
+        "source": "https://files.dfm.idaho.gov/dfm-admin-website/rules/current/24/243930.pdf"
+      }
+    },
+    "energy.floorR": {
+      "value": 30,
+      "unit": "",
+      "code": "IECC 2018",
+      "section": "Table R402.1.2",
+      "amendment": null,
+      "source": "https://regulations.justia.com/states/idaho/24/24-39-30/section-24-39-30-600",
+      "checked": "2026-10-15",
+      "secondCheck": {
+        "verdict": "agree",
+        "source": "https://files.dfm.idaho.gov/dfm-admin-website/rules/current/24/243930.pdf"
+      }
+    },
+    "energy.basementWallR": {
+      "value": "15/19",
+      "unit": "",
+      "code": "IECC 2018",
+      "section": "Table R402.1.2",
+      "amendment": null,
+      "source": "https://regulations.justia.com/states/idaho/24/24-39-30/section-24-39-30-600",
+      "checked": "2026-10-15",
+      "secondCheck": {
+        "verdict": "agree",
+        "source": "https://files.dfm.idaho.gov/dfm-admin-website/rules/current/24/243930.pdf"
+      }
+    },
+    "energy.slabR": {
+      "value": "R-10, 2 ft",
+      "unit": "",
+      "code": "IECC 2018",
+      "section": "Table R402.1.2",
+      "amendment": null,
+      "source": "https://regulations.justia.com/states/idaho/24/24-39-30/section-24-39-30-600",
+      "checked": "2026-10-15",
+      "secondCheck": {
+        "verdict": "agree",
+        "source": "https://files.dfm.idaho.gov/dfm-admin-website/rules/current/24/243930.pdf"
+      }
+    },
+    "energy.crawlWallR": {
+      "value": "15/19",
+      "unit": "",
+      "code": "IECC 2018",
+      "section": "Table R402.1.2",
+      "amendment": null,
+      "source": "https://regulations.justia.com/states/idaho/24/24-39-30/section-24-39-30-600",
+      "checked": "2026-10-15",
+      "secondCheck": {
+        "verdict": "agree",
+        "source": "https://files.dfm.idaho.gov/dfm-admin-website/rules/current/24/243930.pdf"
+      }
+    },
+    "energy.airLeakageACH50": {
+      "value": 5,
+      "unit": "",
+      "code": "IECC 2018",
+      "section": "R402.4.1.2",
+      "amendment": "Idaho: at least 20% of a builder's homes must be tested from 7/1/2021; visual inspection option added",
+      "source": "https://insulationinstitute.org/wp-content/uploads/2024/07/N140-ID-Energy-Code-0823.pdf",
+      "checked": "2026-10-15",
+      "secondCheck": {
+        "verdict": "agree",
+        "source": "https://dopl.idaho.gov/wp-content/uploads/2023/10/BLD-Rules.pdf"
+      }
+    },
+    "energy.ductTestRequired": {
+      "value": "Total duct leakage at most 4 cfm25 per 100 sq ft, tested at rough-in (3 without the air handler) or after construction",
+      "unit": "",
+      "code": "IECC 2018",
+      "section": "R403.3.3, R403.3.4",
+      "amendment": null,
+      "source": "https://insulationinstitute.org/wp-content/uploads/2024/07/N140-ID-Energy-Code-0823.pdf",
+      "checked": "2026-10-15",
+      "secondCheck": {
+        "verdict": "disagree",
+        "source": "https://energycodes.gov/technical-assistance/faqs/what-are-requirements-duct-leakage-testing"
+      },
+      "resolved": "2026-10-15: second check corrected the test type (total leakage, not to outside)"
+    }
   }
- }
 }

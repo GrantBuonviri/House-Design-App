@@ -20,6 +20,12 @@ export type CodeEntry = {
   source: string;
   checked: string;
   note?: string;
+  /** The gathered number couldn't be confirmed from a source; not used by any check. */
+  unverified?: boolean;
+  /** The second, separate check of the number against its source. */
+  secondCheck?: { verdict: "agree" | "disagree" | "could-not-confirm"; source?: string | null };
+  /** How a disagreement between the two checks was settled. */
+  resolved?: string;
 };
 
 export type CodeEdition = { code: string; edition: string; amendments?: string; source?: string };

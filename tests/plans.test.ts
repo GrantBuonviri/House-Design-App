@@ -49,7 +49,12 @@ describe("code numbers", () => {
       expect(e.source, key).toMatch(/^https?:\/\//);
       expect(e.checked, key).toMatch(/^\d{4}-\d{2}-\d{2}$/);
     }
-    for (const r of RULES) expect(CODE_DATA.values[r.ref], r.id).toBeDefined();
+    for (const r of RULES) {
+      expect(CODE_DATA.values[r.ref], r.id).toBeDefined();
+      expect(CODE_DATA.values[r.ref].unverified, r.id).toBeFalsy();
+    }
+    // Every number was checked a second time.
+    for (const [key, e] of Object.entries(CODE_DATA.values)) expect(e.secondCheck?.verdict, key).toBeTruthy();
   });
 
   it("works out a window's clear opening and whether you could escape through it", () => {
