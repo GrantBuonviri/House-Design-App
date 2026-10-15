@@ -11,6 +11,8 @@ import { codeNum, codeRef } from "@/lib/codes/data";
 import { escapeCheck, operationOf, OPERATION_LABEL } from "@/lib/codes/openings";
 import { atticAccessSpot, inchText, isSleeping } from "@/lib/codes/rules";
 import { houseFacts } from "../house";
+import { levelCabinets } from "./cabinets";
+import { cabinetCorners } from "@/lib/plan/cabinets";
 import { DRAW_AREA } from "../frame";
 import { viewTitle } from "../view";
 import { archFeet, capHeight, DASH, ellipse, heading, HEADING_H, line, lineHeight, POCHE, rect, SCALES, table, textBlock, textWidth, readable, type Item, type Weight } from "../draw";
@@ -185,6 +187,8 @@ export function floorPlanSheet(project: Project, level: Level, viewNumber = 1): 
 
   // ---------- Fixtures ----------
   for (const f of plan.fixtures) drawFixture(f);
+  // Upper and tall cabinets, dashed (details on the cabinet sheet).
+  for (const c of levelCabinets(project, level).cabinets) if (c.kind === "tall" || c.bottomIn > 24) ppoly(cabinetCorners(c), "hair", undefined, DASH.hidden);
 
   function drawFixture(f: Fixture) {
     const L = (x: number, y: number) => add(rotate({ x, y }, f.rotation), { x: f.x, y: f.y });
@@ -329,8 +333,8 @@ export function floorPlanSheet(project: Project, level: Level, viewNumber = 1): 
     ny += Math.max(0.3, tb.height + 0.1);
   };
   legend((c) => [rect(c.x - 0.2, c.y - 0.05, 0.4, 0.1, undefined, POCHE)], `Wall, cut. Outside walls ${h.basics?.exteriorWall ?? "2x6"} studs at 16" on center with sheathing; inside walls 2x4 studs at 16" on center.`);
-  legend((c) => [{ t: "circle", c, r: 0.11, stroke: "fine" }, { t: "text", at: c, text: "D1", size: 5.5, bold: true, align: "center", valign: "middle" }], "Door tag. Sizes in the table below (door schedule on A-601 in a later update).");
-  legend((c) => [{ t: "poly", pts: hexagon(c, 0.12), stroke: "fine" }, { t: "text", at: c, text: "W1", size: 5.5, bold: true, align: "center", valign: "middle" }], "Window tag. Sizes in the table below.");
+  legend((c) => [{ t: "circle", c, r: 0.11, stroke: "fine" }, { t: "text", at: c, text: "D1", size: 5.5, bold: true, align: "center", valign: "middle" }], "Door tag. Sizes in the table below; more in the door schedule (A-601).");
+  legend((c) => [{ t: "poly", pts: hexagon(c, 0.12), stroke: "fine" }, { t: "text", at: c, text: "W1", size: 5.5, bold: true, align: "center", valign: "middle" }], "Window tag. Sizes in the table below; more in the window schedule (A-601).");
   legend((c) => [{ t: "text", at: c, text: "TEMP", size: 5, bold: true, align: "center", valign: "middle" }], `Safety glass (tempered or laminated) needed here (IRC R308.4).`);
   legend((c) => [{ t: "text", at: c, text: "EGR", size: 5, bold: true, align: "center", valign: "middle" }], `Emergency escape window: clear opening at least ${codeNum(level.kind === "basement" ? "egress.netClearOpeningGradeFloor" : "egress.netClearOpening")} sq ft, ${codeNum("egress.minClearHeight")}" high, ${codeNum("egress.minClearWidth")}" wide, sill no higher than ${codeNum("egress.maxSillHeight")}" (${codeRef("egress.netClearOpening")}).`);
   legend((c) => [line({ x: c.x - 0.2, y: c.y }, { x: c.x + 0.2, y: c.y }, "fine", DASH.hidden)], "Dashed: above, below, or the open side of a porch or deck.");

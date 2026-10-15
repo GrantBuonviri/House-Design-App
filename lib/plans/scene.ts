@@ -15,7 +15,7 @@ import type { ExteriorLook } from "@/lib/house3d/exterior";
 import type { RGB } from "@/lib/house3d/mesh";
 import { operationOf } from "@/lib/codes/openings";
 import { houseFacts } from "./house";
-import type { Item, Weight } from "./draw";
+import { DASH, type Item, type Weight } from "./draw";
 
 /**
  * The outside of the house as flat faces in 3D (inches; x east, y south, z up
@@ -286,8 +286,11 @@ function openingDetails(wall: Face, a: Point, b: Point, z0: number, z1: number, 
     d.push({ pts: quad(at(-3.5), at(len + 3.5), z0 - 1.5, z1 + 3.5), closed: true, w: "fine", fill: "#ffffff", color3d: trim });
     d.push({ pts: quad(at(f), at(len - f), z0 + f, z1 - f), closed: true, w: "fine", fill: "#ffffff", color3d: glass });
     d.push({ pts: [v(at(-5), z0 - 1.5), v(at(len + 5), z0 - 1.5)], w: "fine" });
-    if (op === "single-hung") d.push({ pts: [v(at(f), (z0 + z1) / 2), v(at(len - f), (z0 + z1) / 2)], w: "fine" });
-    if (op === "slider" || op === "casement") d.push({ pts: [v(at(len / 2), z0 + f), v(at(len / 2), z1 - f)], w: "fine" });
+    if (op === "single-hung" || op === "double-hung") d.push({ pts: [v(at(f), (z0 + z1) / 2), v(at(len - f), (z0 + z1) / 2)], w: "fine" });
+    if (op === "slider") d.push({ pts: [v(at(len / 2), z0 + f), v(at(len / 2), z1 - f)], w: "fine" });
+    // Casements and awnings: the usual dashed lines pointing to the hinges.
+    if (op === "casement") d.push({ pts: [v(at(len - f), z1 - f), v(at(f), (z0 + z1) / 2), v(at(len - f), z0 + f)], w: "hair", dash: DASH.hidden });
+    if (op === "awning") d.push({ pts: [v(at(f), z0 + f), v(at(len / 2), z1 - f), v(at(len - f), z0 + f)], w: "hair", dash: DASH.hidden });
     return;
   }
   const type = openingType(style);

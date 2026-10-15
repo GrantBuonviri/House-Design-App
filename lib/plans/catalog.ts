@@ -4,6 +4,8 @@ import { houseFacts } from "./house";
 import { siteLayout } from "./lot";
 import { houseScene } from "./scene";
 import { exteriorPartsFor, exteriorPick } from "@/lib/exterior/picks";
+import { hasCabinetRuns } from "./sheets/cabinets";
+import { fixtureLines } from "./sheets/schedules";
 
 /**
  * Every plan sheet a Boise house permit asks for (checklist #402), grouped
@@ -25,7 +27,7 @@ export const STATUS_LABEL: Record<SheetStatus, string> = {
 export type SheetGroup = "General" | "Site" | "Architectural" | "Interiors" | "Systems" | "Structural" | "From outside the app";
 export const SHEET_GROUPS: SheetGroup[] = ["General", "Site", "Architectural", "Interiors", "Systems", "Structural", "From outside the app"];
 
-export type Reason = { text: string; stage?: Stage; action?: "details" | "lot" };
+export type Reason = { text: string; stage?: Stage; action?: "details" | "lot" | "cabinets" };
 
 export type SheetEntry = {
   id: string;
@@ -49,12 +51,8 @@ const LATER: Later[] = [
   { id: "energy", number: "G-003", title: "Energy: insulation, windows and REScheck inputs", group: "General", part: 4 },
   { id: "sections", number: "A-301", title: "Building sections", group: "Architectural", part: 5 },
   { id: "stair-section", number: "A-501", title: "Stair section and details", group: "Architectural", part: 5 },
-  { id: "door-window", number: "A-601", title: "Door and window schedules", group: "Architectural", part: 3 },
-  { id: "cabinets", number: "I-201", title: "Cabinet plans and elevations", group: "Interiors", part: 3 },
-  { id: "finishes", number: "I-601", title: "Room finish schedule", group: "Interiors", part: 3 },
   { id: "electrical", number: "E-101", title: "Electrical plan", group: "Systems", part: 4 },
   { id: "plumbing", number: "P-101", title: "Plumbing plan", group: "Systems", part: 4 },
-  { id: "fixtures", number: "P-601", title: "Appliance and plumbing fixture schedule", group: "Systems", part: 3 },
   { id: "mechanical", number: "M-101", title: "Mechanical plan", group: "Systems", part: 4 },
   { id: "foundation", number: "S-101", title: "Foundation plan", group: "Structural", part: 5 },
   { id: "floor-framing", number: "S-201", title: "Floor framing plans", group: "Structural", part: 5 },
@@ -170,6 +168,33 @@ export function readiness(project: Project): Readiness {
     return missing.length ? { status: "notes", reasons: [{ text: `Not picked yet: ${missing.map((c) => c.label.toLowerCase()).join(", ")}`, stage: "exterior" }] } : { status: "ready", reasons: [] };
   });
   outside("views", "A-901", "3D views", "Architectural", () => ({ status: "ready", reasons: [] }), true);
+
+  // Schedules and cabinets.
+  outside("door-window", "A-601", "Door and window schedules", "Architectural", () => {
+    const any = h.levels.some((l) => h.plan(l.id).openings.some((o) => o.kind !== "opening"));
+    if (!any) return { status: "needs", reasons: [{ text: "Place at least one door or window", stage: "plan" }] };
+    const missing = (["windows", "entry-doors"] as const).filter((id) => !exteriorPick(project.exterior.selections, id));
+    return missing.length ? { status: "notes", reasons: [{ text: `Products print "Owner's pick" until you pick ${missing.map((m) => (m === "windows" ? "windows" : "an entry door")).join(" and ")}`, stage: "exterior" }] } : { status: "ready", reasons: [] };
+  });
+  outside("finishes", "I-601", "Room finish schedule", "Interiors", () => {
+    const picks = project.interior.selections;
+    if (!picks.length) return { status: "needs", reasons: [{ text: "Pick at least one inside finish (floors, paint, trim)", stage: "interior" }] };
+    const house = (cat: string) => picks.some((s) => s.category === cat && !s.wall);
+    const missing = [["flooring", "flooring"], ["paint", "wall paint"], ["trim", "baseboard and casing"]].filter(([c]) => !house(c)).map(([, l]) => l);
+    return missing.length ? { status: "notes", reasons: [{ text: `Not picked yet, prints "Owner's pick": ${missing.join(", ")}`, stage: "interior" }] } : { status: "ready", reasons: [] };
+  });
+  outside("cabinets", "I-201", "Cabinet plans and elevations", "Interiors", () => {
+    if (!hasCabinetRuns(project)) return { status: "needs", reasons: [{ text: "Place a counter, island or vanity on the floor plan (Fixtures, Kitchen or Bath)", stage: "plan" }] };
+    const picked = project.interior.selections.some((s) => s.category === "cabinets");
+    const edit: Reason = { text: "The app lays them out from your counters and appliances.", action: "cabinets" };
+    return picked ? { status: "ready", reasons: [edit] } : { status: "notes", reasons: [{ text: "No cabinet style picked yet: the notes say \"owner's pick\"", stage: "interior" }, edit] };
+  });
+  outside("fixtures", "P-601", "Appliance and plumbing fixture schedule", "Systems", () => {
+    const { plumbing, appliances } = fixtureLines(project);
+    if (!plumbing.length && !appliances.length) return { status: "needs", reasons: [{ text: "Place plumbing fixtures or appliances on the floor plan (Fixtures)", stage: "plan" }] };
+    const unpicked = [...plumbing, ...appliances].filter((l) => l.product === "Owner's pick" && !["laundry-sink", "water-heater", "washer", "dryer"].includes(l.kind));
+    return unpicked.length ? { status: "notes", reasons: [{ text: `No product picked yet for: ${[...new Set(unpicked.map((l) => l.label.toLowerCase()))].join(", ")}`, stage: "interior" }] } : { status: "ready", reasons: [] };
+  });
 
   for (const s of LATER) sheets.push({ id: s.id, number: s.number, title: s.title, group: s.group, optional: s.optional, status: "soon", reasons: [{ text: `Added in part ${s.part} of the plans export` }] });
   for (const d of OUTSIDE_DOCS) sheets.push({ id: `outside:${d.id}`, number: "", title: d.title, group: "From outside the app", status: "outside", reasons: [{ text: `Made by: ${d.who}.` }, { text: `The app gives them: ${d.gives}` }] });

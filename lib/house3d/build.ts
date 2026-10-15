@@ -19,6 +19,8 @@ import type { Site } from "./site";
 import { entrySteps } from "./entry";
 import { drawStairs, prism } from "./stairs";
 import { buildYard } from "./yard";
+import { cabinetLayout } from "@/lib/plan/cabinets";
+import { codeNum } from "@/lib/codes/data";
 
 /**
  * The whole 3D house from the project: walls with doors and windows cut in,
@@ -296,6 +298,17 @@ export function buildLevel(
     const pick: Pick = { kind: "fixture", id: fx.id, levelId: L };
     if (!solid.empty) parts.push({ key: `${L}:f:${fx.id}`, levelId: L, layer: "fixtures", pick, mesh: solid.build() });
     if (!glass.empty) parts.push({ key: `${L}:fg:${fx.id}`, levelId: L, layer: "fixtures", pick, mesh: glass.build(), glass: true });
+  }
+
+  // ---- Upper and tall cabinets (base cabinets are part of the counters) ----
+  const hung = cabinetLayout(plan, ceilingIn, codeNum("kitchen.rangeClearanceAbove")).cabinets.filter((c) => c.kind === "tall" || c.bottomIn > 24);
+  if (hung.length) {
+    const mb = new MeshBuilder();
+    for (const c of hung) {
+      const look = lookAt({ x: c.x, y: c.y });
+      mb.block(f, { x: c.x, y: c.y }, c.rotation, c.widthIn - 0.25, c.depthIn, floorIn + c.bottomIn, floorIn + c.bottomIn + c.heightIn, look?.cabinet ?? COLORS.cabinet);
+    }
+    parts.push({ key: `${L}:cab`, levelId: L, layer: "fixtures", mesh: mb.build() });
   }
 
   // ---- Furniture ----

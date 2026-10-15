@@ -1949,6 +1949,165 @@
         "source": "https://www.seattle.gov/documents/Departments/SDCI/Codes/SeattleResidentialCode/2018SRCChapter8.pdf"
       },
       "resolved": "First source was secondary or another edition; the second check confirmed the same number in a 2018-based source."
+    },
+    "kitchen.rangeClearanceAbove": {
+      "value": 30,
+      "unit": "in",
+      "code": "IRC 2018",
+      "section": "G2447.5",
+      "amendment": null,
+      "source": "https://seattle.gov/documents/departments/sdci/codes/seattleresidentialcode/2018srcchapter19.pdf",
+      "checked": "2026-10-15",
+      "note": "30 in read in Seattle's 2018 SRC ch.19 (adopts IRC M1901.1 text; Seattle may amend). ICC site unreadable (paywalled). Medium confidence. Product listing may require more.",
+      "secondCheck": {
+        "verdict": "agree",
+        "source": "https://www.thebuildingcodeforum.com/forum/posts/220088/"
+      }
+    },
+    "kitchen.rangeClearanceAboveProtected": {
+      "value": 24,
+      "unit": "in",
+      "code": "IRC 2018",
+      "section": "G2447.5",
+      "amendment": null,
+      "source": "https://www.thebuildingcodeforum.com/forum/posts/220088/",
+      "checked": "2026-10-15",
+      "note": "24 in from memory of the protected-surface exception; the 2018 text I read only said reduced clearance allowed per hood/oven listing, giving no number. LOW confidence; treat listing as controlling.",
+      "secondCheck": {
+        "verdict": "agree",
+        "source": "https://www.thebuildingcodeforum.com/forum/posts/220088/"
+      },
+      "resolved": "2026-10-15: helpers agreed on the number but gave different sections; settled by reading the source"
+    },
+    "vent.makeupAirHoodCfm": {
+      "value": 400,
+      "unit": "cfm",
+      "code": "IRC 2018",
+      "section": "M1503.6",
+      "amendment": null,
+      "source": "https://www.finehomebuilding.com/project-guides/kitchens/the-basics-of-makeup-air",
+      "checked": "2026-10-15",
+      "note": "400 cfm from secondary article (says 'more than 400'); Idaho amendment list does not include M1503. ICC text unreadable. Medium confidence. Trigger also depends on fuel-fired atmospheric appliances in thermal envelope? (article says so).",
+      "secondCheck": {
+        "verdict": "agree",
+        "source": "https://www.finehomebuilding.com/project-guides/kitchens/the-basics-of-makeup-air"
+      }
+    },
+    "bath.nonabsorbentWallHeight": {
+      "value": 72,
+      "unit": "in",
+      "code": "IRC 2018",
+      "section": "R307.2",
+      "amendment": null,
+      "source": "https://regulations.justia.com/states/idaho/24/24-39-30/section-24-39-30-600",
+      "checked": "2026-10-15",
+      "note": "72 in is from memory of R307.2 (6 ft above floor); not in Idaho amendment list; ICC page unreadable. Medium-high confidence.",
+      "secondCheck": {
+        "verdict": "agree",
+        "source": "https://casagrandeaz.gov/DocumentCenter/View/4185/Bathroom-Clearances"
+      }
+    },
+    "plumbing.wcMaxFlush": {
+      "value": 1.6,
+      "unit": "gal/flush",
+      "code": "ISPC 2017",
+      "section": "UPC 411.2",
+      "amendment": null,
+      "source": "https://files.dfm.idaho.gov/dfm-admin-website/rules/current/24/243920.pdf",
+      "checked": "2026-10-15",
+      "note": "Idaho State Plumbing Code 2017 adopts the 2015 UPC (IDAPA 24.39.20.600); no Idaho amendment to this section. Idaho adopts 2015 UPC (read at IDAPA 24.39.20.600); amendments listed do not touch flush volume. 1.6 gpf matches federal baseline (secondary source); UPC section numbers from memory. Medium confidence",
+      "secondCheck": {
+        "verdict": "agree",
+        "source": "https://files.dfm.idaho.gov/dfm-admin-website/rules/current/24/243920.pdf"
+      },
+      "resolved": "2026-10-15: helpers agreed on the number but gave different sections; settled by reading the source"
+    },
+    "plumbing.showerheadMaxFlow": {
+      "value": 2.5,
+      "unit": "gpm",
+      "code": "ISPC 2017",
+      "section": "UPC 408.2",
+      "amendment": null,
+      "source": "https://lawfilesext.leg.wa.gov/Law/WSR/2017/10/17-10-074.htm",
+      "checked": "2026-10-15",
+      "note": "Idaho State Plumbing Code 2017 adopts the 2015 UPC (IDAPA 24.39.20.600); no Idaho amendment to this section. Idaho amendments do not touch it. 2.5 gpm federal baseline; UPC 2015 section number from memory. Medium.",
+      "secondCheck": {
+        "verdict": "agree",
+        "source": "https://lawfilesext.leg.wa.gov/Law/WSR/2017/10/17-10-074.htm"
+      },
+      "resolved": "2026-10-15: helpers agreed on the number but gave different sections; settled by reading the source"
+    },
+    "plumbing.lavatoryFaucetMaxFlow": {
+      "value": 2.2,
+      "unit": "gpm",
+      "code": "ISPC 2017",
+      "section": "UPC 407.2",
+      "amendment": null,
+      "source": "https://www.safeplumbing.org/technical/pmi-summary-of-current-plumbing-provisions",
+      "checked": "2026-10-15",
+      "note": "Idaho State Plumbing Code 2017 adopts the 2015 UPC (IDAPA 24.39.20.600); no Idaho amendment to this section. Private lavatory 2.2 gpm (federal baseline; UPC 2015 may match). No Idaho change found. Medium-low.",
+      "secondCheck": {
+        "verdict": "agree",
+        "source": "https://www.safeplumbing.org/technical/pmi-summary-of-current-plumbing-provisions"
+      },
+      "resolved": "2026-10-15: helpers agreed on the number but gave different sections; settled by reading the source"
+    },
+    "plumbing.kitchenFaucetMaxFlow": {
+      "value": 2.2,
+      "unit": "gpm",
+      "code": "ISPC 2017",
+      "section": "UPC 420.2",
+      "amendment": null,
+      "source": "https://gocodebook.com/library/us/ca/ca-plumbing-code/chapter-4-plumbing-fixtures-and-fixture-fittings/420.2-water-consumption.-sink-faucets-shall-have-a-maximum-flow-rate-of-not-more-than-2.2-gpm-at",
+      "checked": "2026-10-15",
+      "note": "Idaho State Plumbing Code 2017 adopts the 2015 UPC (IDAPA 24.39.20.600); no Idaho amendment to this section. 2.2 gpm federal baseline; no Idaho change found. Medium-low.",
+      "secondCheck": {
+        "verdict": "agree",
+        "source": "https://gocodebook.com/library/us/ca/ca-plumbing-code/chapter-4-plumbing-fixtures-and-fixture-fittings/420.2-water-consumption.-sink-faucets-shall-have-a-maximum-flow-rate-of-not-more-than-2.2-gpm-at"
+      },
+      "resolved": "2026-10-15: helpers agreed on the number but gave different sections; settled by reading the source"
+    },
+    "plumbing.showerValveMaxTemp": {
+      "value": 120,
+      "unit": "degF",
+      "code": "ISPC 2017",
+      "section": "UPC 408.3",
+      "amendment": null,
+      "source": "https://www.thebuildingcodeforum.com/forum/threads/plumbing-codes-model-codes-and-or-state-and-local-amendments.38748",
+      "checked": "2026-10-15",
+      "note": "Idaho State Plumbing Code 2017 adopts the 2015 UPC (IDAPA 24.39.20.600); no Idaho amendment to this section. 120F from forum summary; Idaho amendments do not touch the shower section per Justia summary. UPC 2015 section number from memory. Medium.",
+      "secondCheck": {
+        "verdict": "agree",
+        "source": "https://forms.iapmo.org/email_marketing/codespotlight/2018/may17.htm"
+      }
+    },
+    "energy.opaqueDoorExemptArea": {
+      "value": 24,
+      "unit": "sq ft",
+      "code": "IECC 2018",
+      "section": "R402.3.4",
+      "amendment": null,
+      "source": "https://regulations.justia.com/states/idaho/24/24-39-30/section-24-39-30-600",
+      "checked": "2026-10-15",
+      "note": "24 sq ft from memory of IECC text; ICC unreadable. Medium-high.",
+      "secondCheck": {
+        "verdict": "agree",
+        "source": "https://www.southface.org/wp-content/uploads/2019/08/2015-IECC-Excerpt_Chap4.pdf"
+      }
+    },
+    "energy.glazedExemptArea": {
+      "value": 15,
+      "unit": "sq ft",
+      "code": "IECC 2018",
+      "section": "R402.3.3",
+      "amendment": null,
+      "source": "https://regulations.justia.com/states/idaho/24/24-39-30/section-24-39-30-600",
+      "checked": "2026-10-15",
+      "note": "15 sq ft from memory; ICC unreadable. Medium-high.",
+      "secondCheck": {
+        "verdict": "agree",
+        "source": "https://www.southface.org/wp-content/uploads/2019/08/2015-IECC-Excerpt_Chap4.pdf"
+      }
     }
   }
 }

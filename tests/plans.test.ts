@@ -26,6 +26,12 @@ import { houseScene } from "@/lib/plans/scene";
 import { roofSheet } from "@/lib/plans/sheets/roof";
 import { elevationSheets } from "@/lib/plans/sheets/elevations";
 import { exteriorProductsFor } from "@/lib/catalog/exterior";
+import { type Fixture, type FloorPlan, type Point } from "@/lib/model/schema";
+import { add, angleOf, dist, leftNormal, scale, sub, unit } from "@/lib/plan/geometry";
+import { openingGeometries } from "@/lib/plan/walls";
+import { addCabinet, autoCabinets, cabinetLayout, fillWidths, newCabinet, removeCabinet, resetCabinets, updateCabinet, UPPER_BOTTOM_IN } from "@/lib/plan/cabinets";
+import { doorWindowRows, finishRows, fixtureLines } from "@/lib/plans/sheets/schedules";
+import { levelCabinets } from "@/lib/plans/sheets/cabinets";
 
 let n = 0;
 const chosen = (type: string, levelId?: string): ChosenRoom => ({ id: `c${++n}`, type, name: `${roomType(type).label}`, description: "", ...(levelId ? { levelId } : {}) });
@@ -306,6 +312,173 @@ function houseDepthFt(p: Project, onLot: Project): number {
   void p;
   return (Math.max(...d) - Math.min(...d)) / 12;
 }
+
+/** Kitchen and bath fixtures put in the way the floor plan's Fixtures tool would: backs 2.5" off the wall line. */
+function withKitchen(p: Project): Project {
+  const plan = p.floorPlans["floor-1"];
+  const fixtures: Fixture[] = [...plan.fixtures];
+  const along = (roomType: string, items: [string, number, number][], minLen: number) => {
+    const room = plan.rooms.find((r) => r.type === roomType);
+    if (!room) return;
+    const doors = openingGeometries(plan).filter((g) => g.opening.kind !== "window");
+    const onEdge = (p: { x: number; y: number }, a: { x: number; y: number }, b: { x: number; y: number }) => Math.abs(dist(a, p) + dist(p, b) - dist(a, b)) < 1;
+    // The longest stretch of wall with no door or opening in it.
+    let best: { a: Point; u: Point; t0: number; len: number } | null = null;
+    for (let i = 0; i < room.polygon.length; i++) {
+      const a = room.polygon[i];
+      const b = room.polygon[(i + 1) % room.polygon.length];
+      const L = dist(a, b);
+      const cuts = doors.filter((g) => onEdge(g.center, a, b)).map((g) => [Math.min(dist(a, g.a), dist(a, g.b)) - 4, Math.max(dist(a, g.a), dist(a, g.b)) + 4] as [number, number]);
+      let at = 0;
+      for (const [c0, c1] of [...cuts.sort((x, y) => x[0] - y[0]), [L, L] as [number, number]]) {
+        if (c0 - at > (best?.len ?? 0)) best = { a, u: unit(sub(b, a)), t0: at, len: c0 - at };
+        at = Math.max(at, c1);
+      }
+    }
+    if (!best || best.len < minLen) return;
+    const e = best;
+    const u = e.u;
+    const inward = scale(leftNormal(u), -1);
+    let t = e.t0 + 6;
+    for (const [kind, w, d] of items) {
+      const at = add(add(e.a, scale(u, t + w / 2)), scale(inward, d / 2 + 2.5));
+      fixtures.push({ id: `${roomType}-${kind}-${t}`, kind, x: at.x, y: at.y, rotation: Math.round(angleOf(inward) - 90), widthIn: w, depthIn: d, roomId: room.id });
+      t += w;
+    }
+  };
+  along("kitchen", [["fridge", 36, 30], ["counter", 15, 25], ["range", 30, 26], ["counter", 12, 25], ["sink", 33, 22], ["dishwasher", 24, 24]], 160);
+  along("primary-bath", [["vanity", 60, 21], ["toilet", 20, 28]], 90);
+  along("bathroom", [["vanity", 36, 21], ["toilet", 20, 28]], 60);
+  const next: FloorPlan = { ...plan, fixtures };
+  return { ...p, floorPlans: { ...p.floorPlans, "floor-1": next } };
+}
+
+describe("schedules and cabinets (part 3)", () => {
+  const ranch = house(RANCH);
+  const kitchen = withKitchen(ranch);
+  const level = kitchen.levels.find((l) => l.id === "floor-1")!;
+
+  it("cuts a length into standard cabinet widths", () => {
+    for (const L of [9, 30, 47, 100, 141.5]) {
+      const f = fillWidths(L);
+      expect(f.widths.reduce((a, b) => a + b, 0) + f.filler).toBeCloseTo(L);
+      for (const w of f.widths) expect(w % 3).toBe(0);
+      expect(f.filler).toBeLessThan(3);
+    }
+  });
+
+  it("lays out cabinets from the counters and appliances", () => {
+    expect(kitchen.floorPlans["floor-1"].fixtures.filter((f) => f.kind === "range")).toHaveLength(1);
+    const lay = levelCabinets(kitchen, level);
+    const run = lay.runs.find((r) => r.appliances.some((a) => a.fixture.kind === "range"))!;
+    expect(run).toBeDefined();
+    const cabs = lay.cabinets.filter((c) => c.runId === run.id);
+    const along = (c: (typeof cabs)[number]) => (c.x - run.origin.x) * run.u.x + (c.y - run.origin.y) * run.u.y;
+    // A sink base under the sink, a drawer base beside the range, and no base box under an appliance.
+    const sink = run.appliances.find((a) => a.fixture.kind === "sink")!;
+    const sb = cabs.find((c) => c.kind === "sink")!;
+    expect(sb.widthIn).toBeGreaterThanOrEqual(33);
+    expect(Math.abs(along(sb) - (sink.t0 + sink.t1) / 2)).toBeLessThan(2);
+    expect(cabs.some((c) => c.kind === "drawer")).toBe(true);
+    for (const a of run.appliances.filter((x) => x.fixture.kind !== "sink"))
+      for (const c of cabs.filter((x) => x.bottomIn === 0)) {
+        const t = along(c);
+        expect(t + c.widthIn / 2 <= a.t0 + 0.5 || t - c.widthIn / 2 >= a.t1 - 0.5, c.code).toBe(true);
+      }
+    // Base boxes in standard widths.
+    for (const c of cabs.filter((x) => x.kind === "base")) expect([9, 12, 15, 18, 21, 24, 27, 30, 33, 36]).toContain(c.widthIn);
+    // Uppers: 54" up, a short one over the fridge, and the one over the range clear of the cooktop.
+    const range = run.appliances.find((a) => a.fixture.kind === "range")!;
+    const fridge = run.appliances.find((a) => a.fixture.kind === "fridge")!;
+    const over = (a: typeof range) => cabs.find((c) => c.bottomIn > 36 && Math.abs(along(c) - (a.t0 + a.t1) / 2) < 2);
+    expect(over(range)!.bottomIn).toBeGreaterThanOrEqual(36 + codeNum("kitchen.rangeClearanceAbove"));
+    expect(over(fridge)!.depthIn).toBe(24);
+    expect(cabs.filter((c) => c.kind === "upper" && c.depthIn === 12 && c.bottomIn === UPPER_BOTTOM_IN).length).toBeGreaterThan(0);
+    // Vanities in the baths.
+    expect(lay.cabinets.filter((c) => c.kind === "vanity").map((c) => c.code).sort()).toEqual(["V36", "V60"]);
+  });
+
+  it("keeps uppers off the windows", () => {
+    const plan = { ...emptyPlan(), rooms: [{ id: "k", name: "Kitchen", type: "kitchen", polygon: [{ x: 0, y: 0 }, { x: 168, y: 0 }, { x: 168, y: 144 }, { x: 0, y: 144 }] }] };
+    const counter: Fixture = { id: "c", kind: "counter", x: 84, y: 15, rotation: 0, widthIn: 160, depthIn: 25, roomId: "k" };
+    const win: Opening = { id: "w", host: { roomId: "k", edge: 0 }, offsetIn: 84, kind: "window", style: "window", widthIn: 36, heightIn: 48, sillIn: 42, side: 1, hinge: "start" };
+    const lay = autoCabinets({ ...plan, fixtures: [counter], openings: [win] }, 96);
+    const uppers = lay.cabinets.filter((c) => c.bottomIn >= UPPER_BOTTOM_IN);
+    expect(uppers.length).toBeGreaterThan(1);
+    for (const c of uppers) expect(c.x + c.widthIn / 2 <= 66 + 0.5 || c.x - c.widthIn / 2 >= 102 - 0.5, c.code).toBe(true);
+    // No wall behind an island: no uppers.
+    const island: Fixture = { id: "i", kind: "island", x: 84, y: 90, rotation: 0, widthIn: 72, depthIn: 36, roomId: "k" };
+    expect(autoCabinets({ ...plan, fixtures: [island] }, 96).cabinets.every((c) => c.bottomIn === 0)).toBe(true);
+  });
+
+  it("lets the owner take away, move and add back cabinets", () => {
+    const plan = kitchen.floorPlans["floor-1"];
+    const lay = cabinetLayout(plan, 96);
+    const first = lay.cabinets.find((c) => c.kind === "upper")!;
+    const gone = removeCabinet(plan, first.id);
+    expect(cabinetLayout(gone, 96).cabinets.some((c) => c.id === first.id)).toBe(false);
+    const moved = updateCabinet(plan, first, { x: first.x + 6 });
+    const after = cabinetLayout(moved, 96).cabinets;
+    expect(after.some((c) => c.id === first.id)).toBe(false);
+    expect(after.find((c) => !c.auto)!.x).toBeCloseTo(first.x + 6, 0);
+    expect(cabinetLayout(resetCabinets(moved), 96).cabinets).toHaveLength(lay.cabinets.length);
+    // One added on a bare wall gets a run of its own, so it shows on an elevation.
+    const lone = cabinetLayout(addCabinet(plan, newCabinet("upper", { x: -500, y: -500 }, 0, 30, 96)), 96);
+    expect(lone.runs).toHaveLength(lay.runs.length + 1);
+    expect(lone.cabinets.find((c) => !c.auto)!.runId).toBe(lone.runs[lone.runs.length - 1].id);
+    // Saved changes survive a save and load.
+    const saved = migrateProject(JSON.parse(exportProjectJson({ ...kitchen, floorPlans: { ...kitchen.floorPlans, "floor-1": moved } })).project);
+    expect(saved.floorPlans["floor-1"].cabinets?.added).toHaveLength(1);
+  });
+
+  it("works out a casement's bigger clear opening, and keeps a window's own choice", () => {
+    const w = (operation?: Opening["operation"]): Opening => ({ id: "w", host: { roomId: "r", edge: 0 }, offsetIn: 0, kind: "window", style: "window", widthIn: 24, heightIn: 48, sillIn: 30, side: 1, hinge: "start", operation });
+    expect(escapeCheck(w(), false).ok).toBe(false);
+    expect(clearOpening(w("casement")).sqft).toBeGreaterThan(clearOpening(w()).sqft * 1.8);
+    const old = { ...createProject("Old"), schemaVersion: 11 } as Record<string, unknown>;
+    expect(migrateProject(old).schemaVersion).toBeGreaterThanOrEqual(12);
+  });
+
+  it("schedules every door and window, the room finishes and the fixtures", () => {
+    const h = houseFacts(kitchen);
+    const { doors, windows } = doorWindowRows(kitchen);
+    expect(doors.length + windows.length).toBe(h.tags.size);
+    // Every bedroom window says whether it's an escape window.
+    expect(windows.some((r) => r[8].startsWith("Yes"))).toBe(true);
+    const finishes = finishRows(kitchen);
+    expect(finishes.length).toBe(kitchen.floorPlans["floor-1"].rooms.filter((r) => r.type !== "patio" && r.type !== "porch" && r.type !== "deck").length);
+    expect(finishes.find((r) => r[0] === "Garage")?.[5]).toMatch(/gypsum/);
+    const { plumbing, appliances } = fixtureLines(kitchen);
+    const toilets = plumbing.find((l) => l.kind === "toilet")!;
+    expect(toilets.count).toBe(2);
+    expect(toilets.notes).toContain(`${codeNum("plumbing.wcMaxFlush")} gal`);
+    expect(appliances.map((a) => a.kind)).toEqual(expect.arrayContaining(["range", "hood", "fridge", "dishwasher"]));
+  });
+
+  it("lists the part 3 sheets and draws them", () => {
+    const before = readiness(ranch).sheets;
+    expect(before.find((s) => s.id === "cabinets")!.status).toBe("needs");
+    const r = readiness(kitchen).sheets;
+    for (const id of ["door-window", "finishes", "cabinets", "fixtures"]) expect(canDraw(r.find((s) => s.id === id)!) || id === "finishes", id).toBe(true);
+    const set = buildSet(kitchen, { only: ["door-window", "cabinets", "fixtures"] });
+    expect(set.length).toBeGreaterThanOrEqual(3);
+    const text = set.map((s) => sheetText(s).join(" ")).join(" ");
+    expect(text).toMatch(/SB3[36]/);
+    expect(text).toMatch(/window schedule/i);
+    expect(text.replace(/\s+/g, " ").split(ALLOWED).join(" ")).not.toMatch(FORBIDDEN);
+    for (const s of set)
+      for (const it of s.items) {
+        const pts = it.t === "text" ? [it.at] : it.t === "circle" ? [it.c] : it.pts;
+        for (const pt of pts) {
+          expect(pt.x, s.number).toBeGreaterThanOrEqual(0);
+          expect(pt.x, s.number).toBeLessThanOrEqual(s.w);
+          expect(pt.y, s.number).toBeGreaterThanOrEqual(0);
+          expect(pt.y, s.number).toBeLessThanOrEqual(s.h);
+        }
+      }
+    if (process.env.PLANS_PDF_OUT) writeFileSync(`${process.env.PLANS_PDF_OUT}/ranch-kitchen.house.json`, exportProjectJson(onRealLot(kitchen)));
+  });
+});
 
 describe("drawing helpers", () => {
   it("writes architectural feet and inches", () => {

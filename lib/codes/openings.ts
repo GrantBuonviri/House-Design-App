@@ -1,4 +1,4 @@
-import type { FloorPlan, Opening, Point } from "@/lib/model/schema";
+import type { FloorPlan, Opening, Point, WindowOperation } from "@/lib/model/schema";
 import { dist, pointInPolygon, project, edgesOf } from "@/lib/plan/geometry";
 import { openingGeometries, type OpeningGeometry } from "@/lib/plan/walls";
 import { openingRooms } from "@/lib/plan/connect";
@@ -11,20 +11,36 @@ import { codeNum, codeRef } from "./data";
  * clear openings are estimates; the maker's numbers are the real ones.
  */
 
-export type WindowOperation = "single-hung" | "slider" | "casement" | "awning" | "fixed";
+export type { WindowOperation };
 
 export const OPERATION_LABEL: Record<WindowOperation, string> = {
   "single-hung": "Single-hung",
+  "double-hung": "Double-hung",
   slider: "Slider",
   casement: "Casement",
   awning: "Awning",
   fixed: "Fixed",
 };
 
-/** How a window opens, from its style. */
-export function operationOf(o: Pick<Opening, "style">): WindowOperation {
-  if (o.style === "window-picture") return "fixed";
-  if (o.style === "window-high") return "slider";
+/** What each one means, for the window panel. */
+export const OPERATION_HINT: Record<WindowOperation, string> = {
+  "single-hung": "Bottom half slides up",
+  "double-hung": "Both halves slide",
+  slider: "One half slides sideways",
+  casement: "Swings out on side hinges, opens all the way",
+  awning: "Hinged at the top, swings out",
+  fixed: "Doesn't open",
+};
+
+/** How a window opens: what was picked for it, else what its type usually is. */
+export function operationOf(o: Pick<Opening, "style" | "operation">): WindowOperation {
+  if (o.operation) return o.operation;
+  return defaultOperation(o.style);
+}
+
+export function defaultOperation(style: string): WindowOperation {
+  if (style === "window-picture") return "fixed";
+  if (style === "window-high") return "slider";
   return "single-hung";
 }
 
@@ -34,13 +50,14 @@ const FRAME_IN = 3.5;
 const RAIL_IN = 1.5;
 
 /** The clear opening when a window is fully open, inches (zero for a fixed window). */
-export function clearOpening(o: Pick<Opening, "style" | "widthIn" | "heightIn">): { widthIn: number; heightIn: number; sqft: number } {
+export function clearOpening(o: Pick<Opening, "style" | "operation" | "widthIn" | "heightIn">): { widthIn: number; heightIn: number; sqft: number } {
   const w = o.widthIn - FRAME_IN;
   const h = o.heightIn - FRAME_IN;
   let cw = 0;
   let ch = 0;
   switch (operationOf(o)) {
     case "single-hung":
+    case "double-hung":
       cw = w;
       ch = (h - RAIL_IN) / 2;
       break;
@@ -72,14 +89,14 @@ export function glassSqft(o: Pick<Opening, "kind" | "style" | "widthIn" | "heigh
 }
 
 /** The part you can open for fresh air, square feet. */
-export function openableSqft(o: Pick<Opening, "kind" | "style" | "widthIn" | "heightIn">): number {
+export function openableSqft(o: Pick<Opening, "kind" | "style" | "operation" | "widthIn" | "heightIn">): number {
   if (o.kind === "window") return clearOpening(o).sqft;
   if (o.style === "door-slider") return glassSqft(o) / 2;
   return 0;
 }
 
 /** Glass panes in the unit, for the large-pane rule. */
-function panes(o: Pick<Opening, "kind" | "style">): number {
+function panes(o: Pick<Opening, "kind" | "style" | "operation">): number {
   if (o.kind !== "window") return 2;
   const op = operationOf(o);
   return op === "fixed" || op === "casement" || op === "awning" ? 1 : 2;
