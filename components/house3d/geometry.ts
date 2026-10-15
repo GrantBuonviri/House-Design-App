@@ -3,12 +3,18 @@ import type { Part, Pick } from "@/lib/house3d/build";
 import type { MeshData } from "@/lib/house3d/mesh";
 
 /** Join parts into one geometry, remembering which part each triangle came from (for clicking). */
-export function mergeParts(parts: Part[]): { geometry: THREE.BufferGeometry; picks: (Pick | undefined)[] } | null {
+export function mergeParts(parts: Part[]): { geometry: THREE.BufferGeometry; picks: (Pick | undefined)[]; owners: Part[] } | null {
   const used = parts.filter((p) => p.mesh.count > 0);
   if (!used.length) return null;
   const picks: (Pick | undefined)[] = [];
-  for (const p of used) for (let i = 0; i < p.mesh.count; i++) picks.push(p.pick);
-  return { geometry: toGeometry(concatMeshes(used.map((p) => p.mesh))), picks };
+  const owners: Part[] = [];
+  for (const p of used) {
+    for (let i = 0; i < p.mesh.count; i++) {
+      picks.push(p.pick);
+      owners.push(p);
+    }
+  }
+  return { geometry: toGeometry(concatMeshes(used.map((p) => p.mesh))), picks, owners };
 }
 
 export function concatMeshes(meshes: MeshData[]): MeshData {

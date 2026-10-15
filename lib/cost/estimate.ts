@@ -303,6 +303,7 @@ export function applySelections(lines: CostLine[], selections: Selection[], q?: 
     const r = file.rates[lineId as RateId];
     // Each room's part of the line, scaled so the parts add up to the line's amount.
     const parts = (q?.rooms ?? []).map((room) => ({ id: room.id, amount: room.amounts[lineId as RateId] ?? 0 })).filter((x) => x.amount > 0);
+    const roomWalls = new Map((q?.rooms ?? []).map((room) => [room.id, room.walls]));
     const sum = parts.reduce((s, x) => s + x.amount, 0);
     const shares = sum > 0 ? parts.map((x) => ({ id: x.id, amount: (x.amount * l.qty) / sum })) : [{ id: WHOLE_HOUSE, amount: l.qty }];
     // An exterior pick with its own quantity prices that quantity.
@@ -315,19 +316,24 @@ export function applySelections(lines: CostLine[], selections: Selection[], q?: 
     for (const part of shares) {
       // The picks that apply here, one per category: the room's own, or the whole house's.
       const cats = new Map<string, Selection>();
-      for (const s of picks) if (s.targetId === WHOLE_HOUSE && !cats.has(s.category)) cats.set(s.category, s);
-      for (const s of picks) if (s.targetId === part.id) cats.set(s.category, s);
+      for (const s of picks) if (s.targetId === WHOLE_HOUSE && !s.wall && !cats.has(s.category)) cats.set(s.category, s);
+      for (const s of picks) if (s.targetId === part.id && !s.wall) cats.set(s.category, s);
+      // Accent walls take their wall's share of the room's paint; the room's own paint covers the rest.
+      const walls = roomWalls.get(part.id);
+      const accents = picks.filter((s) => s.targetId === part.id && s.wall && walls?.[s.wall]);
+      const accentShare = Math.min(1, accents.reduce((t, s) => t + walls![s.wall!], 0));
       let replaced = 0;
       let productCost = 0;
-      for (const s of cats.values()) {
+      const price = (s: Selection, cover: number) => {
         const c = interiorCategory(s.category);
-        const share = c?.share ?? 1;
-        replaced += share;
-        productCost += s.product.price! * (c?.perUnit ?? 1) * part.amount;
+        replaced += (c?.share ?? 1) * cover;
+        productCost += s.product.price! * (c?.perUnit ?? 1) * part.amount * cover;
         used.add(`${s.product.brand} ${s.product.name}`);
-      }
+      };
+      for (const s of cats.values()) price(s, s.category === "paint" ? 1 - accentShare : 1);
+      for (const s of accents) price(s, walls![s.wall!]);
       replaced = Math.min(1, replaced);
-      if (cats.size) pickedAmount += part.amount;
+      if (cats.size || accents.length) pickedAmount += part.amount;
       const allowance = r ? addMoney(times(r.material, part.amount * (1 - replaced)), times(r.labor, part.amount)) : ZERO;
       const product: Money = { low: productCost * 0.95, likely: productCost, high: productCost * 1.1 };
       cost = addMoney(cost, addMoney(allowance, product));

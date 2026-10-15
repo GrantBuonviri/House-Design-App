@@ -27,7 +27,7 @@ function room(id: string, x: number, y: number, w: number, h: number, type = "li
   return { id, name: id, type, polygon: rectangle(x + w / 2, y + h / 2, w, h) };
 }
 function plan(rooms: PlanRoom[], extra: Partial<FloorPlan> = {}): FloorPlan {
-  return { rooms, walls: [], openings: [], stairs: [], fixtures: [], ...extra };
+  return { rooms, walls: [], openings: [], stairs: [], fixtures: [], furniture: [], ...extra };
 }
 const ROOF: House3D["roof"] = House3D.parse({}).roof;
 

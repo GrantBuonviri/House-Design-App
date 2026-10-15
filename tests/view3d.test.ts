@@ -14,7 +14,7 @@ function room(id: string, polygon: Point[]): PlanRoom {
   return { id, name: id, type: "living", polygon };
 }
 function plan(rooms: PlanRoom[], extra: Partial<FloorPlan> = {}): FloorPlan {
-  return { rooms, walls: [], openings: [], stairs: [], fixtures: [], ...extra };
+  return { rooms, walls: [], openings: [], stairs: [], fixtures: [], furniture: [], ...extra };
 }
 function ctx(): HouseContext {
   return { levels: [levelFor(MAIN_LEVEL_ID)], basics: defaultBasics(), house3d: House3D.parse({}), site: siteFor(null, { x: 0, y: 0 }, {}), frame: { ox: 0, oy: 0 } };

@@ -15,7 +15,7 @@ function room(id: string, x: number, y: number, w: number, h: number, type = "li
   return { id, name: id, type, polygon: rectangle(x + w / 2, y + h / 2, w, h) };
 }
 function plan(rooms: PlanRoom[], extra: Partial<FloorPlan> = {}): FloorPlan {
-  return { rooms, walls: [], openings: [], stairs: [], fixtures: [], ...extra };
+  return { rooms, walls: [], openings: [], stairs: [], fixtures: [], furniture: [], ...extra };
 }
 function door(id: string, roomId: string, edge: number, offsetIn: number, style = "door-hinged", kind: Opening["kind"] = "door"): Opening {
   return { id, host: { roomId, edge }, offsetIn, kind, style, widthIn: 36, heightIn: kind === "window" ? 48 : 80, side: 1, hinge: "start" };

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { House3D, WHOLE_HOUSE, type FloorPlan, type PlanRoom, type Project, type Selection } from "@/lib/model/schema";
+import { House3D, SCHEMA_VERSION, WHOLE_HOUSE, type FloorPlan, type PlanRoom, type Project, type Selection } from "@/lib/model/schema";
 import { createProject, migrateProject } from "@/lib/model/project";
 import { generatePlot, FLAT_PLOT_SEED } from "@/lib/land/generate";
 import { levelFor, MAIN_LEVEL_ID } from "@/lib/brief/levels";
@@ -25,7 +25,7 @@ function room(id: string, x: number, y: number, w: number, h: number, type = "li
   return { id, name: id, type, polygon: rectangle(x + w / 2, y + h / 2, w, h) };
 }
 function plan(rooms: PlanRoom[]): FloorPlan {
-  return { rooms, walls: [], openings: [], stairs: [], fixtures: [] };
+  return { rooms, walls: [], openings: [], stairs: [], fixtures: [], furniture: [] };
 }
 function project(rooms: PlanRoom[], selections: Selection[] = []): Project {
   const p = createProject("Test");
@@ -225,7 +225,7 @@ describe("saving", () => {
     const older = { ...createProject("Old"), schemaVersion: 6 } as Record<string, unknown>;
     older.interior = { answers: {}, moodBoard: [], selections: [] };
     const p = migrateProject(older);
-    expect(p.schemaVersion).toBe(7);
+    expect(p.schemaVersion).toBe(SCHEMA_VERSION);
     expect(p.interior).toEqual({ answers: {}, moodBoard: [], shuffle: 0, selections: [] });
   });
 });

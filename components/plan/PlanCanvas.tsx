@@ -14,6 +14,7 @@ import { add, angleOf, boundsOf, dist, edgesOf, leftNormal, polygonArea, polygon
 import { roomSqft } from "@/lib/plan/measure";
 import { snapFrom, snapMove, snapPush, snapTargets, type Guides } from "@/lib/plan/snap";
 import { DEFAULT_STAIRS_WIDTH_IN, stairsDrawing } from "@/lib/plan/stairs";
+import { furnitureOutline, furnitureType } from "@/lib/plan/furniture";
 import { clampOffset, nearestHost, openingGeometries, openingGeometry, solidWalls, wallPieces, type OpeningGeometry } from "@/lib/plan/walls";
 import BubbleShape from "@/components/bubbles/BubbleShape";
 import LandLayer from "@/components/bubbles/LandLayer";
@@ -578,6 +579,7 @@ export default function PlanCanvas(props: Props) {
         ...plan,
         rooms: plan.rooms.map((r) => (r.id === id ? { ...r, polygon: r.polygon.map(tf) } : r)),
         fixtures: plan.fixtures.map((f) => (f.roomId === id ? { ...f, ...tf(f), rotation: Math.round(f.rotation + dRot) } : f)),
+        furniture: plan.furniture.map((f) => (f.roomId === id ? { ...f, ...tf(f), rotation: Math.round(f.rotation + dRot) } : f)),
       });
       return;
     }
@@ -677,6 +679,21 @@ export default function PlanCanvas(props: Props) {
             {shown.fixtures.map((f) => (
               <FixtureSymbol key={f.id} f={f} selected={isPicked(selection, f.id)} scale={s} onTransformEnd={onTransformEnd} />
             ))}
+
+            {/* Furniture placed in the walkthrough: outlines only (it's moved there, with Design on). */}
+            <Group listening={false}>
+              {(shown.furniture ?? []).map((f) => {
+                const t = furnitureType(f.kind);
+                return (
+                  <Group key={f.id}>
+                    <Line points={flat(furnitureOutline(f))} closed fill={f.color ?? "#cfcac0"} opacity={t?.flat ? 0.25 : 0.45} stroke="#6f6658" strokeWidth={1} strokeScaleEnabled={false} dash={[4, 3]} />
+                    {!t?.flat && Math.min(f.widthIn, f.depthIn) * s > 28 && (
+                      <Text x={f.x} y={f.y} width={f.widthIn} offsetX={f.widthIn / 2} offsetY={5 / s} align="center" text={t?.label ?? ""} fontSize={9.5 / s} fill="#4a463f" wrap="none" ellipsis />
+                    )}
+                  </Group>
+                );
+              })}
+            </Group>
 
             {/* Walls, each room edge as its own hit target so it can be picked and pushed. */}
             {solids.map((w, i) => {

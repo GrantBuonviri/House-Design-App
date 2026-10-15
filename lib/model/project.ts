@@ -41,6 +41,8 @@ export function migrateProject(raw: unknown): Project {
   // Version 5 to 6 added the cost settings (water and sewer), with defaults.
   // Version 6 to 7 added interior picks per room ("house" for the whole
   // house) and product colors, all optional, so older data needs no changes.
+  // Version 7 to 8 added furniture on floor plans and accent wall paint,
+  // both optional with defaults, so older data needs no changes.
   return Project.parse({ ...migrated, schemaVersion: SCHEMA_VERSION });
 }
 

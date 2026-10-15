@@ -396,7 +396,7 @@ describe("areas", () => {
 describe("saved projects", () => {
   it("open older saves with an empty floor plan and default plan settings", () => {
     const p = createProject("Old");
-    const older = { ...p, schemaVersion: 3, floorPlans: { "floor-1": { ceilingHeightIn: 108, walls: [], openings: [], rooms: [], stairs: [], fixtures: [] } } } as Record<string, unknown>;
+    const older = { ...p, schemaVersion: 3, floorPlans: { "floor-1": { ceilingHeightIn: 108, walls: [], openings: [], rooms: [], stairs: [], fixtures: [], furniture: [] } } } as Record<string, unknown>;
     delete older.plan;
     const migrated = migrateProject(older);
     expect(migrated.schemaVersion).toBe(SCHEMA_VERSION);

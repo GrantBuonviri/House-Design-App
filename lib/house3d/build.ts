@@ -4,9 +4,10 @@ import { planOf, type Plans } from "@/lib/plan/edit";
 import { add, collinearOverlap, dist, lerp, pointInPolygon, polygonArea, polygonCenter, project, scale, sub, subtractIntervals, unit } from "@/lib/plan/geometry";
 import { areaKind } from "@/lib/plan/measure";
 import { stairsDrawing } from "@/lib/plan/stairs";
-import { openingGeometries, wallPieces, type OpeningGeometry, type WallPiece } from "@/lib/plan/walls";
+import { openingGeometries, roomEdgeAt, wallPieces, type OpeningGeometry, type WallPiece } from "@/lib/plan/walls";
+import { wallKey } from "@/lib/interior/picks";
 import { COLORS, floorColor } from "./colors";
-import { drawFixture } from "./fixtures";
+import { drawFixture, drawFurniture } from "./fixtures";
 import { roomLook, type RoomLook } from "./finishes";
 import { COVERED, cutHoles, floorFootprint, offsetRing, roofFootprint, subtractRegions, type Region } from "./footprint";
 import { levelHeights, type LevelHeights } from "./levels";
@@ -27,7 +28,7 @@ import { drawStairs, prism } from "./stairs";
 export type PickKind = "room" | "opening" | "stairs" | "fixture";
 export type Pick = { kind: PickKind; id: string; levelId: string };
 
-export type Layer = "walls" | "footprints" | "floors" | "ceilings" | "openings" | "stairs" | "fixtures" | "roof" | "foundation";
+export type Layer = "walls" | "footprints" | "floors" | "ceilings" | "openings" | "stairs" | "fixtures" | "furniture" | "roof" | "foundation";
 
 /** Which walls a part belongs to: outside (exterior) walls or inside ones. */
 export type WallGroup = "outside" | "inside";
@@ -46,6 +47,8 @@ export type Part = {
    * along with everything in them.
    */
   wall?: WallGroup;
+  /** Furniture is picked in the walkthrough only, so it carries its id here rather than a `pick`. */
+  furnitureId?: string;
 };
 
 export type HouseContext = {
@@ -131,10 +134,15 @@ export function buildLevel(
     const mid = lerp(p.a, p.b, 0.5);
     // Outside walls run up to the next floor where there's one above, so there's no gap at the floor structure.
     const upTo = p.exterior && above && covers(abovePolys, mid) ? heights[above.id].floorIn : topIn;
-    // Each side of a wall takes the paint of the room it faces (the left side of an outside wall is the siding).
+    // Each side of a wall takes the paint of the room it faces, or that wall's own accent paint
+    // (the left side of an outside wall is the siding).
     const side = (sign: 1 | -1) => {
       const u = unit(sub(p.b, p.a));
-      return lookAt(add(mid, scale({ x: u.y, y: -u.x }, sign * (p.thicknessIn / 2 + 4))))?.wall ?? COLORS.drywall;
+      const r = roomAt(add(mid, scale({ x: u.y, y: -u.x }, sign * (p.thicknessIn / 2 + 4))));
+      const look = r && looks.get(r.id);
+      if (!r || !look) return COLORS.drywall;
+      const edge = look.accents.size ? roomEdgeAt(r.polygon, mid, p.thicknessIn / 2 + 2, { x: u.y, y: -u.x }) : null;
+      return (edge !== null && look.accents.get(wallKey(edge))) || look.wall;
     };
     const color = p.exterior
       ? { left: COLORS.siding, right: side(-1), ends: COLORS.siding, top: COLORS.wallTop }
@@ -269,6 +277,13 @@ export function buildLevel(
     const pick: Pick = { kind: "fixture", id: fx.id, levelId: L };
     if (!solid.empty) parts.push({ key: `${L}:f:${fx.id}`, levelId: L, layer: "fixtures", pick, mesh: solid.build() });
     if (!glass.empty) parts.push({ key: `${L}:fg:${fx.id}`, levelId: L, layer: "fixtures", pick, mesh: glass.build(), glass: true });
+  }
+
+  // ---- Furniture ----
+  for (const item of plan.furniture) {
+    const mb = new MeshBuilder();
+    drawFurniture(mb, f, item, floorIn);
+    if (!mb.empty) parts.push({ key: `${L}:fu:${item.id}`, levelId: L, layer: "furniture", furnitureId: item.id, mesh: mb.build() });
   }
   return parts;
 }

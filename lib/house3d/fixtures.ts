@@ -1,7 +1,8 @@
-import type { Fixture, Point } from "@/lib/model/schema";
+import type { Fixture, FurnitureItem, Point } from "@/lib/model/schema";
+import { furnitureType, piecePlace, type Material } from "@/lib/plan/furniture";
 import { add, rotate } from "@/lib/plan/geometry";
 import { COLORS } from "./colors";
-import { MeshBuilder, type Frame, type RGB } from "./mesh";
+import { hex, MeshBuilder, type Frame, type RGB } from "./mesh";
 import type { RoomLook } from "./finishes";
 
 /**
@@ -92,3 +93,24 @@ export function drawFixture(solid: MeshBuilder, glass: MeshBuilder, f: Frame, fx
   }
 }
 
+
+const FURNITURE_WOOD = hex("#9c6f43");
+const FURNITURE_LIGHT = hex("#f2efe8");
+const FURNITURE_DARK = hex("#3a3632");
+
+/** A piece of furniture as simple boxes: its main color, with wood, bedding and dark legs where they go. */
+export function drawFurniture(mb: MeshBuilder, f: Frame, item: FurnitureItem, floorIn: number) {
+  const t = furnitureType(item.kind);
+  const main = hex(item.color ?? "#cfcac0");
+  const colors: Record<Material, RGB> = {
+    main,
+    wood: t?.main === "wood" ? main : FURNITURE_WOOD,
+    light: FURNITURE_LIGHT,
+    dark: FURNITURE_DARK,
+    metal: COLORS.steel,
+  };
+  for (const p of t?.pieces ?? [{ z0: 0, z1: 30, material: "main" as Material }]) {
+    const { mid, w, d } = piecePlace(item, p);
+    mb.block(f, mid, item.rotation ?? 0, w, d, floorIn + p.z0, floorIn + p.z1, colors[p.material]);
+  }
+}

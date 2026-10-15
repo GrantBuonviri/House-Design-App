@@ -11,6 +11,7 @@ import { cutHoles, type Region } from "./footprint";
 import type { LevelHeights } from "./levels";
 import { entrySteps } from "./entry";
 import { fixtureSpan } from "./fixtures";
+import { furnitureHeight, furnitureOutline, furnitureType } from "@/lib/plan/furniture";
 import { stairSteps } from "./stairs";
 
 /**
@@ -99,6 +100,12 @@ export function walkWorld(plans: Plans, ctx: HouseContext & { heights: LevelHeig
       const span = fixtureSpan(fx.kind);
       const box = rectangle(fx.x, fx.y, fx.widthIn, fx.depthIn, fx.rotation);
       box.forEach((a, i) => blockers.push({ a, b: box[(i + 1) % 4], half: 0.5, z0: floorIn + span.z0, z1: floorIn + span.z1 }));
+    }
+    // Furniture (rugs you walk over).
+    for (const item of plan.furniture) {
+      if (furnitureType(item.kind)?.flat) continue;
+      const box = furnitureOutline(item);
+      box.forEach((a, i) => blockers.push({ a, b: box[(i + 1) % 4], half: 0.5, z0: floorIn, z1: floorIn + furnitureHeight(item.kind) }));
     }
 
     // Floors, with a hole where stairs come up from below.
