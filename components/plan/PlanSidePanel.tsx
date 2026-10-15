@@ -1,6 +1,8 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { WINDOW_OPERATIONS, type WindowOperation } from "@/lib/model/schema";
+import { defaultOperation, operationOf, OPERATION_HINT, OPERATION_LABEL } from "@/lib/codes/openings";
 import type { DesignBrief, FloorPlan, Level, PlanBasics, PlanStairs } from "@/lib/model/schema";
 import { formatFeetInches, parseFeetInches } from "@/lib/model/units";
 import { ceilingFor, riseBetween, STAIRS_LABEL } from "@/lib/plan/basics";
@@ -280,6 +282,29 @@ export default function PlanSidePanel(props: Props) {
           <LengthField label="Height" value={o.heightIn} onCommit={(v) => set({ heightIn: Math.max(12, v) })} />
           {o.kind === "window" && <LengthField label="Off the floor" value={o.sillIn ?? 30} onCommit={(v) => set({ sillIn: Math.max(0, v) })} />}
         </div>
+        {o.kind === "window" && (
+          <>
+            <label className="field-label mt-4" htmlFor="op-operation">
+              Opens as
+            </label>
+            <select
+              id="op-operation"
+              className="input"
+              value={operationOf(o)}
+              onChange={(e) => {
+                const v = e.target.value as WindowOperation;
+                set({ operation: v === defaultOperation(o.style) ? undefined : v });
+              }}
+            >
+              {WINDOW_OPERATIONS.map((x) => (
+                <option key={x} value={x}>
+                  {OPERATION_LABEL[x]}: {OPERATION_HINT[x].toLowerCase()}
+                </option>
+              ))}
+            </select>
+            <p className="field-hint">Used for the window schedule and the bedroom escape-window check.</p>
+          </>
+        )}
         {t.swings && (
           <div className="mt-4 grid grid-cols-2 gap-2">
             <button className="btn text-sm" onClick={() => set({ side: o.side === 1 ? -1 : 1 })}>

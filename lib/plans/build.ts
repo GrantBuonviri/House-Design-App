@@ -11,6 +11,8 @@ import { roofSheet } from "./sheets/roof";
 import { viewsSheet } from "./sheets/views";
 import { materialsSheet } from "./sheets/materials";
 import { landscapeSheet } from "./sheets/landscape";
+import { doorWindowSheets, finishSheets, fixtureSheets } from "./sheets/schedules";
+import { cabinetSheets } from "./sheets/cabinets";
 
 /**
  * Put a set of sheets together: draw each chosen sheet, then add the
@@ -59,6 +61,12 @@ export function buildSet(project: Project, opts: SetOptions = {}): Sheet[] {
     } else if (entry.id === "landscape") {
       const lp = landscapeSheet(project);
       drafts.push({ entry, number: entry.number, title: entry.title, items: lp.items, scale: lp.scaleLabel });
+    } else if (entry.id === "door-window" || entry.id === "finishes" || entry.id === "fixtures") {
+      const pages = entry.id === "door-window" ? doorWindowSheets(project) : entry.id === "finishes" ? finishSheets(project) : fixtureSheets(project);
+      pages.forEach((items, i) => drafts.push({ entry, number: i ? `${entry.number}.${i}` : entry.number, title: i ? `${entry.title} (continued)` : entry.title, items }));
+    } else if (entry.id === "cabinets") {
+      const pages = cabinetSheets(project);
+      pages.forEach((pg, i) => drafts.push({ entry, number: i ? `I-${201 + i}` : entry.number, title: pages.length > 1 ? `${entry.title} (${i + 1} of ${pages.length})` : entry.title, items: pg.items, scale: pg.scaleLabel }));
     } else if (entry.id === "elevations") {
       for (const e of elevationSheets(project)) drafts.push({ entry, number: e.part ? `A-${201 + e.part}` : entry.number, title: e.parts > 1 ? `${entry.title} (${e.part + 1} of ${e.parts})` : entry.title, items: e.items, scale: e.scaleLabel });
     } else if (entry.levelId) {

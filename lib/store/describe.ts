@@ -103,6 +103,7 @@ function describePlan(a: FloorPlan | undefined, b: FloorPlan | undefined): strin
       const label = article(furnitureType(now.kind)?.label ?? "furniture", true);
       return moved(was, now) ? `move ${label}` : was.color !== now.color ? `recolor ${label}` : `change ${label}`;
     }),
+    json(a.cabinets ?? null) !== json(b.cabinets ?? null) ? (b.cabinets ? "change the cabinets" : "go back to the automatic cabinets") : null,
   ].filter((x): x is string => x !== null);
   if (rooms) return rooms;
   return lists.length === 1 ? lists[0] : lists.length ? "change the floor plan" : null;

@@ -153,6 +153,15 @@ describe("roofs", () => {
 describe("walls, doors and windows", () => {
   const windowOn = (roomId: string): Opening => ({ id: "w", host: { roomId, edge: 0 }, offsetIn: 60, kind: "window", style: "window", widthIn: 36, heightIn: 60, sillIn: 30, side: 1, hinge: "start" });
 
+  it("hangs the upper cabinets over a counter", () => {
+    const p = plan([room("k", 0, 0, 14 * FT, 12 * FT)]);
+    const counter = { id: "c", kind: "counter", x: 84, y: 15, rotation: 0, widthIn: 120, depthIn: 25, roomId: "k" };
+    const parts = buildHouse({ "floor-1": { ...p, fixtures: [counter] } }, ctx()).parts;
+    const cab = parts.find((x) => x.key.endsWith(":cab"))!;
+    expect(cab).toBeDefined();
+    expect(yRange([cab.mesh])[0]).toBeCloseTo(54 / IN_PER_UNIT, 5);
+  });
+
   it("puts walls up to the ceiling", () => {
     const p = plan([room("a", 0, 0, 20 * FT, 12 * FT)]);
     const parts = buildHouse({ "floor-1": p }, ctx()).parts;

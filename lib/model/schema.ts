@@ -9,7 +9,7 @@ import { z } from "zod";
  * Angles are degrees clockwise from north (0 = N, 90 = E).
  */
 
-export const SCHEMA_VERSION = 11;
+export const SCHEMA_VERSION = 12;
 
 export const Point = z.object({ x: z.number(), y: z.number() });
 export type Point = z.infer<typeof Point>;
@@ -271,6 +271,11 @@ export const OpeningHost = z.union([
 ]);
 export type OpeningHost = z.infer<typeof OpeningHost>;
 
+/** How a window opens. Left unset, it follows the window's type (see lib/codes/openings.ts). */
+export const WINDOW_OPERATIONS = ["single-hung", "double-hung", "slider", "casement", "awning", "fixed"] as const;
+export const WindowOperation = z.enum(WINDOW_OPERATIONS);
+export type WindowOperation = z.infer<typeof WindowOperation>;
+
 export const Opening = z.object({
   id: z.string(),
   host: OpeningHost,
@@ -287,6 +292,8 @@ export const Opening = z.object({
   side: z.union([z.literal(1), z.literal(-1)]).default(1),
   /** Which end of the opening the hinges are on. */
   hinge: z.enum(["start", "end"]).default("start"),
+  /** Windows: how it opens. */
+  operation: WindowOperation.optional(),
 });
 export type Opening = z.infer<typeof Opening>;
 
@@ -337,6 +344,31 @@ export const FurnitureItem = z.object({
 });
 export type FurnitureItem = z.infer<typeof FurnitureItem>;
 
+export const CABINET_KINDS = ["base", "sink", "drawer", "upper", "tall", "vanity", "filler"] as const;
+
+/** One cabinet box. Like a fixture, its back is toward -y before it's turned by `rotation`. */
+export const Cabinet = z.object({
+  id: z.string(),
+  kind: z.enum(CABINET_KINDS),
+  /** The middle of its footprint. */
+  x: z.number(),
+  y: z.number(),
+  rotation: z.number().default(0),
+  widthIn: z.number().positive(),
+  depthIn: z.number().positive(),
+  /** Height of the box, and of its bottom above the floor. */
+  heightIn: z.number().positive(),
+  bottomIn: z.number().min(0).default(0),
+});
+export type Cabinet = z.infer<typeof Cabinet>;
+
+/** Changes to the cabinets the app lays out: ones taken away, and ones added (moved ones are both). */
+export const CabinetEdits = z.object({
+  hidden: z.array(z.string()).default([]),
+  added: z.array(Cabinet).default([]),
+});
+export type CabinetEdits = z.infer<typeof CabinetEdits>;
+
 export const FloorPlan = z.object({
   rooms: z.array(PlanRoom).default([]),
   walls: z.array(PlanWall).default([]),
@@ -344,6 +376,8 @@ export const FloorPlan = z.object({
   stairs: z.array(PlanStairs).default([]),
   fixtures: z.array(Fixture).default([]),
   furniture: z.array(FurnitureItem).default([]),
+  /** Left out until the cabinets have been changed by hand. */
+  cabinets: CabinetEdits.optional(),
 });
 export type FloorPlan = z.infer<typeof FloorPlan>;
 
