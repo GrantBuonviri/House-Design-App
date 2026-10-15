@@ -34,7 +34,21 @@ const TITLE_BAND = 1.1;
 
 export type FloorPlanSheet = { items: Item[]; scaleLabel: string };
 
+/** The plan drawn lightly, under the electrical, plumbing and mechanical layers, with how plan inches map to the sheet. */
+export type PlanBase = FloorPlanSheet & { inPerFt: number; T: (p: Point) => Point; s: number; area: { x0: number; y0: number; x1: number; y1: number } };
+
+/** Grey walls for the systems plans, so the devices on top read first. */
+export const BASE_POCHE = "#b4b4b4";
+
 export function floorPlanSheet(project: Project, level: Level, viewNumber = 1): FloorPlanSheet {
+  return drawPlan(project, level, viewNumber, false);
+}
+
+export function planBase(project: Project, level: Level): PlanBase {
+  return drawPlan(project, level, 1, true) as PlanBase;
+}
+
+function drawPlan(project: Project, level: Level, viewNumber: number, base: boolean): FloorPlanSheet | PlanBase {
   const h = houseFacts(project);
   const plan = h.plan(level.id);
   const t = h.exteriorIn;
@@ -71,7 +85,7 @@ export function floorPlanSheet(project: Project, level: Level, viewNumber = 1): 
     const half = w.thicknessIn / 2;
     const a = w.capA ? add(w.a, scale(u, -half)) : w.a;
     const e = w.capB ? add(w.b, scale(u, half)) : w.b;
-    ppoly([add(a, scale(n, half)), add(e, scale(n, half)), add(e, scale(n, -half)), add(a, scale(n, -half))], undefined, POCHE);
+    ppoly([add(a, scale(n, half)), add(e, scale(n, half)), add(e, scale(n, -half)), add(a, scale(n, -half))], undefined, base ? BASE_POCHE : POCHE);
   }
 
   // ---------- Doors and windows ----------
@@ -82,7 +96,7 @@ export function floorPlanSheet(project: Project, level: Level, viewNumber = 1): 
     if (o.kind === "window" && openingRooms(plan, o).some((id) => isSleeping(plan.rooms.find((r) => r.id === id) ?? {})) && escapeCheck(o, level.kind === "basement").ok) egress.add(o.id);
   }
   for (const g of geos) drawOpening(g, thicknessAt(g));
-  for (const g of geos) drawTag(g, thicknessAt(g));
+  if (!base) for (const g of geos) drawTag(g, thicknessAt(g));
 
   function drawOpening(g: OpeningGeometry, th: number) {
     const o = g.opening;
@@ -281,6 +295,8 @@ export function floorPlanSheet(project: Project, level: Level, viewNumber = 1): 
     }
   }
 
+  if (base) return { items, scaleLabel: choice.label, inPerFt: choice.inPerFt, T, s, area };
+
   // ---------- Garage separation ----------
   const garages = plan.rooms.filter((r) => roleOf(r) === "garage");
   const gyp = inchText(codeNum("garage.gypsumGarageSide"));
@@ -346,7 +362,7 @@ export function floorPlanSheet(project: Project, level: Level, viewNumber = 1): 
     "Outside dimensions are to the outside face of the wall sheathing. Room sizes are clear, inside the walls. Verify all dimensions on site before building.",
     `Ceiling height on this floor: ${archFeet(ceiling)} unless noted.`,
     ...notes,
-    "Smoke and carbon monoxide alarms are shown on the electrical plan (a later update).",
+    "Smoke and carbon monoxide alarms, outlets, switches and lights are on the electrical plan; fans, registers and the thermostat on the mechanical plan.",
   ];
   general.forEach((n, i) => {
     items.push({ t: "text", at: { x: nx, y: ny + capHeight(6.5) }, text: `${i + 1}.`, size: 6.5 });

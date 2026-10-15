@@ -104,6 +104,7 @@ function describePlan(a: FloorPlan | undefined, b: FloorPlan | undefined): strin
       return moved(was, now) ? `move ${label}` : was.color !== now.color ? `recolor ${label}` : `change ${label}`;
     }),
     json(a.cabinets ?? null) !== json(b.cabinets ?? null) ? (b.cabinets ? "change the cabinets" : "go back to the automatic cabinets") : null,
+    json(a.devices ?? null) !== json(b.devices ?? null) ? (b.devices ? "change the outlets and lights" : "go back to the automatic outlets and lights") : null,
   ].filter((x): x is string => x !== null);
   if (rooms) return rooms;
   return lists.length === 1 ? lists[0] : lists.length ? "change the floor plan" : null;

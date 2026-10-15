@@ -6,6 +6,8 @@ import { houseScene } from "./scene";
 import { exteriorPartsFor, exteriorPick } from "@/lib/exterior/picks";
 import { hasCabinetRuns } from "./sheets/cabinets";
 import { fixtureLines } from "./sheets/schedules";
+import { gasFixtures } from "./sheets/plumbing";
+import { levelDevices } from "./systems";
 
 /**
  * Every plan sheet a Boise house permit asks for (checklist #402), grouped
@@ -27,7 +29,7 @@ export const STATUS_LABEL: Record<SheetStatus, string> = {
 export type SheetGroup = "General" | "Site" | "Architectural" | "Interiors" | "Systems" | "Structural" | "From outside the app";
 export const SHEET_GROUPS: SheetGroup[] = ["General", "Site", "Architectural", "Interiors", "Systems", "Structural", "From outside the app"];
 
-export type Reason = { text: string; stage?: Stage; action?: "details" | "lot" | "cabinets" };
+export type Reason = { text: string; stage?: Stage; action?: "details" | "lot" | "cabinets" | "devices" };
 
 export type SheetEntry = {
   id: string;
@@ -48,12 +50,8 @@ type Later = { id: string; number: string; title: string; group: SheetGroup; opt
 
 /** Sheets that come with later parts of this feature. */
 const LATER: Later[] = [
-  { id: "energy", number: "G-003", title: "Energy: insulation, windows and REScheck inputs", group: "General", part: 4 },
   { id: "sections", number: "A-301", title: "Building sections", group: "Architectural", part: 5 },
   { id: "stair-section", number: "A-501", title: "Stair section and details", group: "Architectural", part: 5 },
-  { id: "electrical", number: "E-101", title: "Electrical plan", group: "Systems", part: 4 },
-  { id: "plumbing", number: "P-101", title: "Plumbing plan", group: "Systems", part: 4 },
-  { id: "mechanical", number: "M-101", title: "Mechanical plan", group: "Systems", part: 4 },
   { id: "foundation", number: "S-101", title: "Foundation plan", group: "Structural", part: 5 },
   { id: "floor-framing", number: "S-201", title: "Floor framing plans", group: "Structural", part: 5 },
   { id: "roof-framing", number: "S-301", title: "Roof framing plan (truss layout)", group: "Structural", part: 5 },
@@ -63,7 +61,7 @@ const LATER: Later[] = [
 /** Documents a permit needs that the app can't make, who makes them, and what the app gives them. */
 export const OUTSIDE_DOCS: { id: string; title: string; who: string; gives: string }[] = [
   { id: "manual-j", title: "Heating and cooling loads (Manual J, D and S)", who: "Your HVAC contractor, using ACCA Manual J, D and S software", gives: "Room list, floor areas, window sizes and Boise's design temperatures (11°F winter, 95°F summer)." },
-  { id: "rescheck", title: "Energy compliance report (REScheck or an energy rating)", who: "You, with the free REScheck tool at energycodes.gov, or an energy rater", gives: "Wall, window, ceiling and floor areas (on the energy sheet, coming in a later update)." },
+  { id: "rescheck", title: "Energy compliance report (REScheck or an energy rating)", who: "You, with the free REScheck tool at energycodes.gov, or an energy rater", gives: "Wall, window, door, ceiling and floor areas by direction, on the energy sheet (G-003)." },
   { id: "trusses", title: "Roof truss drawings", who: "The truss supplier's engineer", gives: "Roof shape, pitch, overhangs and spans." },
   { id: "engineering", title: "Structural engineering", who: "An Idaho-licensed engineer, only where a sheet says \"Engineer required\"", gives: "The framing layout and loads." },
   { id: "survey", title: "Survey or recorded plat", who: "A licensed land surveyor, or the county's recorded plat", gives: "Nothing; the site plan is drawn from it." },
@@ -195,6 +193,46 @@ export function readiness(project: Project): Readiness {
     const unpicked = [...plumbing, ...appliances].filter((l) => l.product === "Owner's pick" && !["laundry-sink", "water-heater", "washer", "dryer"].includes(l.kind));
     return unpicked.length ? { status: "notes", reasons: [{ text: `No product picked yet for: ${[...new Set(unpicked.map((l) => l.label.toLowerCase()))].join(", ")}`, stage: "interior" }] } : { status: "ready", reasons: [] };
   });
+
+  // Systems: electrical, plumbing and mechanical plans, one per floor, and the energy sheet.
+  const failsIn = (levelId: string | undefined, ids: string[]) =>
+    fails.filter((r) => ids.includes(r.rule.id)).flatMap((r) => r.results.filter((x) => x.status === "fail" && (!levelId || x.levelId === levelId)).map((x) => ({ text: `${x.text} (${r.section})`, action: "devices" as const })));
+  const sys = project.plans.systems;
+  const perLevel = (id: string, prefix: string, title: string, levels: typeof h.drawn, rules: string[], info: Reason[]) =>
+    levels.forEach((l, i) => {
+      const notes = failsIn(l.id, rules);
+      sheets.push({ id: `${id}:${l.id}`, number: `${prefix}-${101 + i}`, title: `${l.name} ${title}`, group: "Systems", status: notes.length ? "notes" : "ready", reasons: notes.length ? notes : info, levelId: l.id });
+    });
+  if (needPlan.length) {
+    sheets.push({ id: "electrical", number: "E-101", title: "Electrical plans", group: "Systems", status: "needs", reasons: needPlan });
+    sheets.push({ id: "plumbing", number: "P-101", title: "Plumbing plans", group: "Systems", status: "needs", reasons: needPlan });
+    sheets.push({ id: "mechanical", number: "M-101", title: "Mechanical plans", group: "Systems", status: "needs", reasons: needPlan });
+    sheets.push({ id: "energy", number: "G-003", title: "Energy: insulation, windows and REScheck inputs", group: "General", status: "needs", reasons: needPlan });
+  } else {
+    const edit: Reason = { text: "Placed by the code rules; move, add or take away any of them.", action: "devices" };
+    perLevel("electrical", "E", "electrical plan", h.drawn, ["electrical", "alarms"], [edit]);
+    const all = h.levels.flatMap((l) => h.plan(l.id).fixtures);
+    const plumbingKinds = ["sink", "vanity", "toilet", "tub", "shower", "laundry-sink", "washer", "dishwasher"];
+    const fuel = `${sys.heating === "gas-furnace" ? "gas furnace" : sys.heating === "heat-pump" ? "heat pump" : "electric furnace"}, ${sys.waterHeater.replace("-", " ")} water heater, ${sys.foundation}`;
+    const details: Reason = { text: `Systems: ${fuel}. Change them in Plan details.`, action: "details" };
+    if (!all.some((f) => plumbingKinds.includes(f.kind)) || !all.some((f) => f.kind === "water-heater")) {
+      const reasons: Reason[] = [];
+      if (!all.some((f) => plumbingKinds.includes(f.kind))) reasons.push({ text: "Place plumbing fixtures on the floor plan (Fixtures, Kitchen or Bath)", stage: "plan" });
+      if (!all.some((f) => f.kind === "water-heater")) reasons.push({ text: "Place a water heater (Fixtures, Other)", stage: "plan" });
+      sheets.push({ id: "plumbing", number: "P-101", title: "Plumbing plans", group: "Systems", status: "needs", reasons });
+    } else {
+      const levels = h.drawn.filter((l) => h.plan(l.id).fixtures.some((f) => plumbingKinds.includes(f.kind) || f.kind === "water-heater") || gasFixtures(project, h.plan(l.id).fixtures).length || levelDevices(project, l).some((d) => d.kind === "hose-bib"));
+      perLevel("plumbing", "P", "plumbing plan", levels, [], [details]);
+    }
+    if (!all.some((f) => f.kind === "furnace")) sheets.push({ id: "mechanical", number: "M-101", title: "Mechanical plans", group: "Systems", status: "needs", reasons: [{ text: "Place a furnace or air handler (Fixtures, Other)", stage: "plan" }] });
+    else perLevel("mechanical", "M", "mechanical plan", h.drawn, ["mechanical", "bath-vent"], [details]);
+    const windows = h.levels.some((l) => h.plan(l.id).openings.some((o) => o.kind === "window"));
+    sheets.push(
+      windows
+        ? { id: "energy", number: "G-003", title: "Energy: insulation, windows and REScheck inputs", group: "General", status: failsIn(undefined, ["energy"]).length ? "notes" : "ready", reasons: [...failsIn(undefined, ["energy"]), details] }
+        : { id: "energy", number: "G-003", title: "Energy: insulation, windows and REScheck inputs", group: "General", status: "needs", reasons: [{ text: "Place windows on the floor plan", stage: "plan" }] },
+    );
+  }
 
   for (const s of LATER) sheets.push({ id: s.id, number: s.number, title: s.title, group: s.group, optional: s.optional, status: "soon", reasons: [{ text: `Added in part ${s.part} of the plans export` }] });
   for (const d of OUTSIDE_DOCS) sheets.push({ id: `outside:${d.id}`, number: "", title: d.title, group: "From outside the app", status: "outside", reasons: [{ text: `Made by: ${d.who}.` }, { text: `The app gives them: ${d.gives}` }] });

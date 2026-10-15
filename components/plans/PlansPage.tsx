@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import type { PlansSettings, Project, Stage } from "@/lib/model/schema";
+import type { HouseSystems, PlansSettings, Project, Stage } from "@/lib/model/schema";
 import { useProjectStore } from "@/lib/store/projectStore";
 import { canDraw, LABEL_REVIEW, readiness, SHEET_GROUPS, STATUS_LABEL, type Reason, type SheetEntry, type SheetStatus } from "@/lib/plans/catalog";
 import { buildSet, selectedIds } from "@/lib/plans/build";
@@ -11,6 +11,7 @@ import { reportCounts, type RuleReport, type RuleStatus } from "@/lib/codes/rule
 import SheetSvg from "./SheetSvg";
 import RealLotForm from "./RealLotForm";
 import CabinetEditor from "./CabinetEditor";
+import DeviceEditor from "./DeviceEditor";
 import { hasCabinetRuns } from "@/lib/plans/sheets/cabinets";
 
 /**
@@ -39,10 +40,11 @@ export default function PlansPage({ project, onClose, onGo }: { project: Project
   const update = useProjectStore((s) => s.update);
   const r = readiness(project);
   const [tab, setTab] = useState<"sheets" | "code">("sheets");
-  const [preview, setPreview] = useState<string>(() => r.sheets.find((s) => s.levelId)?.id ?? "cover");
+  const [preview, setPreview] = useState<string>(() => r.sheets.find((s) => s.id.startsWith("floor:"))?.id ?? "cover");
   const [details, setDetails] = useState(false);
   const [lotOpen, setLotOpen] = useState(false);
   const [cabinetsOpen, setCabinetsOpen] = useState(false);
+  const [devicesOpen, setDevicesOpen] = useState(false);
   const [busy, setBusy] = useState<string | null>(null);
   const [zoom, setZoom] = useState(1);
   const selected = useMemo(() => new Set(selectedIds(project)), [project]);
@@ -50,10 +52,10 @@ export default function PlansPage({ project, onClose, onGo }: { project: Project
   const half = project.plans.sheetSize === "half";
 
   useEffect(() => {
-    const esc = (e: KeyboardEvent) => e.key === "Escape" && !details && !lotOpen && !cabinetsOpen && onClose();
+    const esc = (e: KeyboardEvent) => e.key === "Escape" && !details && !lotOpen && !cabinetsOpen && !devicesOpen && onClose();
     window.addEventListener("keydown", esc);
     return () => window.removeEventListener("keydown", esc);
-  }, [onClose, details, lotOpen, cabinetsOpen]);
+  }, [onClose, details, lotOpen, cabinetsOpen, devicesOpen]);
 
   const previewEntry = r.sheets.find((s) => s.id === preview && canDraw(s));
   const sheets = useMemo(() => (previewEntry ? buildSet(project, { only: [...selected, previewEntry.id] }) : []), [project, selected, previewEntry]);
@@ -85,6 +87,7 @@ export default function PlansPage({ project, onClose, onGo }: { project: Project
     if (reason.action === "details") setDetails(true);
     else if (reason.action === "lot") setLotOpen(true);
     else if (reason.action === "cabinets") setCabinetsOpen(true);
+    else if (reason.action === "devices") setDevicesOpen(true);
     else if (reason.stage) onGo(reason.stage);
   };
   const counts = reportCounts(r.report);
@@ -111,6 +114,11 @@ export default function PlansPage({ project, onClose, onGo }: { project: Project
           {hasCabinetRuns(project) && (
             <button className="btn" onClick={() => setCabinetsOpen(true)} data-testid="edit-cabinets">
               Cabinets
+            </button>
+          )}
+          {houseHasRooms(project) && (
+            <button className="btn" onClick={() => setDevicesOpen(true)} data-testid="edit-devices">
+              Outlets and lights
             </button>
           )}
           <button className="btn" onClick={() => setLotOpen(true)} data-testid="real-lot">
@@ -198,12 +206,15 @@ export default function PlansPage({ project, onClose, onGo }: { project: Project
           )}
         </main>
       </div>
+      {devicesOpen && <DeviceEditor project={project} onClose={() => setDevicesOpen(false)} />}
       {cabinetsOpen && <CabinetEditor project={project} onClose={() => setCabinetsOpen(false)} />}
       {lotOpen && <RealLotForm project={project} onSave={(patch) => setPlans(patch)} onClose={() => setLotOpen(false)} />}
       {details && <PlanDetails project={project} onSave={(patch) => setPlans(patch)} onClose={() => setDetails(false)} />}
     </div>
   );
 }
+
+const houseHasRooms = (p: Project) => Object.values(p.floorPlans).some((f) => f.rooms.length > 0);
 
 function SheetRow({ s, active, checked, onCheck, onPreview, onGo }: { s: SheetEntry; active: boolean; checked: boolean; onCheck: () => void; onPreview: () => void; onGo: (r: Reason) => void }) {
   const drawable = canDraw(s);
@@ -227,7 +238,7 @@ function SheetRow({ s, active, checked, onCheck, onPreview, onGo }: { s: SheetEn
               {r.text}
               {(r.stage || r.action) && (
                 <button className="ml-1 text-accent underline" onClick={() => onGo(r)}>
-                  {r.action === "details" ? "Plan details" : r.action === "lot" ? "My real lot" : r.action === "cabinets" ? "Change the cabinets" : "Take me there"}
+                  {r.action === "details" ? "Plan details" : r.action === "lot" ? "My real lot" : r.action === "cabinets" ? "Change the cabinets" : r.action === "devices" ? "Change them" : "Take me there"}
                 </button>
               )}
             </li>
@@ -279,14 +290,27 @@ function CodeList({ report, onGo }: { report: RuleReport[]; onGo: (stage: Stage)
 
 function PlanDetails({ project, onSave, onClose }: { project: Project; onSave: (patch: Partial<PlansSettings>) => void; onClose: () => void }) {
   const [form, setForm] = useState({ address: project.plans.address, parcel: project.plans.parcel, designer: project.plans.designer });
+  const [sys, setSys] = useState<HouseSystems>(project.plans.systems);
+  const pick = <K extends keyof HouseSystems>(key: K, label: string, options: [HouseSystems[K], string][]) => (
+    <label className="block text-sm">
+      <span className="field-label">{label}</span>
+      <select className="input" value={String(sys[key])} onChange={(e) => setSys({ ...sys, [key]: options.find(([v]) => String(v) === e.target.value)![0] })} data-testid={`sys-${key}`}>
+        {options.map(([v, l]) => (
+          <option key={String(v)} value={String(v)}>
+            {l}
+          </option>
+        ))}
+      </select>
+    </label>
+  );
   const owner = project.profile.ownerName?.trim() || "";
   return (
     <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/40 p-6" role="dialog" aria-label="Plan details" data-testid="plan-details-form">
       <form
-        className="card w-full max-w-md p-5"
+        className="card max-h-full w-full max-w-lg overflow-y-auto p-5"
         onSubmit={(e) => {
           e.preventDefault();
-          onSave({ address: form.address.trim(), parcel: form.parcel.trim(), designer: form.designer.trim() });
+          onSave({ address: form.address.trim(), parcel: form.parcel.trim(), designer: form.designer.trim(), systems: sys });
           onClose();
         }}
       >
@@ -307,6 +331,18 @@ function PlanDetails({ project, onSave, onClose }: { project: Project; onSave: (
         </label>
         <input id="pd-designer" className="input" value={form.designer} onChange={(e) => setForm({ ...form, designer: e.target.value })} placeholder={owner || "Your name"} />
         <p className="field-hint mb-4">Left empty, it&apos;s {owner ? owner : "the owner"}.</p>
+        <h4 className="mb-1 font-semibold">House systems</h4>
+        <p className="field-hint mb-2">For the electrical, plumbing, mechanical and energy sheets.</p>
+        <div className="mb-4 grid grid-cols-2 gap-3">
+          {pick("heating", "Heating", [["gas-furnace", "Gas furnace"], ["heat-pump", "Heat pump"], ["electric-furnace", "Electric furnace"]])}
+          {pick("cooling", "Air conditioning", [[true, "Central air"], [false, "None"]])}
+          {pick("waterHeater", "Water heater", [["gas", "Gas tank"], ["tankless-gas", "Gas tankless"], ["electric", "Electric tank"], ["heat-pump", "Heat pump"]])}
+          {pick("cooking", "Range", [["electric", "Electric"], ["gas", "Gas"]])}
+          {pick("dryer", "Dryer", [["electric", "Electric"], ["gas", "Gas"]])}
+          {pick("foundation", "Under the lowest floor", [["crawlspace", "Crawlspace"], ["slab", "Concrete slab"], ["basement", "Basement"]])}
+          {pick("freshAir", "Fresh air", [["bath-fan", "Bath fan, always on"], ["erv", "ERV"]])}
+          {pick("panelAmps", "Electrical panel", [[200, "200 amp"], [100, "100 amp"], [150, "150 amp"], [225, "225 amp"], [400, "400 amp"]])}
+        </div>
         <div className="flex justify-end gap-2">
           <button type="button" className="btn" onClick={onClose}>
             Cancel

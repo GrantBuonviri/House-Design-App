@@ -1731,7 +1731,8 @@
       "secondCheck": {
         "verdict": "agree",
         "source": "https://dopl.idaho.gov/wp-content/uploads/2023/10/BLD-Rules.pdf"
-      }
+      },
+      "resolved": "Part 4 helpers both said 3 ACH50 from memory without reading a source; the Idaho energy code summary (Insulation Institute N140-ID) lists 5 ACH50 for zones 5 and 6 as Idaho amended it, so 5 stays."
     },
     "energy.ductTestRequired": {
       "value": "Total duct leakage at most 4 cfm25 per 100 sq ft, tested at rough-in (3 without the air handler) or after construction",
@@ -2107,6 +2108,642 @@
       "secondCheck": {
         "verdict": "agree",
         "source": "https://www.southface.org/wp-content/uploads/2019/08/2015-IECC-Excerpt_Chap4.pdf"
+      }
+    },
+    "elec.receptacleMaxHeight": {
+      "value": 5.5,
+      "unit": "ft",
+      "code": "NEC 2023",
+      "section": "210.52",
+      "amendment": "None to 210.52(A); Idaho amends only 210.52(E)(3) (balcony/deck/porch receptacle max 6.5 ft above surface).",
+      "source": "https://regulations.justia.com/states/idaho/24/24-39-10/section-24-39-10-600",
+      "checked": "2026-10-15",
+      "note": "Receptacles more than 5.5 ft above floor do not count toward wall receptacle requirement. NEC 2023 base value from my knowledge of the code; ICC/NFPA text was not readable here, so base value confidence is medium-high, not verified against the page. Idaho amendment status read from the Justia IDAPA 24.39.10.600 page (marked temporary rule effective 2024-04-19).",
+      "secondCheck": {
+        "verdict": "agree",
+        "source": "https://files.dfm.idaho.gov/dfm-admin-website/rules/current/24/243910.pdf"
+      }
+    },
+    "elec.bathroomReceptacleFromBasin": {
+      "value": 36,
+      "unit": "in",
+      "code": "NEC 2023",
+      "section": "210.52(D)",
+      "amendment": "None found (210.52(D) not amended).",
+      "source": "https://regulations.justia.com/states/idaho/24/24-39-10/section-24-39-10-600",
+      "checked": "2026-10-15",
+      "note": "Within 3 ft of outside edge of each basin; on wall/partition adjacent to basin or basin countertop/side of cabinet. NEC 2023 base value from my knowledge of the code; ICC/NFPA text was not readable here, so base value confidence is medium-high, not verified against the page. Idaho amendment status read from the Justia IDAPA 24.39.10.600 page (marked temporary rule effective 2024-04-19).",
+      "secondCheck": {
+        "verdict": "agree",
+        "source": "https://files.dfm.idaho.gov/dfm-admin-website/rules/current/24/243910.pdf"
+      }
+    },
+    "elec.laundryReceptacleFromAppliance": {
+      "value": 6,
+      "unit": "ft",
+      "code": "NEC 2023",
+      "section": "210.50(C)",
+      "amendment": "None (210.50 not amended).",
+      "source": "https://regulations.justia.com/states/idaho/24/24-39-10/section-24-39-10-600",
+      "checked": "2026-10-15",
+      "note": "Within 6 ft of intended appliance location. NEC 2023 base value from my knowledge of the code; ICC/NFPA text was not readable here, so base value confidence is medium-high, not verified against the page. Idaho amendment status read from the Justia IDAPA 24.39.10.600 page (marked temporary rule effective 2024-04-19).",
+      "secondCheck": {
+        "verdict": "agree",
+        "source": "https://files.dfm.idaho.gov/dfm-admin-website/rules/current/24/243910.pdf"
+      }
+    },
+    "elec.islandReceptacleRequired": {
+      "value": false,
+      "unit": "",
+      "code": "NEC 2023",
+      "section": "210.52(C)(2)",
+      "amendment": "Idaho adds 210.52(C) list item (4): receptacles may be mounted up to 12 in below the countertop, but not where the counter extends more than 6 in beyond its support base. Does not restore the island requirement.",
+      "source": "https://captaincode2023.leviton.com/node/314",
+      "checked": "2026-10-15",
+      "note": "Not required in 2023 NEC; if none installed, provisions must be made at the island/peninsula for future addition of a receptacle. If installed: on/up to 20 in above countertop, or in listed countertop/work-surface assembly; not on cabinet sides. Read via Leviton Captain Code 2023 summary (secondary); Idaho non-amendment from Justia. Confidence medium-high.",
+      "secondCheck": {
+        "verdict": "agree",
+        "source": "https://files.dfm.idaho.gov/dfm-admin-website/rules/current/24/243910.pdf ; https://aibd.org/islands/ ; https://dli.mn.gov/sites/default/files/pdf/eli_inspection_checklist2.pdf"
+      }
+    },
+    "elec.stairSwitchRisers": {
+      "value": 6,
+      "unit": "risers",
+      "code": "NEC 2023",
+      "section": "210.70(A)(2)(3)",
+      "amendment": "None (210.70 not amended).",
+      "source": "https://regulations.justia.com/states/idaho/24/24-39-10/section-24-39-10-600",
+      "checked": "2026-10-15",
+      "note": "Stairway with 4 or more risers: wall switch at each floor level if lighting outlet is installed (no switch needed at intermediate landings in 2023 wording about 'floor level'). Base value from knowledge; confidence medium-high. Idaho non-amendment read.",
+      "secondCheck": {
+        "verdict": "disagree",
+        "source": "https://dli.mn.gov/sites/default/files/pdf/eli_inspection_checklist2.pdf"
+      },
+      "resolved": "The gatherer said 4 risers at 210.70(A)(2)(2); the checker said 6 at 210.70(A)(2)(3). Leviton's 2023 NEC Captain Code page for 210.70(A)(2) reads six or more risers, item (3), so 6."
+    },
+    "elec.switchedLightEveryRoom": {
+      "value": true,
+      "unit": "",
+      "code": "NEC 2023",
+      "section": "210.70(A)(1)",
+      "amendment": "None.",
+      "source": "https://regulations.justia.com/states/idaho/24/24-39-10/section-24-39-10-600",
+      "checked": "2026-10-15",
+      "note": "Wall switch controlled lighting outlet in every habitable room, bathrooms; kitchens; exception for occupancy sensors. Base value from knowledge; medium-high.",
+      "secondCheck": {
+        "verdict": "agree",
+        "source": "https://files.dfm.idaho.gov/dfm-admin-website/rules/current/24/243910.pdf"
+      }
+    },
+    "elec.outdoorLightAtDoors": {
+      "value": true,
+      "unit": "",
+      "code": "NEC 2023",
+      "section": "210.70(A)(2)(2)",
+      "amendment": "None.",
+      "source": "https://regulations.justia.com/states/idaho/24/24-39-10/section-24-39-10-600",
+      "checked": "2026-10-15",
+      "note": "At least one wall-switched lighting outlet at outdoor entrances/exits with grade-level access (including attached garage vehicle doors). Exact subsection numbering in 2023 not verified (the key says 210.70(A)(2); I believe exterior is 210.70(A)(1) Exception/ (A)(2) depends on edition). Value confidence high, section confidence low-medium.",
+      "secondCheck": {
+        "verdict": "agree",
+        "source": "https://dli.mn.gov/sites/default/files/pdf/eli_inspection_checklist2.pdf"
+      },
+      "resolved": "Same value; the gatherer numbered it (A)(2)(1). Leviton's 2023 NEC page puts outdoor entrances at 210.70(A)(2)(2)."
+    },
+    "elec.panelWorkingDepth": {
+      "value": 36,
+      "unit": "in",
+      "code": "NEC 2023",
+      "section": "110.26(A)(1)",
+      "amendment": "None (110.26 not amended).",
+      "source": "https://regulations.justia.com/states/idaho/24/24-39-10/section-24-39-10-600",
+      "checked": "2026-10-15",
+      "note": "3 ft minimum depth at 0-150 V to ground, condition 1 (exposed live parts one side, none other). Base value from knowledge; high confidence.",
+      "secondCheck": {
+        "verdict": "agree",
+        "source": "https://dli.mn.gov/sites/default/files/pdf/eli_inspection_checklist2.pdf"
+      }
+    },
+    "elec.panelWorkingWidth": {
+      "value": 30,
+      "unit": "in",
+      "code": "NEC 2023",
+      "section": "110.26(A)(2)",
+      "amendment": "None.",
+      "source": "https://regulations.justia.com/states/idaho/24/24-39-10/section-24-39-10-600",
+      "checked": "2026-10-15",
+      "note": "Width of equipment or 30 in, whichever is greater. High confidence from knowledge.",
+      "secondCheck": {
+        "verdict": "agree",
+        "source": "https://dli.mn.gov/sites/default/files/pdf/eli_inspection_checklist2.pdf"
+      }
+    },
+    "elec.panelWorkingHeight": {
+      "value": 6.5,
+      "unit": "ft",
+      "code": "NEC 2023",
+      "section": "110.26(A)(3)",
+      "amendment": "None.",
+      "source": "https://regulations.justia.com/states/idaho/24/24-39-10/section-24-39-10-600",
+      "checked": "2026-10-15",
+      "note": "Height 6.5 ft (or height of equipment if taller). High confidence from knowledge.",
+      "secondCheck": {
+        "verdict": "agree",
+        "source": "https://dli.mn.gov/sites/default/files/pdf/eli_inspection_checklist2.pdf"
+      }
+    },
+    "elec.panelNotIn": {
+      "value": [
+        "clothes closets",
+        "bathrooms",
+        "over stair steps"
+      ],
+      "unit": "",
+      "code": "NEC 2023",
+      "section": "240.24(D)-(F)",
+      "amendment": "None (240.24 not amended).",
+      "source": "https://regulations.justia.com/states/idaho/24/24-39-10/section-24-39-10-600",
+      "checked": "2026-10-15",
+      "note": "Dwelling bathrooms/clothes closets prohibited; overcurrent devices not over stair steps. Base from knowledge; high confidence on bathrooms/closets.",
+      "secondCheck": {
+        "verdict": "agree",
+        "source": "https://dli.mn.gov/sites/default/files/pdf/eli_inspection_checklist2.pdf"
+      }
+    },
+    "smoke.interconnected": {
+      "value": true,
+      "unit": "",
+      "code": "IRC 2018",
+      "section": "R314.4",
+      "amendment": "Idaho/Boise only delete Exception #2 of R314.2.2 (alterations/additions); R314.4 itself unchanged.",
+      "source": "https://regulations.justia.com/states/idaho/24/24-39-30/section-24-39-30-600",
+      "checked": "2026-10-15",
+      "note": "Smoke alarms interconnected so all sound when any actuates (new construction). Base value from knowledge, amendment status read.",
+      "secondCheck": {
+        "verdict": "agree",
+        "source": "https://files.dfm.idaho.gov/dfm-admin-website/rules/current/24/243930.pdf ; https://cityofboise.org/media/19198/amendments_city_code_1-2_family_dwelling_building_code_articleb_9-20-24.pdf"
+      }
+    },
+    "smoke.garageHeatAlarm": {
+      "value": true,
+      "unit": "",
+      "code": "IRC 2018",
+      "section": "R314.7.5",
+      "amendment": "Boise City Code 9-1B-42 adds R314.7.5: a listed heat detector, wired to the smoke alarms, in attached garages (and detached ones with power that lack fire separation distance).",
+      "source": "https://cityofboise.org/media/19198/amendments_city_code_1-2_family_dwelling_building_code_articleb_9-20-24.pdf",
+      "checked": "2026-10-15",
+      "note": "Read the Boise PDF 'amendments city code 1-2 family dwelling building code article B', which is marked DRAFT 9/20/24. Confirm against adopted codelibrary.amlegal.com Title 9 (9-1B-42) before relying. Confidence medium. Idaho state rule has no heat alarm amendment (searched IDAPA 24.39.30.600).",
+      "secondCheck": {
+        "verdict": "agree",
+        "source": "https://cityofboise.org/media/19198/amendments_city_code_1-2_family_dwelling_building_code_articleb_9-20-24.pdf"
+      }
+    },
+    "co.outsideSleepingAreas": {
+      "value": true,
+      "unit": "",
+      "code": "IRC 2018",
+      "section": "R315.3",
+      "amendment": "Idaho/Boise delete only Exception #2 of R315.2.2; IDAPA 24.39.70 also adds M1203.1 CO alarms where permitted work occurs in existing dwellings.",
+      "source": "https://regulations.justia.com/states/idaho/24/24-39-30/section-24-39-30-600",
+      "checked": "2026-10-15",
+      "note": "CO alarms outside each separate sleeping area in immediate vicinity of bedrooms (required where fuel-fired appliance, fireplace, or attached garage). Base value from knowledge; high confidence.",
+      "secondCheck": {
+        "verdict": "agree",
+        "source": "https://files.dfm.idaho.gov/dfm-admin-website/rules/current/24/243930.pdf ; https://files.dfm.idaho.gov/dfm-admin-website/rules/current/24/243970.pdf"
+      }
+    },
+    "mech.dryerExhaustMaxLength": {
+      "value": 35,
+      "unit": "ft",
+      "code": "IRC 2018",
+      "section": "M1502.4.5.1",
+      "amendment": "None to this section. Idaho amends M1502.4.2 only (duct support at 4 ft intervals etc.).",
+      "source": "https://www.seattle.gov/documents/Departments/SDCI/Codes/SeattleResidentialCode/2018SRCChapter15.pdf",
+      "checked": "2026-10-15",
+      "note": "Mechanical base value: IRC 2018 Part V as adopted by IDAPA 24.39.70.600 (read). 35 ft from transition duct to outlet, less fitting equivalents; read through Seattle 2018 SRC ch.15 (mirrors IRC 2018 text), manufacturer's instructions can override (M1502.4.5.2). Confidence high.",
+      "secondCheck": {
+        "verdict": "agree",
+        "source": "https://www.seattle.gov/documents/Departments/SDCI/Codes/SeattleResidentialCode/2018SRCChapter15.pdf ; https://files.dfm.idaho.gov/dfm-admin-website/rules/current/24/243970.pdf"
+      }
+    },
+    "mech.dryerElbow90Deduct": {
+      "value": 5,
+      "unit": "ft",
+      "code": "IRC 2018",
+      "section": "Table M1502.4.5.1",
+      "amendment": "None.",
+      "source": "https://www.seattle.gov/documents/Departments/SDCI/Codes/SeattleResidentialCode/2018SRCChapter15.pdf",
+      "checked": "2026-10-15",
+      "note": "Mechanical base value: IRC 2018 Part V as adopted by IDAPA 24.39.70.600 (read). 5 ft for 4-in radius mitered 90 degree elbow (smooth-radius 90s are 1 ft 9 in for 6 in radius, 1 ft 7 in for 8 in radius, 1 ft 6 in for 10 in radius). Use 5 ft as the conservative default. Read via Seattle 2018 SRC ch.15. Confidence high.",
+      "secondCheck": {
+        "verdict": "agree",
+        "source": "https://www.seattle.gov/documents/Departments/SDCI/Codes/SeattleResidentialCode/2018SRCChapter15.pdf"
+      }
+    },
+    "mech.exhaustTerminationFromOpenings": {
+      "value": 3,
+      "unit": "ft",
+      "code": "IRC 2018",
+      "section": "M1502.3, M1506.3",
+      "amendment": "None.",
+      "source": "https://www.seattle.gov/documents/Departments/SDCI/Codes/SeattleResidentialCode/2018SRCChapter15.pdf",
+      "checked": "2026-10-15",
+      "note": "Mechanical base value: IRC 2018 Part V as adopted by IDAPA 24.39.70.600 (read). 3 ft in any direction from openings into buildings (dryer M1502.3); other exhaust openings also 3 ft from operable windows/gravity intakes, 10 ft from mechanical air intakes (that text read as Seattle M1504.3; the IRC 2018 M1506.3 number match not verified). Confidence medium-high.",
+      "secondCheck": {
+        "verdict": "agree",
+        "source": "https://www.seattle.gov/documents/Departments/SDCI/Codes/SeattleResidentialCode/2018SRCChapter15.pdf ; https://files.dfm.idaho.gov/dfm-admin-website/rules/current/24/243970.pdf"
+      }
+    },
+    "mech.exhaustTerminationFromLotLine": {
+      "value": 3,
+      "unit": "ft",
+      "code": "IRC 2018",
+      "section": "M1506.3",
+      "amendment": "None.",
+      "source": "https://www.seattle.gov/documents/Departments/SDCI/Codes/SeattleResidentialCode/2018SRCChapter15.pdf",
+      "checked": "2026-10-15",
+      "note": "Mechanical base value: IRC 2018 Part V as adopted by IDAPA 24.39.70.600 (read). 3 ft from property lines for exhaust openings (read as Seattle M1504.3 mirror; IRC 2018 M1506.3 wording not directly read). Dryer duct M1502.3 itself gives no property line distance. Confidence medium.",
+      "secondCheck": {
+        "verdict": "agree",
+        "source": "https://www.seattle.gov/documents/Departments/SDCI/Codes/SeattleResidentialCode/2018SRCChapter15.pdf ; https://files.dfm.idaho.gov/dfm-admin-website/rules/current/24/243970.pdf"
+      }
+    },
+    "mech.applianceWorkingSpace": {
+      "value": 30,
+      "unit": "in",
+      "code": "IRC 2018",
+      "section": "M1305.1",
+      "amendment": "None.",
+      "source": "https://www.seattle.gov/documents/Departments/SDCI/Codes/SeattleResidentialCode/2018SRCChapter13.pdf",
+      "checked": "2026-10-15",
+      "note": "Mechanical base value: IRC 2018 Part V as adopted by IDAPA 24.39.70.600 (read). 30 in deep x 30 in wide level working space on control side. Read via Seattle 2018 SRC ch.13. Confidence high.",
+      "secondCheck": {
+        "verdict": "agree",
+        "source": "https://www.seattle.gov/documents/Departments/SDCI/Codes/SeattleResidentialCode/2018SRCChapter13.pdf ; https://files.dfm.idaho.gov/dfm-admin-website/rules/current/24/243970.pdf"
+      }
+    },
+    "mech.garageIgnitionHeight": {
+      "value": 18,
+      "unit": "in",
+      "code": "IRC 2018",
+      "section": "M1307.3",
+      "amendment": "Idaho ISPC (24.39.20) replaces UPC 507.13: ignition sources in residential garages at least 18 in above floor unless listed flammable-vapor-ignition-resistant (same number).",
+      "source": "https://www.seattle.gov/documents/Departments/SDCI/Codes/SeattleResidentialCode/2018SRCChapter13.pdf",
+      "checked": "2026-10-15",
+      "note": "Mechanical base value: IRC 2018 Part V as adopted by IDAPA 24.39.70.600 (read). Ignition source at least 18 in above garage floor, except flammable-vapor-ignition-resistant listed appliances. Confidence high.",
+      "secondCheck": {
+        "verdict": "agree",
+        "source": "https://www.seattle.gov/documents/Departments/SDCI/Codes/SeattleResidentialCode/2018SRCChapter13.pdf ; https://files.dfm.idaho.gov/dfm-admin-website/rules/current/24/243920.pdf ; https://files.dfm.idaho.gov/dfm-admin-website/rules/current/24/243970.pdf"
+      }
+    },
+    "mech.atticApplianceMaxPassage": {
+      "value": 20,
+      "unit": "ft",
+      "code": "IRC 2018",
+      "section": "M1305.1.3",
+      "amendment": "None.",
+      "source": "https://www.seattle.gov/documents/Departments/SDCI/Codes/SeattleResidentialCode/2018SRCChapter13.pdf",
+      "checked": "2026-10-15",
+      "note": "Mechanical base value: IRC 2018 Part V as adopted by IDAPA 24.39.70.600 (read). Passageway max 20 ft measured along centerline (unless exception: >=6 ft high, 22 in wide full length for attic/underfloor per base code; exceptions vary). The page text I read labeled this under-floor; attic provision M1305.1.3 uses the same 20 ft in base IRC from my knowledge. Confidence medium-high.",
+      "secondCheck": {
+        "verdict": "agree",
+        "source": "https://www.seattle.gov/documents/Departments/SDCI/Codes/SeattleResidentialCode/2018SRCChapter13.pdf ; https://files.dfm.idaho.gov/dfm-admin-website/rules/current/24/243970.pdf"
+      }
+    },
+    "plumbing.dfu.lavatory": {
+      "value": 1,
+      "unit": "DFU",
+      "code": "ISPC 2017",
+      "section": "UPC Table 702.1",
+      "amendment": null,
+      "source": "https://kingcounty.gov/en/dept/dph/health-safety/environmental-health/plumbing-gas-piping/installations/drainage-venting-fixture-unit-values",
+      "checked": "2026-10-15",
+      "note": "Private-use value, UPC Table 702.1; read via King County DOH excerpt and open-exam-prep excerpt (edition year not stated on either; same values in 2015 UPC from my knowledge). Confidence high.",
+      "secondCheck": {
+        "verdict": "agree",
+        "source": "https://kingcounty.gov/en/dept/dph/health-safety/environmental-health/plumbing-gas-piping/installations/drainage-venting-fixture-unit-values ; https://files.dfm.idaho.gov/dfm-admin-website/rules/current/24/243920.pdf"
+      }
+    },
+    "plumbing.dfu.kitchenSink": {
+      "value": 2,
+      "unit": "DFU",
+      "code": "ISPC 2017",
+      "section": "UPC Table 702.1",
+      "amendment": null,
+      "source": "https://kingcounty.gov/en/dept/dph/health-safety/environmental-health/plumbing-gas-piping/installations/drainage-venting-fixture-unit-values",
+      "checked": "2026-10-15",
+      "note": "Private-use value, UPC Table 702.1; read via King County DOH excerpt and open-exam-prep excerpt (edition year not stated on either; same values in 2015 UPC from my knowledge). Confidence high.",
+      "secondCheck": {
+        "verdict": "agree",
+        "source": "https://kingcounty.gov/en/dept/dph/health-safety/environmental-health/plumbing-gas-piping/installations/drainage-venting-fixture-unit-values ; https://files.dfm.idaho.gov/dfm-admin-website/rules/current/24/243920.pdf"
+      }
+    },
+    "plumbing.dfu.dishwasher": {
+      "value": 2,
+      "unit": "DFU",
+      "code": "ISPC 2017",
+      "section": "UPC Table 702.1",
+      "amendment": null,
+      "source": "https://kingcounty.gov/en/dept/dph/health-safety/environmental-health/plumbing-gas-piping/installations/drainage-venting-fixture-unit-values",
+      "checked": "2026-10-15",
+      "note": "Private-use value, UPC Table 702.1; read via King County DOH excerpt and open-exam-prep excerpt (edition year not stated on either; same values in 2015 UPC from my knowledge). Confidence high.",
+      "secondCheck": {
+        "verdict": "agree",
+        "source": "https://kingcounty.gov/en/dept/dph/health-safety/environmental-health/plumbing-gas-piping/installations/drainage-venting-fixture-unit-values ; https://files.dfm.idaho.gov/dfm-admin-website/rules/current/24/243920.pdf"
+      }
+    },
+    "plumbing.dfu.clothesWasher": {
+      "value": 2,
+      "unit": "DFU",
+      "code": "ISPC 2017",
+      "section": "UPC Table 702.1",
+      "amendment": "Idaho amends Table 702.1: clothes washer, domestic, private = 2 DFU (base UPC 3).",
+      "source": "https://regulations.justia.com/states/idaho/24/24-39-20/section-24-39-20-600/",
+      "checked": "2026-10-15",
+      "note": "Idaho-amended value 2 (base UPC 3). Source: Justia IDAPA 24.39.20.600. Confidence high for amendment text, medium on whether later Idaho rules changed it.",
+      "secondCheck": {
+        "verdict": "agree",
+        "source": "https://kingcounty.gov/en/dept/dph/health-safety/environmental-health/plumbing-gas-piping/installations/drainage-venting-fixture-unit-values ; https://files.dfm.idaho.gov/dfm-admin-website/rules/current/24/243920.pdf"
+      }
+    },
+    "plumbing.dfu.shower": {
+      "value": 2,
+      "unit": "DFU",
+      "code": "ISPC 2017",
+      "section": "UPC Table 702.1",
+      "amendment": null,
+      "source": "https://kingcounty.gov/en/dept/dph/health-safety/environmental-health/plumbing-gas-piping/installations/drainage-venting-fixture-unit-values",
+      "checked": "2026-10-15",
+      "note": "Private-use value, UPC Table 702.1; read via King County DOH excerpt and open-exam-prep excerpt (edition year not stated on either; same values in 2015 UPC from my knowledge). Confidence high.",
+      "secondCheck": {
+        "verdict": "agree",
+        "source": "https://kingcounty.gov/en/dept/dph/health-safety/environmental-health/plumbing-gas-piping/installations/drainage-venting-fixture-unit-values ; https://files.dfm.idaho.gov/dfm-admin-website/rules/current/24/243920.pdf"
+      }
+    },
+    "plumbing.dfu.bathtub": {
+      "value": 2,
+      "unit": "DFU",
+      "code": "ISPC 2017",
+      "section": "UPC Table 702.1",
+      "amendment": null,
+      "source": "https://kingcounty.gov/en/dept/dph/health-safety/environmental-health/plumbing-gas-piping/installations/drainage-venting-fixture-unit-values",
+      "checked": "2026-10-15",
+      "note": "Private-use value, UPC Table 702.1; read via King County DOH excerpt and open-exam-prep excerpt (edition year not stated on either; same values in 2015 UPC from my knowledge). Confidence high.",
+      "secondCheck": {
+        "verdict": "agree",
+        "source": "https://kingcounty.gov/en/dept/dph/health-safety/environmental-health/plumbing-gas-piping/installations/drainage-venting-fixture-unit-values ; https://files.dfm.idaho.gov/dfm-admin-website/rules/current/24/243920.pdf"
+      }
+    },
+    "plumbing.dfu.waterCloset": {
+      "value": 3,
+      "unit": "DFU",
+      "code": "ISPC 2017",
+      "section": "UPC Table 702.1",
+      "amendment": null,
+      "source": "https://kingcounty.gov/en/dept/dph/health-safety/environmental-health/plumbing-gas-piping/installations/drainage-venting-fixture-unit-values",
+      "checked": "2026-10-15",
+      "note": "Private-use value, UPC Table 702.1; read via King County DOH excerpt and open-exam-prep excerpt (edition year not stated on either; same values in 2015 UPC from my knowledge). Confidence high.",
+      "secondCheck": {
+        "verdict": "agree",
+        "source": "https://kingcounty.gov/en/dept/dph/health-safety/environmental-health/plumbing-gas-piping/installations/drainage-venting-fixture-unit-values ; https://files.dfm.idaho.gov/dfm-admin-website/rules/current/24/243920.pdf"
+      }
+    },
+    "plumbing.dfu.laundrySink": {
+      "value": 2,
+      "unit": "DFU",
+      "code": "ISPC 2017",
+      "section": "UPC Table 702.1",
+      "amendment": null,
+      "source": "https://kingcounty.gov/en/dept/dph/health-safety/environmental-health/plumbing-gas-piping/installations/drainage-venting-fixture-unit-values",
+      "checked": "2026-10-15",
+      "note": "Private-use value, UPC Table 702.1; read via King County DOH excerpt and open-exam-prep excerpt (edition year not stated on either; same values in 2015 UPC from my knowledge). Confidence high.",
+      "secondCheck": {
+        "verdict": "agree",
+        "source": "https://kingcounty.gov/en/dept/dph/health-safety/environmental-health/plumbing-gas-piping/installations/drainage-venting-fixture-unit-values ; https://files.dfm.idaho.gov/dfm-admin-website/rules/current/24/243920.pdf"
+      }
+    },
+    "plumbing.wsfu.lavatory": {
+      "value": 1.0,
+      "unit": "WSFU",
+      "code": "ISPC 2017",
+      "section": "UPC Table 610.3",
+      "amendment": null,
+      "source": "https://mcw.specialdistrict.org/files/3c54d4925/Table-610.3.pdf",
+      "checked": "2026-10-15",
+      "note": "Private-use value, UPC Table 610.3. Values read from a 2022 California Plumbing Code table (garbled extraction) and a Plumbing & Mechanical article for lavatory, washer, tub, water closet, hose bibb; same as UPC 2015 from my knowledge. Confidence medium-high.",
+      "secondCheck": {
+        "verdict": "agree",
+        "source": "https://www.revisor.mn.gov/rules/4714.0610/version/2016-01-25T09:45:43-06:00 ; https://files.dfm.idaho.gov/dfm-admin-website/rules/current/24/243920.pdf"
+      }
+    },
+    "plumbing.wsfu.kitchenSink": {
+      "value": 1.5,
+      "unit": "WSFU",
+      "code": "ISPC 2017",
+      "section": "UPC Table 610.3",
+      "amendment": null,
+      "source": "https://mcw.specialdistrict.org/files/3c54d4925/Table-610.3.pdf",
+      "checked": "2026-10-15",
+      "note": "Private-use value, UPC Table 610.3. Values read from a 2022 California Plumbing Code table (garbled extraction) and a Plumbing & Mechanical article for lavatory, washer, tub, water closet, hose bibb; same as UPC 2015 from my knowledge. Confidence medium-high.",
+      "secondCheck": {
+        "verdict": "agree",
+        "source": "https://www.revisor.mn.gov/rules/4714.0610/version/2016-01-25T09:45:43-06:00 ; https://files.dfm.idaho.gov/dfm-admin-website/rules/current/24/243920.pdf"
+      }
+    },
+    "plumbing.wsfu.dishwasher": {
+      "value": 1.5,
+      "unit": "WSFU",
+      "code": "ISPC 2017",
+      "section": "UPC Table 610.3",
+      "amendment": null,
+      "source": "https://mcw.specialdistrict.org/files/3c54d4925/Table-610.3.pdf",
+      "checked": "2026-10-15",
+      "note": "Private-use value, UPC Table 610.3. Values read from a 2022 California Plumbing Code table (garbled extraction) and a Plumbing & Mechanical article for lavatory, washer, tub, water closet, hose bibb; same as UPC 2015 from my knowledge. Confidence medium-high.",
+      "secondCheck": {
+        "verdict": "agree",
+        "source": "https://www.revisor.mn.gov/rules/4714.0610/version/2016-01-25T09:45:43-06:00 ; https://files.dfm.idaho.gov/dfm-admin-website/rules/current/24/243920.pdf"
+      }
+    },
+    "plumbing.wsfu.clothesWasher": {
+      "value": 2,
+      "unit": "WSFU",
+      "code": "ISPC 2017",
+      "section": "UPC Table 610.3",
+      "amendment": "Idaho amends Table 610.3 (and App. A Table A103.1): clothes washer = 2 WSFU public and private (base 2015 UPC private 4.0).",
+      "source": "https://regulations.justia.com/states/idaho/24/24-39-20/section-24-39-20-600/",
+      "checked": "2026-10-15",
+      "note": "Idaho-amended value 2 (base UPC 4). Source: Justia IDAPA 24.39.20.600. Confidence high for amendment text.",
+      "secondCheck": {
+        "verdict": "agree",
+        "source": "https://www.revisor.mn.gov/rules/4714.0610/version/2016-01-25T09:45:43-06:00 ; https://files.dfm.idaho.gov/dfm-admin-website/rules/current/24/243920.pdf"
+      }
+    },
+    "plumbing.wsfu.shower": {
+      "value": 2.0,
+      "unit": "WSFU",
+      "code": "ISPC 2017",
+      "section": "UPC Table 610.3",
+      "amendment": null,
+      "source": "https://mcw.specialdistrict.org/files/3c54d4925/Table-610.3.pdf",
+      "checked": "2026-10-15",
+      "note": "Private-use value, UPC Table 610.3. Values read from a 2022 California Plumbing Code table (garbled extraction) and a Plumbing & Mechanical article for lavatory, washer, tub, water closet, hose bibb; same as UPC 2015 from my knowledge. Confidence medium-high.",
+      "secondCheck": {
+        "verdict": "agree",
+        "source": "https://www.revisor.mn.gov/rules/4714.0610/version/2016-01-25T09:45:43-06:00 ; https://files.dfm.idaho.gov/dfm-admin-website/rules/current/24/243920.pdf"
+      }
+    },
+    "plumbing.wsfu.bathtub": {
+      "value": 2,
+      "unit": "WSFU",
+      "code": "ISPC 2017",
+      "section": "UPC Table 610.3",
+      "amendment": "Idaho amends Table 610.3: bathtub or combination bath/shower = 2 WSFU public and private (base 2015 UPC private 4.0).",
+      "source": "https://regulations.justia.com/states/idaho/24/24-39-20/section-24-39-20-600/",
+      "checked": "2026-10-15",
+      "note": "Idaho-amended value 2 (base UPC 4). Source: Justia IDAPA 24.39.20.600. Confidence high for amendment text.",
+      "secondCheck": {
+        "verdict": "agree",
+        "source": "https://www.revisor.mn.gov/rules/4714.0610/version/2016-01-25T09:45:43-06:00 ; https://files.dfm.idaho.gov/dfm-admin-website/rules/current/24/243920.pdf"
+      }
+    },
+    "plumbing.wsfu.waterCloset": {
+      "value": 2.5,
+      "unit": "WSFU",
+      "code": "ISPC 2017",
+      "section": "UPC Table 610.3",
+      "amendment": null,
+      "source": "https://mcw.specialdistrict.org/files/3c54d4925/Table-610.3.pdf",
+      "checked": "2026-10-15",
+      "note": "Private-use value, UPC Table 610.3. Values read from a 2022 California Plumbing Code table (garbled extraction) and a Plumbing & Mechanical article for lavatory, washer, tub, water closet, hose bibb; same as UPC 2015 from my knowledge. Confidence medium-high.",
+      "secondCheck": {
+        "verdict": "agree",
+        "source": "https://www.revisor.mn.gov/rules/4714.0610/version/2016-01-25T09:45:43-06:00 ; https://files.dfm.idaho.gov/dfm-admin-website/rules/current/24/243920.pdf"
+      }
+    },
+    "plumbing.wsfu.laundrySink": {
+      "value": 1.5,
+      "unit": "WSFU",
+      "code": "ISPC 2017",
+      "section": "UPC Table 610.3",
+      "amendment": null,
+      "source": "https://mcw.specialdistrict.org/files/3c54d4925/Table-610.3.pdf",
+      "checked": "2026-10-15",
+      "note": "Private-use value, UPC Table 610.3. Values read from a 2022 California Plumbing Code table (garbled extraction) and a Plumbing & Mechanical article for lavatory, washer, tub, water closet, hose bibb; same as UPC 2015 from my knowledge. Confidence medium-high.",
+      "secondCheck": {
+        "verdict": "agree",
+        "source": "https://www.revisor.mn.gov/rules/4714.0610/version/2016-01-25T09:45:43-06:00 ; https://files.dfm.idaho.gov/dfm-admin-website/rules/current/24/243920.pdf"
+      }
+    },
+    "plumbing.wsfu.hoseBib": {
+      "value": 2.5,
+      "unit": "WSFU",
+      "code": "ISPC 2017",
+      "section": "UPC Table 610.3",
+      "amendment": null,
+      "source": "https://mcw.specialdistrict.org/files/3c54d4925/Table-610.3.pdf",
+      "checked": "2026-10-15",
+      "note": "Private-use value, UPC Table 610.3. Values read from a 2022 California Plumbing Code table (garbled extraction) and a Plumbing & Mechanical article for lavatory, washer, tub, water closet, hose bibb; same as UPC 2015 from my knowledge. Confidence medium-high.",
+      "secondCheck": {
+        "verdict": "agree",
+        "source": "https://www.revisor.mn.gov/rules/4714.0610/version/2016-01-25T09:45:43-06:00 ; https://files.dfm.idaho.gov/dfm-admin-website/rules/current/24/243920.pdf"
+      }
+    },
+    "plumbing.whStrapRequired": {
+      "value": false,
+      "unit": "",
+      "code": "ISPC 2017",
+      "section": "UPC 507.2",
+      "amendment": "Idaho deletes UPC 507.2 (seismic strapping)",
+      "source": "https://regulations.justia.com/states/idaho/24/24-39-20/section-24-39-20-600/",
+      "checked": "2026-10-15",
+      "note": "No strapping rule in the Idaho plumbing code. Base UPC 2015 507.2: straps in upper and lower thirds, lower strap at least 4 in above controls (N=4 from my knowledge; the base text was not shown on the page). Idaho deletes the section; value null = not required by Idaho plumbing code. Manufacturer instructions may still call for straps. Confidence high on deletion, medium on N=4.",
+      "secondCheck": {
+        "verdict": "agree",
+        "source": "https://files.dfm.idaho.gov/dfm-admin-website/rules/current/24/243920.pdf"
+      }
+    },
+    "plumbing.hoseBibBackflow": {
+      "value": "Frost-free, self-draining hose bib with built-in backflow protection (vacuum breaker)",
+      "unit": "",
+      "code": "ISPC 2017",
+      "section": "UPC 603.5.7",
+      "amendment": "Idaho replaces UPC 603.5.7 (adds frost-proof self-draining requirement for freezing climates).",
+      "source": "https://regulations.justia.com/states/idaho/24/24-39-20/section-24-39-20-600/",
+      "checked": "2026-10-15",
+      "note": "Read from Justia IDAPA 24.39.20.600. Confidence high.",
+      "secondCheck": {
+        "verdict": "agree",
+        "source": "https://files.dfm.idaho.gov/dfm-admin-website/rules/current/24/243920.pdf"
+      }
+    },
+    "energy.ductRAttic": {
+      "value": 8,
+      "unit": "R",
+      "code": "IECC 2018",
+      "section": "R403.3.1",
+      "amendment": "None found.",
+      "source": "https://regulations.justia.com/states/idaho/24/24-39-30/section-24-39-30-600",
+      "checked": "2026-10-15",
+      "note": "IECC 2018 as amended, IDAPA 24.39.30.600.06 (read on Justia). Attic ducts 3 in diameter and larger R-8 (smaller than 3 in R-6); base value from knowledge, not directly read. Confidence medium-high.",
+      "secondCheck": {
+        "verdict": "agree",
+        "source": "https://files.dfm.idaho.gov/dfm-admin-website/rules/current/24/243930.pdf"
+      }
+    },
+    "energy.ductROther": {
+      "value": 6,
+      "unit": "R",
+      "code": "IECC 2018",
+      "section": "R403.3.1",
+      "amendment": "None found.",
+      "source": "https://regulations.justia.com/states/idaho/24/24-39-30/section-24-39-30-600",
+      "checked": "2026-10-15",
+      "note": "IECC 2018 as amended, IDAPA 24.39.30.600.06 (read on Justia). Other portions outside conditioned space R-6 (R-4.2 for ducts under 3 in); base value from knowledge. Confidence medium-high.",
+      "secondCheck": {
+        "verdict": "agree",
+        "source": "https://files.dfm.idaho.gov/dfm-admin-website/rules/current/24/243930.pdf"
+      }
+    },
+    "energy.programmableThermostat": {
+      "value": true,
+      "unit": "",
+      "code": "IECC 2018",
+      "section": "R403.1.1",
+      "amendment": "None. (Idaho 03.p amends IRC R403.1.1 footing size, a different section.)",
+      "source": "https://regulations.justia.com/states/idaho/24/24-39-30/section-24-39-30-600",
+      "checked": "2026-10-15",
+      "note": "IECC 2018 as amended, IDAPA 24.39.30.600.06 (read on Justia). Programmable thermostat required for the primary heating/cooling system; base value from knowledge. Confidence medium-high.",
+      "secondCheck": {
+        "verdict": "agree",
+        "source": "https://files.dfm.idaho.gov/dfm-admin-website/rules/current/24/243930.pdf"
+      }
+    },
+    "energy.highEfficacyLampsPct": {
+      "value": 90,
+      "unit": "percent",
+      "code": "IECC 2018",
+      "section": "R404.1",
+      "amendment": "None found (R404.1 only referenced in new R402.6 log homes).",
+      "source": "https://www.energy.nv.gov/uploadedFiles/energynvgov/content/Programs/TaskForces/2017/2015 v 2018 IECC Summary - GOE Final w sources.pdf",
+      "checked": "2026-10-15",
+      "note": "2018 IECC raised from 75 percent (2015) to 90 percent; read via Nevada GOE 2015 vs 2018 summary. Idaho amendment status from Justia. Confidence high.",
+      "secondCheck": {
+        "verdict": "agree",
+        "source": "https://files.dfm.idaho.gov/dfm-admin-website/rules/current/24/243930.pdf"
+      }
+    },
+    "energy.hotWaterPipeR": {
+      "value": 3,
+      "unit": "R",
+      "code": "IECC 2018",
+      "section": "R403.5.3",
+      "amendment": "None found.",
+      "source": "https://regulations.justia.com/states/idaho/24/24-39-30/section-24-39-30-600",
+      "checked": "2026-10-15",
+      "note": "IECC 2018 as amended, IDAPA 24.39.30.600.06 (read on Justia). R-3 on hot water pipes (where required: >=3/4 in, recirculating, etc.); base value from knowledge, not directly read. Confidence medium.",
+      "secondCheck": {
+        "verdict": "agree",
+        "source": "https://files.dfm.idaho.gov/dfm-admin-website/rules/current/24/243930.pdf"
       }
     }
   }

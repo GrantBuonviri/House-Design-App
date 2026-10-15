@@ -10,6 +10,7 @@ import { houseFacts, type HouseFacts } from "@/lib/plans/house";
 import { siteLayout } from "@/lib/plans/lot";
 import { codeNum, codeRef } from "./data";
 import { escapeCheck, glassSqft, openableSqft } from "./openings";
+import { alarmChecks, bathFanCheck, electricalChecks, mechanicalChecks } from "./systemsChecks";
 
 /**
  * The code check: a list of rules from the codes Boise uses, each with its
@@ -199,7 +200,9 @@ export const RULES: CodeRule[] = [
         const ok = glass.some((o) => glassSqft(o) >= codeNum("light.bathroomGlazingArea") && openableSqft(o) >= glassSqft(o) / 2 - 0.01);
         return ok
           ? room(level, r, { status: "pass", text: `${where(level, r)}: window big enough` })
-          : room(level, r, { status: "manual", text: `${where(level, r)} needs an exhaust fan. Fans are placed with the mechanical plan, coming in a later update.` });
+          : bathFanCheck(h, level, r)
+            ? room(level, r, { status: "pass", text: `${where(level, r)}: exhaust fan, ${codeNum("vent.bathIntermittent")} cfm, on the mechanical plan` })
+            : { ...room(level, r, { status: "fail", text: `${where(level, r)}: no window big enough and no exhaust fan.`, fix: "Add an exhaust fan (Plans page, Outlets and lights)." }), stage: undefined };
       }),
   },
   {
@@ -384,8 +387,8 @@ export const RULES: CodeRule[] = [
     id: "alarms",
     group: "Systems",
     title: "Smoke alarms in bedrooms, outside them and on every floor; CO alarms with gas or an attached garage",
-    ref: "garage.gypsumGarageSide",
-    check: () => [{ status: "manual", text: "Smoke and CO alarms are placed on the electrical plan, coming in a later update." }],
+    ref: "smoke.inEachBedroom",
+    check: alarmChecks,
   },
   {
     id: "attic-access",
@@ -454,22 +457,28 @@ export const RULES: CodeRule[] = [
     id: "electrical",
     group: "Systems",
     title: "Outlets, GFCI and AFCI protection, kitchen and bath circuits",
-    ref: "plumbing.wcSideClearance",
-    check: () => [{ status: "manual", text: "Placed on the electrical plan, coming in a later update." }],
+    ref: "elec.wallReceptacleMaxDistance",
+    check: electricalChecks,
   },
   {
     id: "mechanical",
     group: "Systems",
     title: "Bath fans, kitchen hood and whole-house fresh air",
-    ref: "plumbing.wcSideClearance",
-    check: () => [{ status: "manual", text: "Placed on the mechanical plan, coming in a later update." }],
+    ref: "vent.wholeHouseCfmPerSqFt",
+    check: mechanicalChecks,
   },
   {
     id: "energy",
     group: "Systems",
     title: "Insulation and window U-factors for climate zone 5",
     ref: "design.climateZone",
-    check: () => [{ status: "manual", text: "On the energy sheet, coming in a later update. The REScheck report comes from energycodes.gov." }],
+    check: (h) =>
+      h.drawn.length
+        ? [
+            { status: "pass", text: `Insulation R-values and U-${codeNum("energy.fenestrationU")} windows set on the energy sheet (G-003), with ${h.project.plan.basics?.exteriorWall === "2x4" ? "R-13 + R-5 continuous in 2x4 walls" : "R-21 in 2x6 walls"}.` },
+            { status: "manual", text: "The REScheck report (energycodes.gov) or an energy rating confirms it; enter the areas from G-003." },
+          ]
+        : [],
   },
   {
     id: "setbacks",
