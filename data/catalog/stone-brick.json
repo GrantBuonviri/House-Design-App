@@ -1,0 +1,194 @@
+[
+  {
+    "id": "eldorado-stone-stacked-stone",
+    "name": "Stacked Stone",
+    "brand": "Eldorado Stone",
+    "url": "https://www.westlakeroyalbuildingproducts.com/stone/eldorado-stone/stacked-stone",
+    "price": 11.0,
+    "unit": "sqft",
+    "priceSource": "estimated",
+    "priceNote": "Estimated: dealer cartons $109.80-131.44 per 11 sq ft flats (thepricer.org, reviewed Mar 2026)",
+    "lastChecked": "2026-10-15",
+    "kind": "stone",
+    "styles": [
+      "mountain-modern",
+      "contemporary",
+      "craftsman"
+    ],
+    "tags": [
+      "gray",
+      "neutral",
+      "earthy"
+    ],
+    "color": "#958A7E",
+    "pattern": "stone"
+  },
+  {
+    "id": "eldorado-stone-mountain-ledge",
+    "name": "Mountain Ledge",
+    "brand": "Eldorado Stone",
+    "url": "https://www.westlakeroyalbuildingproducts.com/stone/eldorado-stone/mountain-ledge",
+    "price": 12.0,
+    "unit": "sqft",
+    "priceSource": "estimated",
+    "priceNote": "Estimated: Eldorado flats run $9-18/sq ft per thepricer.org 2026 guide; mid-range for ledge profiles",
+    "lastChecked": "2026-10-15",
+    "kind": "stone",
+    "styles": [
+      "mountain-modern",
+      "ranch",
+      "craftsman"
+    ],
+    "tags": [
+      "earthy",
+      "warm"
+    ],
+    "color": "#8A7B6A",
+    "pattern": "stone"
+  },
+  {
+    "id": "eldorado-stone-cliffstone",
+    "name": "Cliffstone",
+    "brand": "Eldorado Stone",
+    "url": "https://www.westlakeroyalbuildingproducts.com/stone/eldorado-stone/cliffstone",
+    "price": 11.5,
+    "unit": "sqft",
+    "priceSource": "estimated",
+    "priceNote": "Estimated: dealer cartons $105.50-124.40 per 10 sq ft flats (thepricer.org, reviewed Mar 2026)",
+    "lastChecked": "2026-10-15",
+    "kind": "stone",
+    "styles": [
+      "modern-farmhouse",
+      "traditional",
+      "craftsman"
+    ],
+    "tags": [
+      "light",
+      "neutral"
+    ],
+    "color": "#ABA08F",
+    "pattern": "stone"
+  },
+  {
+    "id": "provia-ledgestone",
+    "name": "ProVia Ledgestone Manufactured Stone",
+    "brand": "ProVia",
+    "url": "https://www.provia.com/stone/ledgestone/",
+    "price": 10.5,
+    "unit": "sqft",
+    "priceSource": "estimated",
+    "priceNote": "Estimated: no price on site; manufactured ledgestone flats typically $9-12/sq ft at dealers",
+    "lastChecked": "2026-10-15",
+    "kind": "stone",
+    "styles": [
+      "ranch",
+      "craftsman",
+      "traditional",
+      "mountain-modern"
+    ],
+    "tags": [
+      "earthy",
+      "gray",
+      "neutral"
+    ],
+    "color": "#8E847A",
+    "pattern": "stone"
+  },
+  {
+    "id": "old-mill-brick-columbia-street-thin-brick",
+    "name": "Old Mill Brick Columbia Street Thin Brick Singles - Flats (Box of 50) 7.625 in x 2.25 in (7.3 sq. ft.)",
+    "brand": "Old Mill Brick",
+    "line": "Thin Brick Singles",
+    "sku": "TB-27007CS",
+    "url": "https://homedepot.com/p/Old-Mill-Brick-Columbia-Street-Thin-Brick-Singles-Flats-Box-of-50-7-625-in-x-2-25-in-7-3-sq-ft-TB-27007CS/205489504",
+    "price": 13.15,
+    "unit": "sqft",
+    "priceSource": "listed",
+    "priceNote": "Home Depot lists $95.98 per box / 7.3 sq ft",
+    "lastChecked": "2026-10-15",
+    "kind": "brick",
+    "styles": [
+      "traditional",
+      "craftsman",
+      "modern-farmhouse"
+    ],
+    "tags": [
+      "red",
+      "warm"
+    ],
+    "color": "#7B4036",
+    "pattern": "brick"
+  },
+  {
+    "id": "knotty-cedar-tongue-and-groove-siding-6-pack",
+    "name": "1 in. x 4 in. x 8 ft. Knotty Cedar Tongue and Groove Siding 6-Pack",
+    "brand": "Western Red Cedar (Home Depot)",
+    "sku": "148WRCTG6PK",
+    "url": "https://homedepot.com/p/1-in-x-4-in-x-8-ft-Knotty-Cedar-Tongue-and-Groove-Siding-6-Pack-148WRCTG6PK/301001376",
+    "price": 4.6,
+    "unit": "sqft",
+    "priceSource": "estimated",
+    "priceNote": "Estimated: HD page shows no price; ~$60 per 6-pack / 12.99 sq ft (stain extra)",
+    "lastChecked": "2026-10-15",
+    "kind": "wood",
+    "styles": [
+      "mountain-modern",
+      "craftsman",
+      "modern-farmhouse"
+    ],
+    "tags": [
+      "wood-tone",
+      "warm"
+    ],
+    "color": "#A8693F",
+    "pattern": "plank"
+  },
+  {
+    "id": "nichiha-vintagewood-cedar",
+    "name": "VintageWood - Cedar",
+    "brand": "Nichiha",
+    "line": "Wood Series AWP",
+    "url": "https://www.nichiha.com/product/vintagewood",
+    "price": 9.0,
+    "unit": "sqft",
+    "priceSource": "estimated",
+    "priceNote": "Estimated: no list price (dealer quote); Nichiha architectural wall panels typically $8-10/sq ft material",
+    "lastChecked": "2026-10-15",
+    "kind": "wood",
+    "styles": [
+      "mountain-modern",
+      "contemporary"
+    ],
+    "tags": [
+      "wood-tone",
+      "warm"
+    ],
+    "color": "#9C6B45",
+    "pattern": "plank"
+  },
+  {
+    "id": "nichiha-vintagewood-blackwood",
+    "name": "VintageWood - BlackWood",
+    "brand": "Nichiha",
+    "line": "Wood Series AWP",
+    "url": "https://www.nichiha.com/product/vintagewood",
+    "price": 9.0,
+    "unit": "sqft",
+    "priceSource": "estimated",
+    "priceNote": "Estimated: no list price (dealer quote); Nichiha architectural wall panels typically $8-10/sq ft material",
+    "lastChecked": "2026-10-15",
+    "kind": "wood",
+    "styles": [
+      "contemporary",
+      "mountain-modern",
+      "modern-farmhouse"
+    ],
+    "tags": [
+      "black",
+      "dark",
+      "wood-tone"
+    ],
+    "color": "#2F2B28",
+    "pattern": "plank"
+  }
+]

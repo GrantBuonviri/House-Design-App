@@ -193,11 +193,14 @@ describe("the estimate", () => {
   });
 
   it("lands near published Boise cost per square foot for a typical one-story house", () => {
-    // The published figures leave out contingency, so compare without it.
+    // The published figures leave out contingency and landscaping, so compare without them.
     const target = rates().calibration.costPerSqft;
+    const LANDSCAPING = ["front-walk", "lawn", "planting-beds", "shrubs", "trees"];
     for (const types of [TYPICAL, [...TYPICAL, "office", "bedroom", "family", "half-bath"]]) {
       const e = estimate(suggestedHouse(flat, types))!;
-      const perSqft = (e.total.likely - cat(e, "contingency")) / e.quantities.livingSqft;
+      const yard = e.categories.flatMap((c) => c.lines).filter((l) => LANDSCAPING.includes(l.id)).reduce((s, l) => s + l.cost.likely, 0);
+      expect(yard).toBeGreaterThan(0);
+      const perSqft = (e.total.likely - cat(e, "contingency") - yard) / e.quantities.livingSqft;
       expect(perSqft).toBeGreaterThan(target[0]);
       expect(perSqft).toBeLessThan(target[2]);
     }

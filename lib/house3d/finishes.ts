@@ -9,8 +9,26 @@ import { hex, type RGB } from "./mesh";
  * room. Rooms with nothing picked keep the plain colors.
  */
 
-/** Floor patterns drawn by the 3D material (see patternShader in components/house3d). */
-export const PATTERN = { none: 0, plank: 1, tile: 2, carpet: 3, stone: 4 } as const;
+/**
+ * Patterns drawn by the 3D material (see components/house3d/patternMaterial.ts):
+ * floors, and since milestone 10 siding, roofs and the yard.
+ */
+export const PATTERN = {
+  none: 0,
+  plank: 1,
+  tile: 2,
+  carpet: 3,
+  stone: 4,
+  lap: 5,
+  batten: 6,
+  shake: 7,
+  brick: 8,
+  stucco: 9,
+  shingle: 10,
+  seam: 11,
+  grass: 12,
+  mulch: 13,
+} as const;
 export type PatternId = (typeof PATTERN)[keyof typeof PATTERN];
 
 export type RoomLook = {

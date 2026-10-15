@@ -1,0 +1,256 @@
+[
+  {
+    "id": "sw-emerald-exterior-pure-white",
+    "name": "Pure White",
+    "brand": "Sherwin-Williams",
+    "line": "Emerald Exterior Acrylic Latex",
+    "sku": "SW 7005",
+    "url": "https://www.sherwin-williams.com/sherwinwilliams/SW7005-pure-white",
+    "price": 92.0,
+    "unit": "gallon",
+    "priceSource": "estimated",
+    "priceNote": "Estimated: SW shows no price; Emerald Exterior ~$80-95/gal 2026 retail (facadecolorizer.com); hex from SW published value",
+    "lastChecked": "2026-10-15",
+    "kind": "body",
+    "styles": [
+      "modern-farmhouse",
+      "traditional",
+      "contemporary"
+    ],
+    "tags": [
+      "white"
+    ],
+    "color": "#EDECE6",
+    "pattern": "solid"
+  },
+  {
+    "id": "sw-emerald-exterior-tricorn-black",
+    "name": "Tricorn Black",
+    "brand": "Sherwin-Williams",
+    "line": "Emerald Exterior Acrylic Latex",
+    "sku": "SW 6258",
+    "url": "https://www.sherwin-williams.com/sherwinwilliams/SW6258-tricorn-black",
+    "price": 92.0,
+    "unit": "gallon",
+    "priceSource": "estimated",
+    "priceNote": "Estimated: SW shows no price; Emerald Exterior ~$80-95/gal 2026 retail (facadecolorizer.com); hex from SW published value",
+    "lastChecked": "2026-10-15",
+    "kind": "trim",
+    "styles": [
+      "modern-farmhouse",
+      "contemporary",
+      "mountain-modern"
+    ],
+    "tags": [
+      "black",
+      "dark"
+    ],
+    "color": "#2F2F30",
+    "pattern": "solid"
+  },
+  {
+    "id": "sw-emerald-exterior-urbane-bronze",
+    "name": "Urbane Bronze",
+    "brand": "Sherwin-Williams",
+    "line": "Emerald Exterior Acrylic Latex",
+    "sku": "SW 7048",
+    "url": "https://sherwin-williams.com/sherwinwilliams/SW7048-urbane-bronze",
+    "price": 92.0,
+    "unit": "gallon",
+    "priceSource": "estimated",
+    "priceNote": "Estimated: SW shows no price; Emerald Exterior ~$80-95/gal 2026 retail (facadecolorizer.com); hex from SW published value",
+    "lastChecked": "2026-10-15",
+    "kind": "trim",
+    "styles": [
+      "mountain-modern",
+      "craftsman",
+      "contemporary"
+    ],
+    "tags": [
+      "bronze",
+      "dark",
+      "warm"
+    ],
+    "color": "#54504A",
+    "pattern": "solid"
+  },
+  {
+    "id": "sw-duration-exterior-iron-ore",
+    "name": "Iron Ore",
+    "brand": "Sherwin-Williams",
+    "line": "Duration Exterior Acrylic Latex",
+    "sku": "SW 7069",
+    "url": "https://www.sherwin-williams.com/sherwinwilliams/SW7069-iron-ore",
+    "price": 86.0,
+    "unit": "gallon",
+    "priceSource": "estimated",
+    "priceNote": "Estimated: SW shows no price; Duration Exterior ~$86/gal 2026 retail (facadecolorizer.com); hex from SW published value",
+    "lastChecked": "2026-10-15",
+    "kind": "body",
+    "styles": [
+      "contemporary",
+      "mountain-modern",
+      "modern-farmhouse"
+    ],
+    "tags": [
+      "dark",
+      "gray"
+    ],
+    "color": "#434341",
+    "pattern": "solid"
+  },
+  {
+    "id": "sw-duration-exterior-repose-gray",
+    "name": "Repose Gray",
+    "brand": "Sherwin-Williams",
+    "line": "Duration Exterior Acrylic Latex",
+    "sku": "SW 7015",
+    "url": "https://www.sherwin-williams.com/sherwinwilliams/SW7015-reposegray",
+    "price": 86.0,
+    "unit": "gallon",
+    "priceSource": "estimated",
+    "priceNote": "Estimated: SW shows no price; Duration Exterior ~$86/gal 2026 retail (facadecolorizer.com); hex from SW published value",
+    "lastChecked": "2026-10-15",
+    "kind": "body",
+    "styles": [
+      "ranch",
+      "traditional",
+      "modern-farmhouse"
+    ],
+    "tags": [
+      "gray",
+      "light",
+      "neutral"
+    ],
+    "color": "#CCC9C0",
+    "pattern": "solid"
+  },
+  {
+    "id": "sw-duration-exterior-naval",
+    "name": "Naval",
+    "brand": "Sherwin-Williams",
+    "line": "Duration Exterior Acrylic Latex",
+    "sku": "SW 6244",
+    "url": "https://www.sherwin-williams.com/sherwinwilliams/SW6244-naval",
+    "price": 86.0,
+    "unit": "gallon",
+    "priceSource": "estimated",
+    "priceNote": "Estimated: SW shows no price; Duration Exterior ~$86/gal 2026 retail (facadecolorizer.com); hex from SW published value",
+    "lastChecked": "2026-10-15",
+    "kind": "body",
+    "styles": [
+      "traditional",
+      "craftsman",
+      "contemporary"
+    ],
+    "tags": [
+      "blue",
+      "dark",
+      "bold"
+    ],
+    "color": "#2F3D4C",
+    "pattern": "solid"
+  },
+  {
+    "id": "sw-duration-exterior-evergreen-fog",
+    "name": "Evergreen Fog",
+    "brand": "Sherwin-Williams",
+    "line": "Duration Exterior Acrylic Latex",
+    "sku": "SW 9130",
+    "url": "https://www.sherwin-williams.com/sherwinwilliams/SW9130-evergreen-fog",
+    "price": 86.0,
+    "unit": "gallon",
+    "priceSource": "estimated",
+    "priceNote": "Estimated: SW shows no price; Duration Exterior ~$86/gal 2026 retail (facadecolorizer.com); hex from SW published value",
+    "lastChecked": "2026-10-15",
+    "kind": "body",
+    "styles": [
+      "craftsman",
+      "modern-farmhouse",
+      "ranch"
+    ],
+    "tags": [
+      "green",
+      "earthy"
+    ],
+    "color": "#95978A",
+    "pattern": "solid"
+  },
+  {
+    "id": "bm-aura-exterior-white-dove",
+    "name": "White Dove",
+    "brand": "Benjamin Moore",
+    "line": "Aura Exterior",
+    "sku": "OC-17",
+    "url": "https://www.benjaminmoore.com/en-us/paint-colors/color/OC-17",
+    "price": 97.99,
+    "unit": "gallon",
+    "priceSource": "listed",
+    "priceNote": "Ace Hardware lists BM Aura Exterior Satin 1 gal at $97.99; hex from BM color page",
+    "lastChecked": "2026-10-15",
+    "kind": "trim",
+    "styles": [
+      "modern-farmhouse",
+      "craftsman",
+      "traditional"
+    ],
+    "tags": [
+      "white",
+      "warm"
+    ],
+    "color": "#EFEEE5",
+    "pattern": "solid"
+  },
+  {
+    "id": "bm-regal-select-exterior-hale-navy",
+    "name": "Hale Navy",
+    "brand": "Benjamin Moore",
+    "line": "Regal Select Exterior",
+    "sku": "HC-154",
+    "url": "https://www.benjaminmoore.com/en-us/paint-colors/color/HC-154/hale-navy",
+    "price": 70.0,
+    "unit": "gallon",
+    "priceSource": "estimated",
+    "priceNote": "Estimated: BM Regal Select Exterior ~$55-72/gal 2026 (facadecolorizer.com); hex #444C57 per hextoral.com (BM page not opened)",
+    "lastChecked": "2026-10-15",
+    "kind": "body",
+    "styles": [
+      "traditional",
+      "craftsman",
+      "modern-farmhouse"
+    ],
+    "tags": [
+      "blue",
+      "dark",
+      "bold"
+    ],
+    "color": "#444C57",
+    "pattern": "solid"
+  },
+  {
+    "id": "bm-regal-select-exterior-revere-pewter",
+    "name": "Revere Pewter",
+    "brand": "Benjamin Moore",
+    "line": "Regal Select Exterior",
+    "sku": "HC-172",
+    "url": "https://www.benjaminmoore.com/en-us/paint-colors/color/hc-172/revere-pewter",
+    "price": 70.0,
+    "unit": "gallon",
+    "priceSource": "estimated",
+    "priceNote": "Estimated: BM Regal Select Exterior ~$55-72/gal 2026 (facadecolorizer.com); hex #CBC6B8 per paintdb.com",
+    "lastChecked": "2026-10-15",
+    "kind": "body",
+    "styles": [
+      "ranch",
+      "traditional",
+      "craftsman"
+    ],
+    "tags": [
+      "neutral",
+      "light",
+      "warm"
+    ],
+    "color": "#CBC6B8",
+    "pattern": "solid"
+  }
+]

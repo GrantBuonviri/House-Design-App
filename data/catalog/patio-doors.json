@@ -1,0 +1,148 @@
+[
+  {
+    "id": "jeld-wen-v4500-sliding-black",
+    "name": "JELD-WEN 72 in. x 80 in. V-4500 Contemporary Black FiniShield Vinyl Right-Hand Full Lite Sliding Patio Door w/White Interior",
+    "brand": "JELD-WEN",
+    "line": "V-4500",
+    "sku": "THDJW155900312",
+    "url": "https://homedepot.com/p/JELD-WEN-72-in-x-80-in-V-4500-Contemporary-Black-FiniShield-Vinyl-Right-Hand-Full-Lite-Sliding-Patio-Door-w-White-Interior-THDJW155900312/206581281",
+    "price": 2152.08,
+    "unit": "each",
+    "priceSource": "listed",
+    "priceNote": "$2,152.08 sale (reg $2,531.86) at Home Depot, 72 x 80 in",
+    "lastChecked": "2026-10-15",
+    "kind": "slider",
+    "styles": [
+      "contemporary",
+      "mountain-modern",
+      "modern-farmhouse"
+    ],
+    "tags": [
+      "black",
+      "dark"
+    ],
+    "color": "#1c1c1c",
+    "pattern": "solid"
+  },
+  {
+    "id": "andersen-200-series-perma-shield-gliding",
+    "name": "200 Series Perma-Shield Gliding Patio Door",
+    "brand": "Andersen",
+    "line": "200 Series",
+    "url": "https://andersenwindows.com/windows-and-doors/doors/sliding-patio-doors/200-series-perma-shield-gliding-patio-door",
+    "price": 2100,
+    "unit": "each",
+    "priceSource": "estimated",
+    "priceNote": "Quote only (HD sells as frame+panel kits); est. complete 6 ft door, white",
+    "lastChecked": "2026-10-15",
+    "kind": "slider",
+    "styles": [
+      "traditional",
+      "ranch",
+      "craftsman"
+    ],
+    "tags": [
+      "white",
+      "light"
+    ],
+    "color": "#f4f3ee",
+    "pattern": "solid"
+  },
+  {
+    "id": "pella-250-series-sliding-patio-door",
+    "name": "Pella 250 Series Vinyl Sliding Patio Door",
+    "brand": "Pella",
+    "line": "250 Series",
+    "url": "https://pella.com/shop/doors/patio-doors/250-series/sliding-patio-doors",
+    "price": 1700,
+    "unit": "each",
+    "priceSource": "estimated",
+    "priceNote": "Quote only; est. for 6 ft vinyl slider, white",
+    "lastChecked": "2026-10-15",
+    "kind": "slider",
+    "styles": [
+      "ranch",
+      "traditional",
+      "modern-farmhouse"
+    ],
+    "tags": [
+      "white",
+      "light"
+    ],
+    "color": "#f5f5f2",
+    "pattern": "solid"
+  },
+  {
+    "id": "milgard-tuscany-v400-sliding-bronze",
+    "name": "V400 Tuscany Series Sliding Patio Door",
+    "brand": "Milgard",
+    "line": "Tuscany (V400)",
+    "url": "https://milgard.com/doors/V400/sliding",
+    "price": 1800,
+    "unit": "each",
+    "priceSource": "estimated",
+    "priceNote": "Quote only; est. for 6 ft vinyl slider with Bronze exterior",
+    "lastChecked": "2026-10-15",
+    "kind": "slider",
+    "styles": [
+      "craftsman",
+      "mountain-modern",
+      "ranch"
+    ],
+    "tags": [
+      "bronze",
+      "dark"
+    ],
+    "color": "#4b3d2f",
+    "pattern": "solid"
+  },
+  {
+    "id": "jeld-wen-f4500-french-primed",
+    "name": "JELD-WEN 72 in. x 80 in. F4500 Right-Hand/Inswing Primed Fiberglass French Patio Door w/ Low-E Glass and Black Handle",
+    "brand": "JELD-WEN",
+    "line": "F-4500",
+    "sku": "THDJW252000009",
+    "url": "https://www.homedepot.com/p/JELD-WEN-F-4500-72-in-x-80-in-White-Right-Hand-Inswing-Primed-Fiberglass-French-Patio-Door-Kit-THDJW252000009/326764885",
+    "price": 1923.64,
+    "unit": "each",
+    "priceSource": "listed",
+    "priceNote": "$1,923.64 sale (reg $2,263.10) at Home Depot, 72 x 80 in",
+    "lastChecked": "2026-10-15",
+    "kind": "french",
+    "styles": [
+      "modern-farmhouse",
+      "traditional",
+      "contemporary"
+    ],
+    "tags": [
+      "white",
+      "light"
+    ],
+    "color": "#f2f1ec",
+    "pattern": "solid"
+  },
+  {
+    "id": "jeld-wen-15-lite-french-white",
+    "name": "JELD-WEN 72 in. x 80 in. White Right-Hand/Inswing Fiberglass French Patio Door w/15 Lite Low-E Glass, Blinds and Rot Resist Jamb",
+    "brand": "JELD-WEN",
+    "sku": "THDJW235000068",
+    "url": "https://homedepot.com/p/JELD-WEN-72-in-x-80-in-Right-Hand-Inswing-Low-E-15-Lite-Modern-White-Fiberglass-Double-Prehung-French-Patio-Door-w-BBG-THDJW235000068/320549178",
+    "price": 2524.78,
+    "unit": "each",
+    "priceSource": "listed",
+    "priceNote": "$2,524.78 sale (reg $2,970.33) at Home Depot, 72 x 80 in",
+    "lastChecked": "2026-10-15",
+    "kind": "french",
+    "styles": [
+      "traditional",
+      "craftsman",
+      "modern-farmhouse"
+    ],
+    "tags": [
+      "white",
+      "light"
+    ],
+    "color": "#f4f3ef",
+    "pattern": "solid"
+  }
+]

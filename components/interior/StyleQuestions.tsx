@@ -1,20 +1,25 @@
-import { QUESTIONS, type Answers } from "@/lib/interior/style";
+import { QUESTIONS, type Answers, type Question } from "@/lib/interior/style";
 
-/** The interior style questions, each a row of drawn choices. */
+/** Style questions (the interior ones unless others are given), each a row of drawn choices. */
 export default function StyleQuestions({
   answers,
   guessed,
   onAnswer,
+  questions = QUESTIONS,
+  guessText = "From what you wrote on the Rooms page",
 }: {
   /** What the user picked. */
   answers: Answers;
   /** Guesses from the Rooms page, shown where the user hasn't answered. */
   guessed: Answers;
   onAnswer: (id: string, value: string | null) => void;
+  questions?: Question[];
+  /** Shown next to a question whose answer is a guess. */
+  guessText?: string;
 }) {
   return (
     <div className="space-y-6">
-      {QUESTIONS.map((q) => {
+      {questions.map((q) => {
         const value = answers[q.id] ?? guessed[q.id];
         const isGuess = answers[q.id] === undefined && guessed[q.id] !== undefined;
         return (
@@ -22,7 +27,7 @@ export default function StyleQuestions({
             <div className="mb-2 flex items-baseline gap-2">
               <h3 className="text-sm font-medium">{q.label}</h3>
               {q.hint && <span className="text-xs text-muted">{q.hint}</span>}
-              {isGuess && <span className="text-xs text-accent">From what you wrote on the Rooms page</span>}
+              {isGuess && <span className="text-xs text-accent">{guessText}</span>}
             </div>
             <div className="flex flex-wrap gap-2">
               {q.options.map((o) => {

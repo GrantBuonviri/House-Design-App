@@ -4,6 +4,7 @@ import { openingType } from "@/lib/plan/catalog";
 import type { OpeningGeometry } from "@/lib/plan/walls";
 import { COLORS } from "./colors";
 import { MeshBuilder, type Frame, type RGB } from "./mesh";
+import type { ExteriorLook } from "./exterior";
 
 /**
  * Doors, windows and openings in 3D. Doors are shown open, so you can see
@@ -38,6 +39,8 @@ export function drawOpening(
   ceilingIn: number,
   /** Picked inside door and trim colors, for doors between rooms. */
   look?: { door: RGB; trim: RGB },
+  /** Picked window frame, door and trim colors, for doors and windows in outside walls. */
+  outside?: ExteriorLook,
 ) {
   const o = og.opening;
   const w = o.widthIn;
@@ -48,7 +51,7 @@ export function drawOpening(
   const plain = (c: RGB) => ({ left: c, right: c, ends: c, top: c, bottom: c });
 
   if (o.kind === "window") {
-    const c = plain(COLORS.frame);
+    const c = plain(outside?.frame ?? COLORS.frame);
     solid.box(f, og.a, at(og, FRAME_IN), depth, z0, z1, c);
     solid.box(f, at(og, w - FRAME_IN), og.b, depth, z0, z1, c);
     solid.box(f, og.a, og.b, depth, z1 - FRAME_IN, z1, c);
@@ -60,7 +63,7 @@ export function drawOpening(
   }
 
   // Doors and openings: a casing lining the sides and top.
-  const c = plain(look?.trim ?? COLORS.trim);
+  const c = plain(look?.trim ?? (outside && o.style !== "door-slider" ? outside.trim : undefined) ?? (o.style === "door-slider" && outside ? outside.patioFrame : COLORS.trim));
   solid.box(f, og.a, at(og, CASING_IN), depth, z0, z1, c);
   solid.box(f, at(og, w - CASING_IN), og.b, depth, z0, z1, c);
   solid.box(f, og.a, og.b, depth, z1 - CASING_IN, z1, c);
@@ -75,11 +78,11 @@ export function drawOpening(
   };
   const style = o.style;
   if (style === "door-garage") {
-    solid.box(f, at(og, CASING_IN), at(og, w - CASING_IN), 2, z0, z1 - CASING_IN, plain(COLORS.garageDoor));
+    solid.box(f, at(og, CASING_IN), at(og, w - CASING_IN), 2, z0, z1 - CASING_IN, plain(outside?.garageDoor ?? COLORS.garageDoor));
     // Panel lines.
     for (let k = 1; k < 4; k++) {
       const z = z0 + ((z1 - z0) * k) / 4;
-      solid.box(f, at(og, CASING_IN), at(og, w - CASING_IN), 2.6, z - 0.4, z + 0.4, plain(COLORS.trim));
+      solid.box(f, at(og, CASING_IN), at(og, w - CASING_IN), 2.6, z - 0.4, z + 0.4, plain(outside?.trim ?? COLORS.trim));
     }
     return;
   }
@@ -98,7 +101,7 @@ export function drawOpening(
     solid.box(f, add(at(og, w * 0.85), off), add(at(og, w * 1.85 + 4), off), SLAB_IN, z0 + 0.5, z1 + 2, plain(COLORS.wood));
     return;
   }
-  const color = style === "door-entry" ? COLORS.frontDoor : (look?.door ?? COLORS.door);
+  const color = style === "door-entry" ? (outside?.frontDoor ?? COLORS.frontDoor) : (look?.door ?? COLORS.door);
   if (style === "door-double") {
     leaf(0, 1, w / 2 - CASING_IN - 1, color);
     leaf(w, -1, w / 2 - CASING_IN - 1, color);

@@ -7,6 +7,7 @@ import { edgeCompass, openingGeometries, roomEdgeAt, wallPieces } from "@/lib/pl
 import { fixtureType } from "@/lib/plan/catalog";
 import { hostPiece, type Layer, type Pick } from "@/lib/house3d/build";
 import { interiorCategory, TILE_ROOMS, type InteriorCategoryId } from "@/lib/catalog/categories";
+import type { ExteriorCategoryId } from "@/lib/catalog/exterior";
 import { wallKey } from "./picks";
 
 /**
@@ -28,6 +29,14 @@ export type Aim =
       /** The wall aimed at, for accent paint. */
       wall?: { key: string; label: string };
     }
+  | {
+      /** A part of the outside: picked for the whole house (exterior design). */
+      kind: "outside";
+      levelId: string;
+      label: string;
+      /** The parts that fit here, the main one first. */
+      categories: ExteriorCategoryId[];
+    }
   | { kind: "furniture"; levelId: string; id: string; label: string }
   | { kind: "none"; label?: string; hint?: string };
 
@@ -36,6 +45,21 @@ export type AimPart = { layer: Layer; levelId: string; pick?: Pick; furnitureId?
 
 /** Where the aim landed: a plan point, its height above that floor, and which way the surface faces (plan x and y, and up). */
 export type AimHit = { p: Point; heightIn: number; normal: { x: number; y: number; up: number } };
+
+const outside = (levelId: string, label: string, categories: ExteriorCategoryId[]): Aim => ({ kind: "outside", levelId, label, categories });
+
+const SIDING: ExteriorCategoryId[] = ["siding", "siding-paint", "accent", "trim-paint"];
+
+/** What each piece of the yard is, and what can change it. */
+const YARD: Record<string, { label: string; cats: ExteriorCategoryId[] }> = {
+  driveway: { label: "Driveway", cats: ["driveway"] },
+  walk: { label: "Front walk", cats: ["walk"] },
+  lawn: { label: "Lawn", cats: ["lawn", "trees", "shrubs"] },
+  beds: { label: "Planting bed", cats: ["beds", "shrubs"] },
+  shrubs: { label: "Shrubs", cats: ["shrubs", "beds"] },
+  trees: { label: "Tree", cats: ["trees"] },
+  lights: { label: "Outdoor light", cats: ["exterior-lighting"] },
+};
 
 /** Room types that get no interior finishes picked (garages, porches and decks). */
 function finished(room: PlanRoom) {
@@ -100,12 +124,26 @@ export function aimAt(
     return { kind: "furniture", levelId: L, id: item.id, label: furnitureType(item.kind)?.label ?? "Furniture" };
   }
 
+  if (part.layer === "yard" && part.pick?.kind === "yard") {
+    const y = YARD[part.pick.id];
+    return y ? outside(L, y.label, y.cats) : { kind: "none" };
+  }
+
+  if (part.layer === "roof") {
+    // Gable ends are siding; the underside is the soffit (trim).
+    if (Math.abs(hit.normal.up) < 0.3) return outside(L, "Gable end", SIDING);
+    if (faceDown) return outside(L, "Soffit", ["trim-paint"]);
+    return outside(L, "Roof", ["roofing", "gutters", "trim-paint"]);
+  }
+
   if (part.layer === "floors" && part.pick?.kind === "room") {
     const room = plan.rooms.find((r) => r.id === part.pick!.id);
     if (!room) return { kind: "none" };
     if (faceDown) return below ? ceilingAim(below.plan, below.levelId, hit.p) : { kind: "none" };
     if (!faceUp) return { kind: "none" };
-    if (!finished(room)) return { kind: "none", label: room.name, hint: "Porches, decks and garages come with exterior design." };
+    if (room.type === "deck") return outside(L, room.name, ["decking"]);
+    if (room.type === "patio") return outside(L, room.name, ["patio"]);
+    if (!finished(room)) return { kind: "none", label: room.name, hint: "Porch and garage floors are concrete." };
     const type = room.type ?? "other";
     const cats = fitting(TILE_ROOMS.has(type) ? ["tile"] : ["flooring"], type);
     if (!cats.length) return { kind: "none", label: `${room.name} floor` };
@@ -120,8 +158,8 @@ export function aimAt(
     // Just in front of the wall, on the side you're looking at.
     const front = add(hit.p, scale(n, 6));
     const room = plan.rooms.find((r) => pointInPolygon(front, r.polygon));
-    if (!room || areaKind(room) === "outdoor") return { kind: "none", label: "Outside wall", hint: "Siding comes with exterior design." };
-    if (!finished(room)) return { kind: "none", label: `${room.name} wall`, hint: "Garages come with exterior design." };
+    if (!room || areaKind(room) === "outdoor") return outside(L, "Outside wall", SIDING);
+    if (!finished(room)) return { kind: "none", label: `${room.name} wall`, hint: "Garage walls are plain drywall." };
     const type = room.type ?? "other";
     const cats = fitting(["paint", "trim"], type);
     if (!cats.length) return { kind: "none", label: `${room.name} wall` };
@@ -134,9 +172,16 @@ export function aimAt(
   if (part.layer === "openings" && part.pick?.kind === "opening") {
     const og = openingGeometries(plan).find((g) => g.opening.id === part.pick!.id);
     if (!og) return { kind: "none" };
-    if (og.opening.kind === "window") return { kind: "none", label: "Window", hint: "Windows come with exterior design." };
+    if (og.opening.kind === "window") return outside(L, "Window", ["windows", "trim-paint"]);
     const host = hostPiece(wallPieces(plan, exteriorWallIn(basics)), og);
-    if (!host || host.exterior) return { kind: "none", label: "Outside door", hint: "Outside doors come with exterior design." };
+    if (host?.exterior) {
+      const style = og.opening.style;
+      if (style === "door-garage") return outside(L, "Garage door", ["garage-doors", "exterior-lighting"]);
+      if (style === "door-slider") return outside(L, "Patio door", ["patio-doors"]);
+      if (style === "door-entry") return outside(L, "Front door", ["entry-doors", "exterior-lighting", "trim-paint"]);
+      return { kind: "none", label: "Outside door" };
+    }
+    if (!host) return { kind: "none", label: "Door" };
     const room = indoorRoomAt(plan, add(og.center, scale(og.n, 12))) ?? indoorRoomAt(plan, add(og.center, scale(og.n, -12)));
     const type = room?.type ?? "other";
     return { kind: "finish", levelId: L, room: room ? roomRef(room) : null, label: "Door", categories: room ? fitting(["interior-doors", "trim"], type) : ["interior-doors", "trim"] };

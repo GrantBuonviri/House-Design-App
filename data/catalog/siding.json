@@ -1,0 +1,297 @@
+[
+  {
+    "id": "james-hardie-hardieplank-primed-cedarmill",
+    "name": "Hardie Plank HZ10 8.25 in. x 144 in. Primed Cedarmill Fiber Cement Lap Siding",
+    "brand": "James Hardie",
+    "line": "HardiePlank",
+    "sku": "215572",
+    "url": "https://www.homedepot.com/p/James-Hardie-Hardie-Plank-HZ10-8-25-in-x-144-in-Primed-Cedarmill-Fiber-Cement-Lap-Siding-215572/100064049",
+    "price": 2.05,
+    "unit": "sqft",
+    "priceSource": "estimated",
+    "priceNote": "Estimated: HD page shows no price; ~$14.50/plank primed (paint extra) / 7 sq ft at 7 in exposure",
+    "lastChecked": "2026-10-15",
+    "kind": "lap",
+    "styles": [
+      "craftsman",
+      "traditional",
+      "ranch",
+      "modern-farmhouse"
+    ],
+    "tags": [
+      "white",
+      "light"
+    ],
+    "color": "#E9E7E0",
+    "pattern": "lap"
+  },
+  {
+    "id": "james-hardie-hardieplank-select-cedarmill-arctic-white",
+    "name": "James Hardie 5/16\" 8-1/4\" x 12' Hardie Plank Select Cedarmill Eased Edge Lap Siding for HardieZone 5 Arctic White",
+    "brand": "James Hardie",
+    "line": "HardiePlank ColorPlus",
+    "url": "https://superarbor.io/products/james-hardie-5-16-8-1-4-x-12-hardie-plank-select-cedarmill-eased-edge-lap-siding-for-hardiezone-5-arctic-white",
+    "price": 3.31,
+    "unit": "sqft",
+    "priceSource": "listed",
+    "priceNote": "superarbor.io lists $23.14 per 12 ft plank (ColorPlus prefinished) / 7 sq ft at 7 in exposure",
+    "lastChecked": "2026-10-15",
+    "kind": "lap",
+    "styles": [
+      "modern-farmhouse",
+      "traditional",
+      "craftsman"
+    ],
+    "tags": [
+      "white"
+    ],
+    "color": "#F0EFEA",
+    "pattern": "lap"
+  },
+  {
+    "id": "james-hardie-hardieplank-statement-iron-gray-smooth",
+    "name": "HARDIE PLANK HZ5 8.25 IN. X 144 IN. STATEMENT COLLECTION IRON GRAY SMOOTH FIBER CEMENT LAP SIDING",
+    "brand": "James Hardie",
+    "line": "HardiePlank ColorPlus Statement Collection",
+    "url": "https://www.arlcoal.com/pd/hardie-plank-hz5-825-in-x-144-in-statement-collection-iron-gray-smooth-fiber-cement-lap-siding/14165",
+    "price": 3.31,
+    "unit": "sqft",
+    "priceSource": "estimated",
+    "priceNote": "Estimated: retailer shows no price; same as listed ColorPlus Arctic White plank ($23.14 / 7 sq ft)",
+    "lastChecked": "2026-10-15",
+    "kind": "lap",
+    "styles": [
+      "contemporary",
+      "mountain-modern",
+      "craftsman"
+    ],
+    "tags": [
+      "gray",
+      "dark"
+    ],
+    "color": "#4F5153",
+    "pattern": "lap"
+  },
+  {
+    "id": "james-hardie-hardieplank-statement-light-mist-cedarmill",
+    "name": "HARDIE PLANK HZ5 8.25 IN. X 144 IN. STATEMENT COLLECTION LIGHT MIST CEDARMILL FIBER CEMENT LAP SIDING",
+    "brand": "James Hardie",
+    "line": "HardiePlank ColorPlus Statement Collection",
+    "sku": "88889032",
+    "url": "https://www.arlcoal.com/pd/hardie-plank-hz5-825-in-x-144-in-statement-collection-light-mist-cedarmill-fiber-cement-lap-siding/14113",
+    "price": 3.31,
+    "unit": "sqft",
+    "priceSource": "estimated",
+    "priceNote": "Estimated: retailer shows no price; same as listed ColorPlus Arctic White plank ($23.14 / 7 sq ft)",
+    "lastChecked": "2026-10-15",
+    "kind": "lap",
+    "styles": [
+      "traditional",
+      "ranch",
+      "modern-farmhouse"
+    ],
+    "tags": [
+      "light",
+      "gray"
+    ],
+    "color": "#D9DBD6",
+    "pattern": "lap"
+  },
+  {
+    "id": "james-hardie-hardiepanel-primed-cedarmill",
+    "name": "James Hardie HZ10 HardiePanel Cedarmill Fiber Cement Vertical Siding Panel, Primed, 48 in. x 96 in.",
+    "brand": "James Hardie",
+    "line": "HardiePanel",
+    "sku": "217950",
+    "url": "https://superarbor.io/products/james-hardie-hz10-hardiepanel-siding-cedar-milled",
+    "price": 2.06,
+    "unit": "sqft",
+    "priceSource": "listed",
+    "priceNote": "superarbor.io lists $65.89 per 4x8 panel / 32 sq ft (battens and paint extra)",
+    "lastChecked": "2026-10-15",
+    "kind": "batten",
+    "styles": [
+      "modern-farmhouse",
+      "mountain-modern",
+      "contemporary"
+    ],
+    "tags": [
+      "white",
+      "light"
+    ],
+    "color": "#E9E7E0",
+    "pattern": "batten"
+  },
+  {
+    "id": "james-hardie-hardieshingle-straight-primed",
+    "name": "HardieShingle Primed Straight Woodgrain Fiber Cement Shingle Siding Panel",
+    "brand": "James Hardie",
+    "line": "HardieShingle",
+    "url": "https://musiccitybuildingsupply.com/products/hardieshingle%C2%AE-primed-straight-woodgrain-fiber-cement-shingle-siding-panel",
+    "price": 5.55,
+    "unit": "sqft",
+    "priceSource": "listed",
+    "priceNote": "Music City Building Supply lists $12.95 per 48 in panel / ~2.33 sq ft at 7 in exposure",
+    "lastChecked": "2026-10-15",
+    "kind": "shake",
+    "styles": [
+      "craftsman",
+      "traditional"
+    ],
+    "tags": [
+      "white",
+      "light"
+    ],
+    "color": "#E9E7E0",
+    "pattern": "shake"
+  },
+  {
+    "id": "lp-smartside-38-lap-abyss-black",
+    "name": "LP SmartSide 38 Series Cedar Texture Lap Engineered Wood Siding, 8 in x 16 ft, Abyss Black",
+    "brand": "LP SmartSide",
+    "line": "SmartSide ExpertFinish 38 Series",
+    "sku": "42279",
+    "url": "https://superarbor.io/products/lp-42279-lp-smartside-38-series-cedar-texture-lap-engineered-wood-siding-8-in-x-16-ft-abyss-black",
+    "price": 2.89,
+    "unit": "sqft",
+    "priceSource": "listed",
+    "priceNote": "superarbor.io lists $26.49 per 16 ft board (ExpertFinish prefinished) / ~9.17 sq ft at 6.875 in exposure",
+    "lastChecked": "2026-10-15",
+    "kind": "lap",
+    "styles": [
+      "contemporary",
+      "mountain-modern",
+      "modern-farmhouse"
+    ],
+    "tags": [
+      "black",
+      "dark"
+    ],
+    "color": "#25262A",
+    "pattern": "lap"
+  },
+  {
+    "id": "lp-smartside-38-lap-timberland-suede",
+    "name": "LP 38 Series Cedar Texture Lap Engineered Wood Siding 8 in x 16 ft, Timberland Suede",
+    "brand": "LP SmartSide",
+    "line": "SmartSide ExpertFinish 38 Series",
+    "sku": "42269",
+    "url": "https://superarbor.io/products/lp-42269-lp-38-series-cedar-texture-lap-engineered-wood-siding-8-in-x-16-ft-timberland-suede",
+    "price": 3.07,
+    "unit": "sqft",
+    "priceSource": "listed",
+    "priceNote": "superarbor.io lists $28.12 per 16 ft board / ~9.17 sq ft at 6.875 in exposure",
+    "lastChecked": "2026-10-15",
+    "kind": "lap",
+    "styles": [
+      "craftsman",
+      "ranch",
+      "mountain-modern"
+    ],
+    "tags": [
+      "earthy",
+      "warm",
+      "neutral"
+    ],
+    "color": "#8B7B68",
+    "pattern": "lap"
+  },
+  {
+    "id": "lp-smartside-38-cedar-texture-8in-oc-panel",
+    "name": "LP SmartSide Cedar Texture 8 in. OC Panel Engineered Treated Wood Siding 8 in. Application as 3/8 in. x 4 ft. x 8 ft.",
+    "brand": "LP SmartSide",
+    "line": "SmartSide 38 Series",
+    "sku": "27874",
+    "url": "https://www.homedepot.com/p/LP-SmartSide-SmartSide-38-Series-8-in-Application-as-4-ft-x-8-ft-Cedar-Texture-OC-Panel-Engineered-Treated-Wood-Siding-27874/100055901",
+    "price": 1.85,
+    "unit": "sqft",
+    "priceSource": "estimated",
+    "priceNote": "Estimated: HD page shows no price; ~$59 per primed 4x8 panel / 32 sq ft (battens and paint extra)",
+    "lastChecked": "2026-10-15",
+    "kind": "batten",
+    "styles": [
+      "modern-farmhouse",
+      "ranch",
+      "mountain-modern"
+    ],
+    "tags": [
+      "light",
+      "neutral"
+    ],
+    "color": "#D8D2C4",
+    "pattern": "batten"
+  },
+  {
+    "id": "certainteed-monogram-double-4-clapboard",
+    "name": "Monogram Double 4\" Clapboard Vinyl Siding",
+    "brand": "CertainTeed",
+    "line": "Monogram",
+    "sku": "P-CARMG4",
+    "url": "https://amerhart.com/catalog/sidingsoffit-and-gutters/vinyl-siding-and-trim/vinyl-siding/certainteed-monogram-double-4-clapboard-vinyl-siding",
+    "price": 1.6,
+    "unit": "sqft",
+    "priceSource": "estimated",
+    "priceNote": "Estimated: retailer shows no price; premium-grade vinyl ~$150-170 per square (100 sq ft) per 2026 price guides",
+    "lastChecked": "2026-10-15",
+    "kind": "lap",
+    "styles": [
+      "traditional",
+      "ranch"
+    ],
+    "tags": [
+      "white",
+      "light"
+    ],
+    "color": "#EDEBE3",
+    "pattern": "lap"
+  },
+  {
+    "id": "quikrete-one-coat-fiberglass-reinforced-stucco",
+    "name": "QUIKRETE One Coat Fiberglass Reinforced Stucco (No. 1200)",
+    "brand": "Quikrete",
+    "line": "One Coat Stucco System",
+    "sku": "1200",
+    "url": "https://quikrete.com/productlines/StuccoOneCoatFiberglass.asp",
+    "price": 1.4,
+    "unit": "sqft",
+    "priceSource": "estimated",
+    "priceNote": "Estimated: ~$17 per 80 lb bag covering ~20 sq ft, plus lath and acrylic finish coat; materials only",
+    "lastChecked": "2026-10-15",
+    "kind": "stucco",
+    "styles": [
+      "contemporary",
+      "ranch",
+      "mountain-modern"
+    ],
+    "tags": [
+      "light",
+      "neutral"
+    ],
+    "color": "#D8D2C7",
+    "pattern": "stucco"
+  },
+  {
+    "id": "glen-gery-red-velour-modular-brick",
+    "name": "Red Velour",
+    "brand": "Glen-Gery",
+    "line": "Full Brick, Modular",
+    "url": "https://www.glengery.com/brick-catalog/red-velour-0",
+    "price": 7.2,
+    "unit": "sqft",
+    "priceSource": "estimated",
+    "priceNote": "Estimated: no price on site; ~$1.05/brick for modular face brick x 6.86 bricks per sq ft (mortar and labor extra)",
+    "lastChecked": "2026-10-15",
+    "kind": "brick",
+    "styles": [
+      "traditional",
+      "craftsman",
+      "ranch"
+    ],
+    "tags": [
+      "red",
+      "warm"
+    ],
+    "color": "#8C3B2E",
+    "pattern": "brick"
+  }
+]

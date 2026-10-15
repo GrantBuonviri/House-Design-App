@@ -11,7 +11,7 @@ export function shade(hex: string, amount: number): string {
   return `#${((r << 16) | (g << 8) | b).toString(16).padStart(6, "0")}`;
 }
 
-/** A drawn sample of a finish: its color with a simple pattern (planks, tile, stone, carpet, metal). */
+/** A drawn sample of a finish: its color with a simple pattern (planks, tile, stone, carpet, metal, and the outside ones: siding, brick, roofing, grass). */
 export function swatchStyle(color: string, pattern: Product["pattern"] = "solid"): CSSProperties {
   const dark = shade(color, -0.18);
   const light = shade(color, 0.12);
@@ -40,6 +40,32 @@ export function swatchStyle(color: string, pattern: Product["pattern"] = "solid"
         backgroundColor: color,
         backgroundImage: `repeating-linear-gradient(45deg, ${dark}33 0 1px, transparent 1px 3px), repeating-linear-gradient(-45deg, ${light}33 0 1px, transparent 1px 3px)`,
       };
+    case "lap":
+      return { backgroundColor: color, backgroundImage: `repeating-linear-gradient(180deg, ${dark} 0 2px, ${light}66 2px 4px, transparent 4px 14px)` };
+    case "batten":
+      return { backgroundColor: color, backgroundImage: `repeating-linear-gradient(90deg, ${dark}aa 0 1px, ${light} 1px 5px, ${dark}aa 5px 6px, transparent 6px 30px)` };
+    case "shake":
+      return {
+        backgroundColor: color,
+        backgroundImage: `repeating-linear-gradient(180deg, ${dark} 0 2px, transparent 2px 14px), repeating-linear-gradient(90deg, ${dark}88 0 1px, transparent 1px 11px, ${dark}55 11px 12px, transparent 12px 19px)`,
+      };
+    case "brick":
+      return {
+        backgroundColor: color,
+        backgroundImage: `repeating-linear-gradient(180deg, #c9c4bb 0 2px, transparent 2px 8px), repeating-linear-gradient(90deg, #c9c4bb 0 2px, transparent 2px 22px)`,
+      };
+    case "stucco":
+      return { backgroundColor: color, backgroundImage: `radial-gradient(${dark}33 1px, transparent 1.5px), radial-gradient(${light}55 1px, transparent 1.5px)`, backgroundSize: "5px 5px, 7px 7px" };
+    case "shingle":
+      return {
+        backgroundColor: color,
+        backgroundImage: `repeating-linear-gradient(180deg, ${dark} 0 2px, transparent 2px 10px), repeating-linear-gradient(90deg, ${light}33 0 14px, ${dark}33 14px 28px)`,
+      };
+    case "seam":
+      return { backgroundColor: color, backgroundImage: `repeating-linear-gradient(90deg, ${light} 0 2px, ${dark} 2px 3px, transparent 3px 22px)` };
+    case "grass":
+    case "mulch":
+      return { backgroundColor: color, backgroundImage: `radial-gradient(${dark}88 1px, transparent 1.5px), radial-gradient(${light}88 1px, transparent 1.5px)`, backgroundSize: "4px 4px, 6px 6px" };
     case "metal":
       return { backgroundColor: color, backgroundImage: `linear-gradient(135deg, ${light} 0%, ${color} 35%, ${dark} 60%, ${light} 85%, ${color} 100%)` };
     default:

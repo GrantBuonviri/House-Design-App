@@ -75,12 +75,18 @@ describe("aiming in the walkthrough", () => {
     expect(fromLiving.kind === "finish" && fromKitchen.kind === "finish" && fromLiving.wall!.key).not.toBe(undefined);
   });
 
-  it("says the outside of the house comes with exterior design", () => {
+  it("offers exterior picks for the outside of the house: siding, windows, the roof and the yard", () => {
     const ext = exteriorWallIn(basics) / 2;
     const a = aimAt(house, part("walls"), { p: { x: -ext, y: 7 * FT }, heightIn: 50, normal: { x: -1, y: 0, up: 0 } }, basics);
-    expect(a).toMatchObject({ kind: "none", hint: expect.stringContaining("exterior") });
+    expect(a).toMatchObject({ kind: "outside", label: "Outside wall", categories: ["siding", "siding-paint", "accent", "trim-paint"] });
     const w = aimAt(house, part("openings", { kind: "opening", id: "w1", levelId: L }), { p: { x: 0, y: 7 * FT }, heightIn: 50, normal: { x: 1, y: 0, up: 0 } }, basics);
-    expect(w).toMatchObject({ kind: "none", label: "Window" });
+    expect(w).toMatchObject({ kind: "outside", label: "Window", categories: ["windows", "trim-paint"] });
+    const roof = aimAt(house, part("roof"), { p: { x: 5 * FT, y: 5 * FT }, heightIn: 120, normal: { x: 0, y: 0.5, up: 0.85 } }, basics);
+    expect(roof).toMatchObject({ kind: "outside", label: "Roof", categories: ["roofing", "gutters", "trim-paint"] });
+    const gable = aimAt(house, part("roof"), { p: { x: 5 * FT, y: 5 * FT }, heightIn: 120, normal: { x: 1, y: 0, up: 0 } }, basics);
+    expect(gable).toMatchObject({ kind: "outside", label: "Gable end" });
+    const lawn = aimAt(house, part("yard", { kind: "yard", id: "lawn", levelId: L }), { p: { x: -20 * FT, y: 0 }, heightIn: 0, normal: up }, basics);
+    expect(lawn).toMatchObject({ kind: "outside", label: "Lawn", categories: ["lawn", "trees", "shrubs"] });
   });
 
   it("offers interior doors for a door between rooms, and lights on the ceiling", () => {

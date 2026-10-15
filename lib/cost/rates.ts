@@ -116,6 +116,20 @@ export const RATE_IDS = [
   "septic",
   "impact-fees",
   "trade-permits",
+  // Milestone 10: exterior picks that cost a different amount to put up, and the yard.
+  "roof-metal",
+  "siding-stucco",
+  "siding-brick",
+  "stone-veneer",
+  "pavers",
+  "front-walk",
+  "driveway-pavers",
+  "driveway-gravel",
+  "lawn",
+  "planting-beds",
+  "shrub",
+  "tree",
+  "exterior-lights",
 ] as const;
 export type RateId = (typeof RATE_IDS)[number];
 

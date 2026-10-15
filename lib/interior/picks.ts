@@ -2,7 +2,6 @@ import { WHOLE_HOUSE, type Point, type Product, type Project, type Selection } f
 import { polygonArea, SQ_IN_PER_SQ_FT } from "@/lib/plan/geometry";
 import { roomType } from "@/lib/brief/rooms";
 import { INTERIOR_CATEGORIES, type InteriorCategory } from "@/lib/catalog/categories";
-import type { CatalogProduct } from "@/lib/catalog/catalog";
 
 /**
  * Interior picks: one per category for the whole house, and any room can
@@ -45,8 +44,13 @@ export function effectivePick(selections: Selection[], roomId: string, category:
   return house ? { pick: house, own: false } : null;
 }
 
-/** A catalog product as saved in a pick: the product details only. */
-export function toProduct(p: CatalogProduct): Product {
+/** A product's brand and name, without saying the brand twice when the name already starts with it. */
+export function productTitle(p: { brand: string; name: string }): string {
+  return p.name.toLowerCase().startsWith(p.brand.toLowerCase()) ? p.name : `${p.brand} ${p.name}`;
+}
+
+/** A catalog product (interior or exterior) as saved in a pick: the product details only. */
+export function toProduct(p: Product & { id: string; priceNote?: string }): Product {
   const { id, name, brand, line, sku, url, imageUrl, price, unit, priceSource, lastChecked, color, pattern, kind } = p;
   const out: Product = { id, name, brand, url, unit, priceSource, lastChecked, color, pattern, kind };
   if (line) out.line = line;
