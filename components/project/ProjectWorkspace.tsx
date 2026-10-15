@@ -24,6 +24,7 @@ import CostPanel, { CostBadge } from "@/components/cost/CostPanel";
 import { estimate as estimateCost } from "@/lib/cost/estimate";
 
 const Walkthrough = dynamic(() => import("@/components/walk/Walkthrough"), { ssr: false });
+const PlansPage = dynamic(() => import("@/components/plans/PlansPage"), { ssr: false });
 
 const SAVE_LABEL: Record<SaveState, string> = {
   saved: "All changes saved",
@@ -36,6 +37,7 @@ export default function ProjectWorkspace({ id }: { id: string }) {
   const { project, loading, notFound, saveState, open, close, update, undo, redo, setStage } = useProjectStore();
   const [walking, setWalking] = useState(false);
   const [costOpen, setCostOpen] = useState(false);
+  const [plansOpen, setPlansOpen] = useState(false);
   // Worked out a moment behind edits, so dragging in the plan stays smooth.
   const deferred = useDeferredValue(project);
   const { cost, costError } = useMemo(() => {
@@ -142,6 +144,11 @@ export default function ProjectWorkspace({ id }: { id: string }) {
             </NeedsFirst>
           )}
           </span>
+          <span data-tour="plans">
+            <button className="btn" onClick={() => setPlansOpen(true)} title="Building plans as PDF sheets, with a code check" data-testid="plans-open">
+              Plans
+            </button>
+          </span>
           <span data-tour="walkthrough">
           {canWalk ? (
             <button className="btn btn-primary" onClick={() => setWalking(true)} title="Walk through the house in first person">
@@ -188,6 +195,16 @@ export default function ProjectWorkspace({ id }: { id: string }) {
         <ExteriorStage onGoToPlan={() => setStage("plan")} onWalk={canWalk ? () => setWalking(true) : undefined} />
       ) : null}
 
+      {plansOpen && (
+        <PlansPage
+          project={project}
+          onClose={() => setPlansOpen(false)}
+          onGo={(stage) => {
+            setPlansOpen(false);
+            setStage(stage);
+          }}
+        />
+      )}
       {walking && canWalk && <Walkthrough project={project} cost={cost} onClose={() => setWalking(false)} />}
       <UndoNotice />
       {touring && <Tour onStage={setStage} onDone={endTour} />}
