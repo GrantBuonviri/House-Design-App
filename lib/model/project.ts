@@ -48,6 +48,8 @@ export function migrateProject(raw: unknown): Project {
   // Version 10 to 11 added "My real lot" to the plan details, empty by default.
   // Version 11 to 12 added how each window opens (optional) and cabinet
   // changes on each floor plan (none by default).
+  // Version 12 to 13 added the house systems (fuel, foundation, panel) to the
+  // plan details, with defaults, and device changes on each floor plan (none).
   return Project.parse({ ...migrated, schemaVersion: SCHEMA_VERSION });
 }
 

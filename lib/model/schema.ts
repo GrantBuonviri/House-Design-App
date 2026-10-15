@@ -9,7 +9,7 @@ import { z } from "zod";
  * Angles are degrees clockwise from north (0 = N, 90 = E).
  */
 
-export const SCHEMA_VERSION = 12;
+export const SCHEMA_VERSION = 13;
 
 export const Point = z.object({ x: z.number(), y: z.number() });
 export type Point = z.infer<typeof Point>;
@@ -369,6 +369,45 @@ export const CabinetEdits = z.object({
 });
 export type CabinetEdits = z.infer<typeof CabinetEdits>;
 
+export const DEVICE_KINDS = [
+  "outlet",
+  "outlet-240",
+  "junction",
+  "switch",
+  "switch-3way",
+  "light",
+  "light-recessed",
+  "light-wall",
+  "fan",
+  "smoke",
+  "co",
+  "smoke-co",
+  "heat",
+  "panel",
+  "supply",
+  "return",
+  "thermostat",
+  "hose-bib",
+] as const;
+export type DeviceKind = (typeof DEVICE_KINDS)[number];
+
+/** An outlet, switch, light, alarm, fan, register or hose bib. Wall ones face into the room: like a fixture, the back is toward -y before `rotation`. */
+export const Device = z.object({
+  id: z.string(),
+  kind: z.enum(DEVICE_KINDS),
+  x: z.number(),
+  y: z.number(),
+  rotation: z.number().default(0),
+});
+export type Device = z.infer<typeof Device>;
+
+/** Changes to the devices the app places: ones taken away, and ones added (moved ones are both). */
+export const DeviceEdits = z.object({
+  hidden: z.array(z.string()).default([]),
+  added: z.array(Device).default([]),
+});
+export type DeviceEdits = z.infer<typeof DeviceEdits>;
+
 export const FloorPlan = z.object({
   rooms: z.array(PlanRoom).default([]),
   walls: z.array(PlanWall).default([]),
@@ -378,6 +417,8 @@ export const FloorPlan = z.object({
   furniture: z.array(FurnitureItem).default([]),
   /** Left out until the cabinets have been changed by hand. */
   cabinets: CabinetEdits.optional(),
+  /** Left out until the outlets, lights, alarms, registers or hose bibs have been changed by hand. */
+  devices: DeviceEdits.optional(),
 });
 export type FloorPlan = z.infer<typeof FloorPlan>;
 
@@ -486,6 +527,21 @@ export const RealLot = z.object({
 });
 export type RealLot = z.infer<typeof RealLot>;
 
+/** How the house is heated, cooled and powered, for the systems sheets. */
+export const HouseSystems = z.object({
+  heating: z.enum(["gas-furnace", "heat-pump", "electric-furnace"]).default("gas-furnace"),
+  cooling: z.boolean().default(true),
+  waterHeater: z.enum(["gas", "electric", "heat-pump", "tankless-gas"]).default("gas"),
+  cooking: z.enum(["gas", "electric"]).default("electric"),
+  dryer: z.enum(["gas", "electric"]).default("electric"),
+  /** Under the lowest floor, unless it's a basement. */
+  foundation: z.enum(["crawlspace", "slab", "basement"]).default("crawlspace"),
+  /** Whole-house fresh air: a quiet bath fan that runs all the time, or an ERV. */
+  freshAir: z.enum(["bath-fan", "erv"]).default("bath-fan"),
+  panelAmps: z.number().int().min(100).max(400).default(200),
+});
+export type HouseSystems = z.infer<typeof HouseSystems>;
+
 /** The "Plan details" form and export choices. The sheets themselves are drawn from the project every time. */
 export const PlansSettings = z.object({
   /** The real site address and county parcel number. Left empty, the sheets print "TBD". */
@@ -498,6 +554,7 @@ export const PlansSettings = z.object({
   excluded: z.array(z.string()).default([]),
   /** "My real lot". Null until it's filled in. */
   lot: RealLot.nullable().default(null),
+  systems: HouseSystems.prefault({}),
 });
 export type PlansSettings = z.infer<typeof PlansSettings>;
 

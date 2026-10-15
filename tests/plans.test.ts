@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { writeFileSync } from "node:fs";
-import { DiscoveryAnswers, type ChosenRoom, type Opening, type Project } from "@/lib/model/schema";
+import { DiscoveryAnswers, HouseSystems, type ChosenRoom, type Opening, type Project } from "@/lib/model/schema";
 import { createProject, migrateProject } from "@/lib/model/project";
 import { generatePlot } from "@/lib/land/generate";
 import { buildRuleBrief } from "@/lib/brief/rules";
@@ -32,6 +32,12 @@ import { openingGeometries } from "@/lib/plan/walls";
 import { addCabinet, autoCabinets, cabinetLayout, fillWidths, newCabinet, removeCabinet, resetCabinets, updateCabinet, UPPER_BOTTOM_IN } from "@/lib/plan/cabinets";
 import { doorWindowRows, finishRows, fixtureLines } from "@/lib/plans/sheets/schedules";
 import { levelCabinets } from "@/lib/plans/sheets/cabinets";
+import { conditionedSqft, hasFuel, levelDevices, wholeHouseCfm } from "@/lib/plans/systems";
+import { addDevice, removeDevice, resetDevices, snapToWall, updateDevice } from "@/lib/plan/devices";
+import { fixtureUnits } from "@/lib/plans/sheets/plumbing";
+import { DIRECTIONS, envelope, facing, roughHeatLoss } from "@/lib/plans/sheets/energy";
+import { dryerRuns } from "@/lib/plans/sheets/mechanical";
+import { pointInPolygon } from "@/lib/plan/geometry";
 
 let n = 0;
 const chosen = (type: string, levelId?: string): ChosenRoom => ({ id: `c${++n}`, type, name: `${roomType(type).label}`, description: "", ...(levelId ? { levelId } : {}) });
@@ -127,7 +133,7 @@ describe("plan sheets", () => {
   it("draws one floor plan per floor, numbered from the lowest", () => {
     const p = house(TWO_STORY, 2);
     const r = readiness(p);
-    const floors = r.sheets.filter((s) => s.levelId);
+    const floors = r.sheets.filter((s) => s.id.startsWith("floor:"));
     expect(floors.map((s) => s.number)).toEqual(["A-101", "A-102"]);
     expect(floors.every(canDraw)).toBe(true);
     const set = buildSet(p);
@@ -193,7 +199,7 @@ describe("plan sheets", () => {
     const old = { ...createProject("Old"), schemaVersion: 9 } as Record<string, unknown>;
     delete old.plans;
     const p = migrateProject(old);
-    expect(p.plans).toEqual({ address: "", parcel: "", designer: "", sheetSize: "full", excluded: [], lot: null });
+    expect(p.plans).toEqual({ address: "", parcel: "", designer: "", sheetSize: "full", excluded: [], lot: null, systems: HouseSystems.parse({}) });
     const v10 = { ...createProject("Old"), schemaVersion: 10 } as Record<string, unknown>;
     v10.plans = { address: "1 Main", parcel: "", designer: "", sheetSize: "half", excluded: [] };
     expect(migrateProject(v10).plans.lot).toBeNull();
@@ -349,6 +355,8 @@ function withKitchen(p: Project): Project {
   along("kitchen", [["fridge", 36, 30], ["counter", 15, 25], ["range", 30, 26], ["counter", 12, 25], ["sink", 33, 22], ["dishwasher", 24, 24]], 160);
   along("primary-bath", [["vanity", 60, 21], ["toilet", 20, 28]], 90);
   along("bathroom", [["vanity", 36, 21], ["toilet", 20, 28]], 60);
+  along("laundry", [["washer", 27, 30], ["dryer", 27, 30]], 60);
+  along("garage", [["water-heater", 24, 24], ["furnace", 30, 30]], 60);
   const next: FloorPlan = { ...plan, fixtures };
   return { ...p, floorPlans: { ...p.floorPlans, "floor-1": next } };
 }
@@ -495,5 +503,112 @@ describe("drawing helpers", () => {
   it("uses Boise's numbers", () => {
     expect(codeNum("design.frostDepth")).toBe(24);
     expect(codeNum("stairs.maxRiser")).toBe(7.75);
+  });
+});
+
+describe("systems (part 4)", () => {
+  const p = withKitchen(house(RANCH));
+  const level = p.levels.find((l) => l.id === "floor-1")!;
+  const plan = p.floorPlans["floor-1"];
+  const inRoom = (type: string, kinds: string[]) => {
+    const r = plan.rooms.find((x) => x.type === type)!;
+    return levelDevices(p, level).filter((d) => kinds.includes(d.kind) && pointInPolygon({ x: d.x, y: d.y }, r.polygon));
+  };
+  const rule = (proj: Project, id: string) => codeReport(proj).find((r) => r.rule.id === id)!;
+
+  it("places outlets, switches, lights, alarms and fans by the code rules", () => {
+    const ds = levelDevices(p, level);
+    for (const r of plan.rooms.filter((x) => ["bedroom", "primary-bedroom"].includes(x.type ?? ""))) expect(ds.some((d) => d.kind === "smoke" && pointInPolygon({ x: d.x, y: d.y }, r.polygon)), r.name).toBe(true);
+    for (const t of ["bathroom", "primary-bath"]) expect(inRoom(t, ["fan"])).toHaveLength(1);
+    expect(inRoom("living", ["outlet"]).length).toBeGreaterThanOrEqual(4);
+    expect(inRoom("kitchen", ["light-recessed"]).length).toBeGreaterThanOrEqual(4);
+    expect(inRoom("garage", ["heat"])).toHaveLength(1);
+    expect(ds.filter((d) => d.kind === "panel")).toHaveLength(1);
+    expect(ds.filter((d) => d.kind === "smoke-co").length).toBeGreaterThan(0);
+    expect(ds.filter((d) => d.kind === "hose-bib")).toHaveLength(2);
+    expect(ds.filter((d) => d.kind === "outlet-240")).toHaveLength(2);
+    expect(ds.some((d) => d.kind === "thermostat")).toBe(true);
+    // Every check passes on the app's own layout.
+    for (const id of ["electrical", "alarms", "mechanical", "bath-vent"]) expect(rule(p, id).status, id).toBe("pass");
+  });
+
+  it("rechecks after the owner moves, adds or takes away devices", () => {
+    const living = inRoom("living", ["outlet"]);
+    let next = plan;
+    for (const d of living) next = removeDevice(next, d.id);
+    const bare = { ...p, floorPlans: { ...p.floorPlans, "floor-1": next } };
+    const elec = rule(bare, "electrical");
+    expect(elec.status).toBe("fail");
+    expect(elec.results.find((r) => r.status === "fail")!.text).toMatch(/Living/);
+    const fan = inRoom("bathroom", ["fan"])[0];
+    const noFan = { ...p, floorPlans: { ...p.floorPlans, "floor-1": removeDevice(plan, fan.id) } };
+    expect(rule(noFan, "mechanical").status).toBe("fail");
+    // Moving swaps an app-placed device for the owner's copy; adding and going back to automatic.
+    const moved = updateDevice(plan, fan, { x: fan.x + 6 });
+    expect(moved.devices!.hidden).toContain(fan.id);
+    expect(moved.devices!.added[0]).toMatchObject({ kind: "fan", x: fan.x + 6 });
+    const added = addDevice(moved, { kind: "outlet", x: 0, y: 0, rotation: 0 });
+    expect(added.devices!.added).toHaveLength(2);
+    expect(resetDevices(added).devices).toBeUndefined();
+    // A wall device snaps onto the wall face.
+    const r = plan.rooms.find((x) => x.type === "living")!;
+    const snapped = snapToWall(plan, { x: r.polygon[0].x + 30, y: r.polygon[0].y + 20 }, 6.5)!;
+    expect(snapped).not.toBeNull();
+  });
+
+  it("follows the fuel choices", () => {
+    const allElectric: Project = { ...p, plans: { ...p.plans, systems: { ...p.plans.systems, heating: "heat-pump", waterHeater: "heat-pump", cooking: "electric", dryer: "electric" } } };
+    expect(hasFuel(allElectric)).toBe(false);
+    const gas: Project = { ...p, plans: { ...p.plans, systems: { ...p.plans.systems, cooking: "gas", dryer: "gas" } } };
+    expect(levelDevices(gas, level).filter((d) => d.kind === "outlet-240")).toHaveLength(0);
+    const sheets = buildSet(gas, { only: [`plumbing:floor-1`, `mechanical:floor-1`, `electrical:floor-1`] });
+    const text = sheets.map((x) => sheetText(x).join(" ")).join(" ");
+    expect(text).toMatch(/Gas piping sized/);
+    expect(text).toMatch(/Whole-house fresh air: \d+ cfm/);
+    expect(text).toMatch(/GFI/);
+  });
+
+  it("adds up fixture units and the walls by direction", () => {
+    const fu = fixtureUnits(p);
+    const toilets = fu.rows.find((r) => r.label.startsWith("Toilet"))!;
+    expect(toilets.dfu).toBe(codeNum("plumbing.dfu.waterCloset"));
+    expect(fu.dfu).toBeCloseTo(fu.rows.reduce((s, r) => s + r.count * r.dfu, 0));
+    expect(facing({ x: 0, y: -1 })).toBe("N");
+    expect(facing({ x: 1, y: 0 })).toBe("E");
+    const env = envelope(p);
+    const windows = env.windows.reduce((s, w) => s + w.sqft, 0);
+    expect(windows).toBeCloseTo(DIRECTIONS.reduce((s, d) => s + env.walls[d].windows, 0));
+    expect(env.conditionedSqft).toBeGreaterThan(1000);
+    expect(env.ceiling).toBeCloseTo(env.conditionedSqft, 0);
+    expect(roughHeatLoss(p).btuh).toBeGreaterThan(5000);
+  });
+
+  it("works out the whole-house fresh air and the dryer duct", () => {
+    expect(wholeHouseCfm(p)).toBe(Math.ceil(0.01 * conditionedSqft(p) + 7.5 * (3 + 1)));
+    const runs = dryerRuns(plan);
+    expect(runs).toHaveLength(1);
+    expect(runs[0].ok).toBe(true);
+  });
+
+  it("lists the part 4 sheets and draws them", () => {
+    const r = readiness(p);
+    for (const n of ["E-101", "P-101", "M-101", "G-003"]) expect(canDraw(r.sheets.find((x) => x.number === n)!), n).toBe(true);
+    expect(r.sheets.some((x) => x.status === "soon" && ["E-101", "P-101", "M-101", "G-003"].includes(x.number))).toBe(false);
+    // No water heater or furnace yet: plumbing and mechanical need more.
+    const bare = readiness(house(RANCH));
+    expect(bare.sheets.find((x) => x.id === "plumbing")!.status).toBe("needs");
+    expect(bare.sheets.find((x) => x.id === "mechanical")!.status).toBe("needs");
+    const set = buildSet(p);
+    const e = set.find((x) => x.number === "E-101")!;
+    expect(sheetText(e).join(" ")).toMatch(/ELECTRICAL LEGEND/);
+    const g = set.find((x) => x.number === "G-003")!;
+    expect(sheetText(g).join(" ")).toMatch(/REScheck/);
+    for (const sh of set.filter((x) => /^(E|P|M)-1|G-003/.test(x.number))) expect(sheetText(sh).join(" ").replace(/\s+/g, " ").split(ALLOWED).join(" "), sh.number).not.toMatch(FORBIDDEN);
+  });
+
+  it("opens version 12 projects with default house systems", () => {
+    const old = { ...createProject("Old"), schemaVersion: 12 } as Record<string, unknown>;
+    old.plans = { address: "", parcel: "", designer: "", sheetSize: "full", excluded: [], lot: null };
+    expect(migrateProject(old).plans.systems).toEqual(HouseSystems.parse({}));
   });
 });

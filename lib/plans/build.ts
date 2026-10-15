@@ -13,6 +13,10 @@ import { materialsSheet } from "./sheets/materials";
 import { landscapeSheet } from "./sheets/landscape";
 import { doorWindowSheets, finishSheets, fixtureSheets } from "./sheets/schedules";
 import { cabinetSheets } from "./sheets/cabinets";
+import { electricalSheet } from "./sheets/electrical";
+import { plumbingSheet } from "./sheets/plumbing";
+import { mechanicalSheet } from "./sheets/mechanical";
+import { energySheets } from "./sheets/energy";
 
 /**
  * Put a set of sheets together: draw each chosen sheet, then add the
@@ -69,6 +73,13 @@ export function buildSet(project: Project, opts: SetOptions = {}): Sheet[] {
       pages.forEach((pg, i) => drafts.push({ entry, number: i ? `I-${201 + i}` : entry.number, title: pages.length > 1 ? `${entry.title} (${i + 1} of ${pages.length})` : entry.title, items: pg.items, scale: pg.scaleLabel }));
     } else if (entry.id === "elevations") {
       for (const e of elevationSheets(project)) drafts.push({ entry, number: e.part ? `A-${201 + e.part}` : entry.number, title: e.parts > 1 ? `${entry.title} (${e.part + 1} of ${e.parts})` : entry.title, items: e.items, scale: e.scaleLabel });
+    } else if (entry.levelId && /^(electrical|plumbing|mechanical):/.test(entry.id)) {
+      const level = h.levels.find((l) => l.id === entry.levelId)!;
+      const kind = entry.id.split(":")[0];
+      const sp = kind === "electrical" ? electricalSheet(project, level) : kind === "plumbing" ? plumbingSheet(project, level) : mechanicalSheet(project, level);
+      drafts.push({ entry, number: entry.number, title: entry.title, items: sp.items, scale: sp.scaleLabel });
+    } else if (entry.id === "energy") {
+      energySheets(project).forEach((items, i) => drafts.push({ entry, number: i ? `${entry.number}.${i}` : entry.number, title: i ? `${entry.title} (continued)` : entry.title, items }));
     } else if (entry.levelId) {
       const level = h.levels.find((l) => l.id === entry.levelId)!;
       const fp = floorPlanSheet(project, level);

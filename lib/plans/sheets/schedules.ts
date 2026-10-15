@@ -328,19 +328,20 @@ const FIXTURE_PICKS: Record<string, string[]> = {
 const PLUMBING = ["sink", "vanity", "toilet", "tub", "shower", "laundry-sink", "water-heater"];
 const APPLIANCES = ["range", "hood", "fridge", "dishwasher", "washer", "dryer"];
 
-export type FixtureLine = { tag: string; kind: string; label: string; rooms: string[]; count: number; size: string; product: string; notes: string };
+export type FixtureLine = { tag: string; kind: string; label: string; rooms: string[]; count: number; size: string; product: string; notes: string; ids: string[] };
 
 export function fixtureLines(project: Project): { plumbing: FixtureLine[]; appliances: FixtureLine[] } {
   const h = houseFacts(project);
   const sel = project.interior.selections;
   const groups = new Map<string, FixtureLine>();
-  const add = (kind: string, label: string, room: string, size: string, product: string, notes: string) => {
+  const add = (kind: string, label: string, room: string, size: string, product: string, notes: string, id: string) => {
     const key = `${kind}|${size}|${product}`;
     const g = groups.get(key);
     if (g) {
       g.count++;
+      g.ids.push(id);
       if (!g.rooms.includes(room)) g.rooms.push(room);
-    } else groups.set(key, { tag: "", kind, label, rooms: [room], count: 1, size, product, notes });
+    } else groups.set(key, { tag: "", kind, label, rooms: [room], count: 1, size, product, notes, ids: [id] });
   };
   for (const level of h.levels) {
     const plan = h.plan(level.id);
@@ -349,10 +350,10 @@ export function fixtureLines(project: Project): { plumbing: FixtureLine[]; appli
       const room = plan.rooms.find((r) => r.id === f.roomId)?.name ?? level.name;
       const picks = (FIXTURE_PICKS[f.kind] ?? []).map((c) => (f.roomId ? effectivePick(sel, f.roomId, c) : effectivePick(sel, WHOLE_HOUSE, c))?.pick.product).filter((p): p is Product => Boolean(p));
       const product = picks.length ? picks.map((p) => productTitle(p)).join(" + ") : "Owner's pick";
-      add(f.kind, fixtureType(f.kind).label, room, `${archFeet(f.widthIn)} x ${archFeet(f.depthIn)}`, product, fixtureNotes(f.kind));
+      add(f.kind, fixtureType(f.kind).label, room, `${archFeet(f.widthIn)} x ${archFeet(f.depthIn)}`, product, fixtureNotes(f.kind), f.id);
       if (f.kind === "range") {
         const hood = (f.roomId ? effectivePick(sel, f.roomId, "hoods") : null)?.pick.product;
-        add("hood", "Range hood", room, archFeet(f.widthIn), hood ? productTitle(hood) : "Owner's pick", fixtureNotes("hood"));
+        add("hood", "Range hood", room, archFeet(f.widthIn), hood ? productTitle(hood) : "Owner's pick", fixtureNotes("hood"), `hood:${f.id}`);
       }
     }
   }
@@ -378,7 +379,7 @@ function fixtureNotes(kind: string): string {
     case "tub":
       return `With a shower head: pressure-balance or thermostatic valve limited to ${codeNum("plumbing.showerValveMaxTemp")}°F (${codeRef("plumbing.showerValveMaxTemp")}).`;
     case "water-heater":
-      return `Relief valve drain piped to a safe place (${codeRef("plumbing.waterHeaterTPRDischarge")}). Sizes and venting on the plumbing and mechanical plans (later update).`;
+      return `Relief valve drain piped to a safe place (${codeRef("plumbing.waterHeaterTPRDischarge")}). Gas line, venting and the relief drain on the plumbing and mechanical plans.`;
     case "range":
       return `Cooking top to cabinets above: ${inchText(codeNum("kitchen.rangeClearanceAbove"))} clear unless the range or hood listing allows less (${codeRef("kitchen.rangeClearanceAbove")}). Gas: per the gas code and listing.`;
     case "hood":
@@ -390,6 +391,12 @@ function fixtureNotes(kind: string): string {
     default:
       return "";
   }
+}
+
+/** "P3" or "A2" for each fixture id (and "hood:<range id>"), matching the schedule. */
+export function fixtureTags(project: Project): Map<string, string> {
+  const { plumbing, appliances } = fixtureLines(project);
+  return new Map([...plumbing, ...appliances].flatMap((g) => g.ids.map((id) => [id, g.tag] as [string, string])));
 }
 
 export function fixtureSheets(project: Project): Item[][] {
@@ -407,7 +414,7 @@ export function fixtureSheets(project: Project): Item[][] {
   const notes = [
     "Products are the owner's picks on the Interior page of House Design App; equal products may be used. Install every fixture and appliance to its maker's instructions and listing.",
     `Water use limits come from the Idaho State Plumbing Code (${codeRef("plumbing.wcMaxFlush")}). Look for the WaterSense label.`,
-    "Piping, venting and fixture units are on the plumbing plan; gas, ducts and fans on the mechanical plan (later updates).",
+    "Fixture units and hose bibs are on the plumbing plan; gas, ducts and fans on the mechanical plan.",
   ];
   return flowTables(
     "Appliance and plumbing fixture schedule",
