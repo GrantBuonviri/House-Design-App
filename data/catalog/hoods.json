@@ -1,1 +1,79 @@
-[]
+[
+  {
+    "id": "ge-jvx5300sjss-stainless",
+    "name": "30 in. Under The Cabinet Range Hood, Stainless Steel",
+    "brand": "GE",
+    "line": "Under Cabinet",
+    "sku": "JVX5300SJSS",
+    "url": "https://www.townappliance.com/collections/ductless-hoods/products/ge-appliances-jvx5300sjss-ductless-hood",
+    "price": 299.1,
+    "unit": "each",
+    "priceSource": "listed",
+    "priceNote": "$299.10 at Town Appliance (list $339)",
+    "lastChecked": "2026-10-15",
+    "kind": "hood",
+    "styles": [
+      "transitional",
+      "craftsman",
+      "modern-farmhouse"
+    ],
+    "tags": [
+      "stainless",
+      "neutral"
+    ],
+    "color": "#b9bbbb",
+    "pattern": "metal"
+  },
+  {
+    "id": "whirlpool-wvw93uc0lz-stainless",
+    "name": "30 in. Chimney Wall Mount Range Hood, Stainless Steel",
+    "brand": "Whirlpool",
+    "line": "Chimney Wall Mount",
+    "sku": "WVW93UC0LZ",
+    "url": "https://www.homewiseappliance.com/whirlpool-30-chimney-wall-mount-range-hood-with-dishwasher-safe-grease-filters-wvw93uc0lz",
+    "price": 899.0,
+    "unit": "each",
+    "priceSource": "listed",
+    "priceNote": "$899.00 at Homewise Appliance (reg. $929)",
+    "lastChecked": "2026-10-15",
+    "kind": "hood",
+    "styles": [
+      "modern",
+      "scandinavian",
+      "industrial",
+      "transitional"
+    ],
+    "tags": [
+      "stainless",
+      "cool"
+    ],
+    "color": "#b6b8b9",
+    "pattern": "metal"
+  },
+  {
+    "id": "kitchenaid-kvwb400dss-stainless",
+    "name": "30 in. Wall-Mount 3-Speed Canopy Hood, Stainless Steel",
+    "brand": "KitchenAid",
+    "line": "Canopy Hood",
+    "sku": "KVWB400DSS",
+    "url": "https://www.townappliance.com/products/kitchenaid-kvwb400dss-ducted-hood",
+    "price": 1367.0,
+    "unit": "each",
+    "priceSource": "listed",
+    "priceNote": "$1,367.00 at Town Appliance (list $1,519)",
+    "lastChecked": "2026-10-15",
+    "kind": "hood",
+    "styles": [
+      "mountain-modern",
+      "modern-farmhouse",
+      "industrial",
+      "craftsman"
+    ],
+    "tags": [
+      "stainless",
+      "neutral"
+    ],
+    "color": "#b5b7b7",
+    "pattern": "metal"
+  }
+]

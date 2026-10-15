@@ -1,1 +1,202 @@
-[]
+[
+  {
+    "id": "delta-foundations-b4310lf-chrome",
+    "name": "Foundations Single-Handle Pull-Out Sprayer Kitchen Faucet in Chrome",
+    "brand": "Delta",
+    "line": "Foundations",
+    "sku": "B4310LF",
+    "url": "https://homedepot.com/p/Delta-Foundations-Single-Handle-Pull-Out-Sprayer-Kitchen-Faucet-In-Chrome-B4310LF/203124974",
+    "price": 144.56,
+    "unit": "each",
+    "priceSource": "listed",
+    "priceNote": "$144.56 at Home Depot",
+    "lastChecked": "2026-10-15",
+    "kind": "faucet",
+    "styles": [
+      "transitional",
+      "craftsman"
+    ],
+    "tags": [
+      "chrome",
+      "cool"
+    ],
+    "color": "#c8ccd0",
+    "pattern": "metal"
+  },
+  {
+    "id": "moen-adler-87233bl-matte-black",
+    "name": "Adler Single-Handle Pull-Down Sprayer Kitchen Faucet with Reflex and Power Clean in Matte Black",
+    "brand": "Moen",
+    "line": "Adler",
+    "sku": "87233BL",
+    "url": "https://homedepot.com/p/MOEN-Adler-Single-Handle-Pull-Down-Sprayer-Kitchen-Faucet-with-Reflex-and-Power-Clean-in-Matte-Black-87233BL/311933284",
+    "price": 169.0,
+    "unit": "each",
+    "priceSource": "listed",
+    "priceNote": "$169.00 at Home Depot",
+    "lastChecked": "2026-10-15",
+    "kind": "faucet",
+    "styles": [
+      "modern-farmhouse",
+      "industrial",
+      "modern"
+    ],
+    "tags": [
+      "matte-black",
+      "bold"
+    ],
+    "color": "#1c1c1c",
+    "pattern": "metal"
+  },
+  {
+    "id": "delta-leland-9178-ar-dst-arctic-stainless",
+    "name": "Leland Single-Handle Pull-Down Sprayer Kitchen Faucet with ShieldSpray in Arctic Stainless",
+    "brand": "Delta",
+    "line": "Leland",
+    "sku": "9178-AR-DST",
+    "url": "https://www.homedepot.com/p/Delta-Leland-Single-Handle-Pull-Down-Sprayer-Kitchen-Faucet-w-ShieldSpray-and-MagnaTite-Docking-in-Arctic-Stainless-9178-AR-DST/204184513",
+    "price": 219.82,
+    "unit": "each",
+    "priceSource": "listed",
+    "priceNote": "$219.82 at Home Depot",
+    "lastChecked": "2026-10-15",
+    "kind": "faucet",
+    "styles": [
+      "transitional",
+      "craftsman",
+      "modern-farmhouse"
+    ],
+    "tags": [
+      "stainless",
+      "brushed-nickel",
+      "neutral"
+    ],
+    "color": "#b9b9b4",
+    "pattern": "metal"
+  },
+  {
+    "id": "kohler-bellera-k-560-vs-vibrant-stainless",
+    "name": "Bellera Single-Handle Pull-Down Sprayer Kitchen Faucet with DockNetik in Vibrant Stainless",
+    "brand": "Kohler",
+    "line": "Bellera",
+    "sku": "K-560-VS",
+    "url": "https://www.homedepot.com/p/203309989",
+    "price": 227.14,
+    "unit": "each",
+    "priceSource": "listed",
+    "priceNote": "$227.14 at Home Depot (sale; reg. $302.85)",
+    "lastChecked": "2026-10-15",
+    "kind": "faucet",
+    "styles": [
+      "modern",
+      "scandinavian",
+      "transitional"
+    ],
+    "tags": [
+      "stainless",
+      "brushed-nickel",
+      "neutral"
+    ],
+    "color": "#bdbdb8",
+    "pattern": "metal"
+  },
+  {
+    "id": "moen-arbor-7594c-chrome",
+    "name": "Arbor Single-Handle Pull-Down Sprayer Kitchen Faucet with Power Boost in Chrome",
+    "brand": "Moen",
+    "line": "Arbor",
+    "sku": "7594C",
+    "url": "https://www.homedepot.com/p/MOEN-Arbor-Single-Handle-Pull-Down-Sprayer-Kitchen-Faucet-with-Power-Boost-in-Chrome-7594C/203102586",
+    "price": 255.39,
+    "unit": "each",
+    "priceSource": "listed",
+    "priceNote": "$255.39 at Home Depot",
+    "lastChecked": "2026-10-15",
+    "kind": "faucet",
+    "styles": [
+      "transitional",
+      "modern-farmhouse"
+    ],
+    "tags": [
+      "chrome",
+      "cool"
+    ],
+    "color": "#c9cdd1",
+    "pattern": "metal"
+  },
+  {
+    "id": "kohler-simplice-k-596-2mb-brass",
+    "name": "Simplice Single-Handle Pull-Down Sprayer Kitchen Sink Faucet in Vibrant Brushed Moderne Brass",
+    "brand": "Kohler",
+    "line": "Simplice",
+    "sku": "K-596-2MB",
+    "url": "https://homedepot.com/p/KOHLER-Simplice-Single-Handle-Pull-Down-Sprayer-Kitchen-Sink-Faucet-in-Vibrant-Brushed-Moderne-Brass-K-596-2MB/317417054",
+    "price": 375.0,
+    "unit": "each",
+    "priceSource": "listed",
+    "priceNote": "$375.00 at Home Depot",
+    "lastChecked": "2026-10-15",
+    "kind": "faucet",
+    "styles": [
+      "modern-farmhouse",
+      "scandinavian",
+      "transitional"
+    ],
+    "tags": [
+      "brass",
+      "warm"
+    ],
+    "color": "#c4a46a",
+    "pattern": "metal"
+  },
+  {
+    "id": "delta-trinsic-9159-cz-dst-champagne-bronze",
+    "name": "Trinsic Single-Handle Pull-Down Sprayer Kitchen Faucet with MagnaTite Docking in Champagne Bronze",
+    "brand": "Delta",
+    "line": "Trinsic",
+    "sku": "9159-CZ-DST",
+    "url": "https://homedepot.com/p/Delta-Trinsic-Gold-Single-Handle-Pull-Down-Sprayer-Kitchen-Faucet-with-MagnaTite-Docking-in-Champagne-Bronze-9159-CZ-DST/203155724",
+    "price": 539.25,
+    "unit": "each",
+    "priceSource": "listed",
+    "priceNote": "$539.25 at Home Depot (sale; reg. $719)",
+    "lastChecked": "2026-10-15",
+    "kind": "faucet",
+    "styles": [
+      "modern",
+      "mountain-modern",
+      "transitional"
+    ],
+    "tags": [
+      "brass",
+      "warm"
+    ],
+    "color": "#b99a6b",
+    "pattern": "metal"
+  },
+  {
+    "id": "kohler-crue-k-22972-bl-matte-black",
+    "name": "Crue Single-Handle Pull-Down Sprayer Kitchen Faucet in Matte Black",
+    "brand": "Kohler",
+    "line": "Crue",
+    "sku": "K-22972-BL",
+    "url": "https://homedepot.com/p/KOHLER-Crue-Single-Handle-Pull-Down-Sprayer-Kitchen-Faucet-in-Matte-Black-K-22972-BL/315879096",
+    "price": 582.18,
+    "unit": "each",
+    "priceSource": "listed",
+    "priceNote": "$582.18 at Home Depot",
+    "lastChecked": "2026-10-15",
+    "kind": "faucet",
+    "styles": [
+      "industrial",
+      "mountain-modern",
+      "modern"
+    ],
+    "tags": [
+      "matte-black",
+      "bold"
+    ],
+    "color": "#1b1b1b",
+    "pattern": "metal"
+  }
+]

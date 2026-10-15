@@ -1,1 +1,201 @@
-[]
+[
+  {
+    "id": "hampton-bay-shaker-satin-white",
+    "name": "Shaker Assembled Kitchen Cabinets, Satin White",
+    "brand": "Hampton Bay",
+    "line": "Shaker",
+    "sku": "KB30-SSW / KW3030-SSW",
+    "url": "https://homedepot.com/p/204635906",
+    "price": 199.2,
+    "unit": "linft",
+    "priceSource": "estimated",
+    "priceNote": "30 in base KB30-SSW $269 + 30 in wall KW3030-SSW $229 at Home Depot -> $199.20/linft",
+    "lastChecked": "2026-10-15",
+    "kind": "shaker",
+    "styles": [
+      "modern-farmhouse",
+      "transitional",
+      "scandinavian"
+    ],
+    "tags": [
+      "white",
+      "neutral"
+    ],
+    "color": "#f2f0ea",
+    "pattern": "solid"
+  },
+  {
+    "id": "hampton-bay-avondale-ink-blue",
+    "name": "Avondale RTA Plywood Shaker Kitchen Cabinets, Ink Blue",
+    "brand": "Hampton Bay",
+    "line": "Avondale",
+    "sku": "SB30-B / W3030-B",
+    "url": "https://www.homedepot.com/p/Hampton-Bay-Avondale-30-in-W-x-12-in-D-x-30-in-H-Ready-to-Assemble-Plywood-Shaker-Wall-Kitchen-Cabinet-in-Ink-Blue-W3030-B/328272485",
+    "price": 230.0,
+    "unit": "linft",
+    "priceSource": "estimated",
+    "priceNote": "30 in sink base SB30-B $309 + 30 in wall W3030-B $266 at Home Depot -> $230/linft",
+    "lastChecked": "2026-10-15",
+    "kind": "shaker",
+    "styles": [
+      "modern-farmhouse",
+      "transitional",
+      "craftsman"
+    ],
+    "tags": [
+      "bold",
+      "cool"
+    ],
+    "color": "#2b3a52",
+    "pattern": "solid"
+  },
+  {
+    "id": "hampton-bay-edgeley-driftwood",
+    "name": "Designer Series Edgeley Slab Kitchen Cabinets, Driftwood",
+    "brand": "Hampton Bay",
+    "line": "Designer Series Edgeley",
+    "sku": "B30-EDDW / W3042-EDDW",
+    "url": "https://www.homedepot.com/p/Hampton-Bay-Designer-Series-Edgeley-Assembled-30x34-5x23-75-in-Base-Kitchen-Cabinet-in-Driftwood-B30-EDDW/305842352",
+    "price": 276.4,
+    "unit": "linft",
+    "priceSource": "estimated",
+    "priceNote": "30 in base B30-EDDW $359 + 30x42 in wall W3042-EDDW $332 (no 30x30 door wall listed) at Home Depot -> $276.40/linft",
+    "lastChecked": "2026-10-15",
+    "kind": "flat",
+    "styles": [
+      "scandinavian",
+      "mountain-modern",
+      "modern"
+    ],
+    "tags": [
+      "light-wood",
+      "warm"
+    ],
+    "color": "#c9b394",
+    "pattern": "plank"
+  },
+  {
+    "id": "kunal-kitchens-amherst-shaker-walnut",
+    "name": "Amherst Shaker Plywood Assembled Kitchen Cabinets, Walnut",
+    "brand": "Kunal Kitchens",
+    "line": "Amherst Shaker",
+    "sku": "B30B-AMHERST WALNUT / W3030B-AMHERST WALNUT",
+    "url": "https://www.homedepot.com/p/Amherst-Shaker-30-in-W-x-34-5-in-H-x-24-in-D-in-Walnut-Plywood-Assembled-Base-Cabinet-B30B-AMHERST-WALNUT/332450824",
+    "price": 273.6,
+    "unit": "linft",
+    "priceSource": "estimated",
+    "priceNote": "30 in base $415.01 + 30 in wall W3030B $268.99 at Home Depot -> $273.60/linft",
+    "lastChecked": "2026-10-15",
+    "kind": "shaker",
+    "styles": [
+      "craftsman",
+      "mountain-modern",
+      "transitional"
+    ],
+    "tags": [
+      "medium-wood",
+      "warm"
+    ],
+    "color": "#8a5a3b",
+    "pattern": "plank"
+  },
+  {
+    "id": "hampton-bay-shaker-java",
+    "name": "Shaker Assembled Kitchen Cabinets, Java",
+    "brand": "Hampton Bay",
+    "line": "Shaker",
+    "sku": "KB30-SJM / KW3030-SJM",
+    "url": "https://homedepot.com/p/Hampton-Bay-Shaker-30-in-W-x-24-in-D-x-34-5-in-H-Assembled-Base-Kitchen-Cabinet-in-Java-with-Ball-Bearing-Drawer-Glides-KB30-SJM/204310776",
+    "price": 197.41,
+    "unit": "linft",
+    "priceSource": "estimated",
+    "priceNote": "30 in base KB30-SJM $278.52 + 30 in wall KW3030-SJM $215 at Home Depot -> $197.41/linft",
+    "lastChecked": "2026-10-15",
+    "kind": "shaker",
+    "styles": [
+      "craftsman",
+      "mountain-modern",
+      "industrial"
+    ],
+    "tags": [
+      "dark-wood",
+      "warm"
+    ],
+    "color": "#3b2a22",
+    "pattern": "plank"
+  },
+  {
+    "id": "hampton-bay-shaker-dove-gray",
+    "name": "Shaker Assembled Kitchen Cabinets, Dove Gray",
+    "brand": "Hampton Bay",
+    "line": "Shaker",
+    "sku": "KB30-SDV / KW3030-SDV",
+    "url": "https://homedepot.com/p/301452169",
+    "price": 195.2,
+    "unit": "linft",
+    "priceSource": "estimated",
+    "priceNote": "30 in base KB30-SDV $264 + 30 in wall KW3030-SDV $224 at Home Depot -> $195.20/linft",
+    "lastChecked": "2026-10-15",
+    "kind": "shaker",
+    "styles": [
+      "transitional",
+      "modern-farmhouse",
+      "industrial"
+    ],
+    "tags": [
+      "cool",
+      "neutral"
+    ],
+    "color": "#a7a8a5",
+    "pattern": "solid"
+  },
+  {
+    "id": "hampton-bay-hampton-medium-oak",
+    "name": "Hampton Raised Panel Assembled Kitchen Cabinets, Medium Oak",
+    "brand": "Hampton Bay",
+    "line": "Hampton",
+    "sku": "KB30-MO / KW3030-MO",
+    "url": "https://homedepot.com/p/100573491",
+    "price": 181.2,
+    "unit": "linft",
+    "priceSource": "estimated",
+    "priceNote": "30 in base KB30-MO $244 + 30 in wall KW3030-MO $209 at Home Depot -> $181.20/linft",
+    "lastChecked": "2026-10-15",
+    "kind": "raised",
+    "styles": [
+      "craftsman",
+      "transitional"
+    ],
+    "tags": [
+      "medium-wood",
+      "warm"
+    ],
+    "color": "#a8743f",
+    "pattern": "plank"
+  },
+  {
+    "id": "cambridge-radiance-white-gloss",
+    "name": "Radiance RTA Slab Kitchen Cabinets, White Gloss",
+    "brand": "Cambridge",
+    "line": "Radiance",
+    "sku": "SA-B30-WG-KIT / SA-WU3030-WG",
+    "url": "https://homedepot.com/p/Cambridge-Radiance-30-in-W-x-24-in-D-x-34-50-in-H-Ready-to-Assemble-Slab-Base-Kitchen-Cabinet-in-White-Gloss-SA-B30-WG-KIT/332338957",
+    "price": 242.96,
+    "unit": "linft",
+    "priceSource": "estimated",
+    "priceNote": "30 in base SA-B30-WG-KIT $407.52 + 30 in wall SA-WU3030-WG $199.89 at Home Depot -> $242.96/linft",
+    "lastChecked": "2026-10-15",
+    "kind": "flat",
+    "styles": [
+      "modern",
+      "scandinavian",
+      "industrial"
+    ],
+    "tags": [
+      "white",
+      "cool"
+    ],
+    "color": "#f7f7f5",
+    "pattern": "solid"
+  }
+]

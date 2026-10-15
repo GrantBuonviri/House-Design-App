@@ -50,12 +50,12 @@ export default function ProductCard({
           Last checked {checkedText(product.lastChecked)}
         </div>
         {note && <div className="mt-1 text-[11px] text-accent">{note}</div>}
-        <div className="mt-auto flex items-center justify-between gap-2 pt-3">
-          <a href={product.url} target="_blank" rel="noreferrer" className="text-xs text-accent underline">
+        <div className="mt-auto flex flex-col gap-2 pt-3">
+          <a href={product.url} target="_blank" rel="noreferrer" className="text-xs whitespace-nowrap text-accent underline">
             View product ↗
           </a>
           {action && onAction && (
-            <button className={picked ? "btn px-2 py-1 text-xs" : "btn-primary px-2 py-1 text-xs"} onClick={onAction}>
+            <button className={`${picked ? "btn" : "btn-primary"} w-full justify-center px-2 py-1.5 text-xs`} onClick={onAction}>
               {action}
             </button>
           )}

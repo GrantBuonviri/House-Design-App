@@ -6,7 +6,7 @@ import type { Point, Project } from "@/lib/model/schema";
 import { lotOffsetFor } from "@/lib/house3d/site";
 import type { WallsShown } from "@/components/house3d/House3DView";
 
-const HEIGHT = 460;
+const HEIGHT = 520;
 
 const House3DView = dynamic(() => import("@/components/house3d/House3DView"), {
   ssr: false,
@@ -48,6 +48,7 @@ export default function Interior3D({ project, roomId }: { project: Project; room
         roof={false}
         walls={walls}
         editing={false}
+        viewOnly
         onEditing={() => {}}
         selection={roomId ? [{ kind: "room", id: roomId }] : []}
         snap={false}

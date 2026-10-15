@@ -1,1 +1,104 @@
-[]
+[
+  {
+    "id": "ge-grf600avss-stainless",
+    "name": "30 in. 5 Element Smart Free-Standing Electric Range with No-Preheat Air Fry, Stainless",
+    "brand": "GE",
+    "line": "GRF600",
+    "sku": "GRF600AVSS",
+    "url": "https://www.homedepot.com/p/p/329371842",
+    "price": 749.0,
+    "unit": "each",
+    "priceSource": "listed",
+    "priceNote": "$749.00 at Home Depot (sale; reg. $1,149)",
+    "lastChecked": "2026-10-15",
+    "kind": "range",
+    "styles": [
+      "transitional",
+      "modern-farmhouse",
+      "craftsman"
+    ],
+    "tags": [
+      "stainless",
+      "neutral"
+    ],
+    "color": "#b8bab9",
+    "pattern": "metal"
+  },
+  {
+    "id": "whirlpool-wfgs5030rz-stainless",
+    "name": "30 in. 5 Burner Freestanding Gas Range with Air Cooking Technology, Fingerprint Resistant Stainless Steel",
+    "brand": "Whirlpool",
+    "line": "Freestanding Gas",
+    "sku": "WFGS5030RZ",
+    "url": "https://www.homedepot.com/p/p/330918775",
+    "price": 899.0,
+    "unit": "each",
+    "priceSource": "listed",
+    "priceNote": "$899.00 at Home Depot (sale; reg. $1,221)",
+    "lastChecked": "2026-10-15",
+    "kind": "range",
+    "styles": [
+      "modern-farmhouse",
+      "craftsman",
+      "mountain-modern"
+    ],
+    "tags": [
+      "stainless",
+      "neutral"
+    ],
+    "color": "#b6b8b8",
+    "pattern": "metal"
+  },
+  {
+    "id": "samsung-bespoke-nsi6dg9500mt-matte-black",
+    "name": "Bespoke 30 in. Slide-In Induction Range, Matte Black Steel",
+    "brand": "Samsung",
+    "line": "Bespoke",
+    "sku": "NSI6DG9500MT",
+    "url": "https://www.bigsandysuperstore.com/product/samsung-bespoke-30-matte-black-steel-slide-in-induction-range-nsi6dg9500mt-1495388",
+    "price": 1499.99,
+    "unit": "each",
+    "priceSource": "listed",
+    "priceNote": "$1,499.99 at Big Sandy Superstore (sale; reg. $2,599)",
+    "lastChecked": "2026-10-15",
+    "kind": "range",
+    "styles": [
+      "modern",
+      "industrial",
+      "scandinavian"
+    ],
+    "tags": [
+      "black",
+      "matte-black",
+      "bold"
+    ],
+    "color": "#2a2a2b",
+    "pattern": "metal"
+  },
+  {
+    "id": "lg-lsgl6335x-printproof-stainless",
+    "name": "30 in. Slide-In Gas Range, PrintProof Stainless Steel",
+    "brand": "LG",
+    "line": "Slide-In Gas",
+    "sku": "LSGL6335X",
+    "url": "https://www.aitoro.com/product/lg-30-printproof-stainless-steel-slide-in-gas-range-lsgl6335x-1697501",
+    "price": 1599.0,
+    "unit": "each",
+    "priceSource": "listed",
+    "priceNote": "$1,599.00 at Aitoro (sale; reg. $2,499)",
+    "lastChecked": "2026-10-15",
+    "kind": "range",
+    "styles": [
+      "mountain-modern",
+      "industrial",
+      "transitional",
+      "modern"
+    ],
+    "tags": [
+      "stainless",
+      "cool"
+    ],
+    "color": "#b4b6b7",
+    "pattern": "metal"
+  }
+]

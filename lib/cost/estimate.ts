@@ -337,7 +337,10 @@ export function applySelections(lines: CostLine[], selections: Selection[], q?: 
     l.qty = shares.reduce((s, x) => s + x.amount, 0);
     const names = [...used];
     const everywhere = pickedAmount >= l.qty - 0.01;
-    l.product = names.length === 1 ? names[0] : `${names.length} picks`;
+    // A pick that's only part of the line (a fridge in the appliance package) names the line too.
+    const partial = picks.every((x) => (interiorCategory(x.category)?.share ?? 1) < 1);
+    const what = names.length === 1 ? names[0] : `${names.length} picks`;
+    l.product = partial ? `${l.label} with ${what}` : what;
     if (!everywhere) l.product += ", mid-range elsewhere";
     // The per-unit material shown is what it averages out to.
     l.material = l.qty > 0 ? Math.max(0, cost.likely / l.qty - (l.labor ?? 0)) : l.material;

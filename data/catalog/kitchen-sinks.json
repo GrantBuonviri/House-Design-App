@@ -1,1 +1,153 @@
-[]
+[
+  {
+    "id": "glacier-bay-workstation-acs3219a1-w-gunmetal",
+    "name": "32 in. Undermount Single Bowl 18 Gauge Gunmetal Black Stainless Steel Workstation Kitchen Sink",
+    "brand": "Glacier Bay",
+    "line": "Workstation",
+    "sku": "ACS3219A1-W",
+    "url": "https://homedepot.com/p/Glacier-Bay-32-in-Undermount-Single-Bowl-18-Gauge-Gunmetal-Black-Stainless-Steel-Workstation-Kitchen-Sink-ACS3219A1-W/316946006",
+    "price": 217.04,
+    "unit": "each",
+    "priceSource": "listed",
+    "priceNote": "$217.04 at Home Depot (sale; reg. $241.15)",
+    "lastChecked": "2026-10-15",
+    "kind": "undermount",
+    "styles": [
+      "industrial",
+      "modern",
+      "mountain-modern"
+    ],
+    "tags": [
+      "black",
+      "stainless",
+      "bold"
+    ],
+    "color": "#3a3a3c",
+    "pattern": "metal"
+  },
+  {
+    "id": "kohler-brookfield-k-5846-1-0-white",
+    "name": "Brookfield Drop-In Cast Iron 33 in. 1-Hole Double Bowl Kitchen Sink in White",
+    "brand": "Kohler",
+    "line": "Brookfield",
+    "sku": "K-5846-1-0",
+    "url": "https://homedepot.com/p/KOHLER-Brookfield-Drop-In-Cast-Iron-33-in-1-Hole-Double-Bowl-Kitchen-Sink-in-White-K-5846-1-0/204481101",
+    "price": 445.61,
+    "unit": "each",
+    "priceSource": "listed",
+    "priceNote": "$445.61 at Home Depot (sale; reg. $524.25)",
+    "lastChecked": "2026-10-15",
+    "kind": "drop-in",
+    "styles": [
+      "craftsman",
+      "transitional",
+      "modern-farmhouse"
+    ],
+    "tags": [
+      "white",
+      "neutral"
+    ],
+    "color": "#f4f3ef",
+    "pattern": "solid"
+  },
+  {
+    "id": "glacier-bay-fireclay-farmhouse-2aclb-52-001",
+    "name": "33 in. Farmhouse/Apron-Front Single Bowl White Fireclay Kitchen Sink",
+    "brand": "Glacier Bay",
+    "line": "Fireclay",
+    "sku": "2ACLB-52-001",
+    "url": "https://www.homedepot.com/p/Glacier-Bay-White-Fireclay-33-in-Single-Bowl-Farmhouse-Apron-Front-Kitchen-Sink-with-Grid-2ACLB-52-001/311922189",
+    "price": 439.0,
+    "unit": "each",
+    "priceSource": "listed",
+    "priceNote": "$439.00 at Home Depot",
+    "lastChecked": "2026-10-15",
+    "kind": "farmhouse",
+    "styles": [
+      "modern-farmhouse",
+      "craftsman",
+      "scandinavian"
+    ],
+    "tags": [
+      "white",
+      "warm"
+    ],
+    "color": "#f6f4ee",
+    "pattern": "solid"
+  },
+  {
+    "id": "kohler-cairn-k-8206-cm1-matte-black",
+    "name": "Cairn Undermount Neoroc Granite Composite 33.5 in. Single Bowl Kitchen Sink Kit in Matte Black",
+    "brand": "Kohler",
+    "line": "Cairn",
+    "sku": "K-8206-CM1",
+    "url": "https://www.homedepot.com/p/KOHLER-Cairn-Undermount-Neoroc-Granite-Composite-33-5-in-Single-Bowl-Kitchen-Sink-Kit-in-Matte-Black-K-8206-CM1/206703758",
+    "price": 579.0,
+    "unit": "each",
+    "priceSource": "listed",
+    "priceNote": "$579.00 at Home Depot",
+    "lastChecked": "2026-10-15",
+    "kind": "undermount",
+    "styles": [
+      "modern",
+      "industrial",
+      "mountain-modern"
+    ],
+    "tags": [
+      "black",
+      "bold"
+    ],
+    "color": "#232323",
+    "pattern": "solid"
+  },
+  {
+    "id": "kohler-strive-k-5285-na-stainless",
+    "name": "Strive Undermount Stainless Steel 32 in. Single Bowl Kitchen Sink with Included Accessories",
+    "brand": "Kohler",
+    "line": "Strive",
+    "sku": "K-5285-NA",
+    "url": "https://homedepot.com/p/KOHLER-Strive-Undermount-Stainless-Steel-32-in-Single-Bowl-Kitchen-Sink-with-Included-Accessories-K-5285-NA/204633480",
+    "price": 844.01,
+    "unit": "each",
+    "priceSource": "listed",
+    "priceNote": "$844.01 at Home Depot",
+    "lastChecked": "2026-10-15",
+    "kind": "undermount",
+    "styles": [
+      "transitional",
+      "modern",
+      "scandinavian"
+    ],
+    "tags": [
+      "stainless",
+      "neutral"
+    ],
+    "color": "#b8b9b7",
+    "pattern": "metal"
+  },
+  {
+    "id": "kohler-vault-k-3943-na-stainless-farmhouse",
+    "name": "Vault 36 in. Farmhouse/Apron-Front Single Bowl 16-Gauge Stainless Steel Kitchen Sink w/ Accessories and Basin Rack",
+    "brand": "Kohler",
+    "line": "Vault",
+    "sku": "K-3943-NA",
+    "url": "https://homedepot.com/p/KOHLER-Vault-36-in-Farmhouse-Apron-Front-Single-Bowl-16-Gauge-Stainless-Steel-Kitchen-Sink-w-Accessories-and-Basin-Rack-K-3943-NA/203308294",
+    "price": 1314.0,
+    "unit": "each",
+    "priceSource": "listed",
+    "priceNote": "$1,314.00 at Home Depot",
+    "lastChecked": "2026-10-15",
+    "kind": "farmhouse",
+    "styles": [
+      "modern-farmhouse",
+      "industrial",
+      "transitional"
+    ],
+    "tags": [
+      "stainless",
+      "cool"
+    ],
+    "color": "#b5b7b8",
+    "pattern": "metal"
+  }
+]
