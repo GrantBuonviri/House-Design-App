@@ -72,6 +72,11 @@ export const TOUR: TourStep[] = [
     body: "Once you pick rooms, a cost estimate for building in Boise shows here and updates with every change. Click it for the breakdown.",
   },
   {
+    target: "plans",
+    title: "Building plans",
+    body: "Plans makes PDF sheets for a building permit: floor plans, a cover sheet and a code check against the codes Boise uses. Each sheet says what it still needs.",
+  },
+  {
     target: "walkthrough",
     title: "Walk through it",
     body: "Once there's a floor plan, walk through the house in first person. Press E inside to paint walls, pick finishes and place furniture.",

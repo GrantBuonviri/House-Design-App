@@ -22,6 +22,7 @@ export function describeChange(before: Project, after: Project): string {
   if (!same("plan")) return before.plan.basics === null && after.plan.basics ? "answer the plan basics" : "change the plan settings";
   if (!same("house3d")) return "change the roof";
   if (!same("cost")) return "change the water and sewer setting";
+  if (!same("plans")) return "change the plan details";
   if (!same("interior")) return describeDesign(before.interior, after.interior, "inside");
   if (!same("exterior")) return describeDesign(before.exterior, after.exterior, "outside");
   if (!same("levels")) return "change the floors";

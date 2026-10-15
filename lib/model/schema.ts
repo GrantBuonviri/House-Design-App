@@ -9,7 +9,7 @@ import { z } from "zod";
  * Angles are degrees clockwise from north (0 = N, 90 = E).
  */
 
-export const SCHEMA_VERSION = 9;
+export const SCHEMA_VERSION = 10;
 
 export const Point = z.object({ x: z.number(), y: z.number() });
 export type Point = z.infer<typeof Point>;
@@ -399,6 +399,24 @@ export const CostSettings = z.object({
 });
 export type CostSettings = z.infer<typeof CostSettings>;
 
+// ---------- Building plans (PDF export) ----------
+
+/** Paper for the plan sheets: 24" x 36" (ARCH D), or a half-size 12" x 18" print for home printers. */
+export const SHEET_SIZES = ["full", "half"] as const;
+
+/** The "Plan details" form and export choices. The sheets themselves are drawn from the project every time. */
+export const PlansSettings = z.object({
+  /** The real site address and county parcel number. Left empty, the sheets print "TBD". */
+  address: z.string().max(200).default(""),
+  parcel: z.string().max(60).default(""),
+  /** Who drew the plans. Empty means the owner's name. */
+  designer: z.string().max(120).default(""),
+  sheetSize: z.enum(SHEET_SIZES).default("full"),
+  /** Sheet ids left out of "Export selected". Every ready sheet is included unless it's listed here. */
+  excluded: z.array(z.string()).default([]),
+});
+export type PlansSettings = z.infer<typeof PlansSettings>;
+
 // ---------- 6 & 7. Interior / exterior selections ----------
 
 /** How a finish is drawn: on swatches and in 3D. The outside ones (siding, roofs, brick) came with exterior design. */
@@ -478,6 +496,7 @@ export const Project = z.object({
   plan: PlanSettings.prefault({}),
   house3d: House3D.prefault({}),
   cost: CostSettings.prefault({}),
+  plans: PlansSettings.prefault({}),
   interior: DesignChoices.prefault({}),
   exterior: DesignChoices.prefault({}),
 });

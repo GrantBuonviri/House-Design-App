@@ -43,6 +43,8 @@ export function migrateProject(raw: unknown): Project {
   // house) and product colors, all optional, so older data needs no changes.
   // Version 7 to 8 added furniture on floor plans and accent wall paint,
   // both optional with defaults, so older data needs no changes.
+  // Version 9 to 10 added the building plan details (address, parcel,
+  // designer, sheet size), all with defaults.
   return Project.parse({ ...migrated, schemaVersion: SCHEMA_VERSION });
 }
 
