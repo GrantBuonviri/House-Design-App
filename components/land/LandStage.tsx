@@ -7,25 +7,12 @@ import { useProjectStore } from "@/lib/store/projectStore";
 import PlotCard from "./PlotCard";
 import PlotDetails from "./PlotDetails";
 import { LandViewModeContext, ViewModeSwitch, type LandViewMode } from "./PlotView";
+import { readStorage, writeStorage } from "@/lib/browserStorage";
 
 const PER_PAGE = 3;
 
 function randomSeed() {
   return Math.floor(Math.random() * 2 ** 31);
-}
-
-function readStorage(store: () => Storage, key: string): string | null {
-  try {
-    return store().getItem(key);
-  } catch {
-    return null;
-  }
-}
-
-function writeStorage(store: () => Storage, key: string, value: string) {
-  try {
-    store().setItem(key, value);
-  } catch {}
 }
 
 /**

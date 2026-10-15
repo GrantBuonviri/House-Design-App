@@ -7,6 +7,8 @@ import * as THREE from "three";
 import type { FloorPlan, FurnitureItem, Point, Project, Selection } from "@/lib/model/schema";
 import { newId } from "@/lib/model/project";
 import { useProjectStore } from "@/lib/store/projectStore";
+import UndoButtons from "@/components/project/UndoButtons";
+import GraphicsToggle from "@/components/project/GraphicsToggle";
 import type { Estimate } from "@/lib/cost/estimate";
 import { shortMoney } from "@/lib/cost/estimate";
 import { buildHouse, type HouseContext } from "@/lib/house3d/build";
@@ -26,6 +28,7 @@ import { toGeometry } from "@/components/house3d/geometry";
 import { HouseMeshes, Sky, type AimTarget } from "@/components/house3d/Scene";
 import { AddFurniturePanel, FinishPanel, FurniturePanel, OutsidePanel } from "./DesignPanel";
 import { effectiveExterior } from "@/lib/exterior/style";
+import { canvasSettings, useGraphics } from "@/lib/graphics";
 
 const LOOK_PER_PX = 0.0022;
 
@@ -66,11 +69,8 @@ const turnBy = (deg: number, by: number) => (((Math.round(deg + by) % 360) + 360
  * add, move and turn furniture.
  */
 export default function Walkthrough({ project, cost, onClose }: { project: Project; cost?: Estimate | null; onClose: () => void }) {
+  const quality = useGraphics((g) => g.quality);
   const update = useProjectStore((s) => s.update);
-  const undo = useProjectStore((s) => s.undo);
-  const redo = useProjectStore((s) => s.redo);
-  const canUndo = useProjectStore((s) => s.past.length > 0);
-  const canRedo = useProjectStore((s) => s.future.length > 0);
 
   const levels = useMemo(() => [...project.levels].sort((a, b) => a.elevationIn - b.elevationIn), [project.levels]);
   const basics = project.plan.basics;
@@ -362,9 +362,8 @@ export default function Walkthrough({ project, cost, onClose }: { project: Proje
   return (
     <div className="fixed inset-0 z-50 bg-black" data-testid="walkthrough">
       <Canvas
-        shadows
-        dpr={[1, 1.5]}
-        gl={{ antialias: true, preserveDrawingBuffer: true }}
+        key={quality}
+        {...canvasSettings(quality, 1.5)}
         onCreated={({ gl }) => {
           canvasRef.current = gl.domElement;
         }}
@@ -424,12 +423,10 @@ export default function Walkthrough({ project, cost, onClose }: { project: Proje
           )}
           {!locked && (
             <>
-              <button className="pointer-events-auto rounded-md bg-white/90 px-3 py-1.5 text-sm text-ink shadow hover:bg-white disabled:opacity-50" onClick={undo} disabled={!canUndo} title="Undo (⌘Z)">
-                Undo
-              </button>
-              <button className="pointer-events-auto rounded-md bg-white/90 px-3 py-1.5 text-sm text-ink shadow hover:bg-white disabled:opacity-50" onClick={redo} disabled={!canRedo} title="Redo (⇧⌘Z)">
-                Redo
-              </button>
+              <UndoButtons className="pointer-events-auto rounded-md bg-white/90 px-3 py-1.5 text-sm text-ink shadow hover:bg-white disabled:opacity-50" />
+              <span className="pointer-events-auto">
+                <GraphicsToggle dark />
+              </span>
             </>
           )}
           <button className="pointer-events-auto rounded-md bg-white/90 px-3 py-1.5 text-sm font-medium text-ink shadow hover:bg-white" onClick={onClose}>

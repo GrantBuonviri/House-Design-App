@@ -1,25 +1,20 @@
 "use client";
 
 import type { Stage } from "@/lib/model/schema";
-import { STAGE_INFO, stageAvailable } from "@/lib/stages";
+import { STAGE_INFO } from "@/lib/stages";
 
 export default function StageBar({ current, onSelect }: { current: Stage; onSelect: (s: Stage) => void }) {
   return (
-    <ol className="flex gap-1 overflow-x-auto">
+    <ol className="flex gap-1 overflow-x-auto" data-tour="stages">
       {STAGE_INFO.map((s, i) => {
         const active = s.id === current;
-        const available = stageAvailable(s.id);
         return (
           <li key={s.id}>
             <button
               onClick={() => onSelect(s.id)}
-              title={available ? undefined : `Coming in milestone ${s.milestone}`}
+              data-tour={`stage-${s.id}`}
               className={`flex items-center gap-2 rounded-md px-3 py-2 text-sm whitespace-nowrap ${
-                active
-                  ? "bg-accent text-white"
-                  : available
-                    ? "text-ink hover:bg-stone-100"
-                    : "text-muted hover:bg-stone-100"
+                active ? "bg-accent text-white" : "text-ink hover:bg-stone-100"
               }`}
             >
               <span

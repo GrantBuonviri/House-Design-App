@@ -23,6 +23,7 @@ import { roomSqft } from "@/lib/plan/measure";
 import type { PlanSelection } from "@/components/plan/types";
 import { concatMeshes, mergeParts, toGeometry } from "./geometry";
 import { withPatterns } from "./patternMaterial";
+import { canvasSettings, useGraphics } from "@/lib/graphics";
 
 /** Which walls the 3D view shows. Hidden walls leave a strip on the floor where they stood. */
 export type WallsShown = "all" | "outside" | "none";
@@ -99,6 +100,7 @@ function shownGroups(walls: WallsShown): Record<keyof Groups, boolean> {
  * with its room names, like a plan.
  */
 export default function House3DView(props: Props) {
+  const quality = useGraphics((g) => g.quality);
   const { plans, levels, basics, house3d, interior, exterior, plot, offset, levelId, height, editing, walls } = props;
   const [lookingDown, setLookingDown] = useState(false);
   const [topRequest, setTopRequest] = useState(0);
@@ -170,7 +172,7 @@ export default function House3DView(props: Props) {
   const drag = { ...props, frame, heights, onDragging: setDragging };
   return (
     <div style={{ height }} className="relative w-full overflow-hidden rounded-lg border border-line" data-testid="house-3d" data-editing={editing ? "on" : "off"} data-looking-down={lookingDown ? "on" : "off"}>
-      <Canvas shadows frameloop="demand" dpr={[1, 2]} gl={{ antialias: true, preserveDrawingBuffer: true }}>
+      <Canvas key={quality} {...canvasSettings(quality)} frameloop="demand">
         <color attach="background" args={[SKY]} />
         <fog attach="fog" args={[SKY, span * 6, span * 18]} />
         <PerspectiveCamera makeDefault fov={FOV} near={0.5} far={4000} position={props.viewOnly ? [center[0] + span * 0.5, span * 0.6, center[2] + span * 0.6] : [center[0] + span * 1.05, span * 0.85, center[2] + span * 1.25]} />

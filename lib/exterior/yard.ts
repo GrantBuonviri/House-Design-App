@@ -48,6 +48,9 @@ export function stripArea(s: Strip): number {
 }
 
 function onStrip(p: Point, s: Strip, margin = 0): boolean {
+  // Quick no for points well away from the strip's box.
+  const r = s.width / 2 + margin;
+  if (p.x < Math.min(s.a.x, s.b.x) - r || p.x > Math.max(s.a.x, s.b.x) + r || p.y < Math.min(s.a.y, s.b.y) - r || p.y > Math.max(s.a.y, s.b.y) + r) return false;
   const pr = project(p, s.a, s.b);
   return pr.t >= -margin && pr.t <= pr.length + margin && pr.d <= s.width / 2 + margin;
 }
@@ -97,7 +100,14 @@ export function yardLayout(plans: Plans, levels: Level[], basics: PlanBasics | n
         return { x: lb.x0, y: p.y };
     }
   };
-  const insideHouse = (p: Point, margin = 0) => all.some((poly) => pointInPolygon(p, poly) || (margin > 0 && distanceToPolygonEdge(p, poly) < margin));
+  // Each room's box, so most points can skip the slower outline checks.
+  const boxes = all.map((poly) => boundsOf(poly)!);
+  const insideHouse = (p: Point, margin = 0) =>
+    all.some((poly, i) => {
+      const b = boxes[i];
+      if (p.x < b.x0 - margin || p.x > b.x1 + margin || p.y < b.y0 - margin || p.y > b.y1 + margin) return false;
+      return pointInPolygon(p, poly) || (margin > 0 && distanceToPolygonEdge(p, poly) < margin);
+    });
   const outward = (og: OpeningGeometry): Point => (indoor.some((poly) => pointInPolygon(add(og.center, scale(og.n, exteriorIn / 2 + 12)), poly)) ? scale(og.n, -1) : og.n);
 
   // Doors on outside walls of the ground floors.

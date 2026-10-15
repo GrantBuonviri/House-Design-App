@@ -1,0 +1,155 @@
+import type { BubbleDiagram, DesignChoices, FloorPlan, Project } from "@/lib/model/schema";
+import { openingType, fixtureType } from "@/lib/plan/catalog";
+import { furnitureType } from "@/lib/plan/furniture";
+
+/**
+ * A short, plain description of what changed between two versions of a
+ * project, for the Undo and Redo buttons ("move Kitchen", "pick oak
+ * flooring"). Worked out by comparing them, so every edit gets a label
+ * without each screen having to name its changes.
+ */
+export function describeChange(before: Project, after: Project): string {
+  const same = (k: keyof Project) => before[k] === after[k] || json(before[k]) === json(after[k]);
+
+  if (!same("name")) return "rename the house";
+  if (!same("profile")) return "change your name";
+  if (!same("plot")) return after.plot ? (before.plot ? "pick other land" : "pick land") : "clear the land";
+  if (!same("discovery")) return describeRooms(before, after);
+  if (!same("brief")) return after.brief && before.brief ? "change the design brief" : after.brief ? "make the design brief" : "clear the design brief";
+  if (!same("bubbles")) return describeLevels(before, after, "bubbles", describeSketch) ?? "change the flow sketch";
+  if (!same("sketch")) return "change the flow sketch settings";
+  if (!same("floorPlans")) return describeLevels(before, after, "floorPlans", describePlan) ?? "change the floor plan";
+  if (!same("plan")) return before.plan.basics === null && after.plan.basics ? "answer the plan basics" : "change the plan settings";
+  if (!same("house3d")) return "change the roof";
+  if (!same("cost")) return "change the water and sewer setting";
+  if (!same("interior")) return describeDesign(before.interior, after.interior, "inside");
+  if (!same("exterior")) return describeDesign(before.exterior, after.exterior, "outside");
+  if (!same("levels")) return "change the floors";
+  return "last change";
+}
+
+function json(v: unknown): string {
+  return JSON.stringify(v ?? null);
+}
+
+/** The level with changes, then what changed on it. */
+function describeLevels<K extends "bubbles" | "floorPlans">(
+  before: Project,
+  after: Project,
+  key: K,
+  describe: (a: NonNullable<Project[K][string]> | undefined, b: NonNullable<Project[K][string]> | undefined) => string | null,
+): string | null {
+  const ids = new Set([...Object.keys(before[key]), ...Object.keys(after[key])]);
+  const changed = [...ids].filter((id) => json(before[key][id]) !== json(after[key][id]));
+  if (changed.length !== 1) return changed.length > 1 ? (key === "bubbles" ? "change the flow sketch" : "change the floor plan") : null;
+  return describe(
+    before[key][changed[0]] as NonNullable<Project[K][string]> | undefined,
+    after[key][changed[0]] as NonNullable<Project[K][string]> | undefined,
+  );
+}
+
+type Named = { id: string };
+
+/**
+ * What happened to one list: something added, deleted, or changed. Returns
+ * null when the list is the same.
+ */
+function describeList<T extends Named>(
+  a: T[],
+  b: T[],
+  name: (item: T) => string,
+  changed: (was: T, now: T) => string = (_, now) => `change ${name(now)}`,
+): string | null {
+  const before = new Map(a.map((x) => [x.id, x]));
+  const after = new Map(b.map((x) => [x.id, x]));
+  const added = b.filter((x) => !before.has(x.id));
+  const removed = a.filter((x) => !after.has(x.id));
+  const edited = b.filter((x) => before.has(x.id) && json(before.get(x.id)) !== json(x));
+  if (added.length + removed.length + edited.length === 0) return null;
+  if (added.length && !removed.length && !edited.length) return added.length === 1 ? `add ${name(added[0])}` : `add ${added.length} things`;
+  if (removed.length && !added.length && !edited.length) return removed.length === 1 ? `delete ${name(removed[0])}` : `delete ${removed.length} things`;
+  if (edited.length && !added.length && !removed.length) {
+    if (edited.length === 1) return changed(before.get(edited[0].id)!, edited[0]);
+    return edited.every((x) => moved(before.get(x.id)!, x)) ? `move ${edited.length} things` : `change ${edited.length} things`;
+  }
+  return null;
+}
+
+/** Only the position (and maybe turn) is different. */
+function moved(a: object, b: object): boolean {
+  const strip = (o: object) => json(Object.fromEntries(Object.entries(o).filter(([k]) => !["x", "y", "rotation", "polygon"].includes(k))));
+  return strip(a) === strip(b);
+}
+
+function describePlan(a: FloorPlan | undefined, b: FloorPlan | undefined): string | null {
+  if (!a || !b) return b ? "start the floor plan" : "clear the floor plan";
+  const roomName = (r: FloorPlan["rooms"][number]) => r.name || "a room";
+  const rooms = describeList(a.rooms, b.rooms, roomName, (was, now) =>
+    was.name !== now.name ? `rename ${roomName(was)}` : moved(was, now) ? `move ${roomName(now)}` : `change ${roomName(now)}`,
+  );
+  const lists = [
+    // Moving a room carries its doors, windows and fixtures along, so the room comes first.
+    rooms,
+    describeList(a.walls, b.walls, () => "a wall"),
+    describeList(a.openings, b.openings, (o) => article(openingType(o.style).label), (was, now) =>
+      was.host === now.host || json(was.host) === json(now.host) ? (was.offsetIn !== now.offsetIn && was.widthIn === now.widthIn ? `move ${article(openingType(now.style).label, true)}` : `change ${article(openingType(now.style).label, true)}`) : `move ${article(openingType(now.style).label, true)}`,
+    ),
+    describeList(a.stairs, b.stairs, () => "the stairs", (was, now) => (moved(was, now) ? "move the stairs" : "change the stairs")),
+    describeList(a.fixtures, b.fixtures, (f) => article(fixtureType(f.kind).label), (was, now) =>
+      moved(was, now) ? `move ${article(fixtureType(now.kind).label, true)}` : `change ${article(fixtureType(now.kind).label, true)}`,
+    ),
+    describeList(a.furniture, b.furniture, (f) => article(furnitureType(f.kind)?.label ?? "furniture"), (was, now) => {
+      const label = article(furnitureType(now.kind)?.label ?? "furniture", true);
+      return moved(was, now) ? `move ${label}` : was.color !== now.color ? `recolor ${label}` : `change ${label}`;
+    }),
+  ].filter((x): x is string => x !== null);
+  if (rooms) return rooms;
+  return lists.length === 1 ? lists[0] : lists.length ? "change the floor plan" : null;
+}
+
+function describeSketch(a: BubbleDiagram | undefined, b: BubbleDiagram | undefined): string | null {
+  if (!a || !b) return b ? "start the flow sketch" : "clear the flow sketch";
+  const label = (x: BubbleDiagram["bubbles"][number]) => x.label || "a room";
+  const lists = [
+    describeList(a.bubbles, b.bubbles, label, (was, now) =>
+      was.label !== now.label ? `rename ${label(was)}` : moved(was, now) ? `move ${label(now)}` : `resize ${label(now)}`,
+    ),
+    describeList(a.flows, b.flows, () => "a connection"),
+    describeList(a.strokes, b.strokes, () => "a pen mark"),
+    describeList(a.notes, b.notes, () => "a note", (was, now) => (was.text !== now.text ? "edit a note" : "move a note")),
+  ].filter((x): x is string => x !== null);
+  return lists.length === 1 ? lists[0] : lists.length ? "change the flow sketch" : null;
+}
+
+function describeRooms(before: Project, after: Project): string {
+  const a = before.discovery.answers;
+  const b = after.discovery.answers;
+  const name = (r: (typeof a.rooms)[number]) => r.name || "a room";
+  const rooms = describeList(a.rooms, b.rooms, name);
+  if (rooms) return rooms;
+  if (a.floorsAbove !== b.floorsAbove || a.floorsBelow !== b.floorsBelow) return "change the number of floors";
+  if (a.garageCars !== b.garageCars) return "change the garage size";
+  if (json(a.connections) !== json(b.connections)) return "change the room connections";
+  if (a.feel !== b.feel) return "edit how the house should feel";
+  return "change the rooms";
+}
+
+function describeDesign(a: DesignChoices, b: DesignChoices, where: "inside" | "outside"): string {
+  if (json(a.answers) !== json(b.answers)) return `change the ${where} style answers`;
+  if (a.shuffle !== b.shuffle || json(a.moodBoard) !== json(b.moodBoard)) return "shuffle the mood board";
+  if (a.accentPlace !== b.accentPlace) return "move the accent siding";
+  const before = new Map(a.selections.map((s) => [s.id, s]));
+  const after = new Map(b.selections.map((s) => [s.id, s]));
+  const added = b.selections.filter((s) => !before.has(s.id) || json(before.get(s.id)) !== json(s));
+  const removed = a.selections.filter((s) => !after.has(s.id));
+  if (added.length === 1) return `pick ${added[0].product.name}`;
+  if (added.length === 0 && removed.length === 1) return `remove ${removed[0].product.name}`;
+  return `change the ${where} picks`;
+}
+
+/** "a window", "an island"; with `the`, "the window". */
+function article(label: string, the = false): string {
+  const l = label.toLowerCase();
+  if (the) return `the ${l}`;
+  return /^[aeiou]/.test(l) ? `an ${l}` : `a ${l}`;
+}
