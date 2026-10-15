@@ -7,6 +7,7 @@ import { add, dist, dot, edgesOf, leftNormal, polygonArea, polygonCenter, rotate
 import { stairsDrawing, TREAD_IN } from "@/lib/plan/stairs";
 import { formatFeetInches } from "@/lib/model/units";
 import { houseFacts, type HouseFacts } from "@/lib/plans/house";
+import { siteLayout } from "@/lib/plans/lot";
 import { codeNum, codeRef } from "./data";
 import { escapeCheck, glassSqft, openableSqft } from "./openings";
 
@@ -68,6 +69,8 @@ export function inchText(n: number): string {
 }
 
 const f1 = (n: number) => (Math.round(n * 10) / 10).toLocaleString("en-US");
+/** 12.5 as "12.5 ft". */
+const feetText = (ft: number) => `${f1(ft)} ft`;
 const where = (l: Level, r?: PlanRoom) => (r ? `${r.name}, ${l.name.toLowerCase()}` : l.name);
 
 /** Rooms with the level they're on. */
@@ -473,7 +476,43 @@ export const RULES: CodeRule[] = [
     group: "Site",
     title: "The house is inside the lot's setbacks",
     ref: "design.frostDepth",
-    check: () => [{ status: "manual", text: "Check with Boise zoning for your lot. The \"My real lot\" form and site plan come in the next update." }],
+    check: (h) => {
+      const site = siteLayout(h.project);
+      if (!site?.real) return [{ status: "manual", text: "The site plan uses a sample lot. Fill in \"My real lot\" on the Plans page with your lot's sides and Boise zoning setbacks to check them." }];
+      const out: RuleResult[] = site.checks.map((c) => {
+        const side = `${c.name} setback`;
+        if (c.ok === null) return { status: "manual", text: `${side}: no setback entered. The house is ${feetText(c.providedFt)} from the ${c.side} lot line.` };
+        return c.ok
+          ? { status: "pass", text: `${side}: the house is ${feetText(c.providedFt)} from the lot line, ${feetText(c.requiredFt!)} needed.` }
+          : { status: "fail", text: `${side}: the house is ${feetText(c.providedFt)} from the lot line, ${feetText(c.requiredFt!)} needed.`, fix: "Move the house on the lot in \"My real lot\", or make the house smaller on that side." };
+      });
+      for (const e of site.easements) {
+        const c = site.checks.find((x) => x.side === e.side);
+        if (c && c.providedFt + 0.01 < e.widthFt) out.push({ status: "fail", text: `The house reaches into the ${feetText(e.widthFt)} ${e.kind.toLowerCase()} along the ${e.side} lot line.`, fix: "Nothing can be built on an easement. Move the house in \"My real lot\"." });
+      }
+      return out;
+    },
+  },
+  {
+    id: "lot-fire",
+    group: "Site",
+    title: `Walls at least ${codeNum("fire.ratedWallDistance")} ft and eaves at least ${codeNum("fire.projectionMinDistance")} ft from side and rear lot lines`,
+    ref: "fire.ratedWallDistance",
+    check: (h) => {
+      const site = siteLayout(h.project);
+      if (!site?.real) return [{ status: "manual", text: "Needs the real lot: fill in \"My real lot\" on the Plans page." }];
+      const wallMin = codeNum("fire.ratedWallDistance");
+      const eaveMin = codeNum("fire.projectionMinDistance");
+      const over = h.project.house3d.roof.overhangIn / 12;
+      return site.lines
+        .filter((l) => !l.street)
+        .map((l): RuleResult => {
+          const d = site.checks.find((c) => c.side === l.side)!.providedFt;
+          if (d < wallMin) return { status: "fail", text: `The house is ${feetText(d)} from the ${l.side} lot line: a wall that close needs a 1-hour fire rating and no openings.`, fix: `Move the house to ${feetText(wallMin)} or more from that line in "My real lot".` };
+          if (d - over < eaveMin) return { status: "fail", text: `The eaves reach to ${feetText(Math.max(0, d - over))} from the ${l.side} lot line.`, fix: `Keep eaves ${feetText(eaveMin)} or more from the line: move the house or shorten the overhang.` };
+          return { status: "pass", text: `${l.side[0].toUpperCase()}${l.side.slice(1)} lot line: walls ${feetText(d)} and eaves ${feetText(d - over)} away.` };
+        });
+    },
   },
   {
     id: "soil",
@@ -498,7 +537,8 @@ const SECTION: Record<string, string> = {
   electrical: "NEC 210.8, 210.11, 210.12, 210.52",
   mechanical: "IRC M1505",
   energy: "IECC R402",
-  setbacks: "Boise City Code Title 11",
+  setbacks: "Boise City Code Title 11 (zoning)",
+  "lot-fire": "IRC Table R302.1(1) as amended by Idaho",
   soil: "IRC R401.4",
   "stairs-handrail": "IRC R311.7.8",
   "egress-bedroom": "IRC R310.1, R310.2",

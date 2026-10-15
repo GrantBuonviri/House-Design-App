@@ -5,6 +5,12 @@ import type { Item, Sheet } from "./draw";
 import { houseFacts } from "./house";
 import { coverSheet, codeSheets } from "./sheets/general";
 import { floorPlanSheet } from "./sheets/floorPlan";
+import { elevationSheets } from "./sheets/elevations";
+import { siteSheet } from "./sheets/site";
+import { roofSheet } from "./sheets/roof";
+import { viewsSheet } from "./sheets/views";
+import { materialsSheet } from "./sheets/materials";
+import { landscapeSheet } from "./sheets/landscape";
 
 /**
  * Put a set of sheets together: draw each chosen sheet, then add the
@@ -39,6 +45,22 @@ export function buildSet(project: Project, opts: SetOptions = {}): Sheet[] {
     if (entry.id === "cover") drafts.push({ entry, number: entry.number, title: entry.title, items: coverSheet(project, { sheets: chosen, report: r.report, label: r.label }) });
     else if (entry.id === "code") {
       codeSheets(project, r.report).forEach((items, i) => drafts.push({ entry, number: i ? `${entry.number}.${i}` : entry.number, title: i ? `${entry.title} (continued)` : entry.title, items }));
+    } else if (entry.id === "site") {
+      const sp = siteSheet(project);
+      drafts.push({ entry, number: entry.number, title: entry.title, items: sp.items, scale: sp.scaleLabel });
+    } else if (entry.id === "roof") {
+      const rp = roofSheet(project);
+      drafts.push({ entry, number: entry.number, title: entry.title, items: rp.items, scale: rp.scaleLabel });
+    } else if (entry.id === "views") {
+      const v = viewsSheet(project);
+      drafts.push({ entry, number: entry.number, title: entry.title, items: v.items, scale: v.scaleLabel });
+    } else if (entry.id === "exterior-materials") {
+      drafts.push({ entry, number: entry.number, title: entry.title, items: materialsSheet(project) });
+    } else if (entry.id === "landscape") {
+      const lp = landscapeSheet(project);
+      drafts.push({ entry, number: entry.number, title: entry.title, items: lp.items, scale: lp.scaleLabel });
+    } else if (entry.id === "elevations") {
+      for (const e of elevationSheets(project)) drafts.push({ entry, number: e.part ? `A-${201 + e.part}` : entry.number, title: e.parts > 1 ? `${entry.title} (${e.part + 1} of ${e.parts})` : entry.title, items: e.items, scale: e.scaleLabel });
     } else if (entry.levelId) {
       const level = h.levels.find((l) => l.id === entry.levelId)!;
       const fp = floorPlanSheet(project, level);

@@ -9,7 +9,7 @@ import { z } from "zod";
  * Angles are degrees clockwise from north (0 = N, 90 = E).
  */
 
-export const SCHEMA_VERSION = 10;
+export const SCHEMA_VERSION = 11;
 
 export const Point = z.object({ x: z.number(), y: z.number() });
 export type Point = z.infer<typeof Point>;
@@ -404,6 +404,54 @@ export type CostSettings = z.infer<typeof CostSettings>;
 /** Paper for the plan sheets: 24" x 36" (ARCH D), or a half-size 12" x 18" print for home printers. */
 export const SHEET_SIZES = ["full", "half"] as const;
 
+/** The sides of a lot, as seen from the street looking at it. */
+export const LOT_SIDES = ["front", "right", "rear", "left"] as const;
+export type LotSide = (typeof LOT_SIDES)[number];
+
+/** A strip of the lot kept for utilities, drainage or access, along one side. */
+export const Easement = z.object({
+  id: z.string(),
+  side: z.enum(LOT_SIDES),
+  widthFt: z.number().min(0).max(200),
+  kind: z.string().max(80).default("Public utility easement"),
+});
+export type Easement = z.infer<typeof Easement>;
+
+/**
+ * The owner's real lot, from the plat or a survey ("My real lot"): its side
+ * lengths in feet, which way the street is, setbacks, easements, and where
+ * the house sits on it. The site plan and setback checks use it; without it
+ * they use the made-up lot and say so.
+ */
+export const RealLot = z.object({
+  /** A rectangle (front = rear, left = right), or four sides with the front and rear parallel. */
+  shape: z.enum(["rectangle", "four-sides"]).default("rectangle"),
+  frontFt: z.number().min(0).max(5000).default(0),
+  rearFt: z.number().min(0).max(5000).default(0),
+  leftFt: z.number().min(0).max(5000).default(0),
+  rightFt: z.number().min(0).max(5000).default(0),
+  /** The compass side of the lot the street is on. */
+  streetSide: z.enum(["N", "E", "S", "W"]).default("S"),
+  /** A corner lot: the side street, seen from the main street. */
+  sideStreet: z.enum(["none", "left", "right"]).default("none"),
+  /** Setbacks from zoning, feet. Left empty, that side isn't checked. */
+  setbacks: z
+    .object({
+      front: z.number().min(0).max(500).nullable().default(null),
+      side: z.number().min(0).max(500).nullable().default(null),
+      rear: z.number().min(0).max(500).nullable().default(null),
+      streetSide: z.number().min(0).max(500).nullable().default(null),
+    })
+    .prefault({}),
+  easements: z.array(Easement).default([]),
+  /** Where the house sits: feet from the front line to the house, and from the left line. Empty: centered, just behind the front setback. */
+  houseFrontFt: z.number().min(0).max(5000).nullable().default(null),
+  houseLeftFt: z.number().min(0).max(5000).nullable().default(null),
+  /** The zoning height limit, feet, if known. */
+  heightLimitFt: z.number().min(0).max(200).nullable().default(null),
+});
+export type RealLot = z.infer<typeof RealLot>;
+
 /** The "Plan details" form and export choices. The sheets themselves are drawn from the project every time. */
 export const PlansSettings = z.object({
   /** The real site address and county parcel number. Left empty, the sheets print "TBD". */
@@ -414,6 +462,8 @@ export const PlansSettings = z.object({
   sheetSize: z.enum(SHEET_SIZES).default("full"),
   /** Sheet ids left out of "Export selected". Every ready sheet is included unless it's listed here. */
   excluded: z.array(z.string()).default([]),
+  /** "My real lot". Null until it's filled in. */
+  lot: RealLot.nullable().default(null),
 });
 export type PlansSettings = z.infer<typeof PlansSettings>;
 

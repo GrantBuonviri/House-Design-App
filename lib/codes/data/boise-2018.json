@@ -1746,6 +1746,209 @@
         "source": "https://energycodes.gov/technical-assistance/faqs/what-are-requirements-duct-leakage-testing"
       },
       "resolved": "2026-10-15: second check corrected the test type (total leakage, not to outside)"
+    },
+    "site.gradeFall": {
+      "value": 6,
+      "unit": "in",
+      "code": "IRC 2018",
+      "section": "R401.3",
+      "amendment": null,
+      "source": "https://jerseycounty-il.gov/wp-content/uploads/2025/01/Residential-Building-Guide-5_22.pdf",
+      "checked": "2026-10-15",
+      "note": "Read in a 2018 IRC county guide (Jersey County IL), 6 in within first 10 ft. Not listed among Idaho amendments (Justia IDAPA 24.39.30.600 page); Boise City Code Title 9 not checked.",
+      "secondCheck": {
+        "verdict": "agree",
+        "source": "https://www.seattle.gov/documents/Departments/SDCI/Codes/SeattleResidentialCode/2018SRCChapter4.pdf"
+      }
+    },
+    "site.gradeFallDistance": {
+      "value": 10,
+      "unit": "ft",
+      "code": "IRC 2018",
+      "section": "R401.3",
+      "amendment": null,
+      "source": "https://jerseycounty-il.gov/wp-content/uploads/2025/01/Residential-Building-Guide-5_22.pdf",
+      "checked": "2026-10-15",
+      "note": "Same source. Not listed among Idaho amendments (Justia IDAPA 24.39.30.600 page); Boise City Code Title 9 not checked.",
+      "secondCheck": {
+        "verdict": "agree",
+        "source": "https://www.seattle.gov/documents/Departments/SDCI/Codes/SeattleResidentialCode/2018SRCChapter4.pdf"
+      }
+    },
+    "fire.ratedWallDistance": {
+      "value": 3,
+      "unit": "ft",
+      "code": "IRC 2018",
+      "section": "Table R302.1(1)",
+      "amendment": "Idaho replaced Table R302.1(1) (IDAPA 24.39.30.600); Boise City Code 9-1B-35 repeats it",
+      "source": "https://regulations.justia.com/states/idaho/24/24-39-30/section-24-39-30-600/",
+      "checked": "2026-10-15",
+      "note": "Model 2018 IRC says 5 ft; Idaho replaces the table so walls need 1-hour only under 3 ft (0-hour at 3 ft+). Source text writes the 3 ft boundary inconsistently (> 3 vs >= 3); confirm against the official table.",
+      "secondCheck": {
+        "verdict": "agree",
+        "source": "https://regulations.justia.com/states/idaho/24/24-39-30/section-24-39-30-600/"
+      }
+    },
+    "fire.noOpeningsDistance": {
+      "value": 3,
+      "unit": "ft",
+      "code": "IRC 2018",
+      "section": "Table R302.1(1)",
+      "amendment": "Idaho replaced Table R302.1(1) (IDAPA 24.39.30.600); Boise City Code 9-1B-35 repeats it",
+      "source": "https://regulations.justia.com/states/idaho/24/24-39-30/section-24-39-30-600/",
+      "checked": "2026-10-15",
+      "note": "Idaho table: openings not allowed under 3 ft, max 25% of wall area from 3 to under 5 ft, unlimited at 5 ft+.",
+      "secondCheck": {
+        "verdict": "agree",
+        "source": "https://regulations.justia.com/states/idaho/24/24-39-30/section-24-39-30-600/"
+      }
+    },
+    "fire.projectionMinDistance": {
+      "value": 2,
+      "unit": "ft",
+      "code": "IRC 2018",
+      "section": "Table R302.1(1)",
+      "amendment": "Idaho replaced Table R302.1(1) (IDAPA 24.39.30.600); Boise City Code 9-1B-35 repeats it",
+      "source": "https://regulations.justia.com/states/idaho/24/24-39-30/section-24-39-30-600/",
+      "checked": "2026-10-15",
+      "note": "Idaho table lists 2 to under 3 ft projections as 1-hour underside/heavy timber/FRT; no projection row shown for under 2 ft (model IRC: not allowed under 2 ft), so 2 is the model-IRC value. Eave underside may be 0-hour with fireblocking (footnote a). Unverified for under 2 ft.",
+      "secondCheck": {
+        "verdict": "agree",
+        "source": "https://regulations.justia.com/states/idaho/24/24-39-30/section-24-39-30-600/"
+      },
+      "resolved": "First source was secondary or another edition; the second check confirmed the same number in a 2018-based source."
+    },
+    "address.minHeight": {
+      "value": 4,
+      "unit": "in",
+      "code": "IRC 2018",
+      "section": "R319.1",
+      "amendment": null,
+      "source": "https://www.sandiego.gov/sites/default/files/dsddbcs_tac_04.pdf",
+      "checked": "2026-10-15",
+      "note": "Read in a 2016 California code document and a 2009 IRC quote, not a 2018 IRC page; the number is the same across editions I know of. Not listed among Idaho amendments (Justia IDAPA 24.39.30.600 page); Boise City Code Title 9 not checked.",
+      "secondCheck": {
+        "verdict": "agree",
+        "source": "https://www.springfieldmo.gov/DocumentCenter/View/41269/2018-IRC-Adoptive-Ordinance"
+      },
+      "resolved": "First source was secondary or another edition; the second check confirmed the same number in a 2018-based source."
+    },
+    "address.minStroke": {
+      "value": 0.5,
+      "unit": "in",
+      "code": "IRC 2018",
+      "section": "R319.1",
+      "amendment": null,
+      "source": "https://www.sandiego.gov/sites/default/files/dsddbcs_tac_04.pdf",
+      "checked": "2026-10-15",
+      "note": "Same source and caveat as address.minHeight.",
+      "secondCheck": {
+        "verdict": "agree",
+        "source": "https://www.springfieldmo.gov/DocumentCenter/View/41269/2018-IRC-Adoptive-Ordinance"
+      },
+      "resolved": "First source was secondary or another edition; the second check confirmed the same number in a 2018-based source."
+    },
+    "foundation.exposedAboveGrade": {
+      "value": 6,
+      "unit": "in",
+      "code": "IRC 2018",
+      "section": "R404.1.6",
+      "amendment": null,
+      "source": "https://jerseycounty-il.gov/wp-content/uploads/2025/01/Residential-Building-Guide-5_22.pdf",
+      "checked": "2026-10-15",
+      "note": "Read in a 2018 IRC county guide. Not listed among Idaho amendments (Justia IDAPA 24.39.30.600 page); Boise City Code Title 9 not checked.",
+      "secondCheck": {
+        "verdict": "agree",
+        "source": "https://jerseycounty-il.gov/wp-content/uploads/2025/01/Residential-Building-Guide-5_22.pdf"
+      }
+    },
+    "foundation.exposedAboveGradeVeneer": {
+      "value": 4,
+      "unit": "in",
+      "code": "IRC 2018",
+      "section": "R404.1.6",
+      "amendment": null,
+      "source": "https://jerseycounty-il.gov/wp-content/uploads/2025/01/Residential-Building-Guide-5_22.pdf",
+      "checked": "2026-10-15",
+      "note": "Same source. Not listed among Idaho amendments (Justia IDAPA 24.39.30.600 page); Boise City Code Title 9 not checked.",
+      "secondCheck": {
+        "verdict": "agree",
+        "source": "https://jerseycounty-il.gov/wp-content/uploads/2025/01/Residential-Building-Guide-5_22.pdf"
+      }
+    },
+    "siding.woodClearanceToGrade": {
+      "value": 6,
+      "unit": "in",
+      "code": "IRC 2018",
+      "section": "R317.1",
+      "amendment": null,
+      "source": "https://bsd.dli.mt.gov/_docs/Training/Engineered-Wood-Products-Conventional-Wood-Framing-Weds-PM.pdf",
+      "checked": "2026-10-15",
+      "note": "Read in a Montana training deck (edition not stated, cites 2021 IRC elsewhere), not the 2018 text. Also 2 in from concrete steps/porch/patio slabs. Not listed among Idaho amendments (Justia IDAPA 24.39.30.600 page); Boise City Code Title 9 not checked.",
+      "secondCheck": {
+        "verdict": "agree",
+        "source": "https://jerseycounty-il.gov/wp-content/uploads/2025/01/Residential-Building-Guide-5_22.pdf"
+      },
+      "resolved": "First source was secondary or another edition; the second check confirmed the same number in a 2018-based source."
+    },
+    "roof.shingleMinSlope": {
+      "value": 2,
+      "unit": "in per 12",
+      "code": "IRC 2018",
+      "section": "R905.2.2",
+      "amendment": null,
+      "source": "https://hopkinsmn.com/615/Asphalt-Shingles-R9052",
+      "checked": "2026-10-15",
+      "note": "Read in a city page (edition unnamed) and the 2025 California code; same 2:12 as model 2018 IRC. Not listed among Idaho amendments (Justia IDAPA 24.39.30.600 page); Boise City Code Title 9 not checked.",
+      "secondCheck": {
+        "verdict": "agree",
+        "source": "https://seattle.gov/documents/departments/sdci/codes/seattleresidentialcode/2018srcchapter9.pdf"
+      }
+    },
+    "roof.shingleDoubleUnderlaymentBelow": {
+      "value": 4,
+      "unit": "in per 12",
+      "code": "IRC 2018",
+      "section": "R905.2.2 / Table R905.1.1(2)",
+      "amendment": null,
+      "source": "https://gocodebook.com/library/us/ca/ca-residential-code/chapter-9-roof-assemblies/section-r905-requirements-for-roof-coverings",
+      "checked": "2026-10-15",
+      "note": "Read in the 2025 California Residential Code, not 2018 IRC: two layers for 2:12 up to 4:12. Not listed among Idaho amendments (Justia IDAPA 24.39.30.600 page); Boise City Code Title 9 not checked.",
+      "secondCheck": {
+        "verdict": "agree",
+        "source": "https://seattle.gov/documents/departments/sdci/codes/seattleresidentialcode/2018srcchapter9.pdf"
+      },
+      "resolved": "First source was secondary or another edition; the second check confirmed the same number in a 2018-based source."
+    },
+    "roof.metalLappedMinSlope": {
+      "value": 3,
+      "unit": "in per 12",
+      "code": "IRC 2018",
+      "section": "R905.10.2",
+      "amendment": null,
+      "source": "https://gocodebook.com/library/us/ca/ca-residential-code/chapter-9-roof-assemblies/section-r905-requirements-for-roof-coverings",
+      "checked": "2026-10-15",
+      "note": "Read in the 2025 California Residential Code, not 2018 IRC. Not listed among Idaho amendments (Justia IDAPA 24.39.30.600 page); Boise City Code Title 9 not checked.",
+      "secondCheck": {
+        "verdict": "agree",
+        "source": "https://seattle.gov/documents/departments/sdci/codes/seattleresidentialcode/2018srcchapter9.pdf"
+      },
+      "resolved": "First source was secondary or another edition; the second check confirmed the same number in a 2018-based source."
+    },
+    "roof.drainageNote": {
+      "value": false,
+      "unit": "boolean",
+      "code": "IRC 2018",
+      "section": "R801.3",
+      "amendment": null,
+      "source": "https://forum.nachi.org/t/are-gutters-downspouts-required/170255",
+      "checked": "2026-10-15",
+      "note": "Forum quote: gutters only required where expansive or collapsible soils are known to exist. Not read in the 2018 IRC text itself. Not listed among Idaho amendments (Justia IDAPA 24.39.30.600 page); Boise City Code Title 9 not checked.",
+      "secondCheck": {
+        "verdict": "agree",
+        "source": "https://www.seattle.gov/documents/Departments/SDCI/Codes/SeattleResidentialCode/2018SRCChapter8.pdf"
+      },
+      "resolved": "First source was secondary or another edition; the second check confirmed the same number in a 2018-based source."
     }
   }
 }
