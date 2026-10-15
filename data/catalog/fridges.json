@@ -1,0 +1,102 @@
+[
+  {
+    "id": "frigidaire-frte1936aw-white",
+    "name": "19 Cu. Ft. Garage Ready Top Freezer Refrigerator, White",
+    "brand": "Frigidaire",
+    "line": "Top Freezer",
+    "sku": "FRTE1936AW",
+    "url": "https://townappliance.com/products/frigidaire-frte1936aw-top-freezer-freestanding-refrigerator",
+    "price": 642.01,
+    "unit": "each",
+    "priceSource": "listed",
+    "priceNote": "$642.01 at Town Appliance (list $949)",
+    "lastChecked": "2026-10-15",
+    "kind": "fridge",
+    "styles": [
+      "modern-farmhouse",
+      "scandinavian",
+      "craftsman"
+    ],
+    "tags": [
+      "white",
+      "neutral"
+    ],
+    "color": "#f5f5f3",
+    "pattern": "solid"
+  },
+  {
+    "id": "whirlpool-wrff3036rz-stainless",
+    "name": "36 in. 25.2 Cu. Ft. French Door Refrigerator, Fingerprint Resistant Stainless Steel",
+    "brand": "Whirlpool",
+    "line": "French Door",
+    "sku": "WRFF3036RZ",
+    "url": "https://www.bigsandysuperstore.com/product/whirlpool-36-in-252-cu-ft-french-door-refrigerator-wrff3036r-1619762",
+    "price": 1599.0,
+    "unit": "each",
+    "priceSource": "listed",
+    "priceNote": "$1,599.00 at Big Sandy Superstore (sale; reg. $2,299)",
+    "lastChecked": "2026-10-15",
+    "kind": "fridge",
+    "styles": [
+      "transitional",
+      "modern-farmhouse",
+      "craftsman"
+    ],
+    "tags": [
+      "stainless",
+      "neutral"
+    ],
+    "color": "#b9bbbb",
+    "pattern": "metal"
+  },
+  {
+    "id": "samsung-bespoke-rf30bb6600ql-stainless",
+    "name": "Bespoke 36 in. 30 Cu. Ft. 3-Door French Door Refrigerator with Beverage Center, Stainless Steel",
+    "brand": "Samsung",
+    "line": "Bespoke",
+    "sku": "RF30BB6600QL",
+    "url": "https://www.build.com/samsung-rf30bb6600/s1843062",
+    "price": 1899.0,
+    "unit": "each",
+    "priceSource": "listed",
+    "priceNote": "$1,899.00 at Build.com (sale; was $3,099)",
+    "lastChecked": "2026-10-15",
+    "kind": "fridge",
+    "styles": [
+      "modern",
+      "industrial",
+      "transitional"
+    ],
+    "tags": [
+      "stainless",
+      "cool"
+    ],
+    "color": "#b7b9ba",
+    "pattern": "metal"
+  },
+  {
+    "id": "ge-gss25iynfs-stainless",
+    "name": "25.1 cu. ft. Side by Side Refrigerator, Fingerprint Resistant Stainless Steel",
+    "brand": "GE",
+    "line": "Side by Side",
+    "sku": "GSS25IYNFS",
+    "url": "https://www.homedepot.com/p/GE-25-1-cu-ft-Side-by-Side-Refrigerator-in-Fingerprint-Resistant-Stainless-Steel-GSS25IYNFS/309003622",
+    "price": 2199.0,
+    "unit": "each",
+    "priceSource": "listed",
+    "priceNote": "$2,199.00 at Home Depot",
+    "lastChecked": "2026-10-15",
+    "kind": "fridge",
+    "styles": [
+      "mountain-modern",
+      "industrial",
+      "craftsman"
+    ],
+    "tags": [
+      "stainless",
+      "neutral"
+    ],
+    "color": "#babcbc",
+    "pattern": "metal"
+  }
+]

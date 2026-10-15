@@ -484,6 +484,7 @@ export default function PlanStage({ onContinue, onGoToSketch }: { onContinue: ()
               levels={levels}
               basics={basics}
               house3d={project.house3d}
+              interior={project.interior.selections}
               plot={plot}
               offset={offset}
               levelId={level.id}
@@ -657,6 +658,7 @@ export default function PlanStage({ onContinue, onGoToSketch }: { onContinue: ()
           levels={levels}
           basics={basics}
           house3d={project.house3d}
+          interior={project.interior.selections}
           plot={plot}
           offset={offset}
           levelId={previewing.levelId}

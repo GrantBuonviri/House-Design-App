@@ -4,7 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { Canvas, useFrame, useThree, type ThreeEvent } from "@react-three/fiber";
 import { Line, OrbitControls, PerspectiveCamera } from "@react-three/drei";
 import * as THREE from "three";
-import type { FloorPlan, House3D, Level, PlanBasics, Plot, Point } from "@/lib/model/schema";
+import type { FloorPlan, House3D, Level, PlanBasics, Plot, Point, Selection } from "@/lib/model/schema";
 import { buildLevel, buildRoofs, dugOut, houseBounds, type HouseContext, type Part, type Pick } from "@/lib/house3d/build";
 import { isLookingDown, orbitOf, orbitPosition, topViewOrbit, tweenOrbit, type Orbit } from "@/lib/house3d/camera";
 import { levelHeights, type LevelHeights } from "@/lib/house3d/levels";
@@ -21,6 +21,7 @@ import { polygonCenter } from "@/lib/plan/geometry";
 import { roomSqft } from "@/lib/plan/measure";
 import type { PlanSelection } from "@/components/plan/types";
 import { concatMeshes, mergeParts, toGeometry } from "./geometry";
+import { withPatterns } from "./patternMaterial";
 
 /** Which walls the 3D view shows. Hidden walls leave a strip on the floor where they stood. */
 export type WallsShown = "all" | "outside" | "none";
@@ -31,6 +32,8 @@ type Props = {
   levels: Level[];
   basics: PlanBasics | null;
   house3d: House3D;
+  /** Interior picks, for finishes. */
+  interior?: Selection[];
   plot: Plot | null;
   offset: Point;
   levelId: string;
@@ -42,6 +45,8 @@ type Props = {
   /** Clicking and dragging select and move things only while editing; otherwise dragging just turns the view. */
   editing: boolean;
   onEditing: (on: boolean) => void;
+  /** Just for looking (no Edit button), with the camera starting closer in. */
+  viewOnly?: boolean;
   selection: PlanSelection;
   snap: boolean;
   height: number;
@@ -53,7 +58,7 @@ const SKY = "#dfe9f2";
 const ACCENT = "#2f6b4f";
 const FOV = 40;
 
-export const solidMaterial = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.9, metalness: 0 });
+export const solidMaterial = withPatterns(new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.9, metalness: 0 }));
 export const glassMaterial = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.15, metalness: 0, transparent: true, opacity: 0.35, depthWrite: false });
 const highlightMaterial = new THREE.MeshBasicMaterial({
   color: ACCENT,
@@ -91,7 +96,7 @@ function shownGroups(walls: WallsShown): Record<keyof Groups, boolean> {
  * with its room names, like a plan.
  */
 export default function House3DView(props: Props) {
-  const { plans, levels, basics, house3d, plot, offset, levelId, height, editing, walls } = props;
+  const { plans, levels, basics, house3d, interior, plot, offset, levelId, height, editing, walls } = props;
   const [lookingDown, setLookingDown] = useState(false);
   const [topRequest, setTopRequest] = useState(0);
   const cutAway = props.cutAway || lookingDown;
@@ -110,7 +115,7 @@ export default function House3DView(props: Props) {
 
   const heights = useMemo(() => levelHeights(levels, basics), [levels, basics]);
   const site = useMemo(() => siteFor(plot, offset, settled), [plot, offset, settled]);
-  const ctx = useMemo(() => ({ levels, basics, house3d, site, frame, heights }), [levels, basics, house3d, site, frame, heights]);
+  const ctx = useMemo(() => ({ levels, basics, house3d, site, frame, heights, interior }), [levels, basics, house3d, site, frame, heights, interior]);
 
   // Each floor is rebuilt only when it (or a floor next to it) changes.
   const cache = useRef(new Map<string, { key: unknown[]; parts: Part[] }>());
@@ -165,7 +170,7 @@ export default function House3DView(props: Props) {
       <Canvas shadows frameloop="demand" dpr={[1, 2]} gl={{ antialias: true, preserveDrawingBuffer: true }}>
         <color attach="background" args={[SKY]} />
         <fog attach="fog" args={[SKY, span * 6, span * 18]} />
-        <PerspectiveCamera makeDefault fov={FOV} near={0.5} far={4000} position={[center[0] + span * 1.05, span * 0.85, center[2] + span * 1.25]} />
+        <PerspectiveCamera makeDefault fov={FOV} near={0.5} far={4000} position={props.viewOnly ? [center[0] + span * 0.5, span * 0.6, center[2] + span * 0.6] : [center[0] + span * 1.05, span * 0.85, center[2] + span * 1.25]} />
         <OrbitControls makeDefault target={center} minPolarAngle={0} maxPolarAngle={Math.PI * 0.495} minDistance={6} maxDistance={span * 10} enableDamping={false} />
         <CameraRig topRequest={topRequest} goal={topViewOrbit(center, span, FOV)} onLookingDown={setLookingDown} />
         {/* A mid-afternoon sun shows the shape. */}
@@ -207,13 +212,15 @@ export default function House3DView(props: Props) {
         >
           Top view
         </button>
-        <button
-          className={`rounded-md px-3 py-1.5 text-sm font-semibold shadow-sm ${editing ? "bg-ink text-white hover:bg-stone-700" : "bg-accent text-white hover:opacity-90"}`}
-          aria-pressed={editing}
-          onClick={() => props.onEditing(!editing)}
-        >
-          {editing ? "Done editing" : "Edit"}
-        </button>
+        {!props.viewOnly && (
+          <button
+            className={`rounded-md px-3 py-1.5 text-sm font-semibold shadow-sm ${editing ? "bg-ink text-white hover:bg-stone-700" : "bg-accent text-white hover:opacity-90"}`}
+            aria-pressed={editing}
+            onClick={() => props.onEditing(!editing)}
+          >
+            {editing ? "Done editing" : "Edit"}
+          </button>
+        )}
       </div>
       {roofs.fellBack && props.roof && (
         <p className="absolute bottom-2 left-2 rounded bg-white/90 px-2 py-1 text-xs text-muted">This outline was too tricky for a sloped roof, so part of it has a flat one.</p>

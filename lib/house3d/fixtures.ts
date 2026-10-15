@@ -2,6 +2,7 @@ import type { Fixture, Point } from "@/lib/model/schema";
 import { add, rotate } from "@/lib/plan/geometry";
 import { COLORS } from "./colors";
 import { MeshBuilder, type Frame, type RGB } from "./mesh";
+import type { RoomLook } from "./finishes";
 
 /**
  * Fixtures and appliances as simple 3D shapes. Each is drawn in its own
@@ -65,7 +66,21 @@ export function fixtureSpan(kind: string): { z0: number; z1: number } {
   return { z0: Math.min(...solid.map((p) => p.z0)), z1: Math.max(...solid.map((p) => p.z1)) };
 }
 
-export function drawFixture(solid: MeshBuilder, glass: MeshBuilder, f: Frame, fx: Fixture, floorIn: number) {
+/** A fixture piece's color with the room's picked finishes: cabinets, counters, the sink and appliances. */
+function finished(kind: string, color: RGB, look?: RoomLook): RGB {
+  if (!look) return color;
+  if (color === COLORS.cabinet) return kind === "vanity" ? look.vanity : look.cabinet;
+  if (color === COLORS.counter) return look.counter;
+  if (color === COLORS.steel) {
+    if (kind === "sink") return look.sink;
+    if (kind === "fridge") return look.fridge;
+    if (kind === "range") return look.range;
+    if (kind === "dishwasher") return look.dishwasher;
+  }
+  return color;
+}
+
+export function drawFixture(solid: MeshBuilder, glass: MeshBuilder, f: Frame, fx: Fixture, floorIn: number, look?: RoomLook) {
   const pieces = SHAPES[fx.kind] ?? [{ z0: 0, z1: 30, color: COLORS.cabinet }];
   const c: Point = { x: fx.x, y: fx.y };
   for (const p of pieces) {
@@ -73,7 +88,7 @@ export function drawFixture(solid: MeshBuilder, glass: MeshBuilder, f: Frame, fx
     const mid = add(c, rotate(local, fx.rotation ?? 0));
     const w = (p.w ?? 1) * fx.widthIn;
     const d = (p.d ?? 1) * fx.depthIn;
-    (p.glass ? glass : solid).block(f, mid, fx.rotation ?? 0, w, d, floorIn + p.z0, floorIn + p.z1, p.color);
+    (p.glass ? glass : solid).block(f, mid, fx.rotation ?? 0, w, d, floorIn + p.z0, floorIn + p.z1, finished(fx.kind, p.color, look));
   }
 }
 

@@ -33,7 +33,10 @@ export default function Walkthrough({ project, onClose }: { project: Project; on
   });
   const heights = useMemo(() => levelHeights(levels, basics), [levels, basics]);
   const site = useMemo(() => siteFor(project.plot, offset, plans), [project.plot, offset, plans]);
-  const ctx: HouseContext = useMemo(() => ({ levels, basics, house3d: project.house3d, site, frame }), [levels, basics, project.house3d, site, frame]);
+  const ctx: HouseContext = useMemo(
+    () => ({ levels, basics, house3d: project.house3d, site, frame, interior: project.interior.selections }),
+    [levels, basics, project.house3d, site, frame, project.interior.selections],
+  );
   const model = useMemo(() => buildHouse(plans, ctx), [plans, ctx]);
   const world = useMemo(() => walkWorld(plans, { ...ctx, heights }), [plans, ctx, heights]);
 

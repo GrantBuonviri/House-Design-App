@@ -1,0 +1,201 @@
+[
+  {
+    "id": "everbilt-domed-knob-matte-black",
+    "name": "Domed 1-1/4 in. Matte Black Classic Round Cabinet Knob (10-Pack)",
+    "brand": "Everbilt",
+    "line": "Domed",
+    "sku": "10XCAB000079WMB",
+    "url": "https://homedepot.com/p/Everbilt-Domed-1-1-4-in-Matte-Black-Classic-Round-Cabinet-Knob-10-Pack-10XCAB000079WMB/308887076",
+    "price": 1.0,
+    "unit": "each",
+    "priceSource": "listed",
+    "priceNote": "$9.98 per 10-pack at Home Depot -> $1.00 each",
+    "lastChecked": "2026-10-15",
+    "kind": "knob",
+    "styles": [
+      "modern-farmhouse",
+      "craftsman",
+      "industrial"
+    ],
+    "tags": [
+      "matte-black",
+      "bold"
+    ],
+    "color": "#1d1d1d",
+    "pattern": "metal"
+  },
+  {
+    "id": "liberty-ball-top-knob-satin-nickel",
+    "name": "Ball Top 1-1/4 in. (32 mm) Satin Nickel Round Cabinet Knob",
+    "brand": "Liberty",
+    "line": "Ball Top",
+    "sku": "P10614H-SN-C",
+    "url": "https://homedepot.com/p/Liberty-Liberty-Ball-Top-1-1-4-in-32-mm-Satin-Nickel-Round-Cabinet-Knob-P10614H-SN-C/204143982",
+    "price": 2.88,
+    "unit": "each",
+    "priceSource": "listed",
+    "priceNote": "$2.88 at Home Depot",
+    "lastChecked": "2026-10-15",
+    "kind": "knob",
+    "styles": [
+      "transitional",
+      "scandinavian"
+    ],
+    "tags": [
+      "brushed-nickel",
+      "cool"
+    ],
+    "color": "#b4b3ae",
+    "pattern": "metal"
+  },
+  {
+    "id": "liberty-cup-pull-satin-nickel",
+    "name": "Cup Dual Mount 2-1/2 or 3 in. (64/76 mm) Satin Nickel Cabinet Drawer Cup Pull",
+    "brand": "Liberty",
+    "line": "Cup",
+    "sku": "PN1053-BSN-C",
+    "url": "https://www.homedepot.com/p/202023711",
+    "price": 3.97,
+    "unit": "each",
+    "priceSource": "listed",
+    "priceNote": "$3.97 at Home Depot",
+    "lastChecked": "2026-10-15",
+    "kind": "pull",
+    "styles": [
+      "modern-farmhouse",
+      "craftsman",
+      "transitional"
+    ],
+    "tags": [
+      "brushed-nickel",
+      "neutral"
+    ],
+    "color": "#b1afa9",
+    "pattern": "metal"
+  },
+  {
+    "id": "amerock-bar-pulls-matte-black",
+    "name": "Bar Pulls 5-1/16 in. (128mm) Center-to-Center Matte Black Bar Cabinet Pull (10-Pack)",
+    "brand": "Amerock",
+    "line": "Bar Pulls",
+    "sku": "10BX40517MB",
+    "url": "https://homedepot.com/p/Amerock-Bar-Pulls-5-1-16-in-128mm-Center-to-Center-Matte-Black-Bar-Cabinet-Pull-10-Pack-10BX40517MB/334543944",
+    "price": 4.24,
+    "unit": "each",
+    "priceSource": "listed",
+    "priceNote": "$42.42 per 10-pack at Home Depot -> $4.24 each",
+    "lastChecked": "2026-10-15",
+    "kind": "pull",
+    "styles": [
+      "modern",
+      "industrial",
+      "mountain-modern",
+      "scandinavian"
+    ],
+    "tags": [
+      "matte-black",
+      "bold"
+    ],
+    "color": "#1c1c1c",
+    "pattern": "metal"
+  },
+  {
+    "id": "amerock-bridgeport-champagne-bronze",
+    "name": "Bridgeport 5-1/16 in. (128mm) Traditional Champagne Bronze Bar Cabinet Pull (10-Pack)",
+    "brand": "Amerock",
+    "line": "Bridgeport",
+    "sku": "10BX37032CZ",
+    "url": "https://homedepot.com/p/Amerock-10-Pack-Bridgeport-5-1-16-in-128mm-Traditional-Champagne-Bronze-Bar-Cabinet-Pull-10BX37032CZ/327232317",
+    "price": 4.57,
+    "unit": "each",
+    "priceSource": "listed",
+    "priceNote": "$45.69 per 10-pack at Home Depot -> $4.57 each",
+    "lastChecked": "2026-10-15",
+    "kind": "pull",
+    "styles": [
+      "transitional",
+      "modern-farmhouse",
+      "craftsman"
+    ],
+    "tags": [
+      "brass",
+      "warm"
+    ],
+    "color": "#b89a6a",
+    "pattern": "metal"
+  },
+  {
+    "id": "amerock-everett-knob-champagne-bronze",
+    "name": "Everett 1-1/4 in. (33mm) Round Cabinet Knob in Champagne Bronze",
+    "brand": "Amerock",
+    "line": "Everett",
+    "sku": "BP37102CZ",
+    "url": "https://www.shopamerock.com/product/amerock-everett-round-knob/ame-bp37102cz/1-1-4-33mm-round-cabinet-knob-in-champagne-bronze",
+    "price": 10.79,
+    "unit": "each",
+    "priceSource": "listed",
+    "priceNote": "$10.79 at shopamerock.com (sale; MSRP $12.69)",
+    "lastChecked": "2026-10-15",
+    "kind": "knob",
+    "styles": [
+      "modern",
+      "mountain-modern",
+      "transitional"
+    ],
+    "tags": [
+      "brass",
+      "warm"
+    ],
+    "color": "#b99b6c",
+    "pattern": "metal"
+  },
+  {
+    "id": "amerock-everett-pull-polished-chrome",
+    "name": "Everett 5-1/16 in. (128mm) Modern Polished Chrome Bar Cabinet Pull",
+    "brand": "Amerock",
+    "line": "Everett",
+    "sku": "BP3710526",
+    "url": "https://homedepot.com/p/Amerock-Everett-5-1-16-in-128mm-Modern-Polished-Chrome-Bar-Cabinet-Pull-BP3710526/324117324",
+    "price": 17.27,
+    "unit": "each",
+    "priceSource": "listed",
+    "priceNote": "$17.27 at Home Depot",
+    "lastChecked": "2026-10-15",
+    "kind": "pull",
+    "styles": [
+      "modern",
+      "transitional"
+    ],
+    "tags": [
+      "chrome",
+      "cool"
+    ],
+    "color": "#cdd1d4",
+    "pattern": "metal"
+  },
+  {
+    "id": "amerock-bronx-pull-golden-champagne",
+    "name": "Bronx 5-1/16 in. (128mm) Modern Golden Champagne Bar Cabinet Pull",
+    "brand": "Amerock",
+    "line": "Bronx",
+    "sku": "BP36558BBZ",
+    "url": "https://homedepot.com/p/Amerock-Bronx-5-1-16-in-128mm-Modern-Golden-Champagne-Bar-Cabinet-Pull-BP36558BBZ/315855498",
+    "price": 18.35,
+    "unit": "each",
+    "priceSource": "listed",
+    "priceNote": "$18.35 at Home Depot",
+    "lastChecked": "2026-10-15",
+    "kind": "pull",
+    "styles": [
+      "modern",
+      "scandinavian",
+      "mountain-modern"
+    ],
+    "tags": [
+      "brass",
+      "warm"
+    ],
+    "color": "#c8a86e",
+    "pattern": "metal"
+  }
+]

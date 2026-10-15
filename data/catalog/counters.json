@@ -1,0 +1,229 @@
+[
+  {
+    "id": "msi-aruca-white-quartz",
+    "name": "Aruca White Quartz",
+    "brand": "MSI Surfaces",
+    "line": "Q Premium Quartz",
+    "url": "https://www.surprisegranite.com/countertops/aruca-white/",
+    "price": 66.69,
+    "unit": "sqft",
+    "priceSource": "listed",
+    "priceNote": "from $66.69/sq ft installed (fabrication + install) at Surprise Granite",
+    "lastChecked": "2026-10-15",
+    "kind": "quartz",
+    "styles": [
+      "modern-farmhouse",
+      "scandinavian",
+      "transitional",
+      "modern"
+    ],
+    "tags": [
+      "quartz",
+      "white",
+      "neutral"
+    ],
+    "color": "#eeece6",
+    "pattern": "stone"
+  },
+  {
+    "id": "msi-calacatta-castana-quartz",
+    "name": "Calacatta Castana Quartz",
+    "brand": "MSI Surfaces",
+    "line": "Q Premium Quartz",
+    "url": "https://www.surprisegranite.com/countertops/calacatta-castana/",
+    "price": 84.24,
+    "unit": "sqft",
+    "priceSource": "listed",
+    "priceNote": "from $84.24/sq ft installed (fabrication + install) at Surprise Granite; marble look",
+    "lastChecked": "2026-10-15",
+    "kind": "quartz",
+    "styles": [
+      "modern-farmhouse",
+      "transitional",
+      "craftsman"
+    ],
+    "tags": [
+      "quartz",
+      "white",
+      "warm"
+    ],
+    "color": "#f1ebe1",
+    "pattern": "stone"
+  },
+  {
+    "id": "arizona-tile-ripieno-honed-quartz",
+    "name": "Ripieno Honed Quartz",
+    "brand": "Arizona Tile",
+    "line": "Arizona Tile Quartz",
+    "url": "https://www.surprisegranite.com/countertops/ripieno-honed/",
+    "price": 75.88,
+    "unit": "sqft",
+    "priceSource": "listed",
+    "priceNote": "from $75.88/sq ft installed (fabrication + install) at Surprise Granite; Calacatta marble look",
+    "lastChecked": "2026-10-15",
+    "kind": "quartz",
+    "styles": [
+      "transitional",
+      "modern-farmhouse",
+      "scandinavian"
+    ],
+    "tags": [
+      "quartz",
+      "white",
+      "neutral"
+    ],
+    "color": "#eeeae4",
+    "pattern": "stone"
+  },
+  {
+    "id": "arizona-tile-slate-grey-n-quartz",
+    "name": "Slate Grey N Quartz",
+    "brand": "Arizona Tile",
+    "line": "Arizona Tile Quartz",
+    "url": "https://www.surprisegranite.com/countertops/slate-grey-n/",
+    "price": 70.5,
+    "unit": "sqft",
+    "priceSource": "listed",
+    "priceNote": "from $70.50/sq ft installed (fabrication + install) at Surprise Granite",
+    "lastChecked": "2026-10-15",
+    "kind": "quartz",
+    "styles": [
+      "industrial",
+      "mountain-modern",
+      "modern"
+    ],
+    "tags": [
+      "quartz",
+      "cool",
+      "bold"
+    ],
+    "color": "#4a4846",
+    "pattern": "stone"
+  },
+  {
+    "id": "caesarstone-turbine-grey-quartz",
+    "name": "6313 Turbine Grey Quartz",
+    "brand": "Caesarstone",
+    "line": "Caesarstone Quartz",
+    "sku": "6313",
+    "url": "https://www.surprisegranite.com/countertops/turbine-grey-caesarstone/",
+    "price": 105.26,
+    "unit": "sqft",
+    "priceSource": "listed",
+    "priceNote": "from $105.26/sq ft installed (fabrication + install) at Surprise Granite; concrete-look quartz",
+    "lastChecked": "2026-10-15",
+    "kind": "concrete-look",
+    "styles": [
+      "industrial",
+      "modern",
+      "mountain-modern"
+    ],
+    "tags": [
+      "quartz",
+      "concrete-look",
+      "cool"
+    ],
+    "color": "#8e8b86",
+    "pattern": "stone"
+  },
+  {
+    "id": "msi-black-pearl-granite",
+    "name": "Black Pearl Granite",
+    "brand": "MSI Surfaces",
+    "line": "Granite",
+    "url": "https://www.surprisegranite.com/countertops/black-pearl-granite/",
+    "price": 65.86,
+    "unit": "sqft",
+    "priceSource": "listed",
+    "priceNote": "from $65.86/sq ft installed (fabrication + install) at Surprise Granite",
+    "lastChecked": "2026-10-15",
+    "kind": "granite",
+    "styles": [
+      "industrial",
+      "mountain-modern",
+      "craftsman"
+    ],
+    "tags": [
+      "granite",
+      "black",
+      "cool"
+    ],
+    "color": "#1e1d1c",
+    "pattern": "stone"
+  },
+  {
+    "id": "msi-luna-pearl-granite",
+    "name": "Luna Pearl Granite",
+    "brand": "MSI Surfaces",
+    "line": "Granite",
+    "url": "https://www.surprisegranite.com/countertops/luna-pearl-granite",
+    "price": 66.38,
+    "unit": "sqft",
+    "priceSource": "listed",
+    "priceNote": "from $66.38/sq ft installed (fabrication + install) at Surprise Granite",
+    "lastChecked": "2026-10-15",
+    "kind": "granite",
+    "styles": [
+      "transitional",
+      "craftsman"
+    ],
+    "tags": [
+      "granite",
+      "neutral"
+    ],
+    "color": "#b9b5ae",
+    "pattern": "stone"
+  },
+  {
+    "id": "ikea-karlby-oak",
+    "name": "KARLBY Countertop, oak/veneer, 98x1 1/2\"",
+    "brand": "IKEA",
+    "line": "KARLBY",
+    "sku": "903.352.11",
+    "url": "https://www.ikea.com/us/en/p/karlby-countertop-oak-veneer-90335211/",
+    "price": 14.85,
+    "unit": "sqft",
+    "priceSource": "estimated",
+    "priceNote": "$259 per 98 x 25-5/8 in top (17.44 sq ft) at IKEA -> $14.85/sq ft, material only",
+    "lastChecked": "2026-10-15",
+    "kind": "butcher-block",
+    "styles": [
+      "scandinavian",
+      "modern-farmhouse",
+      "mountain-modern"
+    ],
+    "tags": [
+      "butcher-block",
+      "light-wood",
+      "warm"
+    ],
+    "color": "#c8a171",
+    "pattern": "plank"
+  },
+  {
+    "id": "ikea-karlby-walnut",
+    "name": "KARLBY Countertop, walnut/veneer, 98x1 1/2\"",
+    "brand": "IKEA",
+    "line": "KARLBY",
+    "sku": "703.352.12",
+    "url": "https://www.ikea.com/us/en/p/karlby-countertop-walnut-veneer-70335212/",
+    "price": 21.73,
+    "unit": "sqft",
+    "priceSource": "estimated",
+    "priceNote": "$379 per 98 x 25-5/8 in top (17.44 sq ft) at IKEA -> $21.73/sq ft, material only",
+    "lastChecked": "2026-10-15",
+    "kind": "butcher-block",
+    "styles": [
+      "craftsman",
+      "mountain-modern",
+      "modern"
+    ],
+    "tags": [
+      "butcher-block",
+      "dark-wood",
+      "warm"
+    ],
+    "color": "#5e3f2b",
+    "pattern": "plank"
+  }
+]

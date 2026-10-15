@@ -9,7 +9,7 @@ import { z } from "zod";
  * Angles are degrees clockwise from north (0 = N, 90 = E).
  */
 
-export const SCHEMA_VERSION = 6;
+export const SCHEMA_VERSION = 7;
 
 export const Point = z.object({ x: z.number(), y: z.number() });
 export type Point = z.infer<typeof Point>;
@@ -384,6 +384,8 @@ export type CostSettings = z.infer<typeof CostSettings>;
 // ---------- 6 & 7. Interior / exterior selections ----------
 
 export const Product = z.object({
+  /** The catalog id, when it came from the built-in catalog. */
+  id: z.string().optional(),
   name: z.string(),
   brand: z.string(),
   line: z.string().optional(),
@@ -394,24 +396,39 @@ export const Product = z.object({
   unit: z.enum(["sqft", "each", "linft", "gallon", "set"]),
   priceSource: z.enum(["listed", "estimated"]),
   lastChecked: z.string(),
+  /** Display color for swatches and the 3D view, like "#c8a77e". */
+  color: z.string().optional(),
+  pattern: z.enum(["plank", "tile", "stone", "carpet", "solid", "metal"]).optional(),
+  kind: z.string().optional(),
 });
 export type Product = z.infer<typeof Product>;
 
+/** A Selection's targetId for a pick that covers the whole house. */
+export const WHOLE_HOUSE = "house";
+
 export const Selection = z.object({
   id: z.string(),
-  /** A floor-plan room id, or an exterior part such as "roof" or "siding". */
+  /**
+   * A floor-plan room id, "house" for the whole house (rooms without their
+   * own pick use it), or an exterior part such as "roof" or "siding".
+   */
   targetId: z.string(),
   category: z.string(),
+  /** A copy of the product, so a pick keeps working if the catalog changes. */
   product: Product,
   quantity: z.number().min(0).optional(),
 });
 export type Selection = z.infer<typeof Selection>;
 
 export const DesignChoices = z.object({
+  /** Style question answers, by question id. */
   answers: z.record(z.string(), z.string()).default({}),
   moodBoard: z.array(z.string()).default([]),
+  /** How many times the mood board was shuffled (0 shows the best matches). */
+  shuffle: z.number().int().min(0).default(0),
   selections: z.array(Selection).default([]),
 });
+export type DesignChoices = z.infer<typeof DesignChoices>;
 
 // ---------- The project ----------
 
@@ -433,7 +450,7 @@ export const Project = z.object({
   plan: PlanSettings.prefault({}),
   house3d: House3D.prefault({}),
   cost: CostSettings.prefault({}),
-  interior: DesignChoices,
-  exterior: DesignChoices,
+  interior: DesignChoices.prefault({}),
+  exterior: DesignChoices.prefault({}),
 });
 export type Project = z.infer<typeof Project>;

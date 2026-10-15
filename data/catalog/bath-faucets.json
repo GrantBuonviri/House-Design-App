@@ -1,0 +1,200 @@
+[
+  {
+    "id": "delta-windemere-centerset-chrome",
+    "name": "Delta Windemere Chrome Traditional Centerset Bathroom Sink Faucet 4 in.",
+    "brand": "Delta",
+    "line": "Windemere",
+    "sku": "25896LF",
+    "url": "https://www.acehardware.com/p/4015129",
+    "price": 79.99,
+    "unit": "each",
+    "priceSource": "listed",
+    "priceNote": "$79.99 at Ace Hardware",
+    "lastChecked": "2026-10-15",
+    "kind": "faucet",
+    "styles": [
+      "transitional",
+      "craftsman"
+    ],
+    "tags": [
+      "chrome",
+      "cool"
+    ],
+    "color": "#c8ccd0",
+    "pattern": "metal"
+  },
+  {
+    "id": "moen-genta-lx-single-hole-brushed-nickel",
+    "name": "Moen Genta LX Single Handle Centerset Bathroom Faucet, Brushed Nickel",
+    "brand": "Moen",
+    "line": "Genta LX",
+    "sku": "6702BN",
+    "url": "https://www.build.com/moen-6702/s1247707",
+    "price": 172.98,
+    "unit": "each",
+    "priceSource": "listed",
+    "priceNote": "$172.98 at Build.com",
+    "lastChecked": "2026-10-15",
+    "kind": "faucet",
+    "styles": [
+      "modern",
+      "scandinavian",
+      "transitional"
+    ],
+    "tags": [
+      "brushed-nickel",
+      "neutral"
+    ],
+    "color": "#a9a59c",
+    "pattern": "metal"
+  },
+  {
+    "id": "moen-arlys-centerset-matte-black",
+    "name": "Moen Arlys Matte Black Traditional Bathroom Faucet 4 in.",
+    "brand": "Moen",
+    "line": "Arlys",
+    "sku": "84770BL",
+    "url": "https://www.acehardware.com/departments/plumbing/faucet-and-faucet-repair/bathroom-sink-faucets/4007344",
+    "price": 169.99,
+    "unit": "each",
+    "priceSource": "listed",
+    "priceNote": "$169.99 at Ace Hardware",
+    "lastChecked": "2026-10-15",
+    "kind": "faucet",
+    "styles": [
+      "modern-farmhouse",
+      "industrial",
+      "craftsman"
+    ],
+    "tags": [
+      "matte-black",
+      "bold"
+    ],
+    "color": "#1e1e1e",
+    "pattern": "metal"
+  },
+  {
+    "id": "kohler-hint-widespread-polished-chrome",
+    "name": "Kohler Hint Widespread Bathroom Sink Faucet, 1.2 GPM, Polished Chrome",
+    "brand": "Kohler",
+    "line": "Hint",
+    "sku": "K-97093-4-CP",
+    "url": "https://www.supplyhouse.com/Kohler-K-97093-4-CP-Hint-Widespread-Bathroom-Sink-Faucet-1-2-GPM-Polished-Chrome",
+    "price": 348.87,
+    "unit": "each",
+    "priceSource": "listed",
+    "priceNote": "$348.87 at SupplyHouse",
+    "lastChecked": "2026-10-15",
+    "kind": "faucet",
+    "styles": [
+      "modern",
+      "scandinavian"
+    ],
+    "tags": [
+      "chrome",
+      "cool"
+    ],
+    "color": "#cfd3d6",
+    "pattern": "metal"
+  },
+  {
+    "id": "kohler-devonshire-widespread-brushed-nickel",
+    "name": "Kohler Devonshire Widespread Bathroom Faucet, Vibrant Brushed Nickel",
+    "brand": "Kohler",
+    "line": "Devonshire",
+    "sku": "K-394-4-BN",
+    "url": "https://www.build.com/kohler-k-394-4/s561276?uid=225016",
+    "price": 408.52,
+    "unit": "each",
+    "priceSource": "listed",
+    "priceNote": "$408.52 at Build.com",
+    "lastChecked": "2026-10-15",
+    "kind": "faucet",
+    "styles": [
+      "transitional",
+      "modern-farmhouse",
+      "craftsman"
+    ],
+    "tags": [
+      "brushed-nickel",
+      "neutral"
+    ],
+    "color": "#aaa69d",
+    "pattern": "metal"
+  },
+  {
+    "id": "delta-trinsic-single-handle-champagne-bronze",
+    "name": "Delta Trinsic Single Handle Bathroom Faucet with Drain, Champagne Bronze",
+    "brand": "Delta",
+    "line": "Trinsic",
+    "sku": "559LF-CZMPU",
+    "url": "https://frankwebb.com/products/delta-559lf-czmpu-trinsic-lavatory-faucet-sc30023-549885",
+    "price": 417.34,
+    "unit": "each",
+    "priceSource": "listed",
+    "priceNote": "$417.34 at Frank Webb (sale from $542.00)",
+    "lastChecked": "2026-10-15",
+    "kind": "faucet",
+    "styles": [
+      "modern",
+      "transitional",
+      "mountain-modern"
+    ],
+    "tags": [
+      "brass",
+      "warm"
+    ],
+    "color": "#c2a77a",
+    "pattern": "metal"
+  },
+  {
+    "id": "delta-stryke-widespread-matte-black",
+    "name": "Delta Stryke Widespread Bathroom Faucet, Matte Black",
+    "brand": "Delta",
+    "line": "Stryke",
+    "sku": "35776-BLMPU-DST",
+    "url": "https://www.supplyhouse.com/Delta-35776-BLMPU-DST-35776-BLMPU-DST-Stryke-Widespread-Bathroom-Faucet-Matte-Black",
+    "price": 609.0,
+    "unit": "each",
+    "priceSource": "listed",
+    "priceNote": "$609.00 at SupplyHouse",
+    "lastChecked": "2026-10-15",
+    "kind": "faucet",
+    "styles": [
+      "modern",
+      "industrial",
+      "mountain-modern"
+    ],
+    "tags": [
+      "matte-black",
+      "bold"
+    ],
+    "color": "#1c1c1c",
+    "pattern": "metal"
+  },
+  {
+    "id": "kohler-purist-widespread-brushed-moderne-brass",
+    "name": "Kohler Purist Widespread Bathroom Sink Faucet with Lever Handles, 1.2 GPM, Vibrant Brushed Moderne Brass",
+    "brand": "Kohler",
+    "line": "Purist",
+    "sku": "K-14406-4-2MB",
+    "url": "https://www.supplyhouse.com/Kohler-K-14406-4-2MB-Purist-Widespread-Bathroom-Sink-Faucet-w-Lever-Handles-1-2-GPM-Vibrant-Brushed-Moderne-Brass-K-14406-4-2MB",
+    "price": 880.87,
+    "unit": "each",
+    "priceSource": "listed",
+    "priceNote": "$880.87 at SupplyHouse",
+    "lastChecked": "2026-10-15",
+    "kind": "faucet",
+    "styles": [
+      "modern",
+      "transitional",
+      "scandinavian"
+    ],
+    "tags": [
+      "brass",
+      "warm"
+    ],
+    "color": "#b99a5f",
+    "pattern": "metal"
+  }
+]

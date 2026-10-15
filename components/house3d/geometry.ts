@@ -16,14 +16,17 @@ export function concatMeshes(meshes: MeshData[]): MeshData {
   const positions = new Float32Array(total * 9);
   const normals = new Float32Array(total * 9);
   const colors = new Float32Array(total * 9);
+  const patterned = meshes.some((m) => m.patterns);
+  const patterns = patterned ? new Float32Array(total * 3) : undefined;
   let at = 0;
   for (const m of meshes) {
     positions.set(m.positions, at * 9);
     normals.set(m.normals, at * 9);
     colors.set(m.colors, at * 9);
+    if (patterns && m.patterns) patterns.set(m.patterns, at * 3);
     at += m.count;
   }
-  return { positions, normals, colors, count: total };
+  return { positions, normals, colors, ...(patterns ? { patterns } : {}), count: total };
 }
 
 export function toGeometry(m: MeshData): THREE.BufferGeometry {
@@ -31,6 +34,8 @@ export function toGeometry(m: MeshData): THREE.BufferGeometry {
   g.setAttribute("position", new THREE.BufferAttribute(m.positions, 3));
   g.setAttribute("normal", new THREE.BufferAttribute(m.normals, 3));
   g.setAttribute("color", new THREE.BufferAttribute(m.colors, 3));
+  // Every geometry gets a pattern per corner, so one material draws them all.
+  g.setAttribute("pattern", new THREE.BufferAttribute(m.patterns ?? new Float32Array(m.count * 3), 1));
   g.computeBoundingSphere();
   return g;
 }

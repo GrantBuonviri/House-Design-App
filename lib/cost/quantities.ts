@@ -1,4 +1,4 @@
-import type { FloorPlan, Level, PlanBasics, Point, Project, Roof } from "@/lib/model/schema";
+import type { Level, PlanBasics, Point, Project, Roof } from "@/lib/model/schema";
 import { isHeated, roomType } from "@/lib/brief/rooms";
 import { plotImplications, type FoundationType } from "@/lib/land/implications";
 import { exteriorWallIn, FLOOR_STRUCTURE_IN } from "@/lib/plan/basics";
@@ -12,6 +12,8 @@ import { floorFootprint, joinRooms, offsetRing, regionArea, roofFootprint, subtr
 import { levelHeights } from "@/lib/house3d/levels";
 import { roofShape, type RoofShape } from "@/lib/house3d/roof";
 import { lotOffsetFor, siteFor, type Site } from "@/lib/house3d/site";
+import { lightsFor } from "@/lib/catalog/categories";
+import type { RateId } from "./rates";
 
 /**
  * Measures the house for the cost estimate: areas, wall lengths, the roof,
@@ -93,6 +95,24 @@ export type Quantities = {
   /** Every fixture that needs water or a drain. */
   plumbingFixtures: number;
   waterHeaters: number;
+  /** Decorative ceiling and wall lights. */
+  lightFixtures: number;
+  /** Cabinet pulls and knobs. */
+  cabinetHardware: number;
+  /**
+   * Each room's share of the finish lines (flooring, tile, cabinets, fixtures
+   * and so on), so a product picked for one room prices only that room.
+   */
+  rooms: RoomFinish[];
+};
+
+export type RoomFinish = {
+  /** The floor plan room id (or "rough-N" for a room from the Rooms page). */
+  id: string;
+  name: string;
+  type: string;
+  sqft: number;
+  amounts: Partial<Record<RateId, number>>;
 };
 
 const sqft = (sqIn: number) => sqIn / SQ_IN_PER_SQ_FT;
@@ -109,6 +129,7 @@ const SHALLOW_DIG_IN = 12;
 
 const BATH_TYPES = new Set(["bathroom", "primary-bath", "half-bath"]);
 const TILE_ROOMS = new Set(["bathroom", "primary-bath", "half-bath", "laundry", "mudroom"]);
+const SHOWER_TILE_SQFT = 90;
 const OPEN_ROOMS = new Set(["living", "family", "kitchen", "dining", "entry", "hall", "bonus", "other"]);
 
 function ringLength(ring: Point[]): number {
@@ -282,6 +303,9 @@ function empty(source: Quantities["source"]): Quantities {
     laundries: 0,
     plumbingFixtures: 0,
     waterHeaters: 0,
+    lightFixtures: 0,
+    cabinetHardware: 0,
+    rooms: [],
   };
 }
 
@@ -304,11 +328,22 @@ function toRoad(p: Ctx, pt: Point, offset: Point): number {
   return Math.max(20 * 12, d);
 }
 
-/** Plumbing, cabinets and tile for rooms, using what's placed in each room or typical amounts when nothing is. */
-function roomFixtures(q: Quantities, rooms: { type: string; sqft: number; fixtures: { kind: string; widthIn: number; depthIn: number }[] }[]) {
+type MeasuredRoom = { id: string; name: string; type: string; sqft: number; fixtures: { kind: string; widthIn: number; depthIn: number }[] };
+
+/**
+ * Plumbing, cabinets, tile, lights and finishes for rooms, using what's
+ * placed in each room or typical amounts when nothing is. Each room's share
+ * is kept in `q.rooms` too.
+ */
+function roomFixtures(q: Quantities, rooms: MeasuredRoom[]) {
   for (const r of rooms) {
     const f = (k: string) => r.fixtures.filter((x) => x.kind === k);
     const placed = r.fixtures.length > 0;
+    const heated = isHeated(r.type);
+    const a: RoomFinish["amounts"] = {};
+    const add = (id: RateId, n: number) => {
+      if (n > 0) a[id] = (a[id] ?? 0) + n;
+    };
     if (BATH_TYPES.has(r.type) || f("toilet").length || f("vanity").length) {
       const half = r.type === "half-bath";
       const toilets = placed ? f("toilet").length : 1;
@@ -320,7 +355,14 @@ function roomFixtures(q: Quantities, rooms: { type: string; sqft: number; fixtur
       q.bathSinks += sinks;
       q.showers += showers;
       q.plumbingFixtures += toilets + sinks + showers;
-      q.tileSqft += showers * 90;
+      q.tileSqft += showers * SHOWER_TILE_SQFT;
+      add("toilet", toilets);
+      add("vanity", vanities);
+      add("bath-sink-faucet", sinks);
+      add("shower-tub", showers);
+      add("tile", showers * SHOWER_TILE_SQFT);
+      add("countertops", vanities * 4);
+      add("cabinet-hardware", vanities * 4);
     }
     if (r.type === "kitchen" || f("sink").length || f("range").length) {
       const kitchen = r.type === "kitchen";
@@ -328,26 +370,47 @@ function roomFixtures(q: Quantities, rooms: { type: string; sqft: number; fixtur
       const sinks = placed ? f("sink").length : kitchen ? 1 : 0;
       q.kitchenSinks += sinks;
       q.plumbingFixtures += sinks + (placed ? f("dishwasher").length : kitchen ? 1 : 0);
+      add("kitchen-sink-faucet", sinks);
+      if (kitchen) add("appliance-package", 1);
       const counters = [...f("counter"), ...f("island")];
+      let lf = 0;
+      let top = 0;
       if (counters.length) {
-        q.cabinetLf += counters.reduce((s, c) => s + ft(c.widthIn), 0);
-        q.counterSqft += counters.reduce((s, c) => s + sqft(c.widthIn * Math.max(c.depthIn, 25)), 0);
+        lf = counters.reduce((s, c) => s + ft(c.widthIn), 0);
+        top = counters.reduce((s, c) => s + sqft(c.widthIn * Math.max(c.depthIn, 25)), 0);
       } else if (kitchen) {
         // A typical kitchen: about 20 ft of base cabinets and the matching uppers.
-        const lf = Math.min(36, Math.max(14, r.sqft / 11));
-        q.cabinetLf += lf;
-        q.counterSqft += lf * 2.1;
+        lf = Math.min(36, Math.max(14, r.sqft / 11));
+        top = lf * 2.1;
       }
+      q.cabinetLf += lf;
+      q.counterSqft += top;
+      add("kitchen-cabinets", lf);
+      add("countertops", top);
+      add("cabinet-hardware", lf * 1.5);
     }
     if (r.type === "laundry" || f("washer").length) {
       q.laundries += 1;
       q.plumbingFixtures += placed ? f("washer").length + f("laundry-sink").length : 1;
     }
     if (r.type === "outdoor-kitchen") q.plumbingFixtures += 1;
-    if (TILE_ROOMS.has(r.type)) q.tileSqft += r.sqft;
+    if (TILE_ROOMS.has(r.type)) {
+      q.tileSqft += r.sqft;
+      add("tile", r.sqft);
+    }
     q.waterHeaters += f("water-heater").length;
+    if (heated) {
+      if (!TILE_ROOMS.has(r.type) && r.type !== "mechanical") add("flooring", r.sqft);
+      if (r.type !== "mechanical") add("interior-paint", r.sqft);
+      add("trim-millwork", r.sqft);
+    }
+    const lights = lightsFor(r.type, r.sqft);
+    q.lightFixtures += lights;
+    add("lighting-fixtures", lights);
+    q.rooms.push({ id: r.id, name: r.name, type: r.type, sqft: r.sqft, amounts: a });
   }
   q.counterSqft += q.vanities * 4;
+  q.cabinetHardware = Math.round(q.cabinetLf * 1.5 + q.vanities * 4);
   if (q.plumbingFixtures > 0) q.waterHeaters = Math.max(1, q.waterHeaters);
 }
 
@@ -367,7 +430,7 @@ export function measurePlan(p: Ctx): Quantities | null {
   q.floorsAbove = Math.max(1, used.filter((l) => !below(l.id)).length);
   q.floorsBelow = used.filter((l) => below(l.id)).length;
 
-  const allRooms: { type: string; sqft: number; fixtures: FloorPlan["fixtures"] }[] = [];
+  const allRooms: MeasuredRoom[] = [];
   let lowestUsed = Infinity;
   for (const l of used) lowestUsed = Math.min(lowestUsed, heights[l.id].floorIn);
 
@@ -449,7 +512,7 @@ export function measurePlan(p: Ctx): Quantities | null {
       else if (kind === "garage") q.garageSqft += a;
       else if (r.type === "deck") q.deckSqft += a;
       else q.porchSqft += a;
-      allRooms.push({ type: r.type ?? "other", sqft: a, fixtures: plan.fixtures.filter((f) => f.roomId === r.id) });
+      allRooms.push({ id: r.id, name: r.name, type: r.type ?? "other", sqft: a, fixtures: plan.fixtures.filter((f) => f.roomId === r.id) });
     }
     // Floors framed over something: upper floors, and lower basements' upper floors.
     if (!groundLevels.includes(l) && floorIn > lowestUsed + 12) q.floorFramingSqft += sqft(floorFootprint(plan).reduce((s, r) => s + regionArea(r), 0));
@@ -526,8 +589,8 @@ function applyRoof(q: Quantities, roof: ReturnType<typeof measureRoof>) {
 export function measureRough(p: Ctx): Quantities | null {
   const answers = p.discovery.answers;
   const rooms = p.brief
-    ? p.brief.rooms.map((r) => ({ type: r.type, sqft: r.targetSqFt, levelId: r.levelId }))
-    : answers.rooms.map((r) => ({ type: r.type, sqft: (r.lengthIn && r.widthIn ? (r.lengthIn * r.widthIn) / 144 : 0) || roomType(r.type).sqft, levelId: r.levelId }));
+    ? p.brief.rooms.map((r) => ({ name: r.name, type: r.type, sqft: r.targetSqFt, levelId: r.levelId }))
+    : answers.rooms.map((r) => ({ name: r.name, type: r.type, sqft: (r.lengthIn && r.widthIn ? (r.lengthIn * r.widthIn) / 144 : 0) || roomType(r.type).sqft, levelId: r.levelId }));
   if (!rooms.length) return null;
   const q = empty("rough");
   siteFacts(p, q);
@@ -598,7 +661,7 @@ export function measureRough(p: Ctx): Quantities | null {
 
   roomFixtures(
     q,
-    rooms.map((r) => ({ type: r.type, sqft: r.sqft, fixtures: [] })),
+    rooms.map((r, i) => ({ id: `rough-${i}`, name: r.name, type: r.type, sqft: r.sqft, fixtures: [] })),
   );
   q.drywallSqft = q.extWallSqft + q.intWallSqft * 2 + heated + garage;
   q.driveSqft = 40 * (garage ? 20 : 12);

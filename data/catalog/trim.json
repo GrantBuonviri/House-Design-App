@@ -1,0 +1,128 @@
+[
+  {
+    "id": "house-of-fara-8831-colonial-base",
+    "name": "8831 5/8 in. x 5-1/4 in. x 96 in. Colonial Primed MDF Baseboard Moulding",
+    "brand": "House of Fara",
+    "line": "Primed MDF Mouldings",
+    "sku": "8831",
+    "url": "https://homedepot.com/p/HOUSE-OF-FARA-8831-5-8-in-x-5-1-4-in-x-96-in-Colonial-Primed-MDF-Baseboard-Moulding-1-Piece-8-Total-Linear-Feet-8831/205426943",
+    "price": 3.84,
+    "unit": "linft",
+    "priceSource": "listed",
+    "priceNote": "$30.71 per 8 ft piece at Home Depot -> $3.84/linft",
+    "lastChecked": "2026-10-15",
+    "kind": "baseboard",
+    "styles": [
+      "transitional",
+      "modern-farmhouse"
+    ],
+    "tags": [
+      "neutral",
+      "white"
+    ],
+    "color": "#f3f2ee",
+    "pattern": "solid"
+  },
+  {
+    "id": "alexandria-121x6-flat-base",
+    "name": "Craftsman 1/2 in. x 5-1/2 in. x 96 in. Primed MDF Baseboard Moulding (square-edge flat stock)",
+    "brand": "Alexandria Moulding",
+    "line": "Primed MDF Mouldings",
+    "sku": "121X6-96096C",
+    "url": "https://homedepot.com/p/Alexandria-Moulding-Craftsman-1-2-in-x-5-1-2-in-x-96-in-Primed-MDF-Baseboard-Moulding-121X6-96096C/302681059",
+    "price": 1.92,
+    "unit": "linft",
+    "priceSource": "listed",
+    "priceNote": "$15.38 per 8 ft piece at Home Depot -> $1.92/linft",
+    "lastChecked": "2026-10-15",
+    "kind": "baseboard",
+    "styles": [
+      "craftsman",
+      "modern",
+      "scandinavian",
+      "modern-farmhouse"
+    ],
+    "tags": [
+      "neutral",
+      "white"
+    ],
+    "color": "#f3f2ee",
+    "pattern": "solid"
+  },
+  {
+    "id": "swaner-red-oak-s4s-base",
+    "name": "3/4 in. x 5.5 in. x 96 in. S4S Red Oak Base Moulding (2-Pack)",
+    "brand": "Swaner Hardwood",
+    "line": "S4S Hardwood",
+    "sku": "OLM04051696OR",
+    "url": "https://www.homedepot.com/p/Swaner-Hardwood-3-4-in-x-5-5-in-x-96-in-S4S-Red-Oak-Base-Moulding-2-Pack-OLM04051696OR/322098655",
+    "price": 7.38,
+    "unit": "linft",
+    "priceSource": "listed",
+    "priceNote": "$118.00 per 2-pack (16 linft) at Home Depot -> $7.38/linft; unfinished, stain grade",
+    "lastChecked": "2026-10-15",
+    "kind": "baseboard",
+    "styles": [
+      "mountain-modern",
+      "craftsman",
+      "industrial"
+    ],
+    "tags": [
+      "warm",
+      "medium-wood"
+    ],
+    "color": "#b8865a",
+    "pattern": "solid"
+  },
+  {
+    "id": "kelleher-lwm356-colonial-casing",
+    "name": "LWM 356 5/8 in. x 2-1/4 in. x 84 in. Primed MDF Colonial Casing",
+    "brand": "Kelleher",
+    "line": "Primed MDF Mouldings",
+    "sku": "MDF239A-1",
+    "url": "https://www.homedepot.com/p/Kelleher-LWM356-5-8-in-x-2-1-4-in-x-7-ft-Primed-Wood-Colonial-MDF-Casing-MDF239A-1/202071610",
+    "price": 1.24,
+    "unit": "linft",
+    "priceSource": "listed",
+    "priceNote": "$8.68 per 7 ft piece at Home Depot -> $1.24/linft",
+    "lastChecked": "2026-10-15",
+    "kind": "casing",
+    "styles": [
+      "transitional",
+      "modern-farmhouse"
+    ],
+    "tags": [
+      "neutral",
+      "white"
+    ],
+    "color": "#f3f2ee",
+    "pattern": "solid"
+  },
+  {
+    "id": "builders-choice-1x4-flat-casing",
+    "name": "1 in. D x 4 in. W x 84 in. L Primed MDF E2E Casing Moulding Pack (4-Pack)",
+    "brand": "Builders Choice",
+    "line": "Primed MDF Mouldings",
+    "sku": "M1X4P-96084PK",
+    "url": "https://homedepot.com/p/Alexandria-Moulding-1-in-D-x-4-in-W-x-84-in-L-Primed-MDF-E2E-Casing-Moulding-Pack-4-Pack-M1X4P-96084PK/330745837",
+    "price": 1.17,
+    "unit": "linft",
+    "priceSource": "listed",
+    "priceNote": "$32.86 per 4-pack of 7 ft pieces (28 linft) at Home Depot -> $1.17/linft; flat craftsman/modern casing",
+    "lastChecked": "2026-10-15",
+    "kind": "casing",
+    "styles": [
+      "craftsman",
+      "modern",
+      "scandinavian",
+      "industrial",
+      "mountain-modern"
+    ],
+    "tags": [
+      "neutral",
+      "white"
+    ],
+    "color": "#f3f2ee",
+    "pattern": "solid"
+  }
+]

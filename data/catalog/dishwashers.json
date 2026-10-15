@@ -1,0 +1,78 @@
+[
+  {
+    "id": "ge-gdf650syvfs-stainless",
+    "name": "Front Control Built-In Dishwasher with Stainless Steel Interior and Sanitize Cycle, Fingerprint Resistant Stainless",
+    "brand": "GE",
+    "line": "GDF650",
+    "sku": "GDF650SYVFS",
+    "url": "https://www.townappliance.com/products/ge-appliances-gdf650syvfs-built-in-dishwasher",
+    "price": 572.0,
+    "unit": "each",
+    "priceSource": "listed",
+    "priceNote": "$572.00 at Town Appliance (list $949)",
+    "lastChecked": "2026-10-15",
+    "kind": "dishwasher",
+    "styles": [
+      "transitional",
+      "modern-farmhouse",
+      "craftsman"
+    ],
+    "tags": [
+      "stainless",
+      "neutral"
+    ],
+    "color": "#b9bbbb",
+    "pattern": "metal"
+  },
+  {
+    "id": "bosch-300-shx53dm5n-stainless",
+    "name": "300 Series 24 in. Top Control Smart Dishwasher with 3rd Rack and PureDry, Stainless Steel",
+    "brand": "Bosch",
+    "line": "300 Series",
+    "sku": "SHX53DM5N",
+    "url": "https://www.pcrichard.com/bosch-300-series-24-in-top-control-smart-dishwasher-with-46-dba-sound-level-3rd-rack-and-puredry-stainless-steel/SHX53DM5N.html",
+    "price": 1199.97,
+    "unit": "each",
+    "priceSource": "listed",
+    "priceNote": "$1,199.97 at P.C. Richard & Son",
+    "lastChecked": "2026-10-15",
+    "kind": "dishwasher",
+    "styles": [
+      "modern",
+      "scandinavian",
+      "mountain-modern",
+      "industrial"
+    ],
+    "tags": [
+      "stainless",
+      "cool"
+    ],
+    "color": "#b7b9ba",
+    "pattern": "metal"
+  },
+  {
+    "id": "kitchenaid-kdtm404kbs-black-stainless",
+    "name": "24 in. Top Control Built-In Dishwasher, PrintShield Black Stainless Steel",
+    "brand": "KitchenAid",
+    "line": "KDTM404K",
+    "sku": "KDTM404KBS",
+    "url": "https://www.bigsandysuperstore.com/product/kitchenaid-24-printshield-black-stainless-steel-top-control-built-in-dishwasher-kdtm404kbs-373854",
+    "price": 1304.1,
+    "unit": "each",
+    "priceSource": "listed",
+    "priceNote": "$1,304.10 at Big Sandy Superstore (sale; reg. $1,449)",
+    "lastChecked": "2026-10-15",
+    "kind": "dishwasher",
+    "styles": [
+      "industrial",
+      "modern",
+      "mountain-modern"
+    ],
+    "tags": [
+      "black",
+      "bold"
+    ],
+    "color": "#3b3b3d",
+    "pattern": "metal"
+  }
+]
