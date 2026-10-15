@@ -14,6 +14,7 @@ import { windowViews, type Shot, type WindowViews } from "@/lib/house3d/windowVi
 import type { Plans } from "@/lib/plan/edit";
 import { Ground } from "./House3DView";
 import { HouseMeshes, Sky } from "./Scene";
+import { canvasSettings, useGraphics } from "@/lib/graphics";
 
 type Props = {
   plans: Plans;
@@ -53,6 +54,7 @@ const STILL: Looks = { inside: { yaw: 0, pitch: 0 }, outside: { yaw: 0, pitch: 0
  * day on a loop. It follows the window as it's moved or resized.
  */
 export default function WindowPreview(props: Props) {
+  const quality = useGraphics((g) => g.quality);
   const { plans, levels, basics, house3d, interior, exterior, plot, offset, levelId, openingId, onClose } = props;
 
   // The scene is centered on the house as it was when the preview opened.
@@ -232,10 +234,9 @@ export default function WindowPreview(props: Props) {
         <>
           <div className="relative bg-stone-200" style={{ height: PICTURE_HEIGHT }}>
             <Canvas
-              shadows
+              key={quality}
+              {...canvasSettings(quality, 1.5)}
               frameloop="demand"
-              dpr={[1, 1.5]}
-              gl={{ antialias: true, preserveDrawingBuffer: true }}
               onCreated={(state) => {
                 invalidate.current = () => state.invalidate();
               }}

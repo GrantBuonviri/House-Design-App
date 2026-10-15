@@ -7,6 +7,7 @@ import * as THREE from "three";
 import type { Plot } from "@/lib/model/schema";
 import { SCENE_SIZE, buildTerrainMesh, drapeLine, landScene, roadLine, waterSurfaces } from "@/lib/land/mesh";
 import { dayArc, sunPosition, SUMMER_SOLSTICE, WINTER_SOLSTICE } from "@/lib/land/sun";
+import { useGraphics } from "@/lib/graphics";
 
 const SKY_RADIUS = 6.5;
 
@@ -139,11 +140,13 @@ export default function PlotTerrain3D({
   size: number;
   interactive?: boolean;
 }) {
+  const quality = useGraphics((g) => g.quality);
   return (
     <div style={{ width: size, height: size }} className="overflow-hidden rounded-lg bg-[#dfe9f2]">
       <Canvas
+        key={quality}
         frameloop="demand"
-        dpr={[1, 2]}
+        dpr={quality === "fast" ? 1 : [1, 2]}
         camera={{ position: [4, 12, 12], fov: 38, near: 0.1, far: 100 }}
         gl={{ antialias: true, preserveDrawingBuffer: true }}
       >

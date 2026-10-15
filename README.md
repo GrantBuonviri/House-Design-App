@@ -2,7 +2,18 @@
 
 Design a house from start to finish: pick land, sketch the flow, draw the floor plan, choose finishes, walk through it in 3D, and watch a running Boise, Idaho cost estimate. It runs on your own computer in a desktop browser.
 
-The app is built in milestones. So far it has:
+## How to use it
+
+1. Press **New project** on the home screen and name your house. The first time you open a house, a short guided tour shows you around (take it again any time with **Take the tour**, next to the stage bar).
+2. Work through the seven steps in the stage bar, left to right: **Project setup**, **Land**, **Rooms**, **Flow sketch**, **Floor plan**, **Interior** and **Exterior**. You can go back to any step whenever you like.
+3. Watch the **Cost** at the top right, and press **Walkthrough** to walk through the house once it has a floor plan. If one of those isn't ready yet, click it and it tells you what to do first.
+4. Everything saves itself in this browser. **Undo** and **Redo** (⌘Z and ⇧⌘Z) go back step by step through everything you've done, and remember your last 30 steps even after you close the house. Hover either one to see what it will undo or redo; a note at the bottom of the window says what just changed. Switching between steps isn't counted, so Undo never just takes you to another page.
+5. **3D: Fast / Pretty** (next to the stage bar, and in the walkthrough) sets how the 3D views are drawn on this computer. **Pretty** has shadows and smooth edges; **Fast** leaves them out and runs smoother, for older computers or very big houses.
+6. Use **Export** now and then to keep a backup file.
+
+## What's in it
+
+The app was built in 11 milestones:
 
 - **Milestone 1:** the home screen, project setup (your name and the house name), saving, and export/import.
 - **Milestone 2:** land selection. Made-up plots around Boise, three at a time with arrows to see more (forever). Each plot shows in 3D (drag to turn it) or as a 2D map, with slope, sun paths, drainage, soil and water features. A perfectly flat plot is always first and one click away from the top bar.
@@ -18,6 +29,7 @@ The app is built in milestones. So far it has:
 - **Milestone 9:** interior design. The **Interior** stage has three steps. **Style** asks about the look you want (style, wood tone, colors, metal finish, countertops, floors, carpet in bedrooms), filled in from what you wrote on the Rooms page where it can. **Mood board** shows paint colors and finishes that fit, with **Shuffle** for other matches. **Pick finishes** shows real products from a built-in catalog (flooring, tile, paint, trim, doors, cabinets, counters, hardware, sinks, faucets, appliances, vanities, toilets, shower trim and lighting), best match first, each with its price, the date it was last checked and a link to its page. Pick for the whole house, then change any room. Every pick updates the cost estimate, and the 3D view, walkthrough and window preview show the colors, with wood planks, tile and carpet drawn on the floors.
 - **Design in the walkthrough:** turn on **Design** in the walkthrough (or press **E**) and the dot in the middle of the screen aims. Click a floor, wall, ceiling, counter, cabinet, appliance, fixture or inside door to pick its finish in a panel on the right, for this room or the whole house, and paint any single wall its own color (an accent wall). Add furniture (sofas, beds, tables, rugs and more) and move, turn and recolor it. Furniture isn't part of the cost, and it shows as outlines on the floor plan.
 - **Milestone 10:** exterior design. The **Exterior** stage has the same three steps. **Style** asks about the outside (style, siding, body color, accent, roof, roof color, window frames), guessed from your interior style where it can. **Mood board** shows the house's colors and matching products. **Pick finishes** has about 120 real products for the roof, siding, siding paint, an accent (stone, brick or wood, as a 3 ft band along the base or on the gable ends), trim paint, gutters, windows, front door, patio doors, garage doors, outdoor lights, decking, patio, front walk, driveway, lawn, planting beds, shrubs and trees. The 3D view and walkthrough draw them, with the yard laid out for you: a driveway from the garage to the road, a front walk, beds along the walls with shrubs, a few trees and lawn around the house. In the walkthrough's Design mode, aim at the outside of the house or the yard and click to change it. Every pick updates the cost estimate, which now counts the walk, lawn, beds, shrubs, trees and outdoor lights too.
+- **Milestone 11:** polish. The guided tour, Undo and Redo that say what they'll do and remember your last 30 steps after you close a house, clearer messages when Cost or Walkthrough isn't ready yet, the **Fast / Pretty** 3D switch, and a faster cost estimate for big houses.
 
 ### Flow sketch tips
 
@@ -43,10 +55,10 @@ The app is built in milestones. So far it has:
 
 ### 3D view tips
 
-- **2D plan**, **Bird's-eye** and **3D** are at the top right of the floor plan. The floor tabs on the left pick the floor you're working on.
+- **2D plan** and **3D** are at the top right of the floor plan. The floor tabs on the left pick the floor you're working on.
 - **3D:** drag to turn the house, right-drag (or drag with two fingers) to slide it, and scroll to zoom. Tick **Look inside** to take off the roof and the floors above the one you picked.
-- **Bird's-eye:** drag empty space to slide around and scroll to zoom.
-- In either view, click a room's floor, a door, a window, stairs or a fixture to select it (the panel on the right shows its details, like in 2D), then drag it to move it. Rooms snap to other rooms' corners, and doors and windows slide along their wall or hop to the nearest one. **Delete**, the arrow keys and **Undo** work as in 2D.
+- **Top view** (or tilting all the way down) looks straight down at the floor you picked, with room names.
+- Press **Edit**, then click a room's floor, a door, a window, stairs or a fixture to select it (the panel on the right shows its details, like in 2D), then drag it to move it. Rooms snap to other rooms' corners, and doors and windows slide along their wall or hop to the nearest one. **Delete**, the arrow keys and **Undo** work as in 2D.
 - **Roof** in the panel picks the shape (gable, hip, shed or flat), how steep it is and how far it reaches past the walls. Porches and covered patios get a roof on posts; decks stay open.
 - Floors, walls, cabinets, counters, doors and appliances show the finishes picked on the Interior stage. Rooms with nothing picked are plain (light walls, wood floors, tile in bathrooms, carpet in bedrooms). The outside (siding, roof, windows, doors and yard) shows what's picked on the Exterior stage.
 

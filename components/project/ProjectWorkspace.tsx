@@ -1,13 +1,18 @@
 "use client";
 
-import { useDeferredValue, useEffect, useMemo, useState } from "react";
+import { useCallback, useDeferredValue, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import dynamic from "next/dynamic";
 import type { Stage } from "@/lib/model/schema";
 import { useProjectStore, type SaveState } from "@/lib/store/projectStore";
-import { STAGE_INFO, stageAvailable } from "@/lib/stages";
 import { downloadProject } from "@/lib/download";
 import StageBar from "./StageBar";
+import NeedsFirst from "./NeedsFirst";
+import GraphicsToggle from "./GraphicsToggle";
+import Tour from "@/components/tour/Tour";
+import { TOUR_SEEN_KEY } from "@/lib/tour/steps";
+import { readStorage, writeStorage } from "@/lib/browserStorage";
+import UndoButtons, { UndoNotice } from "./UndoButtons";
 import SetupForm from "./SetupForm";
 import LandStage from "@/components/land/LandStage";
 import BriefStage from "@/components/brief/BriefStage";
@@ -27,19 +32,8 @@ const SAVE_LABEL: Record<SaveState, string> = {
   error: "Couldn't save. Export a backup.",
 };
 
-function ComingSoon({ stage }: { stage: Stage }) {
-  const info = STAGE_INFO.find((s) => s.id === stage)!;
-  return (
-    <div className="card mx-auto flex max-w-xl flex-col items-center px-6 py-16 text-center">
-      <h2 className="text-lg font-semibold">{info.label}</h2>
-      <p className="mt-2 text-sm text-muted">This stage arrives in milestone {info.milestone}.</p>
-    </div>
-  );
-}
-
 export default function ProjectWorkspace({ id }: { id: string }) {
-  const { project, loading, notFound, saveState, past, future, open, close, update, undo, redo } =
-    useProjectStore();
+  const { project, loading, notFound, saveState, open, close, update, undo, redo, setStage } = useProjectStore();
   const [walking, setWalking] = useState(false);
   const [costOpen, setCostOpen] = useState(false);
   // Worked out a moment behind edits, so dragging in the plan stays smooth.
@@ -54,9 +48,39 @@ export default function ProjectWorkspace({ id }: { id: string }) {
     }
   }, [deferred]);
 
+  // The guided tour: on its own the first time a house opens in this browser, then from "Take the tour".
+  const [touring, setTouring] = useState<{ from: Stage } | null>(null);
+  const ready = !!project;
+  useEffect(() => {
+    if (ready && readStorage(() => localStorage, TOUR_SEEN_KEY) === null) {
+      setTouring({ from: useProjectStore.getState().project!.stage });
+    }
+  }, [ready]);
+  const startTour = () => project && setTouring({ from: project.stage });
+  const endTour = useCallback(() => {
+    writeStorage(() => localStorage, TOUR_SEEN_KEY, "yes");
+    // Back to the page the tour started on.
+    if (touring) useProjectStore.getState().setStage(touring.from);
+    setTouring(null);
+  }, [touring]);
+
+  // Save right away when the tab is hidden or closed, so the last change and undo step aren't lost.
+  useEffect(() => {
+    const flush = () => useProjectStore.getState().flush();
+    const onHide = () => document.visibilityState === "hidden" && flush();
+    window.addEventListener("pagehide", flush);
+    document.addEventListener("visibilitychange", onHide);
+    return () => {
+      window.removeEventListener("pagehide", flush);
+      document.removeEventListener("visibilitychange", onHide);
+    };
+  }, []);
+
   useEffect(() => {
     void open(id);
-    return () => close();
+    return () => {
+      void close();
+    };
   }, [id, open, close]);
 
   // Cmd+Z / Shift+Cmd+Z (Ctrl on other systems). Text fields keep their own undo.
@@ -87,7 +111,6 @@ export default function ProjectWorkspace({ id }: { id: string }) {
     );
   }
 
-  const setStage = (stage: Stage) => update((p) => ({ ...p, stage }));
   const canWalk = !!project.plan.basics && Object.values(project.floorPlans).some((pl) => pl.rooms.length > 0);
 
   return (
@@ -104,29 +127,49 @@ export default function ProjectWorkspace({ id }: { id: string }) {
           <span className={`mr-2 text-xs ${saveState === "error" ? "text-red-700" : "text-muted"}`}>
             {SAVE_LABEL[saveState]}
           </span>
-          <button className="btn" onClick={undo} disabled={past.length === 0} title="Undo (⌘Z)">
-            Undo
-          </button>
-          <button className="btn" onClick={redo} disabled={future.length === 0} title="Redo (⇧⌘Z)">
-            Redo
-          </button>
+          <span className="flex gap-2" data-tour="undo">
+            <UndoButtons />
+          </span>
           <button className="btn" onClick={() => downloadProject(project)}>
             Export
           </button>
-          <CostBadge estimate={cost} error={costError} open={costOpen} onToggle={() => setCostOpen(!costOpen)} />
-          <button
-            className="btn btn-primary"
-            onClick={() => setWalking(true)}
-            disabled={!canWalk}
-            title={canWalk ? "Walk through the house in first person" : "Make a floor plan first, then you can walk through it"}
-          >
-            Walkthrough
-          </button>
+          <span data-tour="cost">
+          {cost || costError ? (
+            <CostBadge estimate={cost} error={costError} open={costOpen} onToggle={() => setCostOpen(!costOpen)} />
+          ) : (
+            <NeedsFirst message="Pick your rooms first, and a rough cost for building in Boise shows up here." action="Go to Rooms" onAction={() => setStage("brief")} testId="cost-needs">
+              Cost
+            </NeedsFirst>
+          )}
+          </span>
+          <span data-tour="walkthrough">
+          {canWalk ? (
+            <button className="btn btn-primary" onClick={() => setWalking(true)} title="Walk through the house in first person">
+              Walkthrough
+            </button>
+          ) : (
+            <NeedsFirst
+              className="btn btn-primary"
+              message="Draw a floor plan first, then you can walk through your house in 3D."
+              action="Go to Floor plan"
+              onAction={() => setStage("plan")}
+              testId="walk-needs"
+            >
+              Walkthrough
+            </NeedsFirst>
+          )}
+          </span>
         </div>
       </div>
 
-      <div className="mb-8 border-b border-line pb-3">
+      <div className="mb-8 flex items-center justify-between gap-4 border-b border-line pb-3">
         <StageBar current={project.stage} onSelect={setStage} />
+        <div className="flex shrink-0 items-center gap-3">
+          <button className="text-xs text-muted underline-offset-2 hover:text-ink hover:underline" onClick={startTour} data-tour="tour" data-testid="tour-start">
+            Take the tour
+          </button>
+          <GraphicsToggle />
+        </div>
       </div>
 
       {project.stage === "setup" ? (
@@ -143,11 +186,11 @@ export default function ProjectWorkspace({ id }: { id: string }) {
         <InteriorStage onContinue={() => setStage("exterior")} onGoToPlan={() => setStage("plan")} />
       ) : project.stage === "exterior" ? (
         <ExteriorStage onGoToPlan={() => setStage("plan")} onWalk={canWalk ? () => setWalking(true) : undefined} />
-      ) : stageAvailable(project.stage) ? null : (
-        <ComingSoon stage={project.stage} />
-      )}
+      ) : null}
 
       {walking && canWalk && <Walkthrough project={project} cost={cost} onClose={() => setWalking(false)} />}
+      <UndoNotice />
+      {touring && <Tour onStage={setStage} onDone={endTour} />}
     </main>
       {costOpen && cost && (
         <CostPanel estimate={cost} onClose={() => setCostOpen(false)} onUtilities={(utilities) => update((p) => ({ ...p, cost: { ...p.cost, utilities } }))} />
