@@ -12,7 +12,8 @@ import { escapeCheck, operationOf, OPERATION_LABEL } from "@/lib/codes/openings"
 import { atticAccessSpot, inchText, isSleeping } from "@/lib/codes/rules";
 import { houseFacts } from "../house";
 import { DRAW_AREA } from "../frame";
-import { archFeet, capHeight, DASH, ellipse, heading, HEADING_H, line, lineHeight, POCHE, rect, SCALES, table, textBlock, textWidth, type Item, type Weight } from "../draw";
+import { viewTitle } from "../view";
+import { archFeet, capHeight, DASH, ellipse, heading, HEADING_H, line, lineHeight, POCHE, rect, SCALES, table, textBlock, textWidth, readable, type Item, type Weight } from "../draw";
 import type { Project } from "@/lib/model/schema";
 
 /**
@@ -375,25 +376,7 @@ export function floorPlanSheet(project: Project, level: Level, viewNumber = 1): 
   }
 
   // ---------- View title ----------
-  const vy = DRAW_AREA.y1 - 0.45;
-  const vx = area.x0 + 0.1;
-  items.push({ t: "circle", c: { x: vx + 0.25, y: vy }, r: 0.25, stroke: "medium" });
-  items.push({ t: "text", at: { x: vx + 0.25, y: vy }, text: String(viewNumber), size: 11, bold: true, align: "center", valign: "middle" });
-  const title = `${level.name.toUpperCase()} PLAN`;
-  items.push({ t: "text", at: { x: vx + 0.65, y: vy - 0.04 }, text: title, size: 14, bold: true });
-  items.push(line({ x: vx + 0.65, y: vy + 0.04 }, { x: vx + 0.65 + Math.max(4, textWidth(title, 14, true)), y: vy + 0.04 }, "heavy"));
-  items.push({ t: "text", at: { x: vx + 0.65, y: vy + 0.24 }, text: `SCALE: ${choice.label}`, size: 8 });
-  // Scale bar: 0, 4, 8 and 16 feet.
-  const sbx = vx + 0.65 + Math.max(4, textWidth(title, 14, true)) + 0.5;
-  const ft = choice.inPerFt;
-  const ticks = [0, 4, 8, 16];
-  for (let i = 0; i < ticks.length - 1; i++) items.push(rect(sbx + ticks[i] * ft, vy - 0.05, (ticks[i + 1] - ticks[i]) * ft, 0.08, "fine", i % 2 ? "#ffffff" : "#000000"));
-  for (const k of ticks) items.push({ t: "text", at: { x: sbx + k * ft, y: vy + 0.2 }, text: k ? `${k}'` : "0", size: 6, align: "center" });
-  // North arrow (north is up the page).
-  const na = { x: sbx + 16 * ft + 0.8, y: vy - 0.05 };
-  items.push({ t: "circle", c: na, r: 0.28, stroke: "fine" });
-  items.push({ t: "poly", pts: [add(na, { x: 0, y: -0.26 }), add(na, { x: 0.1, y: 0.12 }), add(na, { x: 0, y: 0.05 }), add(na, { x: -0.1, y: 0.12 })], fill: "#000000" });
-  items.push({ t: "text", at: add(na, { x: 0, y: -0.36 }), text: "N", size: 8, bold: true, align: "center" });
+  items.push(...viewTitle(area.x0 + 0.1, DRAW_AREA.y1 - 0.45, { number: viewNumber, title: `${level.name} plan`, scaleLabel: choice.label, inPerFt: choice.inPerFt, north: true }));
 
   return { items, scaleLabel: choice.label };
 
@@ -408,13 +391,6 @@ export function floorPlanSheet(project: Project, level: Level, viewNumber = 1): 
 const f2 = (n: number) => (Math.round(n * 100) / 100).toString();
 const tagOrder = (tag: string) => (tag[0] === "D" ? 0 : 100000) + Number(tag.slice(1));
 
-/** Text angle that keeps a label along a direction readable (never upside down), degrees counter-clockwise. */
-function readable(d: Point): number {
-  let a = (-Math.atan2(d.y, d.x) * 180) / Math.PI;
-  if (a > 90) a -= 180;
-  if (a <= -90) a += 180;
-  return Math.round(a * 100) / 100;
-}
 
 function hexagon(c: Point, r: number): Point[] {
   return Array.from({ length: 6 }, (_, i) => ({ x: c.x + r * Math.cos((i * Math.PI) / 3), y: c.y + r * Math.sin((i * Math.PI) / 3) }));

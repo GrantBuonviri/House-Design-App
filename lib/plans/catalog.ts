@@ -1,6 +1,9 @@
 import type { Project, Stage } from "@/lib/model/schema";
 import { codeReport, type RuleReport } from "@/lib/codes/rules";
 import { houseFacts } from "./house";
+import { siteLayout } from "./lot";
+import { houseScene } from "./scene";
+import { exteriorPartsFor, exteriorPick } from "@/lib/exterior/picks";
 
 /**
  * Every plan sheet a Boise house permit asks for (checklist #402), grouped
@@ -22,7 +25,7 @@ export const STATUS_LABEL: Record<SheetStatus, string> = {
 export type SheetGroup = "General" | "Site" | "Architectural" | "Interiors" | "Systems" | "Structural" | "From outside the app";
 export const SHEET_GROUPS: SheetGroup[] = ["General", "Site", "Architectural", "Interiors", "Systems", "Structural", "From outside the app"];
 
-export type Reason = { text: string; stage?: Stage; action?: "details" };
+export type Reason = { text: string; stage?: Stage; action?: "details" | "lot" };
 
 export type SheetEntry = {
   id: string;
@@ -44,15 +47,9 @@ type Later = { id: string; number: string; title: string; group: SheetGroup; opt
 /** Sheets that come with later parts of this feature. */
 const LATER: Later[] = [
   { id: "energy", number: "G-003", title: "Energy: insulation, windows and REScheck inputs", group: "General", part: 4 },
-  { id: "site", number: "C-101", title: "Site plan", group: "Site", part: 2 },
-  { id: "landscape", number: "L-101", title: "Landscape plan", group: "Site", optional: true, part: 2 },
-  { id: "roof", number: "A-111", title: "Roof plan", group: "Architectural", part: 2 },
-  { id: "elevations", number: "A-201", title: "Exterior elevations", group: "Architectural", part: 2 },
   { id: "sections", number: "A-301", title: "Building sections", group: "Architectural", part: 5 },
   { id: "stair-section", number: "A-501", title: "Stair section and details", group: "Architectural", part: 5 },
   { id: "door-window", number: "A-601", title: "Door and window schedules", group: "Architectural", part: 3 },
-  { id: "exterior-materials", number: "A-602", title: "Exterior materials schedule", group: "Architectural", part: 2 },
-  { id: "views", number: "A-901", title: "3D views", group: "Architectural", optional: true, part: 2 },
   { id: "cabinets", number: "I-201", title: "Cabinet plans and elevations", group: "Interiors", part: 3 },
   { id: "finishes", number: "I-601", title: "Room finish schedule", group: "Interiors", part: 3 },
   { id: "electrical", number: "E-101", title: "Electrical plan", group: "Systems", part: 4 },
@@ -134,6 +131,45 @@ export function readiness(project: Project): Readiness {
       const notes = failsOn(l.id);
       sheets.push({ id: `floor:${l.id}`, number: floorPlanNumber(i), title: `${l.name} plan`, group: "Architectural", status: notes.length ? "notes" : "ready", reasons: notes, levelId: l.id });
     });
+
+  // Outside of the house.
+  const outside = (id: string, number: string, title: string, group: SheetGroup, more: () => Pick<SheetEntry, "status" | "reasons">, optional?: boolean) =>
+    sheets.push({ id, number, title, group, optional, ...(needPlan.length ? { status: "needs" as const, reasons: needPlan } : more()) });
+  outside("site", "C-101", "Site plan", "Site", () => {
+    const site = siteLayout(project);
+    if (!site) return { status: "needs", reasons: [{ text: "Fill in My real lot", action: "lot" }, { text: "Or pick a piece of land", stage: "land" }] };
+    const reasons: Reason[] = [];
+    if (!site.real) reasons.push({ text: "Sample lot, not a real property: fill in My real lot", action: "lot" });
+    for (const p of site.problems) reasons.push({ text: p, action: "lot" });
+    for (const c of site.checks) {
+      if (c.ok === false) reasons.push({ text: `${c.name} setback: the house is ${c.providedFt.toFixed(1)} ft from the lot line, ${c.requiredFt} ft needed`, action: "lot" });
+      if (c.ok === null) reasons.push({ text: `${c.name} setback isn't entered`, action: "lot" });
+    }
+    return { status: reasons.length ? "notes" : "ready", reasons };
+  });
+  outside(
+    "landscape",
+    "L-101",
+    "Landscape plan",
+    "Site",
+    () => {
+      const picked = ["lawn", "beds", "shrubs", "trees"].some((id) => exteriorPick(project.exterior.selections, id as "lawn"));
+      return picked ? { status: "ready", reasons: [] } : { status: "notes", reasons: [{ text: "No lawn, beds, shrubs or trees picked yet: the plan shows the layout only", stage: "exterior" }] };
+    },
+    true,
+  );
+  outside("roof", "A-111", "Roof plan", "Architectural", () => {
+    const fell = houseScene(project).roofs.some((r) => r.flat && project.house3d.roof.style !== "flat" && r.shape.fellBack);
+    return fell ? { status: "notes", reasons: [{ text: "Part of the roof couldn't be worked out and is drawn flat. Simplify the outline there or check the 3D view.", stage: "plan" }] } : { status: "ready", reasons: [] };
+  });
+  outside("elevations", "A-201", "Exterior elevations", "Architectural", () => ({ status: "ready", reasons: [] }));
+  outside("exterior-materials", "A-602", "Exterior materials schedule", "Architectural", () => {
+    const parts = exteriorPartsFor(project);
+    const missing = parts.filter((c) => !exteriorPick(project.exterior.selections, c.id));
+    if (missing.length === parts.length) return { status: "needs", reasons: [{ text: "Pick at least one outside material", stage: "exterior" }] };
+    return missing.length ? { status: "notes", reasons: [{ text: `Not picked yet: ${missing.map((c) => c.label.toLowerCase()).join(", ")}`, stage: "exterior" }] } : { status: "ready", reasons: [] };
+  });
+  outside("views", "A-901", "3D views", "Architectural", () => ({ status: "ready", reasons: [] }), true);
 
   for (const s of LATER) sheets.push({ id: s.id, number: s.number, title: s.title, group: s.group, optional: s.optional, status: "soon", reasons: [{ text: `Added in part ${s.part} of the plans export` }] });
   for (const d of OUTSIDE_DOCS) sheets.push({ id: `outside:${d.id}`, number: "", title: d.title, group: "From outside the app", status: "outside", reasons: [{ text: `Made by: ${d.who}.` }, { text: `The app gives them: ${d.gives}` }] });

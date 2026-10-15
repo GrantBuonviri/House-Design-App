@@ -20,6 +20,12 @@ import { codeReportPages } from "@/lib/plans/report";
 import { houseFacts } from "@/lib/plans/house";
 import { emptyPlan } from "@/lib/plan/edit";
 import { exportProjectJson } from "@/lib/storage/exchange";
+import { RealLot } from "@/lib/model/schema";
+import { lotCorners, siteLayout } from "@/lib/plans/lot";
+import { houseScene } from "@/lib/plans/scene";
+import { roofSheet } from "@/lib/plans/sheets/roof";
+import { elevationSheets } from "@/lib/plans/sheets/elevations";
+import { exteriorProductsFor } from "@/lib/catalog/exterior";
 
 let n = 0;
 const chosen = (type: string, levelId?: string): ChosenRoom => ({ id: `c${++n}`, type, name: `${roomType(type).label}`, description: "", ...(levelId ? { levelId } : {}) });
@@ -173,6 +179,7 @@ describe("plan sheets", () => {
       writeFileSync(`${process.env.PLANS_PDF_OUT}/report.pdf`, Buffer.from(report.output("arraybuffer")));
       writeFileSync(`${process.env.PLANS_PDF_OUT}/half.pdf`, Buffer.from(half.output("arraybuffer")));
       writeFileSync(`${process.env.PLANS_PDF_OUT}/two-story.house.json`, exportProjectJson(p));
+      writeFileSync(`${process.env.PLANS_PDF_OUT}/ranch-real-lot.house.json`, exportProjectJson(onRealLot(house(RANCH))));
     }
   });
 
@@ -180,9 +187,125 @@ describe("plan sheets", () => {
     const old = { ...createProject("Old"), schemaVersion: 9 } as Record<string, unknown>;
     delete old.plans;
     const p = migrateProject(old);
-    expect(p.plans).toEqual({ address: "", parcel: "", designer: "", sheetSize: "full", excluded: [] });
+    expect(p.plans).toEqual({ address: "", parcel: "", designer: "", sheetSize: "full", excluded: [], lot: null });
+    const v10 = { ...createProject("Old"), schemaVersion: 10 } as Record<string, unknown>;
+    v10.plans = { address: "1 Main", parcel: "", designer: "", sheetSize: "half", excluded: [] };
+    expect(migrateProject(v10).plans.lot).toBeNull();
+    expect(migrateProject(v10).plans.sheetSize).toBe("half");
   });
 });
+
+/** The ranch on a real lot: 100 ft along the street, 150 ft deep, with zoning setbacks and a rear easement. */
+function onRealLot(p: Project, lot: Partial<RealLot> = {}): Project {
+  const real = RealLot.parse({ frontFt: 100, leftFt: 150, streetSide: p.plot!.roadSide, setbacks: { front: 20, side: 5, rear: 15 }, easements: [{ id: "e", side: "rear", widthFt: 10 }], ...lot });
+  return { ...p, plans: { ...p.plans, address: "1234 W Example St", parcel: "R1234567890", lot: real } };
+}
+
+describe("the outside of the house (part 2)", () => {
+  const ranch = house(RANCH);
+
+  it("works out a lot's corners from its side lengths", () => {
+    const rect = lotCorners(RealLot.parse({ frontFt: 80, leftFt: 120 }));
+    expect("pts" in rect && rect.pts[2]).toEqual({ x: 80, y: 120 });
+    // Front 100, rear 120, sides 130 and 130.38: the rear sticks out 20 ft on the right.
+    const four = lotCorners(RealLot.parse({ shape: "four-sides", frontFt: 100, rearFt: 120, leftFt: 130, rightFt: Math.hypot(20, 130) }));
+    expect("pts" in four).toBe(true);
+    if ("pts" in four) {
+      expect(four.pts[3].x).toBeCloseTo(0);
+      expect(four.pts[2].x).toBeCloseTo(120);
+      expect(four.pts[2].y).toBeCloseTo(130);
+    }
+    expect("problem" in lotCorners(RealLot.parse({ shape: "four-sides", frontFt: 100, rearFt: 100, leftFt: 50, rightFt: 90 }))).toBe(true);
+    expect("problem" in lotCorners(RealLot.parse({ frontFt: 0, leftFt: 100 }))).toBe(true);
+  });
+
+  it("puts the house on the real lot and checks the setbacks and easements", () => {
+    const p = onRealLot(ranch);
+    const site = siteLayout(p)!;
+    expect(site.real).toBe(true);
+    expect(site.areaSqft).toBeCloseTo(15000, 0);
+    const front = site.checks.find((c) => c.side === "front")!;
+    expect(front.providedFt).toBeCloseTo(25, 1);
+    expect(front.ok).toBe(true);
+    // Centered between the sides.
+    const left = site.checks.find((c) => c.side === "left")!.providedFt;
+    const right = site.checks.find((c) => c.side === "right")!.providedFt;
+    expect(left).toBeCloseTo(right, 0);
+    const rule = codeReport(p).find((r) => r.rule.id === "setbacks")!;
+    expect(rule.status).toBe("pass");
+
+    // Moved back into the rear setback and easement.
+    const back = onRealLot(ranch, { houseFrontFt: 150 - 8 - houseDepthFt(ranch, p) });
+    const r2 = codeReport(back).find((r) => r.rule.id === "setbacks")!;
+    expect(r2.status).toBe("fail");
+    expect(r2.results.some((x) => /easement/.test(x.text))).toBe(true);
+    expect(readiness(back).sheets.find((s) => s.id === "site")!.reasons.some((x) => x.action === "lot")).toBe(true);
+  });
+
+  it("checks walls and eaves near the side lot lines", () => {
+    const narrow = onRealLot(ranch, { houseLeftFt: 2.5 });
+    const fire = codeReport(narrow).find((r) => r.rule.id === "lot-fire")!;
+    expect(fire.status).toBe("fail");
+    expect(codeReport(onRealLot(ranch)).find((r) => r.rule.id === "lot-fire")!.status).toBe("pass");
+    expect(codeReport(ranch).find((r) => r.rule.id === "lot-fire")!.status).toBe("manual");
+  });
+
+  it("says the sample lot isn't a real property until the real lot is filled in", () => {
+    const sample = buildSet(ranch).find((s) => s.number === "C-101")!;
+    expect(sheetText(sample).join(" ")).toContain("SAMPLE LOT, NOT A REAL PROPERTY");
+    expect(readiness(ranch).sheets.find((s) => s.id === "site")!.status).toBe("notes");
+    const real = buildSet(onRealLot(ranch)).find((s) => s.number === "C-101")!;
+    expect(sheetText(real).join(" ")).not.toContain("SAMPLE LOT");
+    expect(sheetText(real).join(" ")).toContain("R1234567890");
+  });
+
+  it("lists the part 2 sheets and draws them", () => {
+    const r = readiness(ranch);
+    for (const id of ["site", "roof", "elevations", "views", "landscape"]) expect(canDraw(r.sheets.find((s) => s.id === id)!), id).toBe(true);
+    // Nothing picked outside yet: the materials schedule needs a pick.
+    expect(r.sheets.find((s) => s.id === "exterior-materials")!.status).toBe("needs");
+    const numbers = buildSet(ranch).map((s) => s.number);
+    for (const n of ["C-101", "L-101", "A-111", "A-201", "A-901"]) expect(numbers).toContain(n);
+  });
+
+  it("shows every outside door and window on an elevation, with its tag", () => {
+    const p = house(TWO_STORY, 2);
+    const sc = houseScene(p);
+    const h = houseFacts(p);
+    const text = elevationSheets(p).flatMap((e) => e.items.filter((i) => i.t === "text").map((i) => (i as { text: string }).text));
+    const outside = sc.openings.filter((o) => o.tag);
+    expect(outside.length).toBeGreaterThan(5);
+    for (const o of outside) expect(text).toContain(o.tag);
+    // Windows inside the house (none here) never show; every outside one has a tag from the plans.
+    for (const o of outside) expect([...h.tags.values()]).toContain(o.tag);
+  });
+
+  it("draws gutters and downspouts on the roof plan", () => {
+    const rp = roofSheet(ranch);
+    expect(rp.downspouts).toBeGreaterThan(1);
+    expect(rp.items.some((i) => i.t === "text" && i.text === "6:12")).toBe(true);
+  });
+
+  it("lists the outside picks in the materials schedule", () => {
+    const pick = exteriorProductsFor("siding")[0];
+    const p = { ...ranch, exterior: { ...ranch.exterior, selections: [{ id: "s", targetId: "house", category: "siding", product: pick }] } };
+    expect(readiness(p).sheets.find((s) => s.id === "exterior-materials")!.status).toBe("notes");
+    const sheet = buildSet(p).find((s) => s.number === "A-602")!;
+    expect(sheetText(sheet).join(" ")).toContain(pick.brand);
+  });
+});
+
+/** How deep the house is, front to back, in feet, on a real lot. */
+function houseDepthFt(p: Project, onLot: Project): number {
+  const site = siteLayout(onLot)!;
+  const front = site.lines.find((l) => l.side === "front")!;
+  const pts = site.house.flat();
+  const n = { x: front.b.y - front.a.y, y: front.a.x - front.b.x };
+  const len = Math.hypot(n.x, n.y);
+  const d = pts.map((q) => ((q.x - front.a.x) * n.x + (q.y - front.a.y) * n.y) / len);
+  void p;
+  return (Math.max(...d) - Math.min(...d)) / 12;
+}
 
 describe("drawing helpers", () => {
   it("writes architectural feet and inches", () => {

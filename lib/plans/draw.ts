@@ -211,6 +211,14 @@ export function table(
   return { items, height: at - y, fitted };
 }
 
+/** Text angle along a direction on the sheet, kept readable (never upside down). Degrees counter-clockwise. */
+export function readable(d: Point): number {
+  let a = (-Math.atan2(d.y, d.x) * 180) / Math.PI;
+  if (a > 90) a -= 180;
+  if (a <= -90) a += 180;
+  return Math.round(a * 100) / 100;
+}
+
 /** A heading with a rule under it. */
 export function heading(text: string, x: number, y: number, width: number, size = 9): Item[] {
   return [

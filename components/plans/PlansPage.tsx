@@ -9,6 +9,7 @@ import { downloadPdf, pdfFileName, sheetsToPdf } from "@/lib/plans/pdf";
 import { codeReportPages } from "@/lib/plans/report";
 import { reportCounts, type RuleReport, type RuleStatus } from "@/lib/codes/rules";
 import SheetSvg from "./SheetSvg";
+import RealLotForm from "./RealLotForm";
 
 /**
  * The Plans page: every sheet a Boise permit asks for, with its status and
@@ -38,6 +39,7 @@ export default function PlansPage({ project, onClose, onGo }: { project: Project
   const [tab, setTab] = useState<"sheets" | "code">("sheets");
   const [preview, setPreview] = useState<string>(() => r.sheets.find((s) => s.levelId)?.id ?? "cover");
   const [details, setDetails] = useState(false);
+  const [lotOpen, setLotOpen] = useState(false);
   const [busy, setBusy] = useState<string | null>(null);
   const [zoom, setZoom] = useState(1);
   const selected = useMemo(() => new Set(selectedIds(project)), [project]);
@@ -45,10 +47,10 @@ export default function PlansPage({ project, onClose, onGo }: { project: Project
   const half = project.plans.sheetSize === "half";
 
   useEffect(() => {
-    const esc = (e: KeyboardEvent) => e.key === "Escape" && !details && onClose();
+    const esc = (e: KeyboardEvent) => e.key === "Escape" && !details && !lotOpen && onClose();
     window.addEventListener("keydown", esc);
     return () => window.removeEventListener("keydown", esc);
-  }, [onClose, details]);
+  }, [onClose, details, lotOpen]);
 
   const previewEntry = r.sheets.find((s) => s.id === preview && canDraw(s));
   const sheets = useMemo(() => (previewEntry ? buildSet(project, { only: [...selected, previewEntry.id] }) : []), [project, selected, previewEntry]);
@@ -78,6 +80,7 @@ export default function PlansPage({ project, onClose, onGo }: { project: Project
 
   const go = (reason: Reason) => {
     if (reason.action === "details") setDetails(true);
+    else if (reason.action === "lot") setLotOpen(true);
     else if (reason.stage) onGo(reason.stage);
   };
   const counts = reportCounts(r.report);
@@ -101,6 +104,9 @@ export default function PlansPage({ project, onClose, onGo }: { project: Project
             <option value="full">Full size, 24&quot; x 36&quot;</option>
             <option value="half">Half size, 12&quot; x 18&quot;</option>
           </select>
+          <button className="btn" onClick={() => setLotOpen(true)} data-testid="real-lot">
+            My real lot
+          </button>
           <button className="btn" onClick={() => setDetails(true)} data-testid="plan-details">
             Plan details
           </button>
@@ -183,6 +189,7 @@ export default function PlansPage({ project, onClose, onGo }: { project: Project
           )}
         </main>
       </div>
+      {lotOpen && <RealLotForm project={project} onSave={(patch) => setPlans(patch)} onClose={() => setLotOpen(false)} />}
       {details && <PlanDetails project={project} onSave={(patch) => setPlans(patch)} onClose={() => setDetails(false)} />}
     </div>
   );
@@ -210,7 +217,7 @@ function SheetRow({ s, active, checked, onCheck, onPreview, onGo }: { s: SheetEn
               {r.text}
               {(r.stage || r.action) && (
                 <button className="ml-1 text-accent underline" onClick={() => onGo(r)}>
-                  {r.action === "details" ? "Plan details" : "Take me there"}
+                  {r.action === "details" ? "Plan details" : r.action === "lot" ? "My real lot" : "Take me there"}
                 </button>
               )}
             </li>
@@ -279,7 +286,7 @@ function PlanDetails({ project, onSave, onClose }: { project: Project; onSave: (
           Site address
         </label>
         <input id="pd-address" className="input" value={form.address} onChange={(e) => setForm({ ...form, address: e.target.value })} placeholder="1234 W Example St" />
-        <p className="field-hint mb-3">The street address in Boise. The lot&apos;s shape and setbacks come with the &quot;My real lot&quot; form in a later update.</p>
+        <p className="field-hint mb-3">The street address in Boise. The lot&apos;s shape and setbacks go in &quot;My real lot&quot;.</p>
         <label className="field-label" htmlFor="pd-parcel">
           Parcel number
         </label>

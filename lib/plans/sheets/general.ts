@@ -1,10 +1,12 @@
-import type { Project } from "@/lib/model/schema";
+import type { Project, RealLot } from "@/lib/model/schema";
 import { CODE_DATA, CODE_EDITIONS, codeEntry, codeNum, codeText } from "@/lib/codes/data";
 import { reportCounts, type RuleReport } from "@/lib/codes/rules";
 import { inchText } from "@/lib/codes/rules";
 import { planTotals } from "@/lib/plan/measure";
 import { plotImplications } from "@/lib/land/implications";
 import { houseFacts } from "../house";
+import { realLotOk } from "../lot";
+import { fittedView } from "./views";
 import { DRAW_AREA, designerOf, ownerOf, preparedNote } from "../frame";
 import { OUTSIDE_DOCS, type SheetEntry } from "../catalog";
 import { capHeight, heading, HEADING_H, lineHeight, rect, table, textBlock, type Item } from "../draw";
@@ -96,7 +98,7 @@ export function coverSheet(project: Project, ctx: { sheets: SheetEntry[]; report
     ["Stories", `${above} above ground${h.levels.some((l) => l.kind === "basement") ? ", plus a basement" : ""}`],
     ["Fire sprinklers", "None (not required for a house under the IRC as Idaho adopted it)"],
     ["Foundation", foundationText(project)],
-    ["Lot", plot ? "Sample lot from the app, not a real property (real lot form in a later update)" : "TBD"],
+    ["Lot", realLotOk(project.plans.lot) ? lotText(project.plans.lot) : plot ? "Sample lot from the app, not a real property" : "TBD"],
   ];
   let tb = table(c1.x, y1, [{ title: "", width: 1.8 }, { title: "", width: c1.w - 1.8 }], info, { size: 7.5, boldFirst: true });
   items.push(...tb.items);
@@ -158,6 +160,14 @@ export function coverSheet(project: Project, ctx: { sheets: SheetEntry[]; report
     y3 += b.height + 0.1;
   });
 
+  // A 3D view of the house under the notes, when there's room.
+  if (h.drawn.length && DRAW_AREA.y1 - y3 > 3.5) {
+    y3 += 0.25;
+    items.push(...heading("3D view", c3.x, y3, c3.w));
+    y3 += HEADING_H + 0.1;
+    items.push(...fittedView(project, { x: c3.x, y: y3, w: c3.w, h: Math.min(DRAW_AREA.y1 - y3, c3.w * 0.8) }));
+  }
+
   // Column 4: what was checked, what comes from elsewhere, and the disclaimer.
   let y4 = top;
   items.push(...heading("Code check", c4.x, y4, c4.w));
@@ -199,6 +209,11 @@ export function coverSheet(project: Project, ctx: { sheets: SheetEntry[]; report
   items.push(...b.items);
 
   return items;
+}
+
+function lotText(lot: RealLot): string {
+  const sides = lot.shape === "rectangle" ? `${lot.frontFt}' x ${lot.leftFt}'` : `front ${lot.frontFt}', rear ${lot.rearFt}', sides ${lot.leftFt}' and ${lot.rightFt}'`;
+  return `${sides}, from the owner's entry of the recorded plat. Site plan C-101.`;
 }
 
 function foundationText(p: Project): string {

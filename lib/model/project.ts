@@ -45,6 +45,7 @@ export function migrateProject(raw: unknown): Project {
   // both optional with defaults, so older data needs no changes.
   // Version 9 to 10 added the building plan details (address, parcel,
   // designer, sheet size), all with defaults.
+  // Version 10 to 11 added "My real lot" to the plan details, empty by default.
   return Project.parse({ ...migrated, schemaVersion: SCHEMA_VERSION });
 }
 
