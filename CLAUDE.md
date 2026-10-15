@@ -1,0 +1,46 @@
+# House Design App: map for Claude
+
+Next.js 15 + React 19 + TypeScript app that runs locally in a desktop browser (single user, no server data, no API keys). Tailwind, Zustand, Dexie (IndexedDB), Zod, react-konva (2D canvases), React Three Fiber + drei (3D), Vitest.
+
+Read this file first, then open only the files for the feature you're changing. Don't explore the whole repo. README.md is for the user; its "For developers" section has longer notes on how each `lib/` folder works, if this map isn't enough.
+
+## Saving tokens (please follow)
+
+- **Don't read these whole:** `package-lock.json`, `data/catalog/*.json` (look at one entry with `head -40`, or use `jq`), `lib/cost/data/cost-rates.json` (`jq '.rates | keys'`, or grep for one rate), `app/favicon.ico`.
+- **Big files** (open the part you need with a line range or grep, not the whole file): `components/plan/PlanCanvas.tsx`, `components/plan/PlanStage.tsx`, `components/walk/Walkthrough.tsx`, `lib/cost/quantities.ts`, `lib/plan/suggest.ts`, `components/bubbles/SketchCanvas.tsx`, `components/house3d/House3DView.tsx`, `components/bubbles/BubbleStage.tsx`, `components/plan/PlanSidePanel.tsx`, `lib/model/schema.ts`.
+- **Tests:** while working, run only the related file, e.g. `npx vitest run tests/plan.test.ts`. Run the full `npm test` once before opening a PR, and print only the summary (`npm test 2>&1 | tail -15`).
+- **Build and lint:** `npm run build 2>&1 | tail -20`, `npm run lint 2>&1 | tail -20`. Run them once near the end, not after every edit.
+- **Browser checks:** a few screenshots of what changed, not every screen. Chromium is at `/opt/pw-browsers` for Playwright.
+- **Research** (product prices, links, building rules) goes to a helper agent that returns only the final data, so web pages stay out of the main conversation.
+
+## Commands
+
+`npm install` · `npm run dev` (http://localhost:3000) · `npm test` · `npm run lint` · `npm run build`
+
+## Conventions
+
+- All lengths are **inches** (`lib/model/units.ts` formats feet and inches). Plan and sketch coordinates: x east, y south.
+- The saved project is one Zod object in `lib/model/schema.ts`. Changing its shape means bumping `SCHEMA_VERSION` and adding a migration in `lib/model/project.ts`.
+- Every edit goes through `useProjectStore().update(...)` in `lib/store/projectStore.ts` (undo history + autosave). Undo labels come from `lib/store/describe.ts`.
+- Logic lives in `lib/` as plain functions with tests in `tests/`; `components/` is UI. 3D and Konva components load with `dynamic(..., { ssr: false })`.
+- Everything is worked out by code. No Claude/AI calls and no API keys in the app.
+- Each change: its own branch and PR. The user (Grant, on a Mac, new to dev tools) tests locally; his steps always include `git pull` and `npm install`.
+
+## Where things are
+
+| Feature | Logic (`lib/`) | UI (`components/`) | Tests |
+|---|---|---|---|
+| Home screen, project shell, stage bar, undo buttons, Fast/Pretty | `store/`, `stages.ts`, `graphics.ts` | `home/`, `project/ProjectWorkspace.tsx`, `project/*` | `undo.test.ts` |
+| Data model, saving, export/import | `model/schema.ts`, `model/project.ts`, `storage/db.ts`, `storage/exchange.ts` | | `model`, `storage`, `units` |
+| Guided tour | `tour/steps.ts` | `tour/Tour.tsx` | |
+| Land plots | `land/` (`generate.ts` seed→plot, `terrain.ts`, `sun.ts`, `implications.ts`, `mesh.ts`) | `land/` | `land`, `mesh` |
+| Rooms page + Design Brief | `brief/` (`rules.ts` builds the brief, `levels.ts` floors, `rooms.ts`) | `brief/` | `brief` |
+| Flow sketch (bubbles) | `bubbles/` (`site.ts` compass spots, `arrange.ts` + `layout.ts` drawing, `alternatives.ts`, `edit.ts`, `land.ts` overlays) | `bubbles/` (`BubbleStage.tsx` page, `SketchCanvas.tsx` canvas, `SidePanel.tsx`), shared `canvas/CanvasBits.tsx` | `bubbles`, `sketch-tools` |
+| Floor plan | `plan/` (`walls.ts` walls from rooms, `fromSketch.ts`, `suggest.ts` Suggest a plan, `edit.ts`, `snap.ts`, `stairs.ts`, `checks.ts` warnings, `changes.ts` + `alternatives.ts`, `furniture.ts`, `basics.ts`, `catalog.ts` door/window sizes) | `plan/` (`PlanStage.tsx` page, `PlanCanvas.tsx` canvas, `PlanShapes.tsx`, `PlanSidePanel.tsx`, `PlanBasicsForm.tsx`) | `plan`, `plan-suggest` |
+| 3D house, roof, terrain | `house3d/` (`build.ts` plan→meshes, `roof.ts`, `terrain.ts`, `openings.ts`, `stairs.ts`, `fixtures.ts`, `exterior.ts`, `yard.ts`, `finishes.ts` picks→colors) | `house3d/` (`House3DPanel.tsx`, `House3DView.tsx`, `Scene.tsx`, `patternMaterial.ts`) | `house3d`, `view3d` |
+| Walkthrough + Design mode (key E) | `house3d/walk.ts`, `house3d/sun.ts`, `plan/furniture.ts` | `walk/Walkthrough.tsx`, `walk/DesignPanel.tsx` | `walk`, `walk-design` |
+| Preview window | `house3d/windowView.ts`, `house3d/sunHours.ts` | `house3d/WindowPreview.tsx` | `window-view` |
+| Cost estimate (Boise) | `cost/quantities.ts` measures, `cost/estimate.ts` prices + `applySelections`, `cost/rates.ts`, data in `cost/data/cost-rates.json` | `cost/CostPanel.tsx` | `cost` |
+| Product catalog | `catalog/catalog.ts` loads `data/catalog/*.json` + `config/brands.json`, `catalog/categories.ts`, `catalog/exterior.ts` | | `interior`, `exterior` |
+| Interior design | `interior/` (`style.ts` answers→tags, `picks.ts`, `surfaces.ts`, `scope.ts`) | `interior/` | `interior` |
+| Exterior design + yard | `exterior/` (`style.ts`, `picks.ts`, `yard.ts`) | `exterior/` | `exterior` |
