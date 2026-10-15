@@ -1,4 +1,4 @@
-import type { FloorPlan, House3D, Level, PlanBasics, PlanRoom, Point } from "@/lib/model/schema";
+import type { FloorPlan, House3D, Level, PlanBasics, PlanRoom, Point, Selection } from "@/lib/model/schema";
 import { exteriorWallIn, INTERIOR_WALL_IN } from "@/lib/plan/basics";
 import { planOf, type Plans } from "@/lib/plan/edit";
 import { add, collinearOverlap, dist, lerp, pointInPolygon, polygonArea, polygonCenter, project, scale, sub, subtractIntervals, unit } from "@/lib/plan/geometry";
@@ -7,6 +7,7 @@ import { stairsDrawing } from "@/lib/plan/stairs";
 import { openingGeometries, wallPieces, type OpeningGeometry, type WallPiece } from "@/lib/plan/walls";
 import { COLORS, floorColor } from "./colors";
 import { drawFixture } from "./fixtures";
+import { roomLook, type RoomLook } from "./finishes";
 import { COVERED, cutHoles, floorFootprint, offsetRing, roofFootprint, subtractRegions, type Region } from "./footprint";
 import { levelHeights, type LevelHeights } from "./levels";
 import { MeshBuilder, toScene, type Frame, type MeshData, type Vec3 } from "./mesh";
@@ -53,6 +54,8 @@ export type HouseContext = {
   house3d: House3D;
   site: Site;
   frame: Frame;
+  /** Interior picks, for floor, wall, cabinet and appliance colors. */
+  interior?: Selection[];
 };
 
 const solidColor = (c: [number, number, number]) => ({ left: c, right: c, ends: c, top: c });
@@ -107,6 +110,13 @@ export function buildLevel(
   const belowPolys = indoorPolys(below && plans[below.id]);
   const parts: Part[] = [];
   const L = level.id;
+  const looks = new Map<string, RoomLook>(plan.rooms.map((r) => [r.id, roomLook(ctx.interior, r)]));
+  /** The room a point is in, for picking its finishes. */
+  const roomAt = (pt: Point) => plan.rooms.find((r) => areaKind(r) !== "outdoor" && pointInPolygon(pt, r.polygon));
+  const lookAt = (pt: Point) => {
+    const r = roomAt(pt);
+    return r ? looks.get(r.id) : undefined;
+  };
 
   // ---- Walls ----
   const pieces = wallPieces(plan, exteriorIn);
@@ -121,7 +131,14 @@ export function buildLevel(
     const mid = lerp(p.a, p.b, 0.5);
     // Outside walls run up to the next floor where there's one above, so there's no gap at the floor structure.
     const upTo = p.exterior && above && covers(abovePolys, mid) ? heights[above.id].floorIn : topIn;
-    const color = p.exterior ? { left: COLORS.siding, right: COLORS.drywall, ends: COLORS.siding, top: COLORS.wallTop } : { left: COLORS.drywall, right: COLORS.drywall, ends: COLORS.drywall, top: COLORS.wallTop };
+    // Each side of a wall takes the paint of the room it faces (the left side of an outside wall is the siding).
+    const side = (sign: 1 | -1) => {
+      const u = unit(sub(p.b, p.a));
+      return lookAt(add(mid, scale({ x: u.y, y: -u.x }, sign * (p.thicknessIn / 2 + 4))))?.wall ?? COLORS.drywall;
+    };
+    const color = p.exterior
+      ? { left: COLORS.siding, right: side(-1), ends: COLORS.siding, top: COLORS.wallTop }
+      : { left: side(1), right: side(-1), ends: COLORS.drywall, top: COLORS.wallTop };
     const tol = Math.max(2, p.thicknessIn / 2 + 0.5);
     const cuts: { t0: number; t1: number; og: OpeningGeometry }[] = [];
     for (const og of ogs) {
@@ -175,7 +192,8 @@ export function buildLevel(
     const solid = new MeshBuilder();
     const glass = new MeshBuilder();
     const host = hostPiece(pieces, og);
-    drawOpening(solid, glass, f, og, hostThickness(host), floorIn, ceilingIn);
+    const doorLook = host && !host.exterior ? (lookAt(add(og.center, scale(og.n, 10))) ?? lookAt(add(og.center, scale(og.n, -10)))) : undefined;
+    drawOpening(solid, glass, f, og, hostThickness(host), floorIn, ceilingIn, doorLook);
     const pick: Pick = { kind: "opening", id: og.opening.id, levelId: L };
     // Doors and windows hide with the wall they're in (an opening in no wall counts as inside).
     const wall: WallGroup = host?.exterior ? "outside" : "inside";
@@ -196,7 +214,8 @@ export function buildLevel(
     const outdoor = areaKind(room) === "outdoor";
     const mb = new MeshBuilder();
     const thick = outdoor ? OUTDOOR_SLAB_IN : below || floorIn > 1 ? 13 : GROUND_SLAB_IN;
-    for (const r of cutHoles(room.polygon, stairHoles)) drawSlab(mb, f, r, floorIn, thick, floorColor(room));
+    const look = looks.get(room.id)!;
+    for (const r of cutHoles(room.polygon, stairHoles)) drawSlab(mb, f, r, floorIn, thick, outdoor ? floorColor(room) : look.floor, outdoor ? 0 : look.floorPattern);
     // Posts hold up the roof over a porch or covered patio, at its corners away from the house.
     if (outdoor && COVERED.has(room.type ?? "")) {
       const house = indoorPolys(plan);
@@ -245,7 +264,8 @@ export function buildLevel(
   for (const fx of plan.fixtures) {
     const solid = new MeshBuilder();
     const glass = new MeshBuilder();
-    drawFixture(solid, glass, f, fx, floorIn);
+    const fxRoom = fx.roomId ? looks.get(fx.roomId) : lookAt({ x: fx.x, y: fx.y });
+    drawFixture(solid, glass, f, fx, floorIn, fxRoom);
     const pick: Pick = { kind: "fixture", id: fx.id, levelId: L };
     if (!solid.empty) parts.push({ key: `${L}:f:${fx.id}`, levelId: L, layer: "fixtures", pick, mesh: solid.build() });
     if (!glass.empty) parts.push({ key: `${L}:fg:${fx.id}`, levelId: L, layer: "fixtures", pick, mesh: glass.build(), glass: true });
@@ -254,8 +274,11 @@ export function buildLevel(
 }
 
 /** A floor slab: the top in the room's flooring, the bottom as the ceiling below, and its edges. */
-function drawSlab(mb: MeshBuilder, f: Frame, r: Region, floorIn: number, thick: number, color: [number, number, number]) {
+function drawSlab(mb: MeshBuilder, f: Frame, r: Region, floorIn: number, thick: number, color: [number, number, number], pattern = 0) {
+  // Only the top gets the floor pattern.
+  mb.pattern = pattern;
   mb.flat(f, r.outline, r.holes, floorIn, color, true);
+  mb.pattern = 0;
   mb.flat(f, r.outline, r.holes, floorIn - thick, COLORS.ceiling, false);
   for (const ring of [r.outline, ...r.holes]) {
     ring.forEach((a, i) => {

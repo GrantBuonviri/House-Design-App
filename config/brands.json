@@ -1,0 +1,26 @@
+{
+  "note": "Brands the catalog prefers for each kind of product. Products from these brands show a little higher when two products match your style equally well. Edit freely: add or remove brand names exactly as they appear in the catalog files.",
+  "suppliers": ["Franklin Building Supply", "Home Depot", "Lowe's", "Ferguson"],
+  "categories": {
+    "flooring": ["Shaw", "Mohawk"],
+    "tile": ["Daltile", "MSI"],
+    "paint": ["Sherwin-Williams", "Benjamin Moore"],
+    "kitchen-faucets": ["Delta", "Moen", "Kohler"],
+    "bath-faucets": ["Delta", "Moen", "Kohler"],
+    "showers": ["Delta", "Moen", "Kohler"],
+    "kitchen-sinks": ["Kohler"],
+    "toilets": ["Kohler"],
+    "vanities": [],
+    "cabinets": [],
+    "counters": [],
+    "hardware": [],
+    "lighting": [],
+    "trim": [],
+    "interior-doors": [],
+    "fridges": [],
+    "ranges": [],
+    "dishwashers": [],
+    "hoods": [],
+    "windows": ["Andersen", "Pella"]
+  }
+}

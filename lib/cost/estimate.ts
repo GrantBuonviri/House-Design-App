@@ -1,4 +1,5 @@
-import type { CostSettings, Project, Selection } from "@/lib/model/schema";
+import { WHOLE_HOUSE, type CostSettings, type Project, type Selection } from "@/lib/model/schema";
+import { interiorCategory } from "@/lib/catalog/categories";
 import { measureHouse, type Quantities } from "./quantities";
 import { rates as loadRates, type Range, type RateId, type RatesFile } from "./rates";
 
@@ -69,23 +70,14 @@ const addMoney = (a: Money, b: Money): Money => ({ low: a.low + b.low, likely: a
 const sumMoney = (ms: Money[]) => ms.reduce(addMoney, ZERO);
 const times = (r: Range, k: number): Money => ({ low: r[0] * k, likely: r[1] * k, high: r[2] * k });
 
-/** A product category (from milestones 9 and 10) and the line whose allowance it replaces. */
+/**
+ * Exterior product categories (milestone 10) and the line whose allowance
+ * each replaces for the whole house. Interior categories are in
+ * lib/catalog/categories.ts and can be picked room by room.
+ */
 export const ALLOWANCE_FOR: Record<string, RateId> = {
-  flooring: "flooring",
-  tile: "tile",
-  paint: "interior-paint",
-  trim: "trim-millwork",
-  cabinets: "kitchen-cabinets",
-  counters: "countertops",
-  vanities: "vanity",
-  toilets: "toilet",
-  "bath-faucets": "bath-sink-faucet",
-  showers: "shower-tub",
-  "kitchen-faucets": "kitchen-sink-faucet",
-  appliances: "appliance-package",
   windows: "window",
   "entry-doors": "entry-door",
-  "interior-doors": "interior-door",
   "garage-doors": "garage-door",
   siding: "siding",
   roofing: "roof-shingle",
@@ -186,6 +178,7 @@ export function estimate(
   // Electrical and HVAC
   line("electrical", "electrical", q.livingSqft + q.garageSqft * 0.5);
   line("electrical", "electrical-service", 1);
+  line("electrical", "lighting-fixtures", q.lightFixtures);
   line("hvac", "hvac", q.livingSqft);
 
   // Interior finishes (mid-range allowances until products are picked)
@@ -198,6 +191,7 @@ export function estimate(
   line("cabinets", "kitchen-cabinets", q.cabinetLf);
   line("cabinets", "countertops", q.counterSqft);
   line("cabinets", "vanity", q.vanities);
+  line("cabinets", "cabinet-hardware", q.cabinetHardware);
 
   // Fixtures and appliances
   line("fixtures", "toilet", q.toilets);
@@ -207,7 +201,7 @@ export function estimate(
   line("fixtures", "appliance-package", q.kitchens);
   line("fixtures", "laundry-hookup", q.laundries);
 
-  applySelections(lines, [...p.interior.selections, ...p.exterior.selections]);
+  applySelections(lines, [...p.interior.selections, ...p.exterior.selections], q, file);
 
   // Permits and fees
   const permit = file.permit;
@@ -288,20 +282,66 @@ export function spread(costs: Money[]): Money {
   return { low: likely - (sumDown + rssDown) / 2, likely, high: likely + (sumUp + rssUp) / 2 };
 }
 
-/** Picked products replace the allowance on their line: the product's price times the line's amount (or the picked quantity). */
-export function applySelections(lines: CostLine[], selections: Selection[]) {
+/**
+ * Picked products replace the mid-range allowance on their line. Interior
+ * picks work room by room: each room uses its own pick, or the whole-house
+ * pick, or the allowance, for its share of the line. A pick that is only
+ * part of a line (a faucet in "kitchen sink + faucet") replaces that part of
+ * the allowance. Labor stays at the line's rate.
+ */
+export function applySelections(lines: CostLine[], selections: Selection[], q?: Quantities, file: RatesFile = loadRates()) {
+  const byLine = new Map<string, Selection[]>();
   for (const s of selections) {
-    const id = ALLOWANCE_FOR[s.category];
-    const l = id && lines.find((x) => x.id === id);
-    if (!l || s.product.price === undefined) continue;
-    const qty = s.quantity ?? l.qty;
-    const material = s.product.price * qty;
-    const labor = (l.labor ?? 0) * qty;
-    const c = material + labor;
-    l.cost = { low: c * 0.95, likely: c, high: c * 1.1 };
-    l.material = s.product.price;
-    l.product = `${s.product.brand} ${s.product.name}`;
-    l.qty = qty;
+    if (s.product.price === undefined) continue;
+    const lineId = interiorCategory(s.category)?.line ?? ALLOWANCE_FOR[s.category];
+    if (!lineId) continue;
+    byLine.set(lineId, [...(byLine.get(lineId) ?? []), s]);
+  }
+  for (const [lineId, picks] of byLine) {
+    const l = lines.find((x) => x.id === lineId);
+    if (!l) continue;
+    const r = file.rates[lineId as RateId];
+    // Each room's part of the line, scaled so the parts add up to the line's amount.
+    const parts = (q?.rooms ?? []).map((room) => ({ id: room.id, amount: room.amounts[lineId as RateId] ?? 0 })).filter((x) => x.amount > 0);
+    const sum = parts.reduce((s, x) => s + x.amount, 0);
+    const shares = sum > 0 ? parts.map((x) => ({ id: x.id, amount: (x.amount * l.qty) / sum })) : [{ id: WHOLE_HOUSE, amount: l.qty }];
+    // An exterior pick with its own quantity prices that quantity.
+    const fixedQty = picks.length === 1 && !interiorCategory(picks[0].category) ? picks[0].quantity : undefined;
+    if (fixedQty !== undefined) shares.splice(0, shares.length, { id: WHOLE_HOUSE, amount: fixedQty });
+
+    let cost: Money = ZERO;
+    let pickedAmount = 0;
+    const used = new Set<string>();
+    for (const part of shares) {
+      // The picks that apply here, one per category: the room's own, or the whole house's.
+      const cats = new Map<string, Selection>();
+      for (const s of picks) if (s.targetId === WHOLE_HOUSE && !cats.has(s.category)) cats.set(s.category, s);
+      for (const s of picks) if (s.targetId === part.id) cats.set(s.category, s);
+      let replaced = 0;
+      let productCost = 0;
+      for (const s of cats.values()) {
+        const c = interiorCategory(s.category);
+        const share = c?.share ?? 1;
+        replaced += share;
+        productCost += s.product.price! * (c?.perUnit ?? 1) * part.amount;
+        used.add(`${s.product.brand} ${s.product.name}`);
+      }
+      replaced = Math.min(1, replaced);
+      if (cats.size) pickedAmount += part.amount;
+      const allowance = r ? addMoney(times(r.material, part.amount * (1 - replaced)), times(r.labor, part.amount)) : ZERO;
+      const product: Money = { low: productCost * 0.95, likely: productCost, high: productCost * 1.1 };
+      cost = addMoney(cost, addMoney(allowance, product));
+    }
+    if (!used.size) continue;
+    l.cost = cost;
+    l.qty = shares.reduce((s, x) => s + x.amount, 0);
+    const names = [...used];
+    const everywhere = pickedAmount >= l.qty - 0.01;
+    l.product = names.length === 1 ? names[0] : `${names.length} picks`;
+    if (!everywhere) l.product += ", mid-range elsewhere";
+    // The per-unit material shown is what it averages out to.
+    l.material = l.qty > 0 ? Math.max(0, cost.likely / l.qty - (l.labor ?? 0)) : l.material;
+    l.note = `Picked: ${names.join(", ")}.${everywhere ? "" : " Rooms without a pick use the mid-range allowance."} ${l.note ?? ""}`.trim();
   }
 }
 

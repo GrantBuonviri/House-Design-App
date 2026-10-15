@@ -235,7 +235,7 @@ describe("the estimate", () => {
     const p = project({ [MAIN_LEVEL_ID]: plan([room("a", 0, 0, 50 * FT, 40 * FT)]) });
     const base = estimate(p)!;
     const product = { name: "Test plank", brand: "Shaw", url: "https://shawfloors.com/x", price: 20, unit: "sqft" as const, priceSource: "listed" as const, lastChecked: "2026-10-14" };
-    const picked = estimate({ ...p, interior: { answers: {}, moodBoard: [], selections: [{ id: "s", targetId: "a", category: "flooring", product }] } })!;
+    const picked = estimate({ ...p, interior: { answers: {}, moodBoard: [], shuffle: 0, selections: [{ id: "s", targetId: "a", category: "flooring", product }] } })!;
     const l = line(picked, "flooring")[0];
     expect(l.product).toBe("Shaw Test plank");
     expect(cat(picked, "interior")).toBeGreaterThan(cat(base, "interior"));

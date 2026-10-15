@@ -1,0 +1,303 @@
+[
+  {
+    "id": "progress-gulliver-pendant-graphite",
+    "name": "Progress Lighting Gulliver One-Light Graphite Coastal Pendant",
+    "brand": "Progress Lighting",
+    "line": "Gulliver",
+    "sku": "P500022-143",
+    "url": "https://www.destinationlighting.com/item/P1837505",
+    "price": 169.99,
+    "unit": "each",
+    "priceSource": "listed",
+    "priceNote": "$169.99 at Destination Lighting",
+    "lastChecked": "2026-10-15",
+    "kind": "pendant",
+    "styles": [
+      "industrial",
+      "modern-farmhouse",
+      "mountain-modern"
+    ],
+    "tags": [
+      "black",
+      "cool"
+    ],
+    "color": "#3b3d3f",
+    "pattern": "metal"
+  },
+  {
+    "id": "quoizel-grant-mini-pendant-brushed-nickel",
+    "name": "Quoizel Grant Mini Pendant, Brushed Nickel",
+    "brand": "Quoizel",
+    "line": "Grant",
+    "sku": "GRT1508BN",
+    "url": "https://www.destinationlighting.com/item/grant-mini-pendant-brushed-nickel-quoizel-lighting/P1372233",
+    "price": 220.99,
+    "unit": "each",
+    "priceSource": "listed",
+    "priceNote": "$220.99 at Destination Lighting",
+    "lastChecked": "2026-10-15",
+    "kind": "pendant",
+    "styles": [
+      "transitional",
+      "scandinavian",
+      "modern"
+    ],
+    "tags": [
+      "brushed-nickel",
+      "neutral"
+    ],
+    "color": "#aaa69d",
+    "pattern": "metal"
+  },
+  {
+    "id": "kichler-everly-pendant-olde-bronze",
+    "name": "Kichler Everly Single-Light Pendant, Olde Bronze",
+    "brand": "Kichler",
+    "line": "Everly",
+    "sku": "42046OZ",
+    "url": "https://frankwebb.com/products/kichler-42046oz-everly-pendant-sc30154-667988",
+    "price": 279.99,
+    "unit": "each",
+    "priceSource": "listed",
+    "priceNote": "$279.99 at Frank Webb (sale from $422.14)",
+    "lastChecked": "2026-10-15",
+    "kind": "pendant",
+    "styles": [
+      "craftsman",
+      "modern-farmhouse",
+      "mountain-modern"
+    ],
+    "tags": [
+      "warm",
+      "black"
+    ],
+    "color": "#4a3b2e",
+    "pattern": "metal"
+  },
+  {
+    "id": "hinkley-somerset-pendant-heritage-brass",
+    "name": "Hinkley Somerset 11.5 in. Pendant, Heritage Brass with Etched Opal Glass",
+    "brand": "Hinkley",
+    "line": "Somerset",
+    "sku": "3407HB",
+    "url": "https://www.destinationlighting.com/item/somerset-inch-pendant-heritage-brass-hinkley-lighting/609552",
+    "price": 349.0,
+    "unit": "each",
+    "priceSource": "listed",
+    "priceNote": "$349.00 at Destination Lighting",
+    "lastChecked": "2026-10-15",
+    "kind": "pendant",
+    "styles": [
+      "transitional",
+      "modern",
+      "scandinavian"
+    ],
+    "tags": [
+      "brass",
+      "warm"
+    ],
+    "color": "#b8975a",
+    "pattern": "metal"
+  },
+  {
+    "id": "progress-hangar-5-light-chandelier-antique-bronze",
+    "name": "Progress Lighting Hangar 5-Light Chandelier, Antique Bronze",
+    "brand": "Progress Lighting",
+    "line": "Hangar",
+    "sku": "P400105-020",
+    "url": "https://www.destinationlighting.com/item/hangar-antique-bronze-5-light-chandelier-progress-lighting/P2014307",
+    "price": 389.0,
+    "unit": "each",
+    "priceSource": "listed",
+    "priceNote": "$389.00 at Destination Lighting",
+    "lastChecked": "2026-10-15",
+    "kind": "chandelier",
+    "styles": [
+      "industrial",
+      "modern-farmhouse",
+      "mountain-modern"
+    ],
+    "tags": [
+      "warm",
+      "brass"
+    ],
+    "color": "#4a3b2e",
+    "pattern": "metal"
+  },
+  {
+    "id": "hinkley-beaumont-6-light-chandelier-black",
+    "name": "Hinkley Beaumont 6-Light Chandelier, Black",
+    "brand": "Hinkley",
+    "line": "Beaumont",
+    "sku": "4466BK",
+    "url": "https://www.destinationlighting.com/item/beaumont-6-light-black-chandelier-hinkley-lighting/P2224814",
+    "price": 999.0,
+    "unit": "each",
+    "priceSource": "listed",
+    "priceNote": "$999.00 at Destination Lighting",
+    "lastChecked": "2026-10-15",
+    "kind": "chandelier",
+    "styles": [
+      "transitional",
+      "modern-farmhouse",
+      "craftsman"
+    ],
+    "tags": [
+      "black",
+      "bold"
+    ],
+    "color": "#1e1e1e",
+    "pattern": "metal"
+  },
+  {
+    "id": "kichler-crosby-3-light-vanity-black",
+    "name": "Kichler Crosby 3-Light Vanity Light, Black with Clear Glass",
+    "brand": "Kichler",
+    "line": "Crosby",
+    "sku": "45497BKCLR",
+    "url": "https://www.destinationlighting.com/item/crosby-3-light-vanity-light-black-kichler-lighting/P2729477",
+    "price": 174.97,
+    "unit": "each",
+    "priceSource": "listed",
+    "priceNote": "$174.97 at Destination Lighting (backordered)",
+    "lastChecked": "2026-10-15",
+    "kind": "vanity",
+    "styles": [
+      "modern",
+      "industrial",
+      "modern-farmhouse"
+    ],
+    "tags": [
+      "matte-black",
+      "bold"
+    ],
+    "color": "#1e1e1e",
+    "pattern": "metal"
+  },
+  {
+    "id": "quoizel-gibson-3-light-bath-aged-brass",
+    "name": "Quoizel Gibson 3-Light Bathroom Light, Aged Brass",
+    "brand": "Quoizel",
+    "line": "Gibson",
+    "sku": "GIB8622AB",
+    "url": "https://www.destinationlighting.com/item/quoizel-lighting-gibson-aged-brass-bathroom-light/P2725871",
+    "price": 279.99,
+    "unit": "each",
+    "priceSource": "listed",
+    "priceNote": "$279.99 at Destination Lighting",
+    "lastChecked": "2026-10-15",
+    "kind": "vanity",
+    "styles": [
+      "modern",
+      "transitional",
+      "mountain-modern"
+    ],
+    "tags": [
+      "brass",
+      "warm"
+    ],
+    "color": "#b08d57",
+    "pattern": "metal"
+  },
+  {
+    "id": "quoizel-westcap-3-light-bath-brushed-nickel",
+    "name": "Quoizel Westcap 3-Light Bathroom Light, Brushed Nickel",
+    "brand": "Quoizel",
+    "line": "Westcap",
+    "sku": "WCP8603BN",
+    "url": "https://www.destinationlighting.com/item/westcap-brushed-nickel-3-light-bathroom-light-quoizel-lighting/P2190972",
+    "price": 289.99,
+    "unit": "each",
+    "priceSource": "listed",
+    "priceNote": "$289.99 at Destination Lighting",
+    "lastChecked": "2026-10-15",
+    "kind": "vanity",
+    "styles": [
+      "modern",
+      "scandinavian",
+      "transitional"
+    ],
+    "tags": [
+      "brushed-nickel",
+      "cool"
+    ],
+    "color": "#aaa69d",
+    "pattern": "metal"
+  },
+  {
+    "id": "design-classics-lucent-13-flush-matte-black",
+    "name": "Design Classics Lighting Lucent 13 in. Matte Black Flushmount Light with White Acrylic Drum",
+    "brand": "Design Classics Lighting",
+    "line": "Lucent",
+    "sku": "1872-07",
+    "url": "https://www.destinationlighting.com/item/13-inch-matte-black-flushmount-light/710284",
+    "price": 126.45,
+    "unit": "each",
+    "priceSource": "listed",
+    "priceNote": "$126.45 at Destination Lighting",
+    "lastChecked": "2026-10-15",
+    "kind": "flush",
+    "styles": [
+      "modern",
+      "scandinavian",
+      "industrial"
+    ],
+    "tags": [
+      "matte-black",
+      "white",
+      "neutral"
+    ],
+    "color": "#f2f2f0",
+    "pattern": "metal"
+  },
+  {
+    "id": "progress-tilley-semi-flush-antique-bronze",
+    "name": "Progress Lighting Tilley Semi-Flush Mount, Antique Bronze",
+    "brand": "Progress Lighting",
+    "line": "Tilley",
+    "sku": "P350091-020",
+    "url": "https://www.destinationlighting.com/item/tilley-antique-bronze-semi-flush-mount-progress-lighting/P2014193",
+    "price": 195.0,
+    "unit": "each",
+    "priceSource": "listed",
+    "priceNote": "$195.00 at Destination Lighting",
+    "lastChecked": "2026-10-15",
+    "kind": "flush",
+    "styles": [
+      "modern-farmhouse",
+      "craftsman",
+      "mountain-modern"
+    ],
+    "tags": [
+      "warm",
+      "black"
+    ],
+    "color": "#4a3b2e",
+    "pattern": "metal"
+  },
+  {
+    "id": "savoy-house-fulton-sconce-english-bronze-warm-brass",
+    "name": "Savoy House Fulton Wall Sconce, English Bronze with Warm Brass",
+    "brand": "Savoy House",
+    "line": "Fulton",
+    "sku": "9-5005-1-79",
+    "url": "https://www.destinationlighting.com/item/fulton-wall-sconce-english-bronze-warm-brass-savoy-house/P1794165",
+    "price": 298.0,
+    "unit": "each",
+    "priceSource": "listed",
+    "priceNote": "$298.00 at Destination Lighting",
+    "lastChecked": "2026-10-15",
+    "kind": "sconce",
+    "styles": [
+      "modern",
+      "mountain-modern",
+      "transitional"
+    ],
+    "tags": [
+      "brass",
+      "warm"
+    ],
+    "color": "#5a4632",
+    "pattern": "metal"
+  }
+]

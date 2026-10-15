@@ -1,0 +1,153 @@
+[
+  {
+    "id": "masonite-08200-flush-solid-core",
+    "name": "30 in. x 80 in. No Panel Smooth Flush Hardboard Solid Core Primed Composite Interior Door Slab",
+    "brand": "Masonite",
+    "line": "Flush Solid Core",
+    "sku": "08200",
+    "url": "https://www.homedepot.com/p/Masonite-30-in-x-80-in-No-Panel-Smooth-Flush-Hardboard-Solid-Core-Primed-Composite-Interior-Door-Slab-08200/100092843",
+    "price": 175.64,
+    "unit": "each",
+    "priceSource": "listed",
+    "priceNote": "$175.64 at Home Depot; flat slab, budget option",
+    "lastChecked": "2026-10-15",
+    "kind": "slab",
+    "styles": [
+      "modern",
+      "scandinavian",
+      "industrial"
+    ],
+    "tags": [
+      "neutral",
+      "white"
+    ],
+    "color": "#f2f1ed",
+    "pattern": "solid"
+  },
+  {
+    "id": "masonite-65075-2-panel-square",
+    "name": "30 in. x 80 in. Primed 2-Panel Square Hollow Core Composite Interior Door Slab",
+    "brand": "Masonite",
+    "line": "2-Panel Square",
+    "sku": "65075",
+    "url": "https://homedepot.com/p/Masonite-30-in-x-80-in-Primed-2-Panel-Square-Hollow-Core-Composite-Interior-Door-Slab-65075/207195004",
+    "price": 209.45,
+    "unit": "each",
+    "priceSource": "listed",
+    "priceNote": "$209.45 at Home Depot",
+    "lastChecked": "2026-10-15",
+    "kind": "slab",
+    "styles": [
+      "modern-farmhouse",
+      "transitional",
+      "craftsman"
+    ],
+    "tags": [
+      "neutral",
+      "white"
+    ],
+    "color": "#f2f1ed",
+    "pattern": "solid"
+  },
+  {
+    "id": "eightdoors-shaker-1-panel",
+    "name": "30 in. x 80 in. x 1-3/8 in. Shaker White Primed 1-Panel Solid Core Wood Interior Slab Door",
+    "brand": "eightdoors",
+    "line": "Shaker",
+    "sku": "70188014803035SH",
+    "url": "https://www.homedepot.com/p/eightdoors-30-in-x-80-in-x-1-3-8-in-Shaker-White-Primed-1-Panel-Solid-Core-Wood-Interior-Slab-Door-70188014803035SH/310969642",
+    "price": 219.0,
+    "unit": "each",
+    "priceSource": "listed",
+    "priceNote": "$219.00 at Home Depot",
+    "lastChecked": "2026-10-15",
+    "kind": "slab",
+    "styles": [
+      "modern-farmhouse",
+      "transitional",
+      "scandinavian",
+      "modern"
+    ],
+    "tags": [
+      "neutral",
+      "white"
+    ],
+    "color": "#f2f1ed",
+    "pattern": "solid"
+  },
+  {
+    "id": "eightdoors-shaker-5-panel",
+    "name": "30 in. x 80 in. x 1-3/4 in. Shaker 5-Panel Solid Core White Primed Wood Interior Door Slab",
+    "brand": "eightdoors",
+    "line": "Shaker",
+    "sku": "70588014803045",
+    "url": "https://www.homedepot.com/p/eightdoors-30-in-x-80-in-x-1-3-4-in-Shaker-5-Panel-Solid-Core-White-Primed-Wood-Interior-Door-Slab-70588014803045/317057989",
+    "price": 299.99,
+    "unit": "each",
+    "priceSource": "listed",
+    "priceNote": "$299.99 at Home Depot",
+    "lastChecked": "2026-10-15",
+    "kind": "slab",
+    "styles": [
+      "craftsman",
+      "modern-farmhouse",
+      "transitional"
+    ],
+    "tags": [
+      "neutral",
+      "white"
+    ],
+    "color": "#f2f1ed",
+    "pattern": "solid"
+  },
+  {
+    "id": "eightdoors-1-lite-frosted-glass-shaker",
+    "name": "30 in. x 80 in. x 1-3/8 in. 1-Lite Solid Core Frosted Glass Shaker White Primed Wood Interior Door Slab",
+    "brand": "eightdoors",
+    "line": "Shaker Glass",
+    "sku": "50388014803035FRSH",
+    "url": "https://homedepot.com/p/eightdoors-30-in-x-80-in-x-1-3-8-in-1-Lite-Solid-Core-Frosted-Glass-Shaker-White-Primed-Wood-Interior-Door-Slab-50388014803035FRSH/321743763",
+    "price": 258.71,
+    "unit": "each",
+    "priceSource": "listed",
+    "priceNote": "$258.71 at Home Depot; frosted glass panel",
+    "lastChecked": "2026-10-15",
+    "kind": "slab",
+    "styles": [
+      "modern",
+      "transitional",
+      "scandinavian",
+      "industrial"
+    ],
+    "tags": [
+      "cool",
+      "white"
+    ],
+    "color": "#eef0ef",
+    "pattern": "solid"
+  },
+  {
+    "id": "builders-choice-knotty-alder-v-groove",
+    "name": "30 in. x 80 in. 2-Panel Arch Top V-Grooved Solid Core Knotty Alder Interior Door Slab",
+    "brand": "Builders Choice",
+    "line": "Knotty Alder",
+    "sku": "HD1628S26",
+    "url": "https://www.homedepot.com/p/Builders-Choice-30-in-x-80-in-2-Panel-Arch-Top-V-Grooved-Solid-Core-Knotty-Alder-Interior-Door-Slab-HD1628S26/100055436",
+    "price": 305.0,
+    "unit": "each",
+    "priceSource": "listed",
+    "priceNote": "$305.00 at Home Depot; unfinished rustic V-groove plank look",
+    "lastChecked": "2026-10-15",
+    "kind": "slab",
+    "styles": [
+      "mountain-modern",
+      "craftsman"
+    ],
+    "tags": [
+      "warm",
+      "medium-wood"
+    ],
+    "color": "#b07a4f",
+    "pattern": "plank"
+  }
+]

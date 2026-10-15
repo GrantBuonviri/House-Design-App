@@ -705,12 +705,12 @@
       "note": "1 in PEX/poly from meter box to house, ~50-120 ft, incl. trench. Veolia furnishes and installs meter; customer owns meter-to-house line."
     },
     "electrical": {
-      "label": "Electrical (rough, devices, lighting)",
+      "label": "Electrical (rough, devices, recessed lights)",
       "unit": "sqft",
       "material": [
-        3,
-        4.5,
-        6.5
+        2.4,
+        3.7,
+        5.4
       ],
       "labor": [
         3.5,
@@ -720,7 +720,7 @@
       "source": "HomeGuide electrical wiring cost (new construction $4-$9/sqft) plus mid-range lighting allowance",
       "url": "https://homeguide.com/costs/electrical-wiring-cost",
       "checked": "2026-10-14",
-      "note": "Per sqft finished floor. Includes AFCI/GFCI devices, low-voltage prewire basics, mid-range fixture allowance (~$2-4k)."
+      "note": "Per sqft finished floor. Includes AFCI/GFCI devices, low-voltage prewire basics and recessed lights. Decorative light fixtures are their own line (lighting-fixtures) since milestone 9."
     },
     "electrical-service": {
       "label": "Electrical panel and service (200 amp)",
@@ -739,6 +739,24 @@
       "url": "https://homeguide.com/costs/electrical-wiring-cost",
       "checked": "2026-10-14",
       "note": "200A meter-main, panel, grounding, ~50-100 ft underground conductor. Idaho Power line-extension charges (if any) excluded."
+    },
+    "lighting-fixtures": {
+      "label": "Light fixtures (mid-range)",
+      "unit": "each",
+      "material": [
+        60,
+        120,
+        280
+      ],
+      "labor": [
+        40,
+        65,
+        100
+      ],
+      "source": "Judgment: mid-range pendants, flush mounts and vanity lights at Home Depot/Lowe's run about $60-$300; electrician hangs one in about an hour",
+      "url": null,
+      "checked": "2026-10-15",
+      "note": "Each decorative ceiling or wall light (pendants, chandeliers, vanity lights, flush mounts). Moved out of the electrical rate in milestone 9 (about $1.20/sqft taken off electrical)."
     },
     "hvac": {
       "label": "Heating and cooling (furnace, AC or heat pump, ducts)",
@@ -865,6 +883,24 @@
       "url": "https://homeguide.com/costs/quartz-countertops-cost",
       "checked": "2026-10-14",
       "note": "Mid-range quartz, eased edge, undermount sink cutout. Backsplash separate (tile)."
+    },
+    "cabinet-hardware": {
+      "label": "Cabinet pulls and knobs",
+      "unit": "each",
+      "material": [
+        3,
+        8,
+        18
+      ],
+      "labor": [
+        2,
+        3,
+        4
+      ],
+      "source": "Judgment: mid-range pulls (Amerock, Liberty) run about $3-$18 each; installer time a few minutes each",
+      "url": null,
+      "checked": "2026-10-15",
+      "note": "About 1.5 per linear foot of kitchen cabinets and 4 per bath vanity."
     },
     "vanity": {
       "label": "Bath vanity with top",

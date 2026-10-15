@@ -1,0 +1,251 @@
+[
+  {
+    "id": "daltile-hillcroft-antique-oak",
+    "name": "Hillcroft Antique Oak 6 in. x 36 in. Glazed Porcelain Floor and Wall Tile",
+    "brand": "Daltile",
+    "line": "Hillcroft",
+    "sku": "HL40PLK636MTHD",
+    "url": "https://www.homedepot.com/p/Daltile-Hillcroft-Antique-Oak-6-in-x-36-in-Glazed-Porcelain-Floor-and-Wall-Tile-14-72-sq-ft-Case-HL40PLK636MTHD/324493465",
+    "price": 2.17,
+    "unit": "sqft",
+    "priceSource": "listed",
+    "priceNote": "$2.17/sq ft ($31.92/14.72 sq ft case) at Home Depot; wood-look budget option",
+    "lastChecked": "2026-10-15",
+    "kind": "floor",
+    "styles": [
+      "mountain-modern",
+      "craftsman",
+      "modern-farmhouse"
+    ],
+    "tags": [
+      "warm",
+      "medium-wood"
+    ],
+    "color": "#7b5b3f",
+    "pattern": "plank"
+  },
+  {
+    "id": "daltile-indoterra-white-desert",
+    "name": "Indoterra White Desert 12 in. x 24 in. Matte Porcelain Concrete Look Floor and Wall Tile",
+    "brand": "Daltile",
+    "line": "Indoterra",
+    "sku": "IN41RCT1224XTMT",
+    "url": "https://www.homedepot.com/p/Daltile-Indoterra-White-Desert-12-in-x-24-in-Matte-Porcelain-Concrete-Look-Floor-and-Wall-Tile-17-02-sq-ft-case-IN41RCT1224XTMT/331271157",
+    "price": 7.63,
+    "unit": "sqft",
+    "priceSource": "listed",
+    "priceNote": "$7.63/sq ft ($129.86/17.02 sq ft case) at Home Depot",
+    "lastChecked": "2026-10-15",
+    "kind": "floor",
+    "styles": [
+      "scandinavian",
+      "modern",
+      "modern-farmhouse"
+    ],
+    "tags": [
+      "neutral",
+      "concrete-look"
+    ],
+    "color": "#e2dcd1",
+    "pattern": "tile"
+  },
+  {
+    "id": "daltile-indoterra-volcanic-ash",
+    "name": "Indoterra Volcanic Ash 12 in. x 24 in. Matte Porcelain Concrete Look Floor and Wall Tile",
+    "brand": "Daltile",
+    "line": "Indoterra",
+    "sku": "IN46RCT1224XTMT",
+    "url": "https://homedepot.com/p/Daltile-Indoterra-Volcanic-Ash-12-in-x-24-in-Matte-Porcelain-Concrete-Look-Floor-and-Wall-Tile-17-02-sq-ft-case-IN46RCT1224XTMT/331271150",
+    "price": 7.63,
+    "unit": "sqft",
+    "priceSource": "listed",
+    "priceNote": "$7.63/sq ft ($129.86/17.02 sq ft case) at Home Depot",
+    "lastChecked": "2026-10-15",
+    "kind": "floor",
+    "styles": [
+      "industrial",
+      "modern",
+      "mountain-modern"
+    ],
+    "tags": [
+      "bold",
+      "concrete-look"
+    ],
+    "color": "#4a4947",
+    "pattern": "tile"
+  },
+  {
+    "id": "daltile-delegate-light-grey",
+    "name": "Delegate Light Grey 12 in. x 24 in. Color Body Porcelain Floor and Wall Tile",
+    "brand": "Daltile",
+    "line": "Delegate",
+    "sku": "DL26RCT1224MT",
+    "url": "https://www.homedepot.com/p/Daltile-Delegate-Light-Grey-12-in-x-24-in-Color-Body-Porcelain-Floor-and-Wall-Tile-17-02-sq-ft-case-DL26RCT1224MT/326593644",
+    "price": 8.43,
+    "unit": "sqft",
+    "priceSource": "listed",
+    "priceNote": "$8.43/sq ft ($143.48/17.02 sq ft case) at Home Depot",
+    "lastChecked": "2026-10-15",
+    "kind": "floor",
+    "styles": [
+      "transitional",
+      "modern",
+      "industrial"
+    ],
+    "tags": [
+      "cool"
+    ],
+    "color": "#bcb9b2",
+    "pattern": "stone"
+  },
+  {
+    "id": "daltile-restore-bright-white-3x6",
+    "name": "Restore Bright White 3 in. x 6 in. Glossy Ceramic Subway Wall Tile",
+    "brand": "Daltile",
+    "line": "Restore",
+    "sku": "RE1536MODHD1P4",
+    "url": "https://www.homedepot.com/p/Daltile-Restore-Bright-White-3-in-x-6-in-Glossy-Ceramic-Subway-Wall-Tile-12-5-sq-ft-case-RE1536MODHD1P4/302575146",
+    "price": 1.2,
+    "unit": "sqft",
+    "priceSource": "listed",
+    "priceNote": "$1.20/sq ft ($15.00/12.5 sq ft case) at Home Depot; budget subway",
+    "lastChecked": "2026-10-15",
+    "kind": "wall",
+    "styles": [
+      "modern-farmhouse",
+      "transitional",
+      "craftsman",
+      "scandinavian"
+    ],
+    "tags": [
+      "neutral",
+      "white"
+    ],
+    "color": "#f5f5f3",
+    "pattern": "tile"
+  },
+  {
+    "id": "msi-zelyge-aloe-2x8",
+    "name": "Zelyge Aloe 2.5 in. x 8 in. Satin Ceramic Floor and Wall Tile",
+    "brand": "MSI",
+    "line": "Zelyge",
+    "sku": "NZELALO2.5X8SC",
+    "url": "https://www.homedepot.com/p/Zest-Aloe-Subway-2-5-in-x-8-in-Satin-Ceramic-Zellige-Look-Wall-Tile-5-24-sq-ft-Case-NZESALO2-5X8SC/335156305",
+    "price": 5.39,
+    "unit": "sqft",
+    "priceSource": "listed",
+    "priceNote": "$5.39/sq ft ($28.24/5.24 sq ft case) at Home Depot, on sale from $7.21; zellige-look green",
+    "lastChecked": "2026-10-15",
+    "kind": "wall",
+    "styles": [
+      "modern-farmhouse",
+      "mountain-modern",
+      "scandinavian"
+    ],
+    "tags": [
+      "cool"
+    ],
+    "color": "#a7b49a",
+    "pattern": "tile"
+  },
+  {
+    "id": "daltile-restore-charcoal-gray-3x6",
+    "name": "Restore Charcoal Gray 3 in. x 6 in. Glazed Ceramic Subway Wall Tile",
+    "brand": "Daltile",
+    "line": "Restore",
+    "sku": "018036MOD1P2",
+    "url": "https://www.homedepot.com/p/Daltile-Restore-Charcoal-Gray-3-in-x-6-in-Glazed-Ceramic-Subway-Wall-Tile-12-5-sq-ft-Case-018036MOD1P2/316999198",
+    "price": 6.41,
+    "unit": "sqft",
+    "priceSource": "listed",
+    "priceNote": "$6.41/sq ft ($80.13/12.5 sq ft case) at Home Depot",
+    "lastChecked": "2026-10-15",
+    "kind": "wall",
+    "styles": [
+      "industrial",
+      "modern",
+      "craftsman"
+    ],
+    "tags": [
+      "bold"
+    ],
+    "color": "#3e4043",
+    "pattern": "tile"
+  },
+  {
+    "id": "msi-white-2in-hexagon",
+    "name": "White 2 in. Hexagon 11 in. x 11 in. Matte Porcelain Mesh-Mounted Mosaic Tile",
+    "brand": "MSI",
+    "line": "Hexagon Mosaic",
+    "sku": "NHDWHI2X2HEXC",
+    "url": "https://www.homedepot.com/p/MSI-White-2-in-Hexagon-11-in-x-11-in-x-0-25-in-Matte-Porcelain-Mesh-Mounted-Mosaic-Tile-12-96-sq-ft-Case-NHDWHI2X2HEXC/310589520",
+    "price": 3.67,
+    "unit": "sqft",
+    "priceSource": "listed",
+    "priceNote": "$3.67/sq ft ($47.52/12.96 sq ft case) at Home Depot; shower floor mosaic",
+    "lastChecked": "2026-10-15",
+    "kind": "shower",
+    "styles": [
+      "modern-farmhouse",
+      "craftsman",
+      "scandinavian",
+      "transitional"
+    ],
+    "tags": [
+      "neutral",
+      "white"
+    ],
+    "color": "#f1f0ec",
+    "pattern": "tile"
+  },
+  {
+    "id": "msi-pietra-carrara-12x24",
+    "name": "Pietra Carrara 12 in. x 24 in. Polished Porcelain Stone Look Floor and Wall Tile",
+    "brand": "MSI",
+    "line": "Pietra",
+    "sku": "NCAR1224P",
+    "url": "https://homedepot.com/p/MSI-Pietra-Carrara-12-in-x-24-in-Polished-Porcelain-Stone-Look-Floor-and-Wall-Tile-16-sq-ft-Case-NCAR1224P/304737228",
+    "price": 6.6,
+    "unit": "sqft",
+    "priceSource": "listed",
+    "priceNote": "$6.60/sq ft ($105.60/16 sq ft case) at Home Depot; shower wall",
+    "lastChecked": "2026-10-15",
+    "kind": "shower",
+    "styles": [
+      "transitional",
+      "modern",
+      "mountain-modern"
+    ],
+    "tags": [
+      "cool",
+      "white"
+    ],
+    "color": "#e8e8e5",
+    "pattern": "stone"
+  },
+  {
+    "id": "msi-carrara-white-hexagon",
+    "name": "Carrara White Hexagon 12 in. x 12 in. Matte Porcelain Mesh-Mounted Mosaic Floor and Wall Tile",
+    "brand": "MSI",
+    "line": "Carrara",
+    "sku": "PT-CAR-2HEXM",
+    "url": "https://www.homedepot.com/p/MSI-Carrara-White-Hexagon-12-in-x-12-in-Matte-Porcelain-Mesh-Mounted-Mosaic-Floor-and-Wall-Tile-14-85-square-feet-case-PT-CAR-2HEXM/334429515",
+    "price": 6.46,
+    "unit": "sqft",
+    "priceSource": "listed",
+    "priceNote": "$6.46/sq ft ($95.87/14.85 sq ft case) at Home Depot; marble-look shower floor mosaic",
+    "lastChecked": "2026-10-15",
+    "kind": "shower",
+    "styles": [
+      "transitional",
+      "modern-farmhouse",
+      "industrial"
+    ],
+    "tags": [
+      "cool",
+      "white"
+    ],
+    "color": "#e5e5e2",
+    "pattern": "tile"
+  }
+]

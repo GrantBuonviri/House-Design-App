@@ -4,7 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { Canvas, useFrame, useThree, type ThreeEvent } from "@react-three/fiber";
 import { Line, OrbitControls, PerspectiveCamera } from "@react-three/drei";
 import * as THREE from "three";
-import type { FloorPlan, House3D, Level, PlanBasics, Plot, Point } from "@/lib/model/schema";
+import type { FloorPlan, House3D, Level, PlanBasics, Plot, Point, Selection } from "@/lib/model/schema";
 import { buildLevel, buildRoofs, dugOut, houseBounds, type HouseContext, type Part, type Pick } from "@/lib/house3d/build";
 import { isLookingDown, orbitOf, orbitPosition, topViewOrbit, tweenOrbit, type Orbit } from "@/lib/house3d/camera";
 import { levelHeights, type LevelHeights } from "@/lib/house3d/levels";
@@ -21,6 +21,7 @@ import { polygonCenter } from "@/lib/plan/geometry";
 import { roomSqft } from "@/lib/plan/measure";
 import type { PlanSelection } from "@/components/plan/types";
 import { concatMeshes, mergeParts, toGeometry } from "./geometry";
+import { withPatterns } from "./patternMaterial";
 
 /** Which walls the 3D view shows. Hidden walls leave a strip on the floor where they stood. */
 export type WallsShown = "all" | "outside" | "none";
@@ -31,6 +32,8 @@ type Props = {
   levels: Level[];
   basics: PlanBasics | null;
   house3d: House3D;
+  /** Interior picks, for finishes. */
+  interior?: Selection[];
   plot: Plot | null;
   offset: Point;
   levelId: string;
@@ -53,7 +56,7 @@ const SKY = "#dfe9f2";
 const ACCENT = "#2f6b4f";
 const FOV = 40;
 
-export const solidMaterial = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.9, metalness: 0 });
+export const solidMaterial = withPatterns(new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.9, metalness: 0 }));
 export const glassMaterial = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.15, metalness: 0, transparent: true, opacity: 0.35, depthWrite: false });
 const highlightMaterial = new THREE.MeshBasicMaterial({
   color: ACCENT,
@@ -91,7 +94,7 @@ function shownGroups(walls: WallsShown): Record<keyof Groups, boolean> {
  * with its room names, like a plan.
  */
 export default function House3DView(props: Props) {
-  const { plans, levels, basics, house3d, plot, offset, levelId, height, editing, walls } = props;
+  const { plans, levels, basics, house3d, interior, plot, offset, levelId, height, editing, walls } = props;
   const [lookingDown, setLookingDown] = useState(false);
   const [topRequest, setTopRequest] = useState(0);
   const cutAway = props.cutAway || lookingDown;
@@ -110,7 +113,7 @@ export default function House3DView(props: Props) {
 
   const heights = useMemo(() => levelHeights(levels, basics), [levels, basics]);
   const site = useMemo(() => siteFor(plot, offset, settled), [plot, offset, settled]);
-  const ctx = useMemo(() => ({ levels, basics, house3d, site, frame, heights }), [levels, basics, house3d, site, frame, heights]);
+  const ctx = useMemo(() => ({ levels, basics, house3d, site, frame, heights, interior }), [levels, basics, house3d, site, frame, heights, interior]);
 
   // Each floor is rebuilt only when it (or a floor next to it) changes.
   const cache = useRef(new Map<string, { key: unknown[]; parts: Part[] }>());

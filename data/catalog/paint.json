@@ -1,0 +1,346 @@
+[
+  {
+    "id": "sw-emerald-alabaster",
+    "name": "Alabaster",
+    "brand": "Sherwin-Williams",
+    "line": "Emerald Interior Acrylic Latex",
+    "sku": "SW 7008",
+    "url": "https://www.sherwin-williams.com/sherwinwilliams/SW7008-alabaster",
+    "price": 104.0,
+    "unit": "gallon",
+    "priceSource": "estimated",
+    "priceNote": "SW Emerald Interior Acrylic Latex: sherwin-williams.com shows no price; $104/gal list per usecalcpro.com 2026 SW price guide (about $68 on 35%-off sales); hex from SW color page",
+    "lastChecked": "2026-10-15",
+    "kind": "wall",
+    "styles": [
+      "modern-farmhouse",
+      "scandinavian",
+      "transitional",
+      "craftsman"
+    ],
+    "tags": [
+      "warm",
+      "white"
+    ],
+    "color": "#EDEAE0",
+    "pattern": "solid"
+  },
+  {
+    "id": "bm-regal-select-chantilly-lace",
+    "name": "Chantilly Lace",
+    "brand": "Benjamin Moore",
+    "line": "Regal Select Interior",
+    "sku": "OC-65",
+    "url": "https://www.benjaminmoore.com/en-us/paint-colors/color/oc-65/chantilly-lace",
+    "price": 84.99,
+    "unit": "gallon",
+    "priceSource": "listed",
+    "priceNote": "BM Regal Select Interior Eggshell: $84.99/gal listed on benjaminmoore.com Regal Select product page; hex from BM color page",
+    "lastChecked": "2026-10-15",
+    "kind": "wall",
+    "styles": [
+      "modern",
+      "scandinavian",
+      "industrial"
+    ],
+    "tags": [
+      "cool",
+      "white"
+    ],
+    "color": "#F4F6F1",
+    "pattern": "solid"
+  },
+  {
+    "id": "bm-regal-select-white-dove",
+    "name": "White Dove",
+    "brand": "Benjamin Moore",
+    "line": "Regal Select Interior",
+    "sku": "OC-17",
+    "url": "https://www.benjaminmoore.com/en-us/paint-colors/color/oc-17/white-dove",
+    "price": 84.99,
+    "unit": "gallon",
+    "priceSource": "listed",
+    "priceNote": "BM Regal Select Interior Eggshell: $84.99/gal listed on benjaminmoore.com Regal Select product page; hex from BM color page",
+    "lastChecked": "2026-10-15",
+    "kind": "wall",
+    "styles": [
+      "modern-farmhouse",
+      "transitional",
+      "craftsman",
+      "mountain-modern"
+    ],
+    "tags": [
+      "warm",
+      "white"
+    ],
+    "color": "#EFEEE5",
+    "pattern": "solid"
+  },
+  {
+    "id": "sw-emerald-agreeable-gray",
+    "name": "Agreeable Gray",
+    "brand": "Sherwin-Williams",
+    "line": "Emerald Interior Acrylic Latex",
+    "sku": "SW 7029",
+    "url": "https://www.sherwin-williams.com/sherwinwilliams/SW7029-agreeable-gray",
+    "price": 104.0,
+    "unit": "gallon",
+    "priceSource": "estimated",
+    "priceNote": "SW Emerald Interior Acrylic Latex: sherwin-williams.com shows no price; $104/gal list per usecalcpro.com 2026 SW price guide (about $68 on 35%-off sales); hex from SW color page",
+    "lastChecked": "2026-10-15",
+    "kind": "wall",
+    "styles": [
+      "transitional",
+      "modern-farmhouse",
+      "craftsman"
+    ],
+    "tags": [
+      "warm"
+    ],
+    "color": "#D1CBC1",
+    "pattern": "solid"
+  },
+  {
+    "id": "sw-emerald-accessible-beige",
+    "name": "Accessible Beige",
+    "brand": "Sherwin-Williams",
+    "line": "Emerald Interior Acrylic Latex",
+    "sku": "SW 7036",
+    "url": "https://www.sherwin-williams.com/sherwinwilliams/SW7036-accessible-beige",
+    "price": 104.0,
+    "unit": "gallon",
+    "priceSource": "estimated",
+    "priceNote": "SW Emerald Interior Acrylic Latex: sherwin-williams.com shows no price; $104/gal list per usecalcpro.com 2026 SW price guide (about $68 on 35%-off sales); hex from SW color page",
+    "lastChecked": "2026-10-15",
+    "kind": "wall",
+    "styles": [
+      "craftsman",
+      "mountain-modern",
+      "transitional"
+    ],
+    "tags": [
+      "warm"
+    ],
+    "color": "#D1C7B8",
+    "pattern": "solid"
+  },
+  {
+    "id": "bm-regal-select-edgecomb-gray",
+    "name": "Edgecomb Gray",
+    "brand": "Benjamin Moore",
+    "line": "Regal Select Interior",
+    "sku": "HC-173",
+    "url": "https://www.benjaminmoore.com/en-us/paint-colors/color/hc-173/edgecomb-gray",
+    "price": 84.99,
+    "unit": "gallon",
+    "priceSource": "listed",
+    "priceNote": "BM Regal Select Interior Eggshell: $84.99/gal listed on benjaminmoore.com Regal Select product page; hex from BM color page",
+    "lastChecked": "2026-10-15",
+    "kind": "wall",
+    "styles": [
+      "modern-farmhouse",
+      "transitional",
+      "scandinavian"
+    ],
+    "tags": [
+      "warm"
+    ],
+    "color": "#D9D3C4",
+    "pattern": "solid"
+  },
+  {
+    "id": "sw-emerald-repose-gray",
+    "name": "Repose Gray",
+    "brand": "Sherwin-Williams",
+    "line": "Emerald Interior Acrylic Latex",
+    "sku": "SW 7015",
+    "url": "https://www.sherwin-williams.com/sherwinwilliams/SW7015-repose-gray",
+    "price": 104.0,
+    "unit": "gallon",
+    "priceSource": "estimated",
+    "priceNote": "SW Emerald Interior Acrylic Latex: sherwin-williams.com shows no price; $104/gal list per usecalcpro.com 2026 SW price guide (about $68 on 35%-off sales); hex from SW color page",
+    "lastChecked": "2026-10-15",
+    "kind": "wall",
+    "styles": [
+      "transitional",
+      "modern",
+      "industrial"
+    ],
+    "tags": [
+      "cool"
+    ],
+    "color": "#CCC9C0",
+    "pattern": "solid"
+  },
+  {
+    "id": "bm-regal-select-stonington-gray",
+    "name": "Stonington Gray",
+    "brand": "Benjamin Moore",
+    "line": "Regal Select Interior",
+    "sku": "HC-170",
+    "url": "https://www.benjaminmoore.com/en-us/paint-colors/color/hc-170/stonington-gray",
+    "price": 84.99,
+    "unit": "gallon",
+    "priceSource": "listed",
+    "priceNote": "BM Regal Select Interior Eggshell: $84.99/gal listed on benjaminmoore.com Regal Select product page; hex from BM color page",
+    "lastChecked": "2026-10-15",
+    "kind": "wall",
+    "styles": [
+      "modern",
+      "scandinavian",
+      "transitional"
+    ],
+    "tags": [
+      "cool"
+    ],
+    "color": "#CACBC5",
+    "pattern": "solid"
+  },
+  {
+    "id": "sw-emerald-evergreen-fog",
+    "name": "Evergreen Fog",
+    "brand": "Sherwin-Williams",
+    "line": "Emerald Interior Acrylic Latex",
+    "sku": "SW 9130",
+    "url": "https://www.sherwin-williams.com/sherwinwilliams/SW9130-evergreen-fog",
+    "price": 104.0,
+    "unit": "gallon",
+    "priceSource": "estimated",
+    "priceNote": "SW Emerald Interior Acrylic Latex: sherwin-williams.com shows no price; $104/gal list per usecalcpro.com 2026 SW price guide (about $68 on 35%-off sales); hex from SW color page",
+    "lastChecked": "2026-10-15",
+    "kind": "wall",
+    "styles": [
+      "modern-farmhouse",
+      "mountain-modern",
+      "craftsman"
+    ],
+    "tags": [
+      "neutral"
+    ],
+    "color": "#95978A",
+    "pattern": "solid"
+  },
+  {
+    "id": "bm-regal-select-saybrook-sage",
+    "name": "Saybrook Sage",
+    "brand": "Benjamin Moore",
+    "line": "Regal Select Interior",
+    "sku": "HC-114",
+    "url": "https://www.benjaminmoore.com/en-us/paint-colors/color/hc-114/saybrook-sage",
+    "price": 84.99,
+    "unit": "gallon",
+    "priceSource": "listed",
+    "priceNote": "BM Regal Select Interior Eggshell: $84.99/gal listed on benjaminmoore.com Regal Select product page; hex from BM color page",
+    "lastChecked": "2026-10-15",
+    "kind": "wall",
+    "styles": [
+      "modern-farmhouse",
+      "craftsman",
+      "scandinavian"
+    ],
+    "tags": [
+      "warm"
+    ],
+    "color": "#B1B7A2",
+    "pattern": "solid"
+  },
+  {
+    "id": "bm-regal-select-hale-navy",
+    "name": "Hale Navy",
+    "brand": "Benjamin Moore",
+    "line": "Regal Select Interior",
+    "sku": "HC-154",
+    "url": "https://www.benjaminmoore.com/en-us/paint-colors/color/hc-154/hale-navy",
+    "price": 84.99,
+    "unit": "gallon",
+    "priceSource": "listed",
+    "priceNote": "BM Regal Select Interior Eggshell: $84.99/gal listed on benjaminmoore.com Regal Select product page; hex from BM color page",
+    "lastChecked": "2026-10-15",
+    "kind": "wall",
+    "styles": [
+      "transitional",
+      "craftsman",
+      "modern"
+    ],
+    "tags": [
+      "bold",
+      "cool"
+    ],
+    "color": "#434B56",
+    "pattern": "solid"
+  },
+  {
+    "id": "sw-emerald-urbane-bronze",
+    "name": "Urbane Bronze",
+    "brand": "Sherwin-Williams",
+    "line": "Emerald Interior Acrylic Latex",
+    "sku": "SW 7048",
+    "url": "https://www.sherwin-williams.com/sherwinwilliams/SW7048-urbane-bronze",
+    "price": 104.0,
+    "unit": "gallon",
+    "priceSource": "estimated",
+    "priceNote": "SW Emerald Interior Acrylic Latex: sherwin-williams.com shows no price; $104/gal list per usecalcpro.com 2026 SW price guide (about $68 on 35%-off sales); hex from SW color page",
+    "lastChecked": "2026-10-15",
+    "kind": "wall",
+    "styles": [
+      "mountain-modern",
+      "industrial",
+      "modern"
+    ],
+    "tags": [
+      "bold",
+      "warm"
+    ],
+    "color": "#54504A",
+    "pattern": "solid"
+  },
+  {
+    "id": "bm-regal-select-wrought-iron",
+    "name": "Wrought Iron",
+    "brand": "Benjamin Moore",
+    "line": "Regal Select Interior",
+    "sku": "2124-10",
+    "url": "https://www.benjaminmoore.com/en-us/paint-colors/color/2124-10/wrought-iron",
+    "price": 84.99,
+    "unit": "gallon",
+    "priceSource": "listed",
+    "priceNote": "BM Regal Select Interior Eggshell: $84.99/gal listed on benjaminmoore.com Regal Select product page; hex from BM color page",
+    "lastChecked": "2026-10-15",
+    "kind": "wall",
+    "styles": [
+      "industrial",
+      "mountain-modern",
+      "modern"
+    ],
+    "tags": [
+      "bold"
+    ],
+    "color": "#494A4B",
+    "pattern": "solid"
+  },
+  {
+    "id": "sw-emerald-tricorn-black",
+    "name": "Tricorn Black",
+    "brand": "Sherwin-Williams",
+    "line": "Emerald Interior Acrylic Latex",
+    "sku": "SW 6258",
+    "url": "https://www.sherwin-williams.com/sherwinwilliams/SW6258-tricorn-black",
+    "price": 104.0,
+    "unit": "gallon",
+    "priceSource": "estimated",
+    "priceNote": "SW Emerald Interior Acrylic Latex: sherwin-williams.com shows no price; $104/gal list per usecalcpro.com 2026 SW price guide (about $68 on 35%-off sales); hex from SW color page",
+    "lastChecked": "2026-10-15",
+    "kind": "wall",
+    "styles": [
+      "modern",
+      "industrial",
+      "modern-farmhouse"
+    ],
+    "tags": [
+      "bold",
+      "black"
+    ],
+    "color": "#2F2F30",
+    "pattern": "solid"
+  }
+]

@@ -15,6 +15,7 @@ The app is built in milestones. So far it has:
 - **Milestone 6, part 1:** the house in 3D. On the floor plan page, switch between **2D plan**, **Bird's-eye** (the current floor from straight above, with room names) and **3D** (the whole house on your land). Walls, doors, windows, floors, stairs and fixtures come straight from the plan, the house sits on the real slope of your lot with its foundation running down to the ground (a basement shows as a walkout on the downhill side), and the roof is built from the house's outline: gable, hip, shed or flat, with the steepness and overhang you pick. Click a room, door, window, stairs or fixture in 3D to select it and drag it to move it; the 2D plan changes with it.
 - **Milestone 6, part 2:** the walkthrough. Press **Walkthrough** at the top of any project with a floor plan to walk through the house in first person, starting outside the front door. Walls stop you, doors and openings let you through, stairs take you between floors, outside doors and porches above the ground get steps, and you can walk out onto the land. A time of day slider and a season pick move the sun for Boise, so you can see where the light falls through the windows.
 - **Milestone 7:** **Preview window.** Click a window (or sliding glass door) on an outside wall, in the 2D plan or in 3D edit mode, and press **Preview window**. Two pictures show what you'd see standing in the room looking out, and the window from outside on its wall (outlined in green). A season pick, a time slider and **Play** (the sun moves from sunrise to sunset over and over) show the light, and a line underneath says when direct sun comes in through that window in summer, spring and fall, and winter, counting the roof's overhang, other parts of the house and the hillside. The pictures follow along as you drag the window or change its size.
+- **Milestone 9:** interior design. The **Interior** stage has three steps. **Style** asks about the look you want (style, wood tone, colors, metal finish, countertops, floors, carpet in bedrooms), filled in from what you wrote on the Rooms page where it can. **Mood board** shows paint colors and finishes that fit, with **Shuffle** for other matches. **Pick finishes** shows real products from a built-in catalog (flooring, tile, paint, trim, doors, cabinets, counters, hardware, sinks, faucets, appliances, vanities, toilets, shower trim and lighting), best match first, each with its price, the date it was last checked and a link to its page. Pick for the whole house, then change any room. Every pick updates the cost estimate, and the 3D view, walkthrough and window preview show the colors, with wood planks, tile and carpet drawn on the floors.
 
 ### Flow sketch tips
 
@@ -45,7 +46,7 @@ The app is built in milestones. So far it has:
 - **Bird's-eye:** drag empty space to slide around and scroll to zoom.
 - In either view, click a room's floor, a door, a window, stairs or a fixture to select it (the panel on the right shows its details, like in 2D), then drag it to move it. Rooms snap to other rooms' corners, and doors and windows slide along their wall or hop to the nearest one. **Delete**, the arrow keys and **Undo** work as in 2D.
 - **Roof** in the panel picks the shape (gable, hip, shed or flat), how steep it is and how far it reaches past the walls. Porches and covered patios get a roof on posts; decks stay open.
-- Finishes are plain for now (light walls, wood floors, tile in bathrooms, a grey roof). Real ones come with the interior and exterior design.
+- Floors, walls, cabinets, counters, doors and appliances show the finishes picked on the Interior stage. Rooms with nothing picked are plain (light walls, wood floors, tile in bathrooms, carpet in bedrooms). The outside (siding, roof) comes with the exterior design.
 
 ### Preview window tips
 
@@ -63,6 +64,15 @@ The app is built in milestones. So far it has:
 - **Water and sewer** switches between city hookups and a well and septic system.
 - Finishes (flooring, cabinets, fixtures and so on) are priced as mid-range until products are picked in the interior and exterior stages.
 - Land is always $0. The estimate is for Boise, Idaho in 2026 and is not a bid.
+
+### Interior design tips
+
+- **Style** answers marked "From what you wrote on the Rooms page" are guesses from your words; click any choice to set it yourself. Click the second style again to clear it.
+- On **Pick finishes**, start with **Whole house**: every room uses those picks unless it has its own. Then click a room on the left to change just that room. A number next to a room counts its own picks, and the list on the right shows what that room uses.
+- Only the products that make sense for the room show (no toilets in the bedroom). Doors and baseboard are picked for the whole house.
+- **View product** opens the product's page. Prices are what the page showed on the "last checked" date and may have changed since; **estimated** means the brand doesn't list a price, so it was worked out (hover to see how).
+- In the cost panel, a picked product's name shows on its line. If only some rooms have a pick, the rest are still priced at mid-range.
+- **See it in 3D** (under the picks) shows the house with the roof off, looking into the floor of the room you're picking for.
 
 ### Walkthrough tips
 
@@ -132,7 +142,8 @@ Projects live in your browser's storage (IndexedDB) on this computer. They stay 
 - `lib/bubbles/` is the flow sketch. Bubbles are stored in inches with x pointing east and y pointing south, and a bubble's area always equals its room's square feet. `site.ts` picks a spot for each room: one of eight compass sides of the floor or the middle. `arrange.ts` turns spots into a drawing with the small force layout in `layout.ts` (same input, same drawing), lines the stairs up across floors, and adds missing rooms. `alternatives.ts` makes the alternatives and skips ones that would look the same as yours, `suggest.ts` is what the page calls for a starting sketch or alternatives, and `edit.ts` has the editing helpers. A drawn room is a `"free"` bubble with an outline around its middle; its `rx`/`ry` are half the outline's width and height so the layout code treats it like an oval. `land.ts` draws the lot, water, contours, downhill arrow and sun paths under the sketch (a plot point is the sketch point plus the saved `sketch.lotOffset`), and `start.ts` makes the blank sketch for Start blank. The canvas is in `components/bubbles/` (Konva).
 - `lib/plan/` is the floor plan, in the same inches and coordinates as the flow sketch (so the lot offset is shared). Rooms come first: each `PlanRoom` is a polygon stored clockwise on screen, so the left side of every edge is outside. `walls.ts` derives the walls from the rooms: where two rooms' edges run along each other it's one inside wall, the rest are outside walls, and the open sides of a porch or deck get no wall. `walls` in the saved plan are only the extra walls drawn with the Wall tool. Doors and windows sit on a room edge (`{roomId, edge}`) or an extra wall (`{wallId}`) at a distance along it. `fromSketch.ts` turns sketch bubbles into rectangles of the same area, separates overlaps, slides them together, lines up near edges, then adds doors, stairs and hallway notes. `edit.ts` has the editing helpers (pushing a shared wall moves it for both rooms), `snap.ts` the snapping, `stairs.ts` sizes stairs from the rise between floors (risers up to 7 3/4", 10" treads), `basics.ts` the Plan basics defaults, `measure.ts` the square footage, and `catalog.ts` the door, window and fixture sizes. `connect.ts` says which rooms a door joins and what each room is for (living space, hallway, private room, part of the primary suite and so on). `suggest.ts` is Suggest a plan: stair halls, then hallways (it cuts the plan along a line, slides one side over by 3' 6" and puts the hallway in the gap, picking the cut that serves the most bedrooms and baths), doors, closets and windows. `checks.ts` makes the warnings. `changes.ts` applies small changes for alternatives (push a wall, swap two rooms, add or remove a door, open up a wall, add a window, flip the house) and checks each one: no rooms on top of each other, sensible sizes, no room cut off. A wall pushed into a room whose wall runs further gets a step, so nothing else moves. `alternatives.ts` has the ideas for alternatives, and `suggestPlanAlternatives` there is what the page calls. The canvas is in `components/plan/` (Konva), sharing the zoom, grid and overlay bits in `components/canvas/` and `components/bubbles/ViewOptions.tsx` with the flow sketch.
 
-- `lib/cost/` is the cost estimate. `quantities.ts` measures the house (from the floor plan, or roughly from the Rooms page), `estimate.ts` multiplies by the rates and sorts the lines into the 16 categories, and `rates.ts` checks the rates file. The panel is `components/cost/CostPanel.tsx`. The estimate is worked out every time and never saved.
+- `lib/cost/` is the cost estimate. `quantities.ts` measures the house (from the floor plan, or roughly from the Rooms page), including each room's share of the finish lines (`q.rooms`), `estimate.ts` multiplies by the rates and sorts the lines into the 16 categories, and `rates.ts` checks the rates file. The panel is `components/cost/CostPanel.tsx`. The estimate is worked out every time and never saved. `applySelections` in `estimate.ts` swaps the mid-range allowance for picked products room by room.
+- `lib/catalog/` is the product catalog: `catalog.ts` loads and checks `data/catalog/*.json` and `config/brands.json`, and `categories.ts` lists the interior categories, the rooms each fits, and the cost line each replaces (with `share`, the part of the line's allowance a pick replaces, and `perUnit` to turn the line's unit into the product's). `lib/interior/` has the style questions and matching (`style.ts`: answers become tags, products score by shared tags) and the picks (`picks.ts`: a pick's `targetId` is a room id or `"house"`). The pages are in `components/interior/`. `lib/house3d/finishes.ts` turns picks into 3D colors and floor patterns, which `components/house3d/patternMaterial.ts` draws in the shader.
 
 ## How to update cost rates
 
@@ -156,4 +167,36 @@ All the prices live in one file: `lib/cost/data/cost-rates.json`. Each rate look
 - `percents` holds builder overhead and profit, contingency and the plan review fee. `permit` holds Boise's building permit table.
 - Save the file and the app picks it up (restart `npm run dev` if it doesn't). If a number is mistyped, the app shows an error naming the rate, and `npm test` checks the file too.
 
-How to add products will be documented here when that milestone lands.
+## How to add or change a product
+
+The interior products live in `data/catalog/`, one file per kind (`flooring.json`, `paint.json`, `kitchen-faucets.json` and so on). Each file is a list of products like this:
+
+```json
+{
+  "id": "shaw-floorte-alto-natural",
+  "name": "Floorte Pro Alto Mix, Natural Oak",
+  "brand": "Shaw",
+  "line": "Floorte Pro Alto Mix",
+  "sku": "2032V-00290",
+  "url": "https://www.homedepot.com/p/...",
+  "price": 4.29,
+  "unit": "sqft",
+  "priceSource": "listed",
+  "priceNote": "$4.29/sq ft at Home Depot",
+  "lastChecked": "2026-10-15",
+  "kind": "lvp",
+  "styles": ["modern-farmhouse", "transitional"],
+  "tags": ["light-wood", "warm"],
+  "color": "#c8a77e",
+  "pattern": "plank"
+}
+```
+
+- To add one, copy an entry in the right file, give it a new `id` (any unique name with dashes), and change the rest.
+- `unit` is `sqft`, `each`, `linft`, `gallon` or `set`. `priceSource` is `listed` when the page shows the price, or `estimated` when you worked it out (say how in `priceNote`).
+- `styles` are from: `modern-farmhouse`, `mountain-modern`, `scandinavian`, `craftsman`, `transitional`, `industrial`, `modern`. `tags` are from: `warm`, `cool`, `neutral`, `bold`, `light-wood`, `medium-wood`, `dark-wood`, `matte-black`, `brushed-nickel`, `brass`, `chrome`, `stainless`, `white`, `black`, `quartz`, `granite`, `butcher-block`, `concrete-look`. These decide which products show first for your style answers.
+- `color` is the color used for the swatch and in 3D, and `pattern` is `plank`, `tile`, `stone`, `carpet`, `solid` or `metal`. Add `"imageUrl": "https://..."` to show a photo instead of the drawn swatch (many brand sites block their photos from showing elsewhere, so check it loads).
+- `kind` sorts products within a file: for flooring `wood`, `lvp` or `carpet`; for tile `floor`, `wall` or `shower`; for lighting `pendant`, `chandelier`, `vanity`, `flush` or `sconce`. Copy it from a similar product.
+- Update `price` and `lastChecked` when you check a price again.
+- `config/brands.json` lists preferred brands for each kind; their products show a little higher when two match equally well.
+- Save and the app picks it up. If something is mistyped, the app and `npm test` show an error naming the file and product.

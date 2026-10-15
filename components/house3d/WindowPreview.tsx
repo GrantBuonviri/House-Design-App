@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import * as THREE from "three";
-import type { House3D, Level, PlanBasics, Plot, Point } from "@/lib/model/schema";
+import type { House3D, Level, PlanBasics, Plot, Point, Selection } from "@/lib/model/schema";
 import { buildLevel, buildRoofs, houseBounds, type Part } from "@/lib/house3d/build";
 import { levelHeights } from "@/lib/house3d/levels";
 import { IN_PER_UNIT, toScene, type Frame } from "@/lib/house3d/mesh";
@@ -21,6 +21,8 @@ type Props = {
   levels: Level[];
   basics: PlanBasics | null;
   house3d: House3D;
+  /** Interior picks, for finishes. */
+  interior?: Selection[];
   plot: Plot | null;
   offset: Point;
   levelId: string;
@@ -50,7 +52,7 @@ const STILL: Looks = { inside: { yaw: 0, pitch: 0 }, outside: { yaw: 0, pitch: 0
  * day on a loop. It follows the window as it's moved or resized.
  */
 export default function WindowPreview(props: Props) {
-  const { plans, levels, basics, house3d, plot, offset, levelId, openingId, onClose } = props;
+  const { plans, levels, basics, house3d, interior, plot, offset, levelId, openingId, onClose } = props;
 
   // The scene is centered on the house as it was when the preview opened.
   const [frame] = useState<Frame>(() => {
@@ -64,7 +66,7 @@ export default function WindowPreview(props: Props) {
 
   const heights = useMemo(() => levelHeights(levels, basics), [levels, basics]);
   const site = useMemo(() => siteFor(plot, offset, shapePlans), [plot, offset, shapePlans]);
-  const ctx = useMemo(() => ({ levels, basics, house3d, site, frame, heights }), [levels, basics, house3d, site, frame, heights]);
+  const ctx = useMemo(() => ({ levels, basics, house3d, site, frame, heights, interior }), [levels, basics, house3d, site, frame, heights, interior]);
 
   // Each floor is rebuilt only when it (or a floor next to it) changes.
   const cache = useRef(new Map<string, { key: unknown[]; parts: Part[] }>());

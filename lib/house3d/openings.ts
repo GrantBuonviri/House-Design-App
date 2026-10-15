@@ -28,7 +28,17 @@ const at = (og: OpeningGeometry, t: number): Point => add(og.a, scale(og.u, t));
  * Draw one door, window or opening. `wallIn` is the thickness of the wall
  * it's in, `floorIn` the floor height it stands on.
  */
-export function drawOpening(solid: MeshBuilder, glass: MeshBuilder, f: Frame, og: OpeningGeometry, wallIn: number, floorIn: number, ceilingIn: number) {
+export function drawOpening(
+  solid: MeshBuilder,
+  glass: MeshBuilder,
+  f: Frame,
+  og: OpeningGeometry,
+  wallIn: number,
+  floorIn: number,
+  ceilingIn: number,
+  /** Picked inside door and trim colors, for doors between rooms. */
+  look?: { door: RGB; trim: RGB },
+) {
   const o = og.opening;
   const w = o.widthIn;
   const { bottom, top } = openingSpan(og, ceilingIn);
@@ -50,7 +60,7 @@ export function drawOpening(solid: MeshBuilder, glass: MeshBuilder, f: Frame, og
   }
 
   // Doors and openings: a casing lining the sides and top.
-  const c = plain(COLORS.trim);
+  const c = plain(look?.trim ?? COLORS.trim);
   solid.box(f, og.a, at(og, CASING_IN), depth, z0, z1, c);
   solid.box(f, at(og, w - CASING_IN), og.b, depth, z0, z1, c);
   solid.box(f, og.a, og.b, depth, z1 - CASING_IN, z1, c);
@@ -88,7 +98,7 @@ export function drawOpening(solid: MeshBuilder, glass: MeshBuilder, f: Frame, og
     solid.box(f, add(at(og, w * 0.85), off), add(at(og, w * 1.85 + 4), off), SLAB_IN, z0 + 0.5, z1 + 2, plain(COLORS.wood));
     return;
   }
-  const color = style === "door-entry" ? COLORS.frontDoor : COLORS.door;
+  const color = style === "door-entry" ? COLORS.frontDoor : (look?.door ?? COLORS.door);
   if (style === "door-double") {
     leaf(0, 1, w / 2 - CASING_IN - 1, color);
     leaf(w, -1, w / 2 - CASING_IN - 1, color);

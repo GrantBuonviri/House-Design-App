@@ -1,0 +1,128 @@
+[
+  {
+    "id": "kohler-cavata-elongated-complete-white",
+    "name": "Kohler Cavata ADA Compliant 1.28 gal White Elongated Complete Toilet",
+    "brand": "Kohler",
+    "line": "Cavata",
+    "sku": "30005-0",
+    "url": "https://www.acehardware.com/departments/plumbing/toilets/toilets-and-bidets/4000675",
+    "price": 299.99,
+    "unit": "each",
+    "priceSource": "listed",
+    "priceNote": "$299.99 at Ace Hardware (ADA-height two-piece, complete with seat per title)",
+    "lastChecked": "2026-10-15",
+    "kind": "toilet",
+    "styles": [
+      "transitional",
+      "modern-farmhouse",
+      "craftsman"
+    ],
+    "tags": [
+      "white",
+      "neutral"
+    ],
+    "color": "#f7f7f5",
+    "pattern": "solid"
+  },
+  {
+    "id": "kohler-highline-two-piece-elongated-white",
+    "name": "Kohler Highline Two-Piece Elongated Comfort Height Toilet, 1.28 GPF, White",
+    "brand": "Kohler",
+    "line": "Highline",
+    "sku": "K-3999-T-0",
+    "url": "https://www.supplyhouse.com/Kohler-K-3999-T-0-Highline-Two-Piece-Elongated-Toilet-1-28-Gpf-White-K-3999-T-0",
+    "price": 583.95,
+    "unit": "each",
+    "priceSource": "listed",
+    "priceNote": "$583.95 at SupplyHouse (seat not stated)",
+    "lastChecked": "2026-10-15",
+    "kind": "toilet",
+    "styles": [
+      "transitional",
+      "industrial",
+      "craftsman"
+    ],
+    "tags": [
+      "white",
+      "neutral"
+    ],
+    "color": "#f7f7f5",
+    "pattern": "solid"
+  },
+  {
+    "id": "kohler-highline-one-piece-elongated-white",
+    "name": "Kohler Highline One-Piece Elongated Comfort Height Toilet, 1.28 GPF, White",
+    "brand": "Kohler",
+    "line": "Highline",
+    "sku": "K-26813-0",
+    "url": "https://www.supplyhouse.com/Kohler-K-26813-0-Highline-One-Piece-Elongated-Toilet-1-28-Gpf-White-K-26813-0",
+    "price": 641.11,
+    "unit": "each",
+    "priceSource": "listed",
+    "priceNote": "$641.11 at SupplyHouse",
+    "lastChecked": "2026-10-15",
+    "kind": "toilet",
+    "styles": [
+      "modern",
+      "scandinavian",
+      "transitional"
+    ],
+    "tags": [
+      "white",
+      "neutral"
+    ],
+    "color": "#f7f7f5",
+    "pattern": "solid"
+  },
+  {
+    "id": "kohler-memoirs-stately-two-piece-elongated-white",
+    "name": "Kohler Memoirs Stately Two-Piece Elongated Comfort Height Toilet, 1.28 GPF, White",
+    "brand": "Kohler",
+    "line": "Memoirs Stately",
+    "sku": "K-3817-0",
+    "url": "https://www.supplyhouse.com/Kohler-K-3817-0-Memoirs-Stately-Two-Piece-Elongated-Toilet-1-28-Gpf-White-K-3817-0",
+    "price": 780.3,
+    "unit": "each",
+    "priceSource": "listed",
+    "priceNote": "$780.30 at SupplyHouse (seat not stated)",
+    "lastChecked": "2026-10-15",
+    "kind": "toilet",
+    "styles": [
+      "craftsman",
+      "modern-farmhouse",
+      "transitional"
+    ],
+    "tags": [
+      "white",
+      "neutral"
+    ],
+    "color": "#f7f7f5",
+    "pattern": "solid"
+  },
+  {
+    "id": "kohler-reach-one-piece-skirted-white",
+    "name": "Kohler Reach One-Piece Compact Elongated Comfort Height Toilet with Skirted Trapway, 1.28 GPF, White",
+    "brand": "Kohler",
+    "line": "Reach",
+    "sku": "K-78080-0",
+    "url": "https://www.supplyhouse.com/Kohler-K-78080-0-Reach-One-piece-Compact-Elongated-Toilet-w-Skirted-Trapway-1-28-GPF-White-K-78080-0",
+    "price": 1055.77,
+    "unit": "each",
+    "priceSource": "listed",
+    "priceNote": "$1,055.77 at SupplyHouse (Quiet-Close seat included)",
+    "lastChecked": "2026-10-15",
+    "kind": "toilet",
+    "styles": [
+      "modern",
+      "scandinavian",
+      "mountain-modern",
+      "industrial"
+    ],
+    "tags": [
+      "white",
+      "neutral"
+    ],
+    "color": "#f7f7f5",
+    "pattern": "solid"
+  }
+]

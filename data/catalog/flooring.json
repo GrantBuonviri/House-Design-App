@@ -1,0 +1,300 @@
+[
+  {
+    "id": "shaw-boardwalk-silk-white-oak",
+    "name": "Boardwalk Silk White Oak 1/2 in. T x 7 in. W Engineered Hardwood",
+    "brand": "Shaw",
+    "line": "Boardwalk",
+    "sku": "DH40901079",
+    "url": "https://www.homedepot.com/p/Shaw-Boardwalk-Silk-White-Oak-1-2-in-T-X-7-in-W-Tongue-and-Groove-Engineered-Hardwood-Flooring-23-58-sq-ft-case-DH40901079/313597665",
+    "price": 6.49,
+    "unit": "sqft",
+    "priceSource": "listed",
+    "priceNote": "$6.49/sq ft ($153.03/23.58 sq ft case) at Home Depot",
+    "lastChecked": "2026-10-15",
+    "kind": "wood",
+    "styles": [
+      "scandinavian",
+      "modern",
+      "modern-farmhouse"
+    ],
+    "tags": [
+      "warm",
+      "light-wood"
+    ],
+    "color": "#d9c6a5",
+    "pattern": "plank"
+  },
+  {
+    "id": "shaw-richmond-lancaster-white-oak",
+    "name": "Richmond Lancaster White Oak 9/16 in. T x 7.5 in. W Engineered Hardwood",
+    "brand": "Shaw",
+    "line": "Richmond",
+    "sku": "DH85400146",
+    "url": "https://www.homedepot.com/p/Shaw-Richmond-Lancaster-White-Oak-9-16-in-T-X-7-5-in-W-Tongue-and-Groove-Engineered-Hardwood-Flooring-31-09-sq-ft-case-DH85400146/300646688",
+    "price": 7.31,
+    "unit": "sqft",
+    "priceSource": "listed",
+    "priceNote": "$7.31/sq ft ($227.22/31.09 sq ft case) at Home Depot",
+    "lastChecked": "2026-10-15",
+    "kind": "wood",
+    "styles": [
+      "transitional",
+      "mountain-modern",
+      "modern-farmhouse"
+    ],
+    "tags": [
+      "warm",
+      "medium-wood"
+    ],
+    "color": "#b38a5f",
+    "pattern": "plank"
+  },
+  {
+    "id": "shaw-hampshire-barnboard-hickory",
+    "name": "Hampshire Barnboard Hickory 3/8 in. T x 6.3 in. W Engineered Hardwood",
+    "brand": "Shaw",
+    "line": "Hampshire",
+    "sku": "DH40607070",
+    "url": "https://homedepot.com/p/Shaw-Hampshire-Barnboard-Hickory-3-8-in-T-X-6-3-in-W-Tongue-and-Groove-Engineered-Hardwood-Flooring-30-48-sq-ft-case-DH40607070/313579809",
+    "price": 4.89,
+    "unit": "sqft",
+    "priceSource": "listed",
+    "priceNote": "$4.89/sq ft ($148.94/30.48 sq ft case) at Home Depot",
+    "lastChecked": "2026-10-15",
+    "kind": "wood",
+    "styles": [
+      "mountain-modern",
+      "industrial",
+      "modern-farmhouse"
+    ],
+    "tags": [
+      "neutral",
+      "medium-wood"
+    ],
+    "color": "#8c7764",
+    "pattern": "plank"
+  },
+  {
+    "id": "shaw-western-espresso-hickory",
+    "name": "Western Espresso Hickory 3/8 in. T x 5 in. W Scraped Engineered Hardwood",
+    "brand": "Shaw",
+    "line": "Western",
+    "sku": "DH83300879",
+    "url": "https://homedepot.com/p/Shaw-Western-Espresso-Hickory-3-8-In-T-X-5-in-W-Tongue-and-Groove-Scraped-Engineered-Hardwood-Flooring-23-66-sq-ft-case-DH83300879/205843435",
+    "price": 4.47,
+    "unit": "sqft",
+    "priceSource": "listed",
+    "priceNote": "$4.47/sq ft ($105.87/23.66 sq ft case) at Home Depot",
+    "lastChecked": "2026-10-15",
+    "kind": "wood",
+    "styles": [
+      "craftsman",
+      "mountain-modern",
+      "transitional"
+    ],
+    "tags": [
+      "warm",
+      "dark-wood"
+    ],
+    "color": "#3f2b20",
+    "pattern": "plank"
+  },
+  {
+    "id": "bruce-plano-gunstock-oak",
+    "name": "Plano Gunstock Oak 3/4 in. T x 2-1/4 in. W Solid Hardwood",
+    "brand": "Bruce",
+    "line": "Plano",
+    "sku": "C111",
+    "url": "https://www.homedepot.com/p/Bruce-Plano-Gunstock-Oak-3-4-in-T-x-2-1-4-in-W-Smooth-Solid-Hardwood-Flooring-20-sq-ft-ctn-C111/206213570",
+    "price": 4.79,
+    "unit": "sqft",
+    "priceSource": "listed",
+    "priceNote": "$4.79/sq ft ($95.80/20 sq ft carton) at Home Depot; solid 3/4 in. oak",
+    "lastChecked": "2026-10-15",
+    "kind": "wood",
+    "styles": [
+      "craftsman",
+      "transitional"
+    ],
+    "tags": [
+      "warm",
+      "medium-wood"
+    ],
+    "color": "#8a5a2e",
+    "pattern": "plank"
+  },
+  {
+    "id": "lifeproof-trail-oak",
+    "name": "Trail Oak 6 MIL x 8.7 in. W x 48 in. L Click Lock Waterproof Luxury Vinyl Plank",
+    "brand": "Lifeproof",
+    "line": "Lifeproof Vinyl Plank",
+    "sku": "I96713L",
+    "url": "https://www.homedepot.com/p/Lifeproof-Trail-Oak-6-MIL-x-8-7-in-W-x-48-in-L-Click-Lock-Waterproof-Luxury-Vinyl-Plank-Flooring-20-1-sqft-case-I96713L/300461649",
+    "price": 2.49,
+    "unit": "sqft",
+    "priceSource": "listed",
+    "priceNote": "$2.49/sq ft ($49.95/20.06 sq ft case) at Home Depot; budget option",
+    "lastChecked": "2026-10-15",
+    "kind": "lvp",
+    "styles": [
+      "modern-farmhouse",
+      "transitional",
+      "craftsman"
+    ],
+    "tags": [
+      "warm",
+      "medium-wood"
+    ],
+    "color": "#a9845c",
+    "pattern": "plank"
+  },
+  {
+    "id": "lifeproof-pinecrest-place-oak",
+    "name": "Pinecrest Place Oak 22 MIL x 8.7 in. W x 48 in. L Click Lock Waterproof Luxury Vinyl Plank",
+    "brand": "Lifeproof",
+    "line": "Lifeproof Vinyl Plank",
+    "sku": "I233111L",
+    "url": "https://www.homedepot.com/p/Lifeproof-Pinecrest-Place-Oak-22-MIL-x-8-7-in-W-x-48-in-L-Click-Lock-Waterproof-Luxury-Vinyl-Plank-Flooring-20-1-sq-ft-case-I233111L/327716118",
+    "price": 3.29,
+    "unit": "sqft",
+    "priceSource": "listed",
+    "priceNote": "$3.29/sq ft ($66.12/20.1 sq ft case) at Home Depot",
+    "lastChecked": "2026-10-15",
+    "kind": "lvp",
+    "styles": [
+      "modern",
+      "transitional",
+      "scandinavian"
+    ],
+    "tags": [
+      "cool",
+      "light-wood"
+    ],
+    "color": "#b5ad9f",
+    "pattern": "plank"
+  },
+  {
+    "id": "lifeproof-sterling-oak",
+    "name": "Sterling Oak 22 MIL x 8.7 in. W x 59 in. L Click Lock Waterproof Luxury Vinyl Plank",
+    "brand": "Lifeproof",
+    "line": "Lifeproof Vinyl Plank",
+    "sku": "I966106LPX",
+    "url": "https://www.homedepot.com/p/Lifeproof-Sterling-Oak-22-MIL-x-8-7-in-W-x-59-in-L-Click-Lock-Waterproof-Luxury-Vinyl-Plank-Flooring-25-sq-ft-Case-I966106LPX/327186667",
+    "price": 3.49,
+    "unit": "sqft",
+    "priceSource": "listed",
+    "priceNote": "$3.49/sq ft ($87.25/25 sq ft case) at Home Depot",
+    "lastChecked": "2026-10-15",
+    "kind": "lvp",
+    "styles": [
+      "scandinavian",
+      "modern-farmhouse",
+      "modern"
+    ],
+    "tags": [
+      "warm",
+      "light-wood"
+    ],
+    "color": "#c8af8c",
+    "pattern": "plank"
+  },
+  {
+    "id": "shaw-pinecrest-quarry",
+    "name": "Pinecrest Quarry 20 MIL x 9 in. W x 59 in. L Click Lock Waterproof Luxury Vinyl Plank",
+    "brand": "Shaw",
+    "line": "Pinecrest",
+    "sku": "HD84300554",
+    "url": "https://www.homedepot.com/p/Shaw-Pinecrest-Quarry-20-MIL-x-9-in-W-x-59-in-L-Click-Lock-Waterproof-Luxury-Vinyl-Plank-Flooring-21-79-sqft-case-HD84300554/303448862",
+    "price": 4.19,
+    "unit": "sqft",
+    "priceSource": "listed",
+    "priceNote": "$4.19/sq ft ($91.30/21.79 sq ft case) at Home Depot; gray low-gloss",
+    "lastChecked": "2026-10-15",
+    "kind": "lvp",
+    "styles": [
+      "industrial",
+      "modern",
+      "mountain-modern"
+    ],
+    "tags": [
+      "cool",
+      "medium-wood"
+    ],
+    "color": "#8f8a82",
+    "pattern": "plank"
+  },
+  {
+    "id": "hdc-trendy-threads-plus-ii-durango",
+    "name": "Trendy Threads Plus II - Durango - White 48 oz. SD Polyester Texture Carpet",
+    "brand": "Home Decorators Collection",
+    "line": "Trendy Threads Plus II",
+    "sku": "H0139-486-1200",
+    "url": "https://www.homedepot.com/p/Home-Decorators-Collection-Trendy-Threads-Plus-II-Durango-White-48-oz-SD-Polyester-Texture-Carpet-Installation-Required-H0139-486-1200/329128790",
+    "price": 2.49,
+    "unit": "sqft",
+    "priceSource": "listed",
+    "priceNote": "$2.49/sq ft ($22.41/sq yd) on Home Depot white texture carpet listing page; product page shows only install+pad from $0.69/sq ft",
+    "lastChecked": "2026-10-15",
+    "kind": "carpet",
+    "styles": [
+      "modern-farmhouse",
+      "scandinavian",
+      "transitional"
+    ],
+    "tags": [
+      "neutral",
+      "white"
+    ],
+    "color": "#e7e1d5",
+    "pattern": "carpet"
+  },
+  {
+    "id": "lifeproof-blakely-ii-basalt-gray",
+    "name": "Blakely II - Basalt-Gray 15 ft. 52 oz. High Performance Polyester Texture Carpet",
+    "brand": "Lifeproof",
+    "line": "Blakely II",
+    "sku": "HDF7981502",
+    "url": "https://www.homedepot.com/p/Lifeproof-Blakely-II-Basalt-Gray-15-ft-52-oz-High-Performance-Polyester-Texture-Carpet-Installation-Required-HDF7981502/329049386",
+    "price": 5.09,
+    "unit": "sqft",
+    "priceSource": "listed",
+    "priceNote": "$5.09/sq ft ($45.81/sq yd) on Home Depot Lifeproof polyester carpet listing page; product page shows only install+pad from $0.69/sq ft",
+    "lastChecked": "2026-10-15",
+    "kind": "carpet",
+    "styles": [
+      "modern",
+      "industrial",
+      "transitional"
+    ],
+    "tags": [
+      "cool"
+    ],
+    "color": "#8d8c87",
+    "pattern": "carpet"
+  },
+  {
+    "id": "hdc-supreme-shell-white-wool",
+    "name": "Supreme Shell White 13.9 ft. 71 oz. Wool Texture Carpet",
+    "brand": "Home Decorators Collection",
+    "line": "Supreme",
+    "sku": "060877",
+    "url": "https://www.homedepot.com/p/Home-Decorators-Collection-Supreme-Shell-White-13-9-ft-71-oz-Wool-Texture-Carpet-Installation-Required-060877/313952978",
+    "price": 11.44,
+    "unit": "sqft",
+    "priceSource": "listed",
+    "priceNote": "$11.44/sq ft ($102.96/sq yd) on Home Depot white texture carpet listing page; product page shows only install+pad from $0.69/sq ft; premium wool",
+    "lastChecked": "2026-10-15",
+    "kind": "carpet",
+    "styles": [
+      "scandinavian",
+      "mountain-modern",
+      "craftsman"
+    ],
+    "tags": [
+      "warm",
+      "white"
+    ],
+    "color": "#ece6d9",
+    "pattern": "carpet"
+  }
+]

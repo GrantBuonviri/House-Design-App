@@ -32,6 +32,8 @@ export type MeshData = {
   positions: Float32Array;
   normals: Float32Array;
   colors: Float32Array;
+  /** A floor pattern per corner (see PATTERN in finishes.ts); left out when there are none. */
+  patterns?: Float32Array;
   /** How many triangles. */
   count: number;
 };
@@ -49,6 +51,10 @@ export class MeshBuilder {
   private pos: number[] = [];
   private nor: number[] = [];
   private col: number[] = [];
+  private pat: number[] = [];
+  private patterned = false;
+  /** The floor pattern given to triangles added from now on (0 for none). */
+  pattern = 0;
 
   get empty() {
     return this.pos.length === 0;
@@ -67,7 +73,9 @@ export class MeshBuilder {
       this.pos.push(p[0], p[1], p[2]);
       this.nor.push(n[0], n[1], n[2]);
       this.col.push(color[0], color[1], color[2]);
+      this.pat.push(this.pattern);
     }
+    if (this.pattern) this.patterned = true;
   }
 
   /** A flat four-cornered face, corners in order around it. */
@@ -173,6 +181,7 @@ export class MeshBuilder {
       positions: new Float32Array(this.pos),
       normals: new Float32Array(this.nor),
       colors: new Float32Array(this.col),
+      ...(this.patterned ? { patterns: new Float32Array(this.pat) } : {}),
       count: this.pos.length / 9,
     };
   }
