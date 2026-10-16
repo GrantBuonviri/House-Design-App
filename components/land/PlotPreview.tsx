@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import type { Plot, Point } from "@/lib/model/schema";
 import { bearingVector } from "@/lib/land/generate";
 import { pointInPolygon } from "@/lib/land/geometry";
+import { roadStrips } from "@/lib/land/mesh";
 import { createTerrain } from "@/lib/land/terrain";
 import { dayArc, SUMMER_SOLSTICE, WINTER_SOLSTICE } from "@/lib/land/sun";
 import { landTint as tint, landView as viewFor, type LandView as View } from "@/lib/land/view";
@@ -80,12 +81,16 @@ function drawOverlays(ctx: CanvasRenderingContext2D, plot: Plot, view: View, sca
 
   // Creeks and washes
   for (const w of plot.waterFeatures) {
-    if (w.kind !== "creek" && w.kind !== "wash") continue;
+    if (w.kind !== "creek" && w.kind !== "wash" && w.kind !== "river") continue;
     ctx.beginPath();
     w.points.forEach((p, i) => (i ? ctx.lineTo(...toPx(p)) : ctx.moveTo(...toPx(p))));
     ctx.lineCap = "round";
     ctx.lineJoin = "round";
-    if (w.kind === "creek") {
+    if (w.kind === "river") {
+      ctx.strokeStyle = "#4a86b0";
+      ctx.lineWidth = Math.max(6 * u, 36 * 12 * scale);
+      ctx.setLineDash([]);
+    } else if (w.kind === "creek") {
       ctx.strokeStyle = "#4a86b0";
       ctx.lineWidth = 3.2 * u;
       ctx.setLineDash([]);
@@ -98,16 +103,26 @@ function drawOverlays(ctx: CanvasRenderingContext2D, plot: Plot, view: View, sca
     ctx.setLineDash([]);
   }
 
-  // Road along one edge
-  const roadW = 7 * u;
-  const [ax, ay] = toPx({ x: 0, y: 0 });
-  const [bx, by] = toPx({ x: plot.widthIn, y: plot.depthIn });
-  const gap = 5 * u;
-  ctx.fillStyle = "#8d8f8c";
-  if (plot.roadSide === "N") ctx.fillRect(0, ay - gap - roadW, px, roadW);
-  if (plot.roadSide === "S") ctx.fillRect(0, by + gap, px, roadW);
-  if (plot.roadSide === "W") ctx.fillRect(ax - gap - roadW, 0, roadW, px);
-  if (plot.roadSide === "E") ctx.fillRect(bx + gap, 0, roadW, px);
+  // Lanes through the land
+  for (const l of plot.lanes) {
+    ctx.beginPath();
+    l.points.forEach((p, i) => (i ? ctx.lineTo(...toPx(p)) : ctx.moveTo(...toPx(p))));
+    ctx.lineCap = "round";
+    ctx.lineJoin = "round";
+    ctx.strokeStyle = "#b9a98a";
+    ctx.lineWidth = Math.max(3 * u, l.widthFt * 12 * scale);
+    ctx.stroke();
+  }
+
+  // Roads along their real lot edges
+  ctx.lineCap = "butt";
+  for (const r of roadStrips(plot)) {
+    ctx.beginPath();
+    r.points.forEach((p, i) => (i ? ctx.lineTo(...toPx(p)) : ctx.moveTo(...toPx(p))));
+    ctx.strokeStyle = r.main ? "#8d8f8c" : "#a1a39f";
+    ctx.lineWidth = Math.max(5 * u, r.widthIn * scale);
+    ctx.stroke();
+  }
 
   // Plot boundary
   ctx.beginPath();
@@ -118,6 +133,15 @@ function drawOverlays(ctx: CanvasRenderingContext2D, plot: Plot, view: View, sca
   ctx.setLineDash([6 * u, 3 * u]);
   ctx.stroke();
   ctx.setLineDash([]);
+
+  // Rocks and trees
+  for (const f of plot.features) {
+    const [x, y] = toPx(f.at);
+    ctx.beginPath();
+    ctx.arc(x, y, Math.max(1.6 * u, (f.sizeFt * 12 * scale) / 2), 0, Math.PI * 2);
+    ctx.fillStyle = f.kind === "rock" ? "#8b8a85" : "rgba(79,127,67,0.85)";
+    ctx.fill();
+  }
 
   // Downhill arrow from the middle of the plot
   if (plot.slope.percent >= 0.5) {

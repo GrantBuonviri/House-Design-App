@@ -1,4 +1,5 @@
 import type { Plot, Point } from "@/lib/model/schema";
+import { plotRoadEdges } from "./custom";
 import { pointInPolygon } from "./geometry";
 import { createTerrain, waterLevels, type HeightFn } from "./terrain";
 import { landTint, landView, type LandView } from "./view";
@@ -173,4 +174,73 @@ export function roadLine(plot: Plot, scene: LandScene): Point[] {
     case "E":
       return [{ x: plot.widthIn + gap, y: y1 }, { x: plot.widthIn + gap, y: y2 }];
   }
+}
+
+const FT = 12;
+
+export type RibbonMesh = { positions: Float32Array; indices: Uint32Array };
+
+/**
+ * A flat strip of `widthIn` inches laid along a path on the ground (rivers,
+ * lanes, roads). The path is cut into short steps so the strip follows hills.
+ */
+export function ribbonMesh(points: Point[], widthIn: number, scene: LandScene, liftIn = 6): RibbonMesh | null {
+  const { view } = scene;
+  const step = view.side / 80;
+  const dense: Point[] = [];
+  for (let i = 0; i < points.length - 1; i++) {
+    const a = points[i];
+    const b = points[i + 1];
+    const n = Math.max(1, Math.ceil(Math.hypot(b.x - a.x, b.y - a.y) / step));
+    for (let s = 0; s < n; s++) dense.push({ x: a.x + ((b.x - a.x) * s) / n, y: a.y + ((b.y - a.y) * s) / n });
+  }
+  if (points.length) dense.push(points[points.length - 1]);
+  const inView = (p: Point) => p.x >= view.x0 && p.x <= view.x0 + view.side && p.y >= view.y0 && p.y <= view.y0 + view.side;
+  const kept = dense.filter(inView);
+  if (kept.length < 2) return null;
+  const half = widthIn / 2;
+  const positions = new Float32Array(kept.length * 2 * 3);
+  kept.forEach((p, i) => {
+    const prev = kept[Math.max(0, i - 1)];
+    const next = kept[Math.min(kept.length - 1, i + 1)];
+    const len = Math.hypot(next.x - prev.x, next.y - prev.y) || 1;
+    const nx = -(next.y - prev.y) / len;
+    const ny = (next.x - prev.x) / len;
+    positions.set(scene.toScene(p.x + nx * half, p.y + ny * half, liftIn), i * 6);
+    positions.set(scene.toScene(p.x - nx * half, p.y - ny * half, liftIn), i * 6 + 3);
+  });
+  const indices = new Uint32Array((kept.length - 1) * 6);
+  for (let i = 0; i < kept.length - 1; i++) indices.set([i * 2, i * 2 + 1, i * 2 + 2, i * 2 + 1, i * 2 + 3, i * 2 + 2], i * 6);
+  return { positions, indices };
+}
+
+export type RoadStrip = { points: Point[]; widthIn: number; main: boolean };
+
+/** Each road as a centerline just outside its real lot edge (made-up plots get one main road). */
+export function roadStrips(plot: Plot): RoadStrip[] {
+  return plotRoadEdges(plot).map(({ road, a, b, facingDeg }) => {
+    const r = (facingDeg * Math.PI) / 180;
+    const off = (road.widthFt / 2 + 4) * FT;
+    // Bearing 0 is north, which is up the page (y decreases); bearing 90 is east.
+    const dx = Math.sin(r) * off;
+    const dy = -Math.cos(r) * off;
+    return {
+      points: [
+        { x: a.x + dx, y: a.y + dy },
+        { x: b.x + dx, y: b.y + dy },
+      ],
+      widthIn: road.widthFt * FT,
+      main: road.kind === "main",
+    };
+  });
+}
+
+export type LandSpot = { id: string; kind: "rock" | "tree"; position: [number, number, number]; radius: number };
+
+/** Rocks and trees placed on the ground, in scene units (radius is half their size across). */
+export function featureSpots(plot: Plot, scene: LandScene): LandSpot[] {
+  const { view } = scene;
+  return plot.features
+    .filter((f) => f.at.x >= view.x0 && f.at.x <= view.x0 + view.side && f.at.y >= view.y0 && f.at.y <= view.y0 + view.side)
+    .map((f) => ({ id: f.id, kind: f.kind, position: scene.toScene(f.at.x, f.at.y), radius: (f.sizeFt * FT * scene.scale) / 2 }));
 }
