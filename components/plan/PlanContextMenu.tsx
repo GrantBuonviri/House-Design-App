@@ -8,8 +8,10 @@ import { combineAt, combineWalls, cornerBetween, splitEdge, splitEdgeEqual, spli
 import { removeWall, restoreWall, combineRooms, whyNotCombine, whyWallStays, edgeWalls, roomsAlong } from "@/lib/plan/openWalls";
 import { updateOpening } from "@/lib/plan/edit";
 import { addBay, roundCorner, roundableRadius, whyNoBay, DEFAULT_CORNER_RADIUS_IN } from "@/lib/plan/shapes";
+import { bendInfo } from "@/lib/plan/bend";
+import { curveTogether, isRun, runInfo, runOf, straightenRun, type RunEdit } from "@/lib/plan/curveRun";
 import { duplicateAndSelect } from "./ArrangeButtons";
-import { edgeId, parseEdgeId, type PlanItem, type PlanSelection } from "./types";
+import { edgeId, parseEdgeId, runTargets, type PlanItem, type PlanSelection } from "./types";
 import type { Point } from "@/lib/model/schema";
 
 export type ContextAt = { x: number; y: number; el: (PlanItem & { corner?: number }) | null; at: Point };
@@ -67,6 +69,21 @@ export function contextItems(
     });
     return { label: "Split into equal pieces", run: () => {}, choices, disabled: choices.every((c) => c.disabled) ? (choices[0].disabled as string) : false };
   };
+  // Two or more picked walls that meet end to end: bend them as one curve, or straighten them.
+  const runTs = runTargets(picked);
+  const curving: Item[] = [];
+  if (runTs) {
+    const r = runOf(plan, runTs);
+    const apply = (label: string, out: RunEdit): Exclude<Item, "line"> => ({ label, disabled: "why" in out ? out.why : false, run: () => { if (!("why" in out)) act.change(out.plan); } });
+    if (!isRun(r)) curving.push({ label: "Curve together", disabled: r.why, run: () => {} });
+    else {
+      const info = runInfo(plan, r);
+      const together = apply("Curve together", curveTogether(plan, r));
+      curving.push(info.radius ? { ...together, disabled: "These walls already make one curve. Drag the diamond to change it." } : together);
+      if (r.pieces.some((p) => bendInfo(plan, p.target)?.radius)) curving.push(apply("Make straight", straightenRun(plan, r)));
+    }
+    curving.push("line");
+  }
   const remove = (label: string, rm: string[]): Item => ({ label, danger: true, run: () => (act.change(removeMany(plan, rm)), act.select([])) });
 
   if (el.corner !== undefined) {
@@ -87,7 +104,7 @@ export function contextItems(
     const walls = edgeWalls(plan, roomId, edge);
     const why = whyWallStays(plan, roomId, edge);
     const along = roomsAlong(plan, roomId, edge);
-    const items: Item[] = [];
+    const items: Item[] = [...curving];
     // Two picked walls of this room that meet: combine them.
     const edges = picked.filter((s) => s.kind === "edge").map((s) => parseEdgeId(s.id));
     if (edges.length === 2 && edges.every((x) => x.roomId === roomId)) {
@@ -140,7 +157,7 @@ export function contextItems(
     else if (walls.length <= 1) walling.push(edit("Split wall here", splitWall(plan, el.id, c.at)), pieces((k) => splitWallEqual(plan, el.id, k)));
     if (walling.length) walling.push("line");
   }
-  return [...walling, ...arrange, ...(arrange.length ? (["line"] as Item[]) : []), ...turnGroup, ...(turnGroup.length ? (["line"] as Item[]) : []), remove(ids.length > 1 ? `Delete ${ids.length} things` : `Delete ${noun}`, ids.length ? ids : [el.id])];
+  return [...curving, ...walling, ...arrange, ...(arrange.length ? (["line"] as Item[]) : []), ...turnGroup, ...(turnGroup.length ? (["line"] as Item[]) : []), remove(ids.length > 1 ? `Delete ${ids.length} things` : `Delete ${noun}`, ids.length ? ids : [el.id])];
 }
 
 export default function PlanContextMenu({ at, items, onClose }: { at: { x: number; y: number }; items: Item[]; onClose: () => void }) {

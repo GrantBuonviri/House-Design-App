@@ -5,6 +5,7 @@ import type { BubbleDiagram, FloorPlan, Level, PlanRoom, Point } from "@/lib/mod
 import { formatFeetInches } from "@/lib/model/units";
 import { add, dist, edgesOf, leftNormal, scale as scaleV, sub, unit } from "@/lib/plan/geometry";
 import { bendInfo, type BendSnap, type BendTarget } from "@/lib/plan/bend";
+import { runInfo, type Run } from "@/lib/plan/curveRun";
 import { arcBetween, leftBulge, pointOnEdge, roomEdgeLength } from "@/lib/plan/arcs";
 import { edgeFrame } from "@/lib/plan/labels";
 import { roomOutline, wallOutline } from "@/lib/plan/flatten";
@@ -275,6 +276,22 @@ export function BendHandles({ targets, plan, s }: { targets: BendTarget[]; plan:
         );
       })}
     </>
+  );
+}
+
+/** Konva id of the diamond that bends several picked walls together. */
+export const RUN_HANDLE_ID = "curve-run";
+
+/** One diamond in the middle of a run of picked walls: drag it to bend them all as one curve. */
+export function RunHandle({ run, plan, s }: { run: Run; plan: FloorPlan; s: number }) {
+  const info = runInfo(plan, run);
+  if (info.length * s < 28) return null;
+  const r = 8 / s;
+  // White inside, so it shows on top of the green curved wall it sits on.
+  return (
+    <Group id={RUN_HANDLE_ID} name="bend" x={info.middle.x} y={info.middle.y}>
+      <Line points={[0, -r, r, 0, 0, r, -r, 0]} closed fill="#fff" stroke={ACCENT} strokeWidth={2.5} strokeScaleEnabled={false} hitStrokeWidth={8} />
+    </Group>
   );
 }
 

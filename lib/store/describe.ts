@@ -119,7 +119,7 @@ function moved(a: object, b: object): boolean {
 function describePlan(a: FloorPlan | undefined, b: FloorPlan | undefined): string | null {
   if (!a || !b) return b ? "start the floor plan" : "clear the floor plan";
   const roomName = (r: FloorPlan["rooms"][number]) => r.name || "a room";
-  const special = describeWallEdits(a, b, roomName) ?? describeBend(a, b, roomName) ?? describeOpenWalls(a, b, roomName) ?? describeSplit(a, b, roomName) ?? describeTrim(a, b, roomName) ?? describeCloset(a, b, roomName) ?? describeFurnish(a, b, roomName);
+  const special = describeWallEdits(a, b, roomName) ?? describeRunBend(a, b, roomName) ?? describeBend(a, b, roomName) ?? describeOpenWalls(a, b, roomName) ?? describeSplit(a, b, roomName) ?? describeTrim(a, b, roomName) ?? describeCloset(a, b, roomName) ?? describeFurnish(a, b, roomName);
   if (special) return special;
   const rooms = describeList(a.rooms, b.rooms, roomName, (was, now) =>
     was.name !== now.name ? `rename ${roomName(was)}` : moved(was, now) ? `move ${roomName(now)}` : `change ${roomName(now)}`,
@@ -191,6 +191,24 @@ function describeDesign(a: DesignChoices, b: DesignChoices, where: "inside" | "o
 }
 
 /** Combining rooms, and taking out or putting back a wall (with any doors and windows that went with it). */
+/** Curve together / Make straight on several walls: a room's corners moved onto one curve, or two or more of its walls bent at once. */
+function describeRunBend(a: FloorPlan, b: FloorPlan, roomName: (r: FloorPlan["rooms"][number]) => string): string | null {
+  const curved = (n: number[] | undefined) => (n ?? []).filter((x) => x !== 0).length;
+  for (const now of b.rooms) {
+    const was = a.rooms.find((r) => r.id === now.id);
+    if (!was || was.polygon.length !== now.polygon.length || json(was.bulges ?? null) === json(now.bulges ?? null)) continue;
+    const bent = now.polygon.filter((_, i) => (was.bulges?.[i] ?? 0) !== (now.bulges?.[i] ?? 0)).length;
+    if (bent < 2 && json(was.polygon) === json(now.polygon)) continue;
+    return curved(now.bulges) === 0 ? `straighten the ${roomName(now)} walls` : `curve the ${roomName(now)} walls together`;
+  }
+  const bentWalls = b.walls.filter((now) => {
+    const was = a.walls.find((w) => w.id === now.id);
+    return was && (was.bulge ?? 0) !== (now.bulge ?? 0);
+  });
+  if (bentWalls.length >= 2) return bentWalls.every((w) => !w.bulge) ? "straighten walls" : "curve walls together";
+  return null;
+}
+
 /** A wall bent or made straight: the room (or loose wall) is the same but its curves changed. */
 function describeBend(a: FloorPlan, b: FloorPlan, roomName: (r: FloorPlan["rooms"][number]) => string): string | null {
   const curved = (n: number[] | undefined) => (n ?? []).filter((x) => x !== 0).length;
