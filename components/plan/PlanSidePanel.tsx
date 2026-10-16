@@ -312,6 +312,7 @@ export default function PlanSidePanel(props: Props) {
           <option value={6.5}>6 1/2&quot; (2x6, for plumbing)</option>
           <option value={3.5}>3 1/2&quot; (thin, half wall)</option>
         </select>
+        <p className="mt-1 text-xs text-muted">The floor plan draws every wall the same width; this sets the real wall.</p>
         <label className="field-label mt-4" htmlFor="wall-height">
           Height
         </label>

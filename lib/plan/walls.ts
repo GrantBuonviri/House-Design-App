@@ -184,6 +184,11 @@ export function openingGeometries(plan: FloorPlan): OpeningGeometry[] {
   return plan.openings.map((o) => openingGeometry(plan, o)).filter((g): g is OpeningGeometry => g !== null);
 }
 
+/** How thick a wall is drawn in the 2D floor plan: every full-height or half wall at the outside wall width so joins line up; open edges 0. Real thickness stays `thicknessIn`. */
+export function drawThickness(w: { thicknessIn: number; open?: boolean }, exteriorIn: number): number {
+  return w.open || w.thicknessIn <= 0 ? 0 : exteriorIn;
+}
+
 export type SolidWall = {
   a: Point;
   b: Point;

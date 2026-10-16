@@ -19,7 +19,7 @@ import { mergeTargets, overhangsOf, supportTargets } from "@/lib/plan/support";
 import { roofFootprint, type Region } from "@/lib/house3d/footprint";
 import { parseTypedLength } from "@/lib/model/units";
 import { DEFAULT_STAIRS_WIDTH_IN, stairsCut, stairsDrawing } from "@/lib/plan/stairs";
-import { clampOffset, hostSegment, nearestHost, sameHost, openingGeometries, solidWalls, wallPieces, type OpeningGeometry } from "@/lib/plan/walls";
+import { drawThickness, clampOffset, hostSegment, nearestHost, sameHost, openingGeometries, solidWalls, wallPieces, type OpeningGeometry } from "@/lib/plan/walls";
 import { fillRoomAt, splitRoom, whyNotFill } from "@/lib/plan/partitions";
 import { bowForTyped, curveBow, drawCurve } from "@/lib/plan/curveTool";
 import LandLayer from "@/components/bubbles/LandLayer";
@@ -259,11 +259,11 @@ export default function PlanCanvas(props: Props) {
       let best = { d: Infinity, t: 4.5 };
       for (const p of pieces) {
         const pr = project(g.center, p.a, p.b);
-        if (pr.d < best.d) best = { d: pr.d, t: p.thicknessIn };
+        if (pr.d < best.d) best = { d: pr.d, t: drawThickness(p, exteriorIn) || p.thicknessIn };
       }
       return best.t;
     },
-    [pieces],
+    [pieces, exteriorIn],
   );
 
   const riseFor = (st: Pick<PlanStairs, "toLevelId">, from: Level) => {
@@ -664,7 +664,7 @@ export default function PlanCanvas(props: Props) {
         for (const pc of pieces) {
           if (pc.open) continue;
           const d = project(p, pc.a, pc.b).d;
-          if (d > Math.max(pc.thicknessIn / 2 + 2, 7 / s) || (best && d >= best.d)) continue;
+          if (d > Math.max(drawThickness(pc, exteriorIn) / 2 + 2, 7 / s) || (best && d >= best.d)) continue;
           // A curved wall is one wall: measure it end to end, not by its short pieces.
           best = { host: savedHost(fp, pc.host), d };
         }
@@ -995,7 +995,7 @@ export default function PlanCanvas(props: Props) {
 
             <FurnitureOutlines furniture={shown.furniture ?? []} s={s} names={labelOn(labels, "fixtureNames")} />
 
-            <PlanWalls solids={solids} selection={selection} s={s} toSaved={(h) => savedHost(fp, h)} />
+            <PlanWalls exteriorIn={exteriorIn} solids={solids} selection={selection} s={s} toSaved={(h) => savedHost(fp, h)} />
 
             {geos.map((g) => (
               <OpeningSymbol key={g.opening.id} g={g} thickness={thicknessAt(g)} selected={isPicked(selection, g.opening.id)} scale={s} name="opening" />

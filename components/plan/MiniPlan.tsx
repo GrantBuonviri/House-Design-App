@@ -5,7 +5,7 @@ import type { Bounds } from "@/lib/plan/geometry";
 import { DRAW_STEP_DEG, flatPlan } from "@/lib/plan/flatten";
 import { polygonCenter } from "@/lib/plan/geometry";
 import { labelOn } from "@/lib/plan/labels";
-import { openingGeometries, solidWalls, wallPieces } from "@/lib/plan/walls";
+import { drawThickness, openingGeometries, solidWalls, wallPieces } from "@/lib/plan/walls";
 
 /**
  * A small read-only drawing of one floor, for comparing alternatives. Every
@@ -51,8 +51,8 @@ export default function MiniPlan({
           strokeDasharray={hot.has(r.id) ? `${6 * k} ${3 * k}` : undefined}
         />
       ))}
-      {walls.map((w, i) => (
-        <line key={i} x1={w.a.x} y1={w.a.y} x2={w.b.x} y2={w.b.y} stroke={w.piece.height ? "#9a9285" : "#2a2a2a"} strokeWidth={w.open ? 0.8 * k : Math.max(w.thicknessIn, 1.6 * k)} strokeDasharray={w.open ? `${3 * k} ${2 * k}` : undefined} />
+      {[...walls].sort((p, q) => Number(p.exterior) - Number(q.exterior)).map((w, i) => (
+        <line key={i} x1={w.a.x} y1={w.a.y} x2={w.b.x} y2={w.b.y} stroke={w.piece.height ? "#9a9285" : "#2a2a2a"} strokeWidth={w.open ? 0.8 * k : Math.max(drawThickness(w, exteriorIn), 1.6 * k)} strokeDasharray={w.open ? `${3 * k} ${2 * k}` : undefined} />
       ))}
       {geos
         .filter((g) => g.opening.kind === "window")
