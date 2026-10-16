@@ -1,5 +1,6 @@
 import type { Plot, Point } from "@/lib/model/schema";
 import { bearingVector } from "@/lib/land/generate";
+import { plotRoadEdges } from "@/lib/land/custom";
 import { pointInPolygon } from "@/lib/land/geometry";
 import { createTerrain } from "@/lib/land/terrain";
 import { dayArc, SUMMER_SOLSTICE, WINTER_SOLSTICE } from "@/lib/land/sun";
@@ -15,12 +16,22 @@ import type { Bubble } from "./shapes";
 
 export type WaterLine = { kind: Plot["waterFeatures"][number]["kind"]; points: Point[]; closed: boolean };
 
+/** A road along a lot edge, and where its label goes. */
+export type RoadMark = { a: Point; b: Point; label: Point; main: boolean; text: string };
+
 export type LandDrawing = {
   /** The lot line, in plot coordinates. */
   outline: Point[];
-  /** The lot edge along the road, and where its label goes. */
-  road: { a: Point; b: Point; label: Point } | null;
+  /** The lot edge along the main road, and where its label goes. */
+  road: RoadMark | null;
+  /** Every road along the lot, the main one first. */
+  roads: RoadMark[];
   water: WaterLine[];
+  /** Big rocks and trees: where, and how far across (inches). */
+  rocks: { at: Point; size: number }[];
+  trees: { at: Point; size: number }[];
+  /** Private lanes through the land: their middle line and width (inches). */
+  lanes: { points: Point[]; width: number }[];
   /** Contour segments as x1, y1, x2, y2, … in plot coordinates. Empty on flat land. */
   contours: number[];
   /** Feet between contour lines. */
@@ -51,18 +62,43 @@ export function defaultLotOffset(plot: Plot, mainFloor: Bubble[]): Point {
 
 export function landDrawing(plot: Plot): LandDrawing {
   const { segments, intervalFt } = contours(plot);
+  const roads = roadMarks(plot);
+  const size = (f: Plot["features"][number]) => ({ at: f.at, size: f.sizeFt * FT });
   return {
     outline: plot.outline,
-    road: roadEdge(plot),
+    road: roads.find((r) => r.main) ?? null,
+    roads,
     water: plot.waterFeatures.map((w) => ({ kind: w.kind, points: w.points, closed: w.kind === "pond" || w.kind === "lake" })),
+    rocks: plot.features.filter((f) => f.kind === "rock").map(size),
+    trees: plot.features.filter((f) => f.kind === "tree").map(size),
+    lanes: plot.lanes.filter((l) => l.points.length > 1).map((l) => ({ points: l.points, width: l.widthFt * FT })),
     contours: segments,
     contourFt: intervalFt,
     downhill: downhillArrow(plot),
   };
 }
 
+/**
+ * The roads along the lot. Plots with roads (from the designer) draw each one
+ * along its real edge; made-up plots draw one on the longest edge facing their road side.
+ */
+function roadMarks(plot: Plot): RoadMark[] {
+  if (!plot.roads.length) {
+    const r = roadEdge(plot);
+    return r ? [{ ...r, main: true, text: "Road" }] : [];
+  }
+  const edges = plotRoadEdges(plot).sort((a, b) => Number(b.road.kind === "main") - Number(a.road.kind === "main"));
+  const several = edges.length > 1;
+  return edges.map((e, i) => {
+    const main = i === 0;
+    const out = bearingVector(e.facingDeg);
+    const mid = { x: (e.a.x + e.b.x) / 2, y: (e.a.y + e.b.y) / 2 };
+    return { a: e.a, b: e.b, label: { x: mid.x + out.x * 8 * FT, y: mid.y + out.y * 8 * FT }, main, text: main ? (several ? "Main road" : "Road") : "Side street" };
+  });
+}
+
 /** The longest edge of the lot line that faces the road. */
-function roadEdge(plot: Plot): LandDrawing["road"] {
+function roadEdge(plot: Plot): { a: Point; b: Point; label: Point } | null {
   const pts = plot.outline;
   if (pts.length < 3) return null;
   const dir = ROAD_DIR[plot.roadSide];

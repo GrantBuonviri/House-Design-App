@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { LOT_SIDES, RealLot, type Easement, type LotSide, type PlansSettings, type Project } from "@/lib/model/schema";
-import { siteLayout } from "@/lib/plans/lot";
+import { lotFromCustomLand, siteLayout } from "@/lib/plans/lot";
 
 /**
  * "My real lot": the owner's lot from the recorded plat, so the site plan
@@ -90,6 +90,15 @@ export default function RealLotForm({ project, onSave, onClose }: { project: Pro
   const trial = useMemo(() => ({ ...project, plans: { ...project.plans, lot } }), [project, lot]);
   const site = useMemo(() => siteLayout(trial), [trial]);
   const rect = d.shape === "rectangle";
+  const custom = project.plot?.source === "custom";
+  const [copyNote, setCopyNote] = useState<string | null>(null);
+  function copyFromCustom() {
+    const got = lotFromCustomLand(project.plot);
+    if ("problem" in got) return setCopyNote(got.problem);
+    const l = got.lot;
+    set({ shape: l.shape, frontFt: String(l.frontFt), rearFt: String(l.rearFt), leftFt: String(l.leftFt), rightFt: String(l.rightFt), streetSide: l.streetSide, sideStreet: l.sideStreet });
+    setCopyNote("Copied the side lengths and street from your designed land. Check them against the plat.");
+  }
 
   const field = (id: keyof Draft, label: string, hint?: string) => (
     <label className="block">
@@ -111,6 +120,14 @@ export default function RealLotForm({ project, onSave, onClose }: { project: Pro
       >
         <h3 className="text-lg font-semibold">My real lot</h3>
         <p className="mb-3 text-sm text-muted">From your lot&apos;s recorded plat or survey (Ada County has them). The site plan and setback checks use it instead of the sample land. All lengths in feet.</p>
+        {custom && (
+          <div className="mb-3 flex items-center gap-3 text-sm">
+            <button type="button" className="btn py-1" onClick={copyFromCustom} data-testid="lot-copy-custom">
+              Copy from my custom land
+            </button>
+            {copyNote && <span className="text-muted" data-testid="lot-copy-note">{copyNote}</span>}
+          </div>
+        )}
         <div className="grid min-h-0 flex-1 grid-cols-[1fr_300px] gap-5 overflow-y-auto">
           <div className="space-y-4">
             <div className="grid grid-cols-2 gap-3">

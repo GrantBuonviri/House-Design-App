@@ -60,6 +60,7 @@ export const RATE_IDS = [
   "drainage-some",
   "drainage-major",
   "retaining-wall",
+  "rock-removal",
   "utility-trench",
   "slab",
   "footing",

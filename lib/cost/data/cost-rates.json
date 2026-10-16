@@ -128,6 +128,24 @@
       "checked": "2026-10-14",
       "note": "Segmental block or poured concrete, under ~4 ft without engineering. Taller engineered walls (foothills) exceed high. Split ~40/60."
     },
+    "rock-removal": {
+      "label": "Big rock removal (break up and haul)",
+      "unit": "cuyd",
+      "material": [
+        15,
+        25,
+        45
+      ],
+      "labor": [
+        60,
+        110,
+        200
+      ],
+      "source": "Judgment based on national boulder and rock removal guides (about $75-$250 per cubic yard with a breaker and haul-off)",
+      "url": null,
+      "checked": "2026-10-16",
+      "note": "For big rocks under the house on designed land. Equipment and operator time counted as labor; hauling and dump fees as material. Blasting or very hard basalt can exceed high."
+    },
     "utility-trench": {
       "label": "Utility trenching",
       "unit": "linft",

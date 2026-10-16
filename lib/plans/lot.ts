@@ -2,6 +2,8 @@ import type { LotSide, Plot, Point, Project, RealLot } from "@/lib/model/schema"
 import { add, clockwise, dist, dot, polygonArea, scale, sub, unit } from "@/lib/plan/geometry";
 import { lotOffsetFor } from "@/lib/house3d/site";
 import { offsetRing, roofFootprint } from "@/lib/house3d/footprint";
+import { plotRoadEdges } from "@/lib/land/custom";
+import { bearingVector } from "@/lib/land/generate";
 import { houseFacts } from "./house";
 
 /**
@@ -93,7 +95,16 @@ function layout(project: Project): SiteLayout | null {
   const pts = (plot.outline.length ? plot.outline : [{ x: 0, y: 0 }, { x: plot.widthIn, y: 0 }, { x: plot.widthIn, y: plot.depthIn }, { x: 0, y: plot.depthIn }]).map((p) => sub(p, offset));
   const outline = clockwise(pts);
   const street = plot.roadSide;
-  const toward = TOWARD[street];
+  const roads = plot.roads.length ? plotRoadEdges(plot) : [];
+  const main = roads.find((r) => r.road.kind === "main") ?? roads[0];
+  // Lot lines are named from the main road: its real edge on designed land, the road side on made-up land.
+  const toward = main ? bearingVector(main.facingDeg) : TOWARD[street];
+  /** The road along this lot line, if any (lines and road edges share their corners). */
+  const roadOn = (a: Point, b: Point) =>
+    roads.find((r) => {
+      const [ra, rb] = [sub(r.a, offset), sub(r.b, offset)];
+      return (dist(ra, a) < 1 && dist(rb, b) < 1) || (dist(ra, b) < 1 && dist(rb, a) < 1);
+    });
   // Name each side by the way it faces.
   const lines: LotLine[] = outline.map((a, i) => {
     const b = outline[(i + 1) % outline.length];
@@ -101,8 +112,9 @@ function layout(project: Project): SiteLayout | null {
     const out = { x: u.y, y: -u.x };
     const f = dot(out, toward);
     const r = dot(out, { x: toward.y, y: -toward.x });
-    const side: LotSide = f > 0.7 ? "front" : f < -0.7 ? "rear" : r > 0 ? "right" : "left";
-    return { side, a, b, lengthFt: dist(a, b) / FT, street: side === "front", setbackFt: null, setbackName: "" };
+    const road = roadOn(a, b);
+    const side: LotSide = road?.road.kind === "main" || (f > 0.7 && road?.road.kind !== "side") ? "front" : f < -0.7 ? "rear" : r > 0 ? "right" : "left";
+    return { side, a, b, lengthFt: dist(a, b) / FT, street: road ? true : !roads.length && side === "front", setbackFt: null, setbackName: "" };
   });
   const problems = project.plans.lot ? [lotProblem(project.plans.lot)].filter((x): x is string => !!x) : [];
   return { real: false, outline, lines, streetSide: street, areaSqft: polygonArea(outline) / 144, house, checks: [], easements: [], offset, problems };
@@ -186,7 +198,8 @@ function realLayout(lot: RealLot, house: Point[][]): SiteLayout {
 export function lotAsPlot(site: SiteLayout, plot: Plot | null): { plot: Plot; offset: Point } {
   if (!site.real && plot) return { plot, offset: site.offset };
   const base = plot ?? ({ seed: 0, isFlat: true, widthIn: 1, depthIn: 1, slope: { percent: 0, downhillDeg: 0 }, facingDeg: 0, drainage: { rating: "good", reason: "" }, soilNote: "", waterFeatures: [] } as unknown as Plot);
-  return { plot: { ...base, outline: site.outline, roadSide: site.streetSide }, offset: { x: 0, y: 0 } };
+  // The real lot has its own corners, so the designed land's roads, lanes, rocks and water don't carry over.
+  return { plot: { ...base, outline: site.outline, roadSide: site.streetSide, roads: [], lanes: [], features: [], ground: [], waterFeatures: [] }, offset: { x: 0, y: 0 } };
 }
 
 /** The side the front of the house faces: the street. */
@@ -194,4 +207,58 @@ export function frontSide(project: Project): Compass {
   const lot = project.plans.lot;
   if (realLotOk(lot)) return lot.streetSide;
   return project.plot?.roadSide ?? "S";
+}
+
+export type CopiedLot = Pick<RealLot, "shape" | "frontFt" | "rearFt" | "leftFt" | "rightFt" | "streetSide" | "sideStreet">;
+
+/**
+ * "Copy from my custom land": the side lengths and street of a designed lot,
+ * for the My real lot form. It works when the lot has four sides with the
+ * main road along one and the rear parallel to it; otherwise it says why.
+ */
+export function lotFromCustomLand(plot: Plot | null): { lot: CopiedLot } | { problem: string } {
+  if (!plot || plot.source !== "custom") return { problem: "Design your own land on the Land step first." };
+  const o = plot.outline;
+  if (o.length !== 4) return { problem: `Your land has ${o.length} sides. My real lot needs four sides with the front and rear parallel, so enter it from the plat instead.` };
+  const main = plotRoadEdges(plot).find((r) => r.road.kind === "main");
+  if (!main) return { problem: "Your land has no main road. Put one on an edge in the land designer first." };
+  const i = main.road.edge;
+  const front = [o[i], o[(i + 1) % 4]];
+  const rear = [o[(i + 2) % 4], o[(i + 3) % 4]];
+  const uf = unit(sub(front[1], front[0]));
+  const ur = unit(sub(rear[1], rear[0]));
+  if (Math.abs(uf.x * ur.y - uf.y * ur.x) > Math.sin((1 * Math.PI) / 180)) {
+    return { problem: "The rear of your land isn't parallel to the street, so it can't be entered as front, rear, left and right sides. Enter it from the plat instead." };
+  }
+  // Standing on the street looking at the lot, x runs to the right.
+  const into = scale(bearingVector(main.facingDeg), -1);
+  const right = { x: -into.y, y: into.x };
+  const [fl, fr] = dot(front[0], right) <= dot(front[1], right) ? [front[0], front[1]] : [front[1], front[0]];
+  // Each rear corner is next to the front corner on its side.
+  const next = (p: Point) => {
+    const k = o.indexOf(p);
+    return rear.find((q) => q === o[(k + 1) % 4] || q === o[(k + 3) % 4])!;
+  };
+  const rl = next(fl);
+  const rr = next(fr);
+  const ft = (a: Point, b: Point) => Math.round((dist(a, b) / FT) * 100) / 100;
+  const lot: CopiedLot = {
+    shape: "four-sides",
+    frontFt: ft(fl, fr),
+    rearFt: ft(rl, rr),
+    leftFt: ft(fl, rl),
+    rightFt: ft(fr, rr),
+    streetSide: main.side,
+    sideStreet: "none",
+  };
+  if (Math.abs(lot.frontFt - lot.rearFt) < 0.05 && Math.abs(lot.leftFt - lot.rightFt) < 0.05) lot.shape = "rectangle";
+  for (const r of plotRoadEdges(plot)) {
+    if (r.road.kind !== "side") continue;
+    const [a, b] = [o[r.road.edge], o[(r.road.edge + 1) % 4]];
+    const has = (p: Point, q: Point) => (a === p && b === q) || (a === q && b === p);
+    if (has(fl, rl)) lot.sideStreet = "left";
+    else if (has(fr, rr)) lot.sideStreet = "right";
+  }
+  if ("problem" in lotCorners(lot as RealLot)) return { problem: "Those side lengths don't make a lot with the front and rear parallel. Enter it from the plat instead." };
+  return { lot };
 }

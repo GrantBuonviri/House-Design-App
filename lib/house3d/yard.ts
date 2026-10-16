@@ -5,6 +5,7 @@ import type { Plans } from "@/lib/plan/edit";
 import { lookOutside, type HouseContext, type Part } from "./build";
 import { YARD_COLORS, type Finish } from "./exterior";
 import type { LevelHeights } from "./levels";
+import type { Site } from "./site";
 import { MeshBuilder, toScene, type Frame, type RGB, type Vec3 } from "./mesh";
 
 /**
@@ -134,4 +135,39 @@ export function buildYard(plans: Plans, ctx: HouseContext & { heights: LevelHeig
   }
   parts.push(...flatPart("yard:lights", main, "lights", lights));
   return parts;
+}
+
+const ROCK: RGB = [0.42, 0.4, 0.38];
+const TRUNK: RGB = YARD_COLORS.trunk;
+const CANOPY: RGB = [0.24, 0.42, 0.2];
+
+/**
+ * The land's own big rocks and trees (from the plot, not the yard plan), at
+ * their real size on the ground. They cast shadows in the sun study and block
+ * the sun in the preview window, like the house does.
+ */
+export function buildLandFeatures(site: Site, f: Frame): Part[] {
+  const plot = site.plot;
+  if (!plot?.features.length) return [];
+  const toPlan = (p: Point): Point => ({ x: p.x - site.offset.x, y: p.y - site.offset.y });
+  const rocks = new MeshBuilder();
+  const trees = new MeshBuilder();
+  plot.features.forEach((ft, i) => {
+    const c = toPlan(ft.at);
+    const r = (ft.sizeFt * 12) / 2;
+    const g = site.groundAt(c);
+    if (ft.kind === "rock") {
+      // Half buried: wide and low.
+      blob(rocks, f, c, g - r * 0.25, r * 1.05, r, vary(ROCK, i), 8, 0.35);
+    } else {
+      // A tree's height follows its canopy: about one and a half times as tall as it is wide.
+      const h = Math.max(10 * 12, r * 3);
+      trees.block(f, c, 0, Math.max(8, r * 0.12), Math.max(8, r * 0.12), g - 2, g + h * 0.4, TRUNK);
+      blob(trees, f, c, g + h * 0.3, h * 0.7, r, vary(CANOPY, i), 9, 0.45);
+    }
+  });
+  return [
+    ...(rocks.empty ? [] : [{ key: "land:rocks", levelId: "", layer: "yard" as const, mesh: rocks.build() }]),
+    ...(trees.empty ? [] : [{ key: "land:trees", levelId: "", layer: "yard" as const, mesh: trees.build() }]),
+  ];
 }

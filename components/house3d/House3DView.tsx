@@ -11,8 +11,8 @@ import { levelHeights, type LevelHeights } from "@/lib/house3d/levels";
 import { IN_PER_UNIT, toScene, type Frame } from "@/lib/house3d/mesh";
 import { planBounds, siteFor, type Site } from "@/lib/house3d/site";
 import { EQUINOX, sunDirection } from "@/lib/house3d/sun";
-import { groundMesh, lineOnGround, waterIn3D } from "@/lib/house3d/terrain";
-import { buildYard } from "@/lib/house3d/yard";
+import { groundMesh, lineOnGround, roadLinesIn3D, waterIn3D } from "@/lib/house3d/terrain";
+import { buildLandFeatures, buildYard } from "@/lib/house3d/yard";
 import { landView } from "@/lib/land/view";
 import { roadLine } from "@/lib/land/mesh";
 import type { Plans } from "@/lib/plan/edit";
@@ -356,13 +356,16 @@ export function Ground({
     const view = landView(plot);
     return {
       outline: lineOnGround(site, frame, plot.outline, { closed: true, lift: 3 }),
-      road: lineOnGround(site, frame, roadLine(plot, { view } as Parameters<typeof roadLine>[1]), { lift: 3, step: 96 }),
+      roads: (plot.roads.length ? roadLinesIn3D(plot) : [roadLine(plot, { view } as Parameters<typeof roadLine>[1])]).map((pts) => lineOnGround(site, frame, pts, { lift: 3, step: 96 })),
       streams: plot.waterFeatures
-        .filter((w) => w.kind === "creek" || w.kind === "wash")
+        .filter((w) => w.kind === "creek" || w.kind === "wash" || w.kind === "river")
         .map((w) => ({ kind: w.kind, points: lineOnGround(site, frame, w.points, { lift: 3, step: 48 }) }))
         .filter((s) => s.points.length > 1),
+      lanes: plot.lanes.filter((l) => l.points.length > 1).map((l) => lineOnGround(site, frame, l.points, { lift: 3, step: 48 })),
     };
   }, [site, frame]);
+  const features = useMemo(() => mergeParts(buildLandFeatures(site, frame)), [site, frame]);
+  useEffect(() => () => features?.geometry.dispose(), [features]);
 
   // A click on the ground (not a drag to turn the view) lets go of what's selected.
   const down = useRef<{ x: number; y: number } | null>(null);
@@ -387,14 +390,16 @@ export function Ground({
           <meshStandardMaterial color="#5b93bd" roughness={0.2} transparent opacity={0.9} />
         </mesh>
       ))}
+      {features && <mesh geometry={features.geometry} material={solidMaterial} castShadow receiveShadow />}
+      {lines?.lanes.map((l, i) => <Line key={`lane${i}`} points={l} color="#b9a27c" lineWidth={7} />)}
       {lines?.streams.map((s, i) =>
-        s.kind === "creek" ? (
-          <Line key={i} points={s.points} color="#3f7fae" lineWidth={4} />
-        ) : (
+        s.kind === "wash" ? (
           <Line key={i} points={s.points} color="#a88a5c" lineWidth={3} dashed dashSize={3} gapSize={2} />
+        ) : (
+          <Line key={i} points={s.points} color="#3f7fae" lineWidth={s.kind === "river" ? 10 : 4} />
         ),
       )}
-      {lines && lines.road.length > 1 && <Line points={lines.road} color="#7d7f7c" lineWidth={8} />}
+      {lines?.roads.map((r, i) => r.length > 1 && <Line key={`road${i}`} points={r} color="#7d7f7c" lineWidth={8} />)}
       {lines && lines.outline.length > 1 && <Line points={lines.outline} color="#1f2421" lineWidth={1.6} dashed dashSize={4} gapSize={2.5} />}
     </>
   );
