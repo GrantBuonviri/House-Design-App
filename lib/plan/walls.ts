@@ -1,4 +1,4 @@
-import type { FloorPlan, OpenWall, Opening, OpeningHost, Point } from "@/lib/model/schema";
+import type { FloorPlan, OpenWall, Opening, OpeningHost, Point, WallHeight } from "@/lib/model/schema";
 import { INTERIOR_WALL_IN } from "./basics";
 import { areaKind } from "./measure";
 import { add, collinearOverlap, dist, dot, edgesOf, leftNormal, lerp, polygonCenter, project, scale, sub, subtractIntervals, unit } from "./geometry";
@@ -24,6 +24,8 @@ export type WallPiece = {
   open: boolean;
   /** An inside wall that was taken out (one of `plan.openWalls`): open, and the rooms on both sides count as one space. */
   removed?: boolean;
+  /** A wall drawn on its own that stops short of the ceiling (left out for full height). */
+  height?: Exclude<WallHeight, "full">;
   host: OpeningHost;
   /** Where the piece starts and ends along its host, inches from the host's start. */
   t0: number;
@@ -42,6 +44,20 @@ export type OpeningGeometry = {
   n: Point;
   hostLength: number;
 };
+
+/** How tall a half wall stands, and how thick the counter cap on top of one is, in inches. */
+export const HALF_WALL_IN = 42;
+export const WALL_CAP_IN = 1.5;
+/** How far a counter cap hangs past each face of its half wall. */
+export const WALL_CAP_OVERHANG_IN = 1.5;
+
+export const isHalfWall = (h: WallHeight | undefined): h is Exclude<WallHeight, "full"> => h === "half" || h === "half-cap";
+
+/** How high a wall stands above its floor: the ceiling, or a half wall's height (with its cap). */
+export function wallTopIn(piece: Pick<WallPiece, "height">, ceilingIn: number): number {
+  if (!piece.height) return ceilingIn;
+  return Math.min(ceilingIn, HALF_WALL_IN + (piece.height === "half-cap" ? WALL_CAP_IN : 0));
+}
 
 /** Collinear edges closer than this many inches count as one wall. */
 const SAME_LINE_IN = 1;
@@ -146,7 +162,7 @@ export function wallPieces(plan: FloorPlan, exteriorIn: number): WallPiece[] {
   }
   for (const w of plan.walls) {
     const L = dist(w.a, w.b);
-    if (L > 0.5) pieces.push({ a: w.a, b: w.b, thicknessIn: w.thicknessIn, exterior: false, open: false, host: { wallId: w.id }, t0: 0, t1: L });
+    if (L > 0.5) pieces.push({ a: w.a, b: w.b, thicknessIn: w.thicknessIn, exterior: false, open: false, ...(isHalfWall(w.height) ? { height: w.height } : {}), host: { wallId: w.id }, t0: 0, t1: L });
   }
   return pieces;
 }

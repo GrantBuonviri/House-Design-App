@@ -68,6 +68,7 @@ export default function PlanStage({ onContinue, onGoToSketch }: { onContinue: ()
   const [snap, setSnap] = useState(true);
   const [placeOpening, setPlaceOpening] = useState("door-hinged");
   const [placeFixture, setPlaceFixture] = useState("counter");
+  const [fillMode, setFillMode] = useState(false);
   const [lotMode, setLotMode] = useState(false);
   const [tape, setTape] = useState(false);
   const [editingBasics, setEditingBasics] = useState(false);
@@ -568,6 +569,7 @@ export default function PlanStage({ onContinue, onGoToSketch }: { onContinue: ()
               below={below}
               sketch={showSketch && sketch.bubbles.length ? sketch : null}
               tool={tool}
+              fillMode={fillMode}
               placeOpening={placeOpening}
               placeFixture={placeFixture}
               selection={sel}
@@ -600,6 +602,8 @@ export default function PlanStage({ onContinue, onGoToSketch }: { onContinue: ()
               basics={basics}
               selection={sel}
               tool={tool}
+              fillMode={fillMode}
+              onFillMode={setFillMode}
               placeOpening={placeOpening}
               placeFixture={placeFixture}
               onPlaceOpening={setPlaceOpening}

@@ -9,7 +9,7 @@ import { z } from "zod";
  * Angles are degrees clockwise from north (0 = N, 90 = E).
  */
 
-export const SCHEMA_VERSION = 16;
+export const SCHEMA_VERSION = 17;
 
 export const Point = z.object({ x: z.number(), y: z.number() });
 export type Point = z.infer<typeof Point>;
@@ -255,12 +255,18 @@ export const PlanRoom = z.object({
 });
 export type PlanRoom = z.infer<typeof PlanRoom>;
 
-/** A wall drawn on its own, not around a room. */
+/** How tall a wall drawn on its own stands: to the ceiling, a 42" half wall, or a half wall with a counter cap on top. */
+export const WallHeight = z.enum(["full", "half", "half-cap"]);
+export type WallHeight = z.infer<typeof WallHeight>;
+
+/** A wall drawn on its own, not around a room: a divider inside a room, or a half wall. */
 export const PlanWall = z.object({
   id: z.string(),
   a: Point,
   b: Point,
   thicknessIn: z.number().positive(),
+  /** Left out means full height. */
+  height: WallHeight.optional(),
 });
 export type PlanWall = z.infer<typeof PlanWall>;
 

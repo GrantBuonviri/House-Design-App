@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { WINDOW_OPERATIONS, type WindowOperation } from "@/lib/model/schema";
 import { defaultOperation, operationOf, OPERATION_HINT, OPERATION_LABEL } from "@/lib/codes/openings";
-import type { DesignBrief, FloorPlan, Level, PlanBasics, PlanStairs } from "@/lib/model/schema";
+import type { DesignBrief, FloorPlan, Level, PlanBasics, PlanStairs, WallHeight } from "@/lib/model/schema";
 import { formatFeetInches, parseFeetInches } from "@/lib/model/units";
 import { ceilingFor, riseBetween, STAIRS_LABEL } from "@/lib/plan/basics";
 import { FIXTURE_GROUPS, FIXTURE_TYPES, OPENING_TYPES, fixtureType, openingType } from "@/lib/plan/catalog";
@@ -29,6 +29,9 @@ type Props = {
   basics: PlanBasics | null;
   selection: PlanSelection;
   tool: PlanTool;
+  /** The Room tool fills a space closed in by walls, instead of drawing an outline. */
+  fillMode?: boolean;
+  onFillMode?: (on: boolean) => void;
   placeOpening: string;
   placeFixture: string;
   onPlaceOpening: (id: string) => void;
@@ -48,8 +51,8 @@ export default function PlanSidePanel(props: Props) {
   // Rooms just combined into this one: ask for a name for the bigger room.
   const [combined, setCombined] = useState<string | null>(null);
 
-  // A new room arrives as "New room", and a combined room wants a new name: put the cursor in its name.
-  const askName = !!room && (room.name === "New room" || combined === room.id);
+  // A new room arrives as "New room" (or "Room 2" when split off another), and a combined room wants a new name: put the cursor in its name.
+  const askName = !!room && (room.name === "New room" || /^Room \d+$/.test(room.name) || combined === room.id);
   useEffect(() => {
     if (!askName) return;
     const t = setTimeout(() => nameRef.current?.select(), 0);
@@ -72,6 +75,27 @@ export default function PlanSidePanel(props: Props) {
     onChange(removeMany(plan, ids));
     onSelect([]);
   };
+
+  // ---- The Room tool: draw an outline, or fill a space walls close in ----
+  if (tool === "room" && props.onFillMode) {
+    return (
+      <Panel title="Room">
+        <Choices
+          items={[
+            { id: "draw", label: "Draw a room" },
+            { id: "fill", label: "Fill a space" },
+          ]}
+          value={props.fillMode ? "fill" : "draw"}
+          onPick={(id) => props.onFillMode?.(id === "fill")}
+        />
+        <p className="field-hint mt-2">
+          {props.fillMode
+            ? "Draw the walls first with the Wall tool, then click inside the space they close in. It becomes a room shaped to those walls."
+            : "Drag a rectangle, or click corner by corner for any shape."}
+        </p>
+      </Panel>
+    );
+  }
 
   // ---- Catalogs for the placing tools ----
   if (tool === "door") {
@@ -247,6 +271,24 @@ export default function PlanSidePanel(props: Props) {
           <option value={6.5}>6 1/2&quot; (2x6, for plumbing)</option>
           <option value={3.5}>3 1/2&quot; (thin, half wall)</option>
         </select>
+        <label className="field-label mt-4" htmlFor="wall-height">
+          Height
+        </label>
+        <select
+          id="wall-height"
+          className="input"
+          value={w.height ?? "full"}
+          onChange={(e) => onChange({ ...plan, walls: plan.walls.map((x) => (x.id === w.id ? { ...x, height: e.target.value as WallHeight } : x)) })}
+        >
+          <option value="full">Full height</option>
+          <option value="half">Half wall (42&quot;)</option>
+          <option value="half-cap">Half wall with a counter cap</option>
+        </select>
+        <p className="field-hint">
+          {w.height && w.height !== "full"
+            ? "Stops at 42\" so the rooms stay open above it. Shows in 3D, the walkthrough, the cost and the PDF floor plan."
+            : "Runs up to the ceiling."}
+        </p>
         <button className="mt-4 text-sm text-red-700 hover:underline" onClick={() => remove([w.id])}>
           Delete this wall
         </button>

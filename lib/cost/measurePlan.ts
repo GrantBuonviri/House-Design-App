@@ -3,7 +3,7 @@ import { openingType } from "@/lib/plan/catalog";
 import { planOf } from "@/lib/plan/edit";
 import { boundsOf, dist, edgesOf, pointInPolygon, polygonArea } from "@/lib/plan/geometry";
 import { areaKind } from "@/lib/plan/measure";
-import { openSpans, openingGeometries, wallPieces, type WallPiece } from "@/lib/plan/walls";
+import { openSpans, openingGeometries, WALL_CAP_OVERHANG_IN, wallPieces, wallTopIn, type WallPiece } from "@/lib/plan/walls";
 import { hostPiece } from "@/lib/house3d/build";
 import { floorFootprint, joinRooms, offsetRing, regionArea, subtractRegions, type Region } from "@/lib/house3d/footprint";
 import { levelHeights } from "@/lib/house3d/levels";
@@ -123,9 +123,15 @@ export function measurePlan(p: Ctx): Quantities | null {
       const L = dist(w.a, w.b);
       if (w.open) continue;
       if (w.exterior) extLen += L;
+      // A half wall takes framing and drywall for its 42" only, plus a counter cap when it has one.
+      const share = w.height ? wallTopIn(w, ceilingIn) / ceilingIn : 1;
       if (w.exterior && groundLevels.includes(l)) q.baseWallLf += ft(L);
-      else q.intWallLf += ft(L);
-      if (!w.exterior) q.intWallSqft += sqft(L * ceilingIn);
+      else q.intWallLf += ft(L) * share;
+      if (!w.exterior) q.intWallSqft += sqft(L * ceilingIn * share);
+      if (w.height === "half-cap") {
+        const top = sqft(L * (w.thicknessIn + WALL_CAP_OVERHANG_IN * 2));
+        q.counterSqft += top;
+      }
     }
     let extOpenings = 0;
     for (const g of openingGeometries(plan)) {

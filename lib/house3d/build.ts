@@ -4,7 +4,7 @@ import { planOf, type Plans } from "@/lib/plan/edit";
 import { add, collinearOverlap, dist, lerp, pointInPolygon, polygonArea, polygonCenter, project, scale, sub, subtractIntervals, unit } from "@/lib/plan/geometry";
 import { areaKind } from "@/lib/plan/measure";
 import { stairsDrawing } from "@/lib/plan/stairs";
-import { openingGeometries, roomEdgeAt, wallPieces, type OpeningGeometry, type WallPiece } from "@/lib/plan/walls";
+import { HALF_WALL_IN, openingGeometries, roomEdgeAt, WALL_CAP_IN, WALL_CAP_OVERHANG_IN, wallPieces, type OpeningGeometry, type WallPiece } from "@/lib/plan/walls";
 import { wallKey } from "@/lib/interior/picks";
 import { COLORS, floorColor } from "./colors";
 import { drawFixture, drawFurniture } from "./fixtures";
@@ -147,7 +147,8 @@ export function buildLevel(
     const len = dist(p.a, p.b);
     const mid = lerp(p.a, p.b, 0.5);
     // Outside walls run up to the next floor where there's one above, so there's no gap at the floor structure.
-    const upTo = p.exterior && above && covers(abovePolys, mid) ? heights[above.id].floorIn : topIn;
+    // A half wall stops at 42" (its counter cap, if any, goes on top below).
+    const upTo = p.height ? floorIn + Math.min(HALF_WALL_IN, ceilingIn) : p.exterior && above && covers(abovePolys, mid) ? heights[above.id].floorIn : topIn;
     // Each side of a wall takes the paint of the room it faces, or that wall's own accent paint
     // (the left side of an outside wall is the siding).
     const side = (sign: 1 | -1) => {
@@ -185,8 +186,13 @@ export function buildLevel(
     for (const [t0, t1] of subtractIntervals(len, cuts.map((c) => [c.t0, c.t1]))) piece(t0, t1, floorIn, upTo, t0 < 0.01, t1 > len - 0.01);
     for (const c of cuts) {
       const { bottom, top } = openingSpan(c.og, ceilingIn);
-      if (bottom > 0.5) piece(c.t0, c.t1, floorIn, floorIn + bottom, false, false);
+      if (bottom > 0.5) piece(c.t0, c.t1, floorIn, Math.min(upTo, floorIn + bottom), false, false);
       if (floorIn + top < upTo - 0.5) piece(c.t0, c.t1, floorIn + top, upTo, false, false);
+    }
+    if (p.height === "half-cap") {
+      const [a, b] = ends(0, len, true, true);
+      const c = lookAt(mid)?.counter ?? COLORS.counter;
+      walls[group].box(f, a, b, p.thicknessIn + WALL_CAP_OVERHANG_IN * 2, upTo, upTo + WALL_CAP_IN, { left: c, right: c, ends: c, top: c });
     }
     // The footprint: everywhere the wall meets the floor, so only doorways (openings down to the floor) leave gaps.
     const doorways = cuts.filter((c) => openingSpan(c.og, ceilingIn).bottom <= 0.5).map((c): [number, number] => [c.t0, c.t1]);

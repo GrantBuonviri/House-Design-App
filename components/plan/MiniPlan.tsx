@@ -49,7 +49,7 @@ export default function MiniPlan({
         />
       ))}
       {walls.map((w, i) => (
-        <line key={i} x1={w.a.x} y1={w.a.y} x2={w.b.x} y2={w.b.y} stroke="#2a2a2a" strokeWidth={w.open ? 0.8 * k : Math.max(w.thicknessIn, 1.6 * k)} strokeDasharray={w.open ? `${3 * k} ${2 * k}` : undefined} />
+        <line key={i} x1={w.a.x} y1={w.a.y} x2={w.b.x} y2={w.b.y} stroke={w.piece.height ? "#9a9285" : "#2a2a2a"} strokeWidth={w.open ? 0.8 * k : Math.max(w.thicknessIn, 1.6 * k)} strokeDasharray={w.open ? `${3 * k} ${2 * k}` : undefined} />
       ))}
       {geos
         .filter((g) => g.opening.kind === "window")

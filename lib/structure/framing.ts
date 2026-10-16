@@ -113,7 +113,8 @@ function spansOf(regions: Region[], axis: Axis, bearings: Bearing[], skip: Set<n
 function wallBearings(plan: FloorPlan, exteriorIn: number, axis: Axis): Bearing[] {
   const cross = other(axis);
   return wallPieces(plan, exteriorIn)
-    .filter((p) => !p.open && runsAcross(p.a, p.b, axis))
+    // Half walls stop short of the ceiling, so nothing above rests on them.
+    .filter((p) => !p.open && !p.height && runsAcross(p.a, p.b, axis))
     .map((p) => {
       const w0 = Math.min(along(p.a, cross), along(p.b, cross));
       const w1 = Math.max(along(p.a, cross), along(p.b, cross));

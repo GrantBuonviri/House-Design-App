@@ -52,6 +52,10 @@ export function FurnitureOutlines({ furniture, s, names = true }: { furniture: F
 }
 
 /** Walls, each room edge as its own hit target so it can be picked and pushed. */
+/** Half walls, and the counter cap on top of one. */
+const HALF_WALL = "#9a9285";
+const CAP = "#d6cbb6";
+
 export function PlanWalls({ solids, selection, s }: { solids: SolidWall[]; selection: PlanSelection; s: number }) {
   return (
     <>
@@ -80,17 +84,26 @@ export function PlanWalls({ solids, selection, s }: { solids: SolidWall[]; selec
         const half = w.thicknessIn / 2;
         const a = w.capA ? add(w.a, scaleV(u, -half)) : w.a;
         const b = w.capB ? add(w.b, scaleV(u, half)) : w.b;
-        return (
+        // A half wall is drawn lighter, so it reads as lower; one with a counter cap shows the cap's overhang around it.
+        const low = w.piece.height;
+        const wall = (
           <Line
             key={i}
             id={id}
             name={"wallId" in host ? "wall" : "edge"}
             points={[a.x, a.y, b.x, b.y]}
-            stroke={on ? ACCENT : w.exterior ? INK : "#4a463f"}
+            stroke={on ? ACCENT : w.exterior ? INK : low ? HALF_WALL : "#4a463f"}
             strokeWidth={w.thicknessIn}
             hitStrokeWidth={Math.max(w.thicknessIn, 12 / s)}
             lineCap="butt"
           />
+        );
+        if (low !== "half-cap") return wall;
+        return (
+          <Group key={i}>
+            <Line points={[a.x, a.y, b.x, b.y]} stroke={CAP} strokeWidth={w.thicknessIn + 3} lineCap="butt" listening={false} />
+            {wall}
+          </Group>
         );
       })}
     </>

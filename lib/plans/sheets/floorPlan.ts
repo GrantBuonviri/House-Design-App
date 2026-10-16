@@ -5,7 +5,7 @@ import { openingRooms, roleOf, sharedWall } from "@/lib/plan/connect";
 import { roomSqft } from "@/lib/plan/measure";
 import { ceilingFor, INTERIOR_WALL_IN } from "@/lib/plan/basics";
 import { stairsDrawing } from "@/lib/plan/stairs";
-import { openingGeometries, solidWalls, wallPieces, type OpeningGeometry, type WallPiece } from "@/lib/plan/walls";
+import { HALF_WALL_IN, openingGeometries, solidWalls, wallPieces, type OpeningGeometry, type WallPiece } from "@/lib/plan/walls";
 import { floorFootprint, offsetRing } from "@/lib/house3d/footprint";
 import { codeNum, codeRef } from "@/lib/codes/data";
 import { escapeCheck, operationOf, OPERATION_LABEL } from "@/lib/codes/openings";
@@ -39,6 +39,8 @@ export type PlanBase = FloorPlanSheet & { inPerFt: number; T: (p: Point) => Poin
 
 /** Grey walls for the systems plans, so the devices on top read first. */
 export const BASE_POCHE = "#b4b4b4";
+/** The light fill inside a half wall's outline. */
+const HALF_WALL_FILL = "#e4e4e4";
 
 export function floorPlanSheet(project: Project, level: Level, viewNumber = 1): FloorPlanSheet {
   return drawPlan(project, level, viewNumber, false);
@@ -85,7 +87,19 @@ function drawPlan(project: Project, level: Level, viewNumber: number, base: bool
     const half = w.thicknessIn / 2;
     const a = w.capA ? add(w.a, scale(u, -half)) : w.a;
     const e = w.capB ? add(w.b, scale(u, half)) : w.b;
-    ppoly([add(a, scale(n, half)), add(e, scale(n, half)), add(e, scale(n, -half)), add(a, scale(n, -half))], undefined, base ? BASE_POCHE : POCHE);
+    const outline = [add(a, scale(n, half)), add(e, scale(n, half)), add(e, scale(n, -half)), add(a, scale(n, -half))];
+    // A half wall is drawn in outline with a light fill, so it reads as lower than the full-height walls.
+    if (w.piece.height) ppoly(outline, "fine", HALF_WALL_FILL);
+    else ppoly(outline, undefined, base ? BASE_POCHE : POCHE);
+  }
+  // Each half wall gets a note along it: "42" HALF WALL", and the cap when it has one.
+  if (!base) {
+    for (const p of pieces) {
+      if (!p.height) continue;
+      const u = unit(sub(p.b, p.a));
+      const text = p.height === "half-cap" ? `${HALF_WALL_IN}" HALF WALL W/ CAP` : `${HALF_WALL_IN}" HALF WALL`;
+      items.push({ t: "text", at: T(add(scale(add(p.a, p.b), 0.5), scale(leftNormal(u), p.thicknessIn / 2 + 9))), text, size: 5.5, align: "center", valign: "middle", rotate: readable(u) });
+    }
   }
 
   // ---------- Doors and windows ----------

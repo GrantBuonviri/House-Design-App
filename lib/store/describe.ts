@@ -85,7 +85,7 @@ function moved(a: object, b: object): boolean {
 function describePlan(a: FloorPlan | undefined, b: FloorPlan | undefined): string | null {
   if (!a || !b) return b ? "start the floor plan" : "clear the floor plan";
   const roomName = (r: FloorPlan["rooms"][number]) => r.name || "a room";
-  const special = describeOpenWalls(a, b, roomName);
+  const special = describeOpenWalls(a, b, roomName) ?? describeSplit(a, b, roomName);
   if (special) return special;
   const rooms = describeList(a.rooms, b.rooms, roomName, (was, now) =>
     was.name !== now.name ? `rename ${roomName(was)}` : moved(was, now) ? `move ${roomName(now)}` : `change ${roomName(now)}`,
@@ -93,7 +93,9 @@ function describePlan(a: FloorPlan | undefined, b: FloorPlan | undefined): strin
   const lists = [
     // Moving a room carries its doors, windows and fixtures along, so the room comes first.
     rooms,
-    describeList(a.walls, b.walls, () => "a wall"),
+    describeList(a.walls, b.walls, () => "a wall", (was, now) =>
+      (was.height ?? "full") !== (now.height ?? "full") ? (now.height === "half" ? "make a wall a half wall" : now.height === "half-cap" ? "give a half wall a counter cap" : "make a wall full height") : moved(was, now) ? "move a wall" : "change a wall",
+    ),
     describeList(a.openings, b.openings, (o) => article(openingType(o.style).label), (was, now) =>
       was.host === now.host || json(was.host) === json(now.host) ? (was.offsetIn !== now.offsetIn && was.widthIn === now.widthIn ? `move ${article(openingType(now.style).label, true)}` : `change ${article(openingType(now.style).label, true)}`) : `move ${article(openingType(now.style).label, true)}`,
     ),
@@ -177,4 +179,13 @@ function article(label: string, the = false): string {
   const l = label.toLowerCase();
   if (the) return `the ${l}`;
   return /^[aeiou]/.test(l) ? `an ${l}` : `a ${l}`;
+}
+
+/** A wall drawn across a room split it: one room got smaller and a new one appeared. */
+function describeSplit(a: FloorPlan, b: FloorPlan, roomName: (r: FloorPlan["rooms"][number]) => string): string | null {
+  const was = new Map(a.rooms.map((r) => [r.id, r]));
+  const added = b.rooms.filter((r) => !was.has(r.id));
+  const shrunk = b.rooms.filter((r) => was.has(r.id) && json(was.get(r.id)!.polygon) !== json(r.polygon));
+  if (added.length !== 1 || shrunk.length !== 1 || b.rooms.length !== a.rooms.length + 1) return null;
+  return `split ${roomName(was.get(shrunk[0].id)!)}`;
 }

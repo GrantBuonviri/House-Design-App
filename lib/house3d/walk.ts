@@ -5,7 +5,7 @@ import { planOf, type Plans } from "@/lib/plan/edit";
 import { add, boundsOf, dist, polygonArea, polygonCenter, pointInPolygon, project, rectangle, scale, sub } from "@/lib/plan/geometry";
 import { areaKind } from "@/lib/plan/measure";
 import { stairsDrawing, stairsFrame } from "@/lib/plan/stairs";
-import { openingGeometries, solidWalls, wallPieces } from "@/lib/plan/walls";
+import { openingGeometries, solidWalls, wallPieces, wallTopIn } from "@/lib/plan/walls";
 import type { HouseContext } from "./build";
 import { cutHoles, type Region } from "./footprint";
 import type { LevelHeights } from "./levels";
@@ -93,7 +93,8 @@ export function walkWorld(plans: Plans, ctx: HouseContext & { heights: LevelHeig
     const ogs = openingGeometries(plan).filter((g) => walkable(g.opening.style, g.opening.kind));
     for (const w of solidWalls(wallPieces(plan, exteriorIn), ogs)) {
       if (w.open || w.thicknessIn <= 0) continue;
-      blockers.push({ a: w.a, b: w.b, half: w.thicknessIn / 2, z0: floorIn, z1: top });
+      // A half wall still stops you walking through it, but only stands 42" tall.
+      blockers.push({ a: w.a, b: w.b, half: w.thicknessIn / 2, z0: floorIn, z1: w.piece.height ? floorIn + wallTopIn(w.piece, ceilingIn) : top });
     }
     // Counters, tubs, the fridge and so on.
     for (const fx of plan.fixtures) {
