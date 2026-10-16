@@ -9,7 +9,7 @@ import { z } from "zod";
  * Angles are degrees clockwise from north (0 = N, 90 = E).
  */
 
-export const SCHEMA_VERSION = 25;
+export const SCHEMA_VERSION = 26;
 
 export const Point = z.object({ x: z.number(), y: z.number() });
 export type Point = z.infer<typeof Point>;
@@ -410,6 +410,15 @@ export const Opening = z.object({
 });
 export type Opening = z.infer<typeof Opening>;
 
+export const RailingEdit = z.object({
+  /** The edge's name, like "f1-left", "middle" or "well-2". */
+  edge: z.string(),
+  removed: z.boolean().optional(),
+  kind: z.enum(["guard", "handrail", "half-wall", "wall"]).optional(),
+  style: z.enum(["wood", "metal", "glass"]).optional(),
+});
+export type RailingEdit = z.infer<typeof RailingEdit>;
+
 export const PlanStairs = z.object({
   id: z.string(),
   /** The middle of the stairs' footprint. */
@@ -423,6 +432,12 @@ export const PlanStairs = z.object({
   flip: z.boolean().default(false),
   /** The floor the stairs climb to. They show, faintly, on that floor too. */
   toLevelId: z.string().optional(),
+  /**
+   * Changes to the automatic railings (see lib/plan/railings.ts), one per
+   * named edge of the stairs or of the stairwell above: taken off, or a
+   * different kind or look. Left out means all automatic.
+   */
+  railings: z.array(RailingEdit).optional(),
 });
 export type PlanStairs = z.infer<typeof PlanStairs>;
 

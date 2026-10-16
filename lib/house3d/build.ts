@@ -20,6 +20,9 @@ import { drawRoof, roofShape, roofTop, ROOF_THICK_IN } from "./roof";
 import type { Site } from "./site";
 import { entrySteps } from "./entry";
 import { drawStairs, prism } from "./stairs";
+import { drawRailing, riseFromHeights, type RailingMeshes } from "./railings";
+import { railingsOn } from "@/lib/plan/railings";
+import type { Quality } from "@/lib/graphics";
 import { buildYard } from "./yard";
 import { BASE_KINDS, cabinetLayout } from "@/lib/plan/cabinets";
 import { codeNum } from "@/lib/codes/data";
@@ -63,7 +66,12 @@ export type Part = {
   door?: { id: string; motion: DoorMotion };
   /** Furniture is picked in the walkthrough only, so it carries its id here rather than a `pick`. */
   furnitureId?: string;
+  /** Drawn only with this graphics setting (railing balusters with Pretty, a see-through panel in their place with Fast). Left out: always. */
+  quality?: Quality;
 };
+
+/** The parts drawn with a graphics setting. */
+export const forQuality = (parts: Part[], quality: Quality) => parts.filter((p) => !p.quality || p.quality === quality);
 
 export type HouseContext = {
   levels: Level[];
@@ -353,6 +361,24 @@ export function buildLevel(
     const mb = new MeshBuilder();
     drawStairs(mb, f, s, rise, floorIn, isClosedIn(s, rise, stairHoles));
     parts.push({ key: `${L}:s:${s.id}`, levelId: L, layer: "stairs", pick: { kind: "stairs", id: s.id, levelId: L }, mesh: mb.build() });
+  }
+
+  // ---- Railings: this floor's stairs, and guards around stairwells coming up into it ----
+  const rails = new Map<string, { pick: Pick; m: RailingMeshes }>();
+  for (const r of railingsOn(plans, L, riseFromHeights(heights))) {
+    let g = rails.get(r.stairsId);
+    if (!g) {
+      g = { pick: { kind: "stairs", id: r.stairsId, levelId: r.stairsLevelId }, m: { solid: new MeshBuilder(), glass: new MeshBuilder(), balusters: new MeshBuilder(), panel: new MeshBuilder() } };
+      rails.set(r.stairsId, g);
+    }
+    drawRailing(g.m, f, r, floorIn, ceilingIn);
+  }
+  for (const [id, { pick, m }] of rails) {
+    const base = { levelId: L, layer: "stairs" as const, pick };
+    if (!m.solid.empty) parts.push({ ...base, key: `${L}:rail:${id}`, mesh: m.solid.build() });
+    if (!m.glass.empty) parts.push({ ...base, key: `${L}:railg:${id}`, mesh: m.glass.build(), glass: true });
+    if (!m.balusters.empty) parts.push({ ...base, key: `${L}:railb:${id}`, mesh: m.balusters.build(), quality: "pretty" });
+    if (!m.panel.empty) parts.push({ ...base, key: `${L}:railp:${id}`, mesh: m.panel.build(), glass: true, quality: "fast" });
   }
 
   // ---- Steps down to the ground from outside doors and porches ----

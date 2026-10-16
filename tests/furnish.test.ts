@@ -278,7 +278,7 @@ describe("furnish in 3D and saved data", () => {
     delete v24.plan.showFurnishings;
     const m = migrateProject(v24);
     expect(m.schemaVersion).toBe(SCHEMA_VERSION);
-    expect(SCHEMA_VERSION).toBe(25);
+    expect(SCHEMA_VERSION).toBeGreaterThanOrEqual(25);
     expect(m.floorPlans["floor-1"].addOns).toBeUndefined();
     expect(m.plan.showFurnishings).toBeUndefined();
     const withFurnishStage = migrateProject({ ...JSON.parse(JSON.stringify(m)), stage: "furnish" });

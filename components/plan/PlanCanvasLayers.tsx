@@ -14,6 +14,7 @@ import { drawThickness, type SolidWall } from "@/lib/plan/walls";
 import type { Overhang } from "@/lib/plan/support";
 import type { Region } from "@/lib/house3d/footprint";
 import type { Guides } from "@/lib/plan/snap";
+import type { Railing } from "@/lib/plan/railings";
 import BubbleShape from "@/components/bubbles/BubbleShape";
 import { ACCENT, INK } from "./PlanShapes";
 import { edgeId, isPicked, type PlanSelection, type PlanTool } from "./types";
@@ -357,5 +358,32 @@ export function ZoomButtons({ percent, onZoom, onFit, onFitLot }: { percent: num
         </button>
       )}
     </div>
+  );
+}
+
+/**
+ * Stair railings, faded and not clickable (they're changed in Furnish): a
+ * thin double line for a guard, a single line for a handrail, a thicker one
+ * for a half wall or wall.
+ */
+export function RailingLines({ railings, s }: { railings: Railing[]; s: number }) {
+  return (
+    <Group listening={false} opacity={0.7} name="railings">
+      {railings.map((r) => {
+        const pts = (off: number) => {
+          const n = scaleV(leftNormal(unit(sub(r.b, r.a))), off);
+          return [r.a.x + n.x, r.a.y + n.y, r.b.x + n.x, r.b.y + n.y];
+        };
+        if (r.kind === "guard")
+          return (
+            <Group key={r.key}>
+              <Line points={pts(1.5)} stroke={INK} strokeWidth={0.8 / s} />
+              <Line points={pts(-1.5)} stroke={INK} strokeWidth={0.8 / s} />
+            </Group>
+          );
+        if (r.kind === "handrail") return <Line key={r.key} points={pts(0)} stroke={INK} strokeWidth={1 / s} dash={[6 / s, 3 / s]} />;
+        return <Line key={r.key} points={pts(0)} stroke={INK} strokeWidth={Math.max(2 / s, 4.5)} opacity={0.6} />;
+      })}
+    </Group>
   );
 }

@@ -15,7 +15,8 @@ import { bendInfo, bendWall, bowFromPoint, planRadii, snapBow, type BendSnap, ty
 import { DRAW_STEP_DEG, flatPlan, roomOutline, savedHost } from "@/lib/plan/flatten";
 import { leftBulge, pointOnEdge, projectOnEdge, roomEdgeLength } from "@/lib/plan/arcs";
 import { makeRoundRoom } from "@/lib/plan/shapes";
-import { addRoom, insertCorner, insertGluedCorner, makeRoom, moveEdge, moveMany, moveOpeningTo, newPlanId, removeCorner, setCornerGlued } from "@/lib/plan/edit";
+import { addRoom, emptyPlan, insertCorner, insertGluedCorner, makeRoom, moveEdge, moveMany, moveOpeningTo, newPlanId, removeCorner, setCornerGlued, type Plans } from "@/lib/plan/edit";
+import { railingsOn } from "@/lib/plan/railings";
 import { add, boundsOf, dist, polygonArea, polygonsOverlap, project, rectangle, round1, roundPoint, scale as scaleV, sub, unit } from "@/lib/plan/geometry";
 import { curvedOpeningGuides, distanceGuides, formatLength, labelOn, openingGuides, wallSegments, type Guide } from "@/lib/plan/labels";
 import { snapFrom, snapMove, snapNode, snapPush, snapTargets, type Guides } from "@/lib/plan/snap";
@@ -31,7 +32,7 @@ import type { LandView, Side } from "@/components/bubbles/types";
 import { Grid, ScaleBar, SideLabels, useSpacePan, type View } from "@/components/canvas/CanvasBits";
 import { ACCENT, OpeningSymbol, StairsSymbol } from "./PlanShapes";
 import { dedupe, flat, ghostOpeningAt, roomFill, type Box } from "./canvasHelpers";
-import { BendHandles, BendTip, DraftPreview, GuidesAndBox, MidNodes, NodeReadout, OverhangLayer, PlanWalls, ReferenceLayer, ZoomButtons } from "./PlanCanvasLayers";
+import { BendHandles, BendTip, DraftPreview, GuidesAndBox, MidNodes, NodeReadout, OverhangLayer, PlanWalls, RailingLines, ReferenceLayer, ZoomButtons } from "./PlanCanvasLayers";
 import { DistanceGuides, OutsideDims, RoomLabels, TapeLine, ThingLabels } from "./PlanMeasureLayers";
 import { edgeId, isPicked, parseEdgeId, type PlanItem, type PlanSelection, type PlanTool } from "./types";
 
@@ -290,6 +291,18 @@ export default function PlanCanvas(props: Props) {
     return to ? riseBetween(basics, from, to) : 108 + 13;
   };
   const stairsComingUp = below ? below.plan.stairs.filter((st) => st.toLevelId === level.id) : [];
+  // Railings on this floor's stairs and around stairwells coming up into it (worked out, faded; changed in Furnish).
+  const railings = useMemo(() => {
+    if (!shown.stairs.length && !stairsComingUp.length) return [];
+    const byId = new Map(levels.map((l) => [l.id, l]));
+    const plansHere: Plans = { [level.id]: fp, ...(below && stairsComingUp.length ? { [below.level.id]: { ...emptyPlan(), stairs: stairsComingUp } } : {}) };
+    return railingsOn(plansHere, level.id, (st, from) => {
+      const lv = byId.get(from);
+      return lv ? riseFor(st, lv) : null;
+    });
+    // riseFor only reads levels and basics.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [fp, shown.stairs.length, below, level.id, levels, basics]);
 
   const single = selection.length === 1 ? selection[0] : null;
   const selRoom = single?.kind === "room" && tool === "select" ? shown.rooms.find((r) => r.id === single.id) : undefined;
@@ -1024,6 +1037,8 @@ export default function PlanCanvas(props: Props) {
               const under = stairsComingUp.some((b) => polygonsOverlap(stairsDrawing(b, riseFor(b, below!.level)).footprint, d.footprint));
               return <StairsSymbol key={st.id} id={st.id} d={d} cut={stairsCut(st, riseFor(st, level))} hideAbove={under} selected={isPicked(selection, st.id)} scale={s} />;
             })}
+
+            <RailingLines railings={railings} s={s} />
 
             {(furnishing || showFurnishings) && <FurnishItems items={shownItems} selectedId={single?.kind === "furnish" ? single.id : undefined} badId={badId ?? undefined} s={s} faded={!furnishing} names={labelOn(labels, "fixtureNames")} />}
 

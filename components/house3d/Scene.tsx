@@ -3,7 +3,8 @@
 import { useEffect, useMemo } from "react";
 import { useThree } from "@react-three/fiber";
 import * as THREE from "three";
-import type { Part } from "@/lib/house3d/build";
+import { forQuality, type Part } from "@/lib/house3d/build";
+import { useGraphics } from "@/lib/graphics";
 import { sunDirection } from "@/lib/house3d/sun";
 import { glassMaterial, solidMaterial } from "./House3DView";
 import { mergeParts } from "./geometry";
@@ -22,8 +23,10 @@ export type AimTarget = { mesh: THREE.Mesh; owners: Part[] };
  */
 export function HouseMeshes({ parts, aimRef, doorsApart }: { parts: Part[]; aimRef?: React.MutableRefObject<AimTarget | null>; doorsApart?: boolean }) {
   // With `doorsApart`, door leaves are left out: the caller draws them on their own (see DoorLeaves).
-  const solid = useMemo(() => mergeParts(parts.filter((p) => !p.glass && p.layer !== "footprints" && !(doorsApart && p.door))), [parts, doorsApart]);
-  const glass = useMemo(() => mergeParts(parts.filter((p) => p.glass && !(doorsApart && p.door))), [parts, doorsApart]);
+  const quality = useGraphics((g) => g.quality);
+  const shown = useMemo(() => forQuality(parts, quality), [parts, quality]);
+  const solid = useMemo(() => mergeParts(shown.filter((p) => !p.glass && p.layer !== "footprints" && !(doorsApart && p.door))), [shown, doorsApart]);
+  const glass = useMemo(() => mergeParts(shown.filter((p) => p.glass && !(doorsApart && p.door))), [shown, doorsApart]);
   useEffect(() => () => solid?.geometry.dispose(), [solid]);
   useEffect(() => () => glass?.geometry.dispose(), [glass]);
   return (

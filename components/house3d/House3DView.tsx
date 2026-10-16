@@ -5,7 +5,7 @@ import { Canvas, useFrame, useThree, type ThreeEvent } from "@react-three/fiber"
 import { Line, OrbitControls, PerspectiveCamera } from "@react-three/drei";
 import * as THREE from "three";
 import type { FloorPlan, House3D, Level, PlanBasics, Plot, Point, Selection, TopLabels } from "@/lib/model/schema";
-import { buildLevel, buildRoofs, dugOut, houseBounds, type HouseContext, type Part, type Pick } from "@/lib/house3d/build";
+import { buildLevel, buildRoofs, dugOut, forQuality, houseBounds, type HouseContext, type Part, type Pick } from "@/lib/house3d/build";
 import { isLookingDown, orbitOf, orbitPosition, topViewOrbit, tweenOrbit, type Orbit } from "@/lib/house3d/camera";
 import { levelHeights, type LevelHeights } from "@/lib/house3d/levels";
 import { IN_PER_UNIT, type Frame } from "@/lib/house3d/mesh";
@@ -459,8 +459,10 @@ function LevelMeshes(props: LevelProps) {
   const { parts, visible, editing } = props;
   const mode = props.doors ?? "normal";
   // Door leaves are drawn on their own (shut or open), or not at all with No doors.
-  const solid = useMemo(() => mergeParts(parts.filter((p) => !p.glass && p.layer !== "ceilings" && !p.door)), [parts]);
-  const glass = useMemo(() => mergeParts(parts.filter((p) => p.glass && !p.door)), [parts]);
+  const quality = useGraphics((g) => g.quality);
+  const shown = useMemo(() => forQuality(parts, quality), [parts, quality]);
+  const solid = useMemo(() => mergeParts(shown.filter((p) => !p.glass && p.layer !== "ceilings" && !p.door)), [shown]);
+  const glass = useMemo(() => mergeParts(shown.filter((p) => p.glass && !p.door)), [shown]);
   const leaves = useMemo(() => (mode === "none" ? [] : parts.filter((p) => p.door)), [parts, mode]);
   useEffect(() => () => solid?.geometry.dispose(), [solid]);
   useEffect(() => () => glass?.geometry.dispose(), [glass]);
