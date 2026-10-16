@@ -1,5 +1,6 @@
 "use client";
 
+import ArrangeButtons from "./ArrangeButtons";
 import { useEffect, useRef, useState } from "react";
 import { WINDOW_OPERATIONS, type WindowOperation } from "@/lib/model/schema";
 import { defaultOperation, operationOf, OPERATION_HINT, OPERATION_LABEL } from "@/lib/codes/openings";
@@ -132,6 +133,7 @@ export default function PlanSidePanel(props: Props) {
         <p className="text-xs text-muted">Drag any of them to move them together. Shift-click to add or remove one.</p>
         {selection.every((s) => s.kind === "room") && <CombineButton plan={plan} ids={selection.map((s) => s.id)} label="Combine into one room" onCombine={combine} />}
         {turnable.length > 0 && <TurnButtons onTurn={(deg) => onChange(rotateMany(plan, turnable, deg, centerOfMany(plan, turnable)))} />}
+        <ArrangeButtons plan={plan} ids={turnable} onChange={onChange} onSelect={onSelect} />
         <button className="btn mt-4 w-full text-red-700" onClick={() => remove(selection.filter((s) => s.kind !== "edge").map((s) => s.id))}>
           Delete {selection.filter((s) => s.kind !== "edge").length} things
         </button>
@@ -205,6 +207,7 @@ export default function PlanSidePanel(props: Props) {
         </p>
 
         <TurnButtons onTurn={(deg) => onChange(rotateMany(plan, [room.id], deg, polygonCenter(room.polygon)))} />
+        <ArrangeButtons plan={plan} ids={[room.id]} onChange={onChange} onSelect={onSelect} />
 
         <button className="mt-4 text-sm text-red-700 hover:underline" onClick={() => remove([room.id])}>
           Delete this room

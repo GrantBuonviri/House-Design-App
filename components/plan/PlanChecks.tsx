@@ -8,7 +8,7 @@ import type { PlanWarning } from "@/lib/plan/checks";
  * "Things to check": the plan's friendly warnings, all floors at once.
  * Clicking one goes to its floor, selects the room and centers it.
  */
-export default function PlanChecks({ warnings, levels, levelId, onPick }: { warnings: PlanWarning[]; levels: Level[]; levelId: string; onPick: (w: PlanWarning) => void }) {
+export default function PlanChecks({ warnings, levels, levelId, onPick, onFix }: { warnings: PlanWarning[]; levels: Level[]; levelId: string; onPick: (w: PlanWarning) => void; onFix?: (w: PlanWarning) => void }) {
   const [open, setOpen] = useState(true);
   const multi = new Set(warnings.map((w) => w.levelId)).size > 1 || warnings.some((w) => w.levelId !== levelId);
   const name = (id: string) => levels.find((l) => l.id === id)?.name ?? "";
@@ -37,6 +37,11 @@ export default function PlanChecks({ warnings, levels, levelId, onPick }: { warn
                     {multi && <span className="font-medium text-muted">{name(w.levelId)}: </span>}
                     {w.text}
                   </button>
+                  {w.gap && onFix && (
+                    <button className="btn mx-2 mb-1 px-2 py-0.5 text-xs" onClick={() => onFix(w)}>
+                      Close gap
+                    </button>
+                  )}
                 </li>
               ))}
             </ul>

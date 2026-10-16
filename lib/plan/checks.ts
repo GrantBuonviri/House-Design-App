@@ -7,6 +7,7 @@ import { planOf, type Plans } from "./edit";
 import { dist, edgesOf, isRectangle, polygonCenter, polygonsOverlap, scale, add } from "./geometry";
 import { areaKind, roomSqft } from "./measure";
 import { MIN_STAIRS_WIDTH_IN } from "./stairs";
+import { findGaps, type Gap } from "./overlaps";
 import { isWayIn, stairsBoxes, wayInRooms } from "./suggest";
 
 /**
@@ -24,6 +25,8 @@ export type PlanWarning = {
   roomIds: string[];
   /** Where to look on the drawing, if anywhere in particular. */
   at: Point | null;
+  /** Two rooms a few inches apart: the "Close gap" button pushes them together. */
+  gap?: Gap;
 };
 
 const BEDROOMS = new Set(["bedroom", "primary-bedroom", "guest-suite"]);
@@ -58,6 +61,14 @@ export function planWarnings(plans: Plans, ctx: Ctx): PlanWarning[] {
         const b = plan.rooms[j];
         if (polygonsOverlap(a.polygon, b.polygon)) add_(level.id, `overlap:${a.id}:${b.id}`, `${a.name} and ${b.name} overlap.`, [a, b], scale(add(polygonCenter(a.polygon), polygonCenter(b.polygon)), 0.5));
       }
+    }
+
+    // Rooms left a few inches apart.
+    for (const g of findGaps(plan)) {
+      const a = byId.get(g.aId)!;
+      const b = byId.get(g.bId)!;
+      add_(level.id, `gap:${a.id}:${b.id}`, `${a.name} and ${b.name} are ${formatFeetInches(g.gapIn)} apart.`, [a, b], g.at);
+      out[out.length - 1].gap = g;
     }
 
     // No way in at all.

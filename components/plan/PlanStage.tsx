@@ -27,6 +27,11 @@ import type { LandView, Side } from "@/components/bubbles/types";
 import PlanBasicsForm from "./PlanBasicsForm";
 import PlanAlternativesView from "./PlanAlternativesView";
 import PlanChecks from "./PlanChecks";
+import PlanContextMenu, { contextItems, type ContextAt } from "./PlanContextMenu";
+import KeyboardHelp from "./KeyboardHelp";
+import { duplicateAndSelect } from "./ArrangeButtons";
+import { closeGap } from "@/lib/plan/overlaps";
+import { copyableIds } from "@/lib/plan/arrange";
 import PlanSidePanel from "./PlanSidePanel";
 import House3DPanel from "@/components/house3d/House3DPanel";
 import type { WallsShown } from "@/components/house3d/House3DView";
@@ -71,6 +76,8 @@ export default function PlanStage({ onContinue, onGoToSketch }: { onContinue: ()
   const [fillMode, setFillMode] = useState(false);
   const [lotMode, setLotMode] = useState(false);
   const [tape, setTape] = useState(false);
+  const [menu, setMenu] = useState<ContextAt | null>(null);
+  const [help, setHelp] = useState(false);
   const [editingBasics, setEditingBasics] = useState(false);
   const [choosing, setChoosing] = useState(() => !planHasContent(plans));
   const [notes, setNotes] = useState<string[]>([]);
@@ -213,9 +220,22 @@ export default function PlanStage({ onContinue, onGoToSketch }: { onContinue: ()
     if (choosing || editingBasics || comparing || !basics) return;
     function onKey(e: KeyboardEvent) {
       const t = e.target as HTMLElement;
-      if (e.metaKey || e.ctrlKey || e.altKey || t.closest("input, textarea, select, [contenteditable]")) return;
+      if (t.closest("input, textarea, select, [contenteditable]")) return;
       // In 3D, nothing can be deleted or moved outside edit mode.
       const locked = display === "3d" && !editing3d;
+      // Cmd+D (Ctrl+D) copies what's picked.
+      if ((e.metaKey || e.ctrlKey) && !e.altKey && !e.shiftKey && e.key.toLowerCase() === "d") {
+        e.preventDefault();
+        const ids = copyableIds(plan, sel.filter((s) => s.kind !== "edge" && s.kind !== "opening").map((s) => s.id));
+        if (!locked && ids.length) duplicateAndSelect(plan, ids, setLevelPlan, setSelection);
+        return;
+      }
+      if (e.metaKey || e.ctrlKey || e.altKey) return;
+      if (e.key === "?" && display === "plan") {
+        e.preventDefault();
+        setHelp((h) => !h);
+        return;
+      }
       const removable = locked ? [] : sel.filter((s) => s.kind !== "edge");
       if ((e.key === "Delete" || e.key === "Backspace") && removable.length) {
         e.preventDefault();
@@ -273,7 +293,7 @@ export default function PlanStage({ onContinue, onGoToSketch }: { onContinue: ()
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [choosing, editingBasics, comparing, basics, sel, plan, drafting, lotOn, setLevelPlan, display, editing3d, labels, tape]);
+  }, [choosing, editingBasics, comparing, basics, sel, plan, drafting, lotOn, setLevelPlan, display, editing3d, labels, tape, help]);
 
   /** The sketch as a plan, plus hallways, closets, windows and doors from the built-in rules. */
   function suggest() {
@@ -360,6 +380,14 @@ export default function PlanStage({ onContinue, onGoToSketch }: { onContinue: ()
     setTool("select");
     setLotMode(false);
     if (w.at) setFocus({ at: w.at, key: Date.now() });
+  }
+
+  /** Close gap on a warning: push the two rooms together. */
+  function fixWarning(w: PlanWarning) {
+    if (!w.gap) return;
+    const p = planOf(plans, w.levelId);
+    setPlans((ps) => ({ ...ps, [w.levelId]: closeGap(p, w.gap!) }));
+    setFlash("Closed the gap. Undo puts it back.");
   }
 
   const hasGarage = Boolean(brief?.rooms.some((r) => r.type === "garage") || brief?.garageBays);
@@ -524,7 +552,7 @@ export default function PlanStage({ onContinue, onGoToSketch }: { onContinue: ()
                 onPreviewWindow={(id) => setPreviewing({ levelId: level.id, openingId: id })}
               />
             )}
-            <PlanChecks warnings={warnings} levels={levels} levelId={level.id} onPick={pickWarning} />
+            <PlanChecks warnings={warnings} levels={levels} levelId={level.id} onPick={pickWarning} onFix={fixWarning} />
           </div>
         </div>
       ) : (
@@ -588,7 +616,9 @@ export default function PlanStage({ onContinue, onGoToSketch }: { onContinue: ()
               onDrafting={setDrafting}
               onMessage={setFlash}
               onPreview={previewing ? setDragged : undefined}
+              onContext={setMenu}
             />
+            {menu && <PlanContextMenu at={menu} items={contextItems(plan, menu, sel, { change: setLevelPlan, select: setSelection, message: setFlash })} onClose={() => setMenu(null)} />}
             {lotOn && <LotModeBanner onDone={() => setLotMode(false)} />}
             <p className="mt-2 text-xs text-muted">{hint} Pinch or hold Control and scroll to zoom; scroll to move around. Arrow keys nudge what&apos;s selected.</p>
           </div>
@@ -612,7 +642,13 @@ export default function PlanStage({ onContinue, onGoToSketch }: { onContinue: ()
               onSelect={setSelection}
               onPreviewWindow={(id) => setPreviewing({ levelId: level.id, openingId: id })}
             />
-            <PlanChecks warnings={warnings} levels={levels} levelId={level.id} onPick={pickWarning} />
+            {help && <KeyboardHelp onClose={() => setHelp(false)} />}
+            <PlanChecks warnings={warnings} levels={levels} levelId={level.id} onPick={pickWarning} onFix={fixWarning} />
+            {!help && (
+              <button className="text-xs text-muted hover:underline" onClick={() => setHelp(true)}>
+                Keyboard shortcuts (press ?)
+              </button>
+            )}
           </div>
         </div>
         </>

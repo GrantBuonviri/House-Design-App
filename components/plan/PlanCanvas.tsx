@@ -6,6 +6,7 @@ import Konva from "konva";
 import type { BubbleDiagram, Fixture, FloorPlan, Level, Opening, PlanBasics, PlanLabels, PlanStairs, Point } from "@/lib/model/schema";
 import { exteriorWallIn, riseBetween } from "@/lib/plan/basics";
 import { fixtureType, openingType } from "@/lib/plan/catalog";
+import { trimOverlap } from "@/lib/plan/overlaps";
 import { addRoom, insertCorner, insertGluedCorner, makeRoom, moveEdge, moveMany, moveOpeningTo, newPlanId, removeCorner, setCornerGlued } from "@/lib/plan/edit";
 import { add, angleOf, boundsOf, dist, leftNormal, polygonArea, project, rectangle, round1, roundPoint, scale as scaleV, sub, unit } from "@/lib/plan/geometry";
 import { distanceGuides, openingGuides, wallSegments, type Guide } from "@/lib/plan/labels";
@@ -78,6 +79,8 @@ type Props = {
   onToolDone: () => void;
   onDrafting: (drafting: boolean) => void;
   onMessage: (text: string) => void;
+  /** Right-click on the drawing: where, and what was under the pointer (a corner has `corner` set). */
+  onContext?: (c: { x: number; y: number; el: (PlanItem & { corner?: number }) | null; at: Point }) => void;
   /** The plan as it looks mid-drag (null once let go), for views that follow along. */
   onPreview?: (p: FloorPlan | null) => void;
 };
@@ -667,8 +670,30 @@ export default function PlanCanvas(props: Props) {
       // A click on a "+" without pulling still adds the corner, in the middle.
       if (pv) onChange(pv);
       else if (g.born && g.base) onChange(g.base);
-    } else if (pv && "moved" in g && g.moved) onChange(pv);
+    } else if (pv && "moved" in g && g.moved) {
+      // A room dropped onto another one trims the one that stayed put, so they share a wall.
+      const fit = g.type === "move" ? trimOverlap(pv, g.ids) : null;
+      if (fit && fit.trims.length) {
+        onChange(fit.plan);
+        const name = (id: string) => pv.rooms.find((r) => r.id === id)?.name ?? "a room";
+        const first = fit.trims[0];
+        onMessage(`Trimmed ${name(first.roomId)}${fit.trims.length > 1 ? ` and ${fit.trims.length - 1} more` : ""} to fit ${name(first.byId)}. Undo puts it back.`);
+      } else onChange(pv);
+    }
     setPreview(null);
+  }
+
+  /** Right-click: pick what's under the pointer, then ask the page for its menu. */
+  function onContextMenu(e: Konva.KonvaEventObject<MouseEvent>) {
+    e.evt.preventDefault();
+    if (tool !== "select" || tape || lotMode || spaceDown || !props.onContext) return;
+    const stage = e.target.getStage()!;
+    const el = elementOf(e.target === stage ? null : e.target);
+    if (el && el.mid === undefined) {
+      if (el.corner !== undefined) setSelCorner({ roomId: el.id, i: el.corner });
+      if (el.corner !== undefined || !isPicked(selection, el.id)) onSelect([el.corner !== undefined ? { kind: "room", id: el.id } : { kind: el.kind, id: el.id }]);
+    }
+    props.onContext({ x: e.evt.clientX, y: e.evt.clientY, el: el && el.mid === undefined ? el : null, at: world() });
   }
 
   function onDblClick(e: Konva.KonvaEventObject<MouseEvent>) {
@@ -808,6 +833,7 @@ export default function PlanCanvas(props: Props) {
           onMouseUp={onMouseUp}
           onMouseLeave={onMouseUp}
           onDblClick={onDblClick}
+          onContextMenu={onContextMenu}
           onWheel={onWheel}
         >
           <Layer listening={false}>
