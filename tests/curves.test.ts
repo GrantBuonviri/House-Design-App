@@ -70,7 +70,7 @@ function sharedCurve(): { plan: FloorPlan; a: PlanRoom; b: PlanRoom; ea: number;
 }
 
 function project(plans: Record<string, FloorPlan>) {
-  return { ...createProject("Curves"), plot: flat, levels: [levelFor(MAIN_LEVEL_ID)], floorPlans: plans, plan: { basics: defaultBasics(), showSketch: false, labels: DEFAULT_LABELS } };
+  return { ...createProject("Curves"), plot: flat, levels: [levelFor(MAIN_LEVEL_ID)], floorPlans: plans, plan: { basics: defaultBasics(), showSketch: false, labels: DEFAULT_LABELS, dismissed: [] } };
 }
 
 function ctx(plans: Record<string, FloorPlan>): HouseContext {

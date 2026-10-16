@@ -278,3 +278,20 @@ function landWarnings(plans: Plans, levels: Level[], plot: Plot, offset: Point):
   }
   return out;
 }
+
+/** Splits warnings into the ones still showing and the ones the user dismissed (matched by id). */
+export function splitDismissed(warnings: PlanWarning[], dismissed: string[]): { active: PlanWarning[]; dismissed: PlanWarning[] } {
+  const set = new Set(dismissed);
+  return { active: warnings.filter((w) => !set.has(w.id)), dismissed: warnings.filter((w) => set.has(w.id)) };
+}
+
+/** Adds an id to the dismissed list, dropping saved ids that no longer match any current warning. */
+export function dismissWarning(dismissed: string[], id: string, warnings: PlanWarning[]): string[] {
+  const live = new Set(warnings.map((w) => w.id));
+  return [...new Set([...dismissed, id])].filter((d) => live.has(d));
+}
+
+/** Brings one dismissed item back. */
+export function restoreWarning(dismissed: string[], id: string): string[] {
+  return dismissed.filter((d) => d !== id);
+}

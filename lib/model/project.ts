@@ -73,6 +73,8 @@ export function migrateProject(raw: unknown): Project {
   // same goes: no change beyond the version.
   // Version 22 to 23 added the 3D Top view's label settings (`house3d.topLabels`), all with
   // defaults, so again no change beyond the version.
+  // Version 23 to 24 added `plan.dismissed` (dismissed Things to check, empty by default), so
+  // once more no change beyond the version.
   return Project.parse({ ...migrated, schemaVersion: SCHEMA_VERSION });
 }
 

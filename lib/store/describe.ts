@@ -20,6 +20,14 @@ export function describeChange(before: Project, after: Project): string {
   if (!same("bubbles")) return describeLevels(before, after, "bubbles", describeSketch) ?? "change the flow sketch";
   if (!same("sketch")) return "change the flow sketch settings";
   if (!same("floorPlans")) return describeLevels(before, after, "floorPlans", describePlan) ?? "change the floor plan";
+  if (!same("plan")) {
+    const a = before.plan.dismissed;
+    const b = after.plan.dismissed;
+    if (json(a) !== json(b)) {
+      if (b.length === 0 && a.length > 1) return "bring back all things to check";
+      return b.some((id) => !a.includes(id)) ? "dismiss a thing to check" : "bring back a thing to check";
+    }
+  }
   if (!same("plan")) return before.plan.basics === null && after.plan.basics ? "answer the plan basics" : "change the plan settings";
   if (!same("house3d")) {
     if (json(before.house3d.topLabels) !== json(after.house3d.topLabels)) return describeTopLabels(before, after);

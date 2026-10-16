@@ -14,7 +14,7 @@ import { blankPlans, moveMany, planHasContent, planOf, removeMany } from "@/lib/
 import { removeWall } from "@/lib/plan/openWalls";
 import { plansFromSketch } from "@/lib/plan/fromSketch";
 import { suggestPlanAlternatives, type PlanAlternative } from "@/lib/plan/alternatives";
-import { makeStairsU, planWarnings, type PlanWarning } from "@/lib/plan/checks";
+import { dismissWarning, makeStairsU, planWarnings, restoreWarning, splitDismissed, type PlanWarning } from "@/lib/plan/checks";
 import { suggestPlans } from "@/lib/plan/suggest";
 import { boundsOf, dist } from "@/lib/plan/geometry";
 import { houseTotals, totalsText } from "@/lib/plan/measure";
@@ -403,6 +403,18 @@ export default function PlanStage({ onContinue, onGoToSketch }: { onContinue: ()
 
   const warnings = useMemo(() => (basics && !choosing ? planWarnings(plans, { levels, brief, basics, land: { plot, offset } }) : []), [plans, levels, brief, basics, choosing, plot, offset]);
 
+  const split = useMemo(() => splitDismissed(warnings, project.plan.dismissed), [warnings, project.plan.dismissed]);
+  const dismissProps = {
+    warnings: split.active,
+    dismissed: split.dismissed,
+    onDismiss: (w: PlanWarning) => {
+      update((p) => ({ ...p, plan: { ...p.plan, dismissed: dismissWarning(p.plan.dismissed, w.id, warnings) } }));
+      setFlash("Dismissed. Undo or Show dismissed brings it back.");
+    },
+    onRestore: (w: PlanWarning) => update((p) => ({ ...p, plan: { ...p.plan, dismissed: restoreWarning(p.plan.dismissed, w.id) } })),
+    onRestoreAll: () => update((p) => ({ ...p, plan: { ...p.plan, dismissed: [] } })),
+  };
+
   /** A warning was clicked: go to its floor, select its rooms and center them. */
   function pickWarning(w: PlanWarning) {
     setLevelId(w.levelId);
@@ -602,7 +614,7 @@ export default function PlanStage({ onContinue, onGoToSketch }: { onContinue: ()
                 onPreviewWindow={(id) => setPreviewing({ levelId: level.id, openingId: id })}
               />
             )}
-            <PlanChecks warnings={warnings} levels={levels} levelId={level.id} onPick={pickWarning} onFix={fixWarning} />
+            <PlanChecks {...dismissProps} levels={levels} levelId={level.id} onPick={pickWarning} onFix={fixWarning} />
           </div>
         </div>
       ) : (
@@ -714,7 +726,7 @@ export default function PlanStage({ onContinue, onGoToSketch }: { onContinue: ()
               onPreviewWindow={(id) => setPreviewing({ levelId: level.id, openingId: id })}
             />
             {help && <KeyboardHelp onClose={() => setHelp(false)} />}
-            <PlanChecks warnings={warnings} levels={levels} levelId={level.id} onPick={pickWarning} onFix={fixWarning} />
+            <PlanChecks {...dismissProps} levels={levels} levelId={level.id} onPick={pickWarning} onFix={fixWarning} />
             {!help && (
               <button className="text-xs text-muted hover:underline" onClick={() => setHelp(true)}>
                 Keyboard shortcuts (press ?)

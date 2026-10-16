@@ -39,7 +39,7 @@ function project(pl: FloorPlan, selections: Selection[] = []): Project {
     plot: flat,
     levels: [levelFor(L)],
     floorPlans: { [L]: pl },
-    plan: { basics, showSketch: false, labels: DEFAULT_LABELS },
+    plan: { basics, showSketch: false, labels: DEFAULT_LABELS, dismissed: [] },
     interior: { ...p.interior, selections },
   };
 }

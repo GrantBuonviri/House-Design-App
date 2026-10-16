@@ -27,7 +27,7 @@ const ROOF = House3D.parse({}).roof;
 
 function project(plans: Record<string, FloorPlan>, extra: Partial<Project> = {}): Project {
   const levels = extra.levels ?? [levelFor(MAIN_LEVEL_ID)];
-  return { ...createProject("Test"), plot: flat, levels, floorPlans: plans, plan: { basics: defaultBasics(), showSketch: false, labels: DEFAULT_LABELS }, ...extra };
+  return { ...createProject("Test"), plot: flat, levels, floorPlans: plans, plan: { basics: defaultBasics(), showSketch: false, labels: DEFAULT_LABELS, dismissed: [] }, ...extra };
 }
 
 const cat = (e: Estimate, id: string) => e.categories.find((c) => c.id === id)!.cost.likely;
@@ -45,7 +45,7 @@ function suggestedHouse(plot: Plot, types: string[], above = 1, below = 0) {
   const bubbles = suggestDiagrams({ brief, plot, levels });
   const basics = defaultBasics();
   const plans = suggestPlans(bubbles, { brief, plot, levels, basics }).plans;
-  return { ...createProject("Test"), plot, brief, levels, bubbles, floorPlans: plans, discovery: { answers }, plan: { basics, showSketch: false, labels: DEFAULT_LABELS } };
+  return { ...createProject("Test"), plot, brief, levels, bubbles, floorPlans: plans, discovery: { answers }, plan: { basics, showSketch: false, labels: DEFAULT_LABELS, dismissed: [] } };
 }
 
 const TYPICAL = ["entry", "living", "kitchen", "dining", "primary-bedroom", "primary-bath", "primary-closet", "bedroom", "bedroom", "bathroom", "laundry", "garage", "porch"];

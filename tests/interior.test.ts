@@ -35,7 +35,7 @@ function project(rooms: PlanRoom[], selections: Selection[] = []): Project {
     plot: flat,
     levels: [levelFor(MAIN_LEVEL_ID)],
     floorPlans: { [MAIN_LEVEL_ID]: plan(rooms) },
-    plan: { basics: defaultBasics(), showSketch: false, labels: DEFAULT_LABELS },
+    plan: { basics: defaultBasics(), showSketch: false, labels: DEFAULT_LABELS, dismissed: [] },
     interior: { ...p.interior, selections },
   };
 }
