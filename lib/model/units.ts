@@ -29,6 +29,14 @@ export function parseFeetInches(text: string): number | null {
   return feet * 12 + (feet < 0 ? -inches : inches);
 }
 
+/** A length typed while drawing: `12'6`, `12' 6"`, or a bare number such as `150` (inches). Returns inches, or null. */
+export function parseTypedLength(text: string): number | null {
+  const t = text.trim();
+  if (/^\d+(\.\d+)?$/.test(t)) return parseFloat(t);
+  const v = parseFeetInches(t);
+  return v !== null && v > 0 ? v : null;
+}
+
 export function sqFt(squareInches: number): number {
   return squareInches / 144;
 }

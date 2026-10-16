@@ -1,7 +1,7 @@
 "use client";
 
 import { Circle, Group, Layer, Line, Rect, Text } from "react-konva";
-import type { BubbleDiagram, FloorPlan, FurnitureItem, Level, Point } from "@/lib/model/schema";
+import type { BubbleDiagram, FloorPlan, FurnitureItem, Level, PlanRoom, Point } from "@/lib/model/schema";
 import { formatFeetInches } from "@/lib/model/units";
 import { add, dist, edgesOf, leftNormal, polygonCenter, scale as scaleV, sub, unit } from "@/lib/plan/geometry";
 import { roomSqft } from "@/lib/plan/measure";
@@ -153,7 +153,7 @@ export function PlanLabels({ plan, showDims, selectedEdge, s }: { plan: FloorPla
 }
 
 /** A room or walls being drawn: the dragged rectangle, or the corners clicked so far. */
-export function DraftPreview({ rectStart, rectEnd, draft, cursor, tool, s }: { rectStart: Point | null; rectEnd: Point | null; draft: Point[]; cursor: Point | null; tool: PlanTool; s: number }) {
+export function DraftPreview({ rectStart, rectEnd, draft, cursor, tool, typed, s }: { rectStart: Point | null; rectEnd: Point | null; draft: Point[]; cursor: Point | null; tool: PlanTool; typed: string; s: number }) {
   return (
     <>
       {rectStart && rectEnd && (
@@ -201,11 +201,53 @@ export function DraftPreview({ rectStart, rectEnd, draft, cursor, tool, s }: { r
             <Circle key={i} x={p.x} y={p.y} radius={(i === 0 && tool === "room" ? 6 : 3.5) / s} fill={i === 0 ? ACCENT : "#fff"} stroke={ACCENT} strokeWidth={1.5} strokeScaleEnabled={false} />
           ))}
           {cursor && (
-            <Text x={cursor.x + 10 / s} y={cursor.y + 10 / s} text={formatFeetInches(dist(draft[draft.length - 1], cursor))} fontSize={11.5 / s} fontStyle="600" fill={ACCENT} />
+            <Text x={cursor.x + 10 / s} y={cursor.y + 10 / s} text={typed ? `${typed}▏ (Enter)` : formatFeetInches(dist(draft[draft.length - 1], cursor))} fontSize={11.5 / s} fontStyle="600" fill={ACCENT} />
           )}
         </Group>
       )}
     </>
+  );
+}
+
+/** A small "+" in the middle of each edge of the selected room: drag one to make a new corner. */
+export function MidNodes({ room, s }: { room: PlanRoom; s: number }) {
+  return (
+    <>
+      {edgesOf(room.polygon).map((e) => {
+        if (dist(e.a, e.b) * s < 28) return null;
+        const m = scaleV(add(e.a, e.b), 0.5);
+        const r = 5 / s;
+        return (
+          <Group key={e.i} id={edgeId(room.id, e.i)} name="mid" x={m.x} y={m.y}>
+            <Circle radius={r} fill="#fff" stroke={ACCENT} strokeWidth={1.5} strokeScaleEnabled={false} hitStrokeWidth={8} />
+            <Line points={[-r * 0.55, 0, r * 0.55, 0]} stroke={ACCENT} strokeWidth={1.5} strokeScaleEnabled={false} listening={false} />
+            <Line points={[0, -r * 0.55, 0, r * 0.55]} stroke={ACCENT} strokeWidth={1.5} strokeScaleEnabled={false} listening={false} />
+          </Group>
+        );
+      })}
+    </>
+  );
+}
+
+/** While a corner is dragged: the two edge lengths beside it and the room's square feet. */
+export function NodeReadout({ plan, roomId, i, s }: { plan: FloorPlan; roomId: string; i: number; s: number }) {
+  const room = plan.rooms.find((r) => r.id === roomId);
+  if (!room || !room.polygon[i]) return null;
+  const n = room.polygon.length;
+  const p = room.polygon[i];
+  const tag = (a: Point, b: Point, key: string) => {
+    const u = unit(sub(b, a));
+    const mid = add(scaleV(add(a, b), 0.5), scaleV(leftNormal(u), -(10 + 8 / s)));
+    const w = 90 / s;
+    return <Text key={key} x={mid.x} y={mid.y} offsetX={w / 2} offsetY={6 / s} width={w} align="center" rotation={uprightAngle(u)} text={formatFeetInches(dist(a, b))} fontSize={12 / s} fontStyle="600" fill={ACCENT} />;
+  };
+  const w = 120 / s;
+  return (
+    <Group listening={false}>
+      {tag(room.polygon[(i - 1 + n) % n], p, "in")}
+      {tag(p, room.polygon[(i + 1) % n], "out")}
+      <Text x={p.x} y={p.y - 24 / s} offsetX={w / 2} width={w} align="center" text={`${roomSqft(room).toLocaleString("en-US")} sq ft`} fontSize={11.5 / s} fontStyle="600" fill={ACCENT} />
+    </Group>
   );
 }
 

@@ -1,5 +1,5 @@
 import type { FloorPlan, Point } from "@/lib/model/schema";
-import { add, dot, edgesOf, leftNormal, project, scale, snapAngle, sub, unit } from "./geometry";
+import { add, dot, edgesOf, leftNormal, project, scale, sub, unit } from "./geometry";
 
 /**
  * Snapping while drawing and moving: to corners, to lining up with corners,
@@ -76,10 +76,61 @@ export function snapPoint(p: Point, targets: SnapTargets, tolerance: number, gri
   return { p: out, guides: { x, y }, on: x !== undefined || y !== undefined ? "corner" : grid ? "grid" : undefined };
 }
 
-/** Snap a point drawn from `from`, holding Shift to keep to 45° steps. */
-export function snapFrom(from: Point | null, p: Point, targets: SnapTargets, tolerance: number, grid: boolean, shift: boolean): Snapped {
-  if (from && shift) return { p: snapAngle(from, p), guides: {} };
-  return snapPoint(p, targets, tolerance, grid);
+/**
+ * Pull a point onto the 90° and 45° lines running out of the given anchors
+ * (a corner's neighbors). Near one line it slides onto it; near lines from
+ * two anchors it lands where they cross. Returns null when nothing is close.
+ */
+export function snapAngles(p: Point, anchors: Point[], tolerance: number, stepDeg = 45): Point | null {
+  const lines: { a: Point; d: Point; dist: number; q: Point }[] = [];
+  for (const a of anchors) {
+    let best: { a: Point; d: Point; dist: number; q: Point } | null = null;
+    for (let deg = 0; deg < 180; deg += stepDeg) {
+      const r = (deg * Math.PI) / 180;
+      const d = { x: Math.cos(r), y: Math.sin(r) };
+      const t = dot(sub(p, a), d);
+      const q = add(a, scale(d, t));
+      const dd = Math.hypot(q.x - p.x, q.y - p.y);
+      if (dd <= tolerance && (!best || dd < best.dist)) best = { a, d, dist: dd, q };
+    }
+    if (best) lines.push(best);
+  }
+  if (!lines.length) return null;
+  if (lines.length >= 2) {
+    const [l1, l2] = lines.sort((x, y) => x.dist - y.dist);
+    const cross = l1.d.x * l2.d.y - l1.d.y * l2.d.x;
+    if (Math.abs(cross) > 1e-6) {
+      const w = sub(l2.a, l1.a);
+      const t = (w.x * l2.d.y - w.y * l2.d.x) / cross;
+      const hit = add(l1.a, scale(l1.d, t));
+      if (Math.hypot(hit.x - p.x, hit.y - p.y) <= tolerance * 2) return hit;
+    }
+  }
+  return lines.sort((x, y) => x.dist - y.dist)[0].q;
+}
+
+/**
+ * Snap a corner being placed or dragged: onto another corner, else onto a 90°
+ * or 45° line from its neighbors (`anchors`), else the usual lining up, walls
+ * and grid. `free` (Shift held) turns all snapping off.
+ */
+export function snapNode(p: Point, anchors: Point[], targets: SnapTargets, tolerance: number, grid: boolean, free: boolean): Snapped {
+  if (free) return { p, guides: {} };
+  const base = snapPoint(p, targets, tolerance, grid);
+  if (base.on === "corner" && base.guides.x === undefined && base.guides.y === undefined) return base;
+  const hit = snapAngles(p, anchors, tolerance);
+  if (hit) {
+    // Lining up with a still corner wins when the angle line already passes through it.
+    const x = targets.points.find((q) => Math.abs(q.x - hit.x) < 0.5)?.x;
+    const y = targets.points.find((q) => Math.abs(q.y - hit.y) < 0.5)?.y;
+    return { p: hit, guides: { x, y }, on: "corner" };
+  }
+  return base;
+}
+
+/** Snap a point drawn from `from`; holding Shift turns snapping off, for any angle. */
+export function snapFrom(from: Point | null, p: Point, targets: SnapTargets, tolerance: number, grid: boolean, shift: boolean, more: Point[] = []): Snapped {
+  return snapNode(p, from ? [from, ...more] : more, targets, tolerance, grid, shift);
 }
 
 /**
