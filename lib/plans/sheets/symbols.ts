@@ -10,6 +10,22 @@ import { DASH, heading, HEADING_H, capHeight, table, textBlock, type Item, type 
 
 const R = 0.065;
 
+/** The short tag a built-in or extra carries on the floor plan. */
+export const ADDON_TAG: Record<string, string> = {
+  shelving: "SHELF",
+  bookcase: "BK",
+  "window-seat": "SEAT",
+  bench: "BENCH",
+  desk: "DESK",
+  "ceiling-fan": "CF",
+  mirror: "MIR",
+  "towel-bar": "TB",
+  "grab-bar": "GB",
+  "medicine-cabinet": "MC",
+  "coat-hooks": "HOOKS",
+  lockers: "LKR",
+};
+
 /** Draw a device. `c` is its spot on the wall face (sheet inches); `front` points into the room. */
 export function deviceSymbol(kind: DeviceKind | "hood" | "gas", c: Point, front: Point, opts: { note?: string; amps?: number } = {}): Item[] {
   const items: Item[] = [];
@@ -116,6 +132,26 @@ export function deviceSymbol(kind: DeviceKind | "hood" | "gas", c: Point, front:
       circle(c, 0.055);
       text(c, "G", 4.5);
       break;
+    case "water": {
+      // Hot and cold supply stub: a square with W.
+      const m = at(0.07);
+      items.push({ t: "poly", pts: [add(m, { x: -0.055, y: -0.055 }), add(m, { x: 0.055, y: -0.055 }), add(m, { x: 0.055, y: 0.055 }), add(m, { x: -0.055, y: 0.055 })], stroke: "fine", fill: "#ffffff" });
+      text(m, "W", 4.5);
+      break;
+    }
+    case "drain": {
+      // Drain: a filled circle with D beside it.
+      const m = at(0.07);
+      circle(m, 0.05, "#000000");
+      text(at(0.17), "D", 4.5);
+      break;
+    }
+    case "dryer-vent": {
+      const m = at(0.08);
+      circle(m, 0.065);
+      text(m, "DV", 4.2);
+      break;
+    }
   }
   return items;
 }

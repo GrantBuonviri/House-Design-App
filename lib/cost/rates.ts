@@ -135,6 +135,20 @@ export const RATE_IDS = [
   "shrub",
   "tree",
   "exterior-lights",
+  // Furnish: built-ins, extras and hookups placed by hand.
+  "built-in-cabinetry",
+  "wall-shelving",
+  "ceiling-fan",
+  "bath-accessory",
+  "fireplace",
+  "extra-water-run",
+  "extra-drain-run",
+  "gas-line-run",
+  "circuit-240",
+  "dryer-vent-run",
+  "extra-device",
+  "tall-cabinet",
+  "cabinet-specialty",
 ] as const;
 export type RateId = (typeof RATE_IDS)[number];
 

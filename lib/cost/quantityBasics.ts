@@ -7,6 +7,7 @@ import { lightsFor } from "@/lib/catalog/categories";
 import { wallKey } from "@/lib/interior/picks";
 import type { RateId } from "./rates";
 import type { measureRoof } from "./measureRoof";
+import { noFurnishExtras, type FurnishExtras, type RoomCabinets } from "./furnishQuantities";
 
 /** What the cost measures produce (Quantities), plus the constants and helpers shared by measurePlan.ts and measureRough.ts. */
 
@@ -107,6 +108,11 @@ export type Quantities = {
   lightFixtures: number;
   /** Cabinet pulls and knobs. */
   cabinetHardware: number;
+  /** Tall cabinets and specialty boxes from the real cabinet layout. */
+  tallCabinets: number;
+  specialtyCabinets: number;
+  /** Built-ins, extras and hand-added hookups placed in Furnish. */
+  furnish: FurnishExtras;
   /**
    * Each room's share of the finish lines (flooring, tile, cabinets, fixtures
    * and so on), so a product picked for one room prices only that room.
@@ -230,6 +236,9 @@ export function empty(source: Quantities["source"]): Quantities {
     waterHeaters: 0,
     lightFixtures: 0,
     cabinetHardware: 0,
+    tallCabinets: 0,
+    specialtyCabinets: 0,
+    furnish: noFurnishExtras(),
     rooms: [],
   };
 }
@@ -250,7 +259,7 @@ export function toRoad(p: Ctx, pt: Point, offset: Point): number {
   return Math.max(20 * 12, dist(at, nearestAccess(p.plot, at).at));
 }
 
-export type MeasuredRoom = { id: string; name: string; type: string; sqft: number; fixtures: { kind: string; widthIn: number; depthIn: number }[]; edgesIn?: number[] };
+export type MeasuredRoom = { id: string; name: string; type: string; sqft: number; fixtures: { kind: string; widthIn: number; depthIn: number }[]; edgesIn?: number[]; cabinets?: RoomCabinets };
 
 /**
  * Plumbing, cabinets, tile, lights and finishes for rooms, using what's
@@ -261,6 +270,7 @@ export function roomFixtures(q: Quantities, rooms: MeasuredRoom[]) {
   for (const r of rooms) {
     const f = (k: string) => r.fixtures.filter((x) => x.kind === k);
     const placed = r.fixtures.length > 0;
+    let cabinetsDone = false;
     const heated = isHeated(r.type);
     const a: RoomFinish["amounts"] = {};
     const add = (id: RateId, n: number) => {
@@ -295,21 +305,31 @@ export function roomFixtures(q: Quantities, rooms: MeasuredRoom[]) {
       add("kitchen-sink-faucet", sinks);
       if (kitchen) add("appliance-package", 1);
       const counters = [...f("counter"), ...f("island")];
-      let lf = 0;
-      let top = 0;
-      if (counters.length) {
-        lf = counters.reduce((s, c) => s + ft(c.widthIn), 0);
-        top = counters.reduce((s, c) => s + sqft(c.widthIn * Math.max(c.depthIn, 25)), 0);
-      } else if (kitchen) {
-        // A typical kitchen: about 20 ft of base cabinets and the matching uppers.
+      let top = counters.reduce((s, c) => s + sqft(c.widthIn * Math.max(c.depthIn, 25)), 0);
+      // The real cabinets when there are any; a typical kitchen (about 20 ft of base cabinets and the matching uppers) only when there are none.
+      let lf = r.cabinets?.lf ?? 0;
+      if (!lf && kitchen) {
         lf = Math.min(36, Math.max(14, r.sqft / 11));
-        top = lf * 2.1;
+        if (!counters.length) top = lf * 2.1;
       }
       q.cabinetLf += lf;
       q.counterSqft += top;
       add("kitchen-cabinets", lf);
       add("countertops", top);
       add("cabinet-hardware", lf * 1.5);
+      cabinetsDone = true;
+    }
+    if (r.cabinets) {
+      // Cabinets in other rooms (laundry, mudroom, anything placed by hand) at the same rate.
+      if (!cabinetsDone && r.cabinets.lf > 0) {
+        q.cabinetLf += r.cabinets.lf;
+        add("kitchen-cabinets", r.cabinets.lf);
+        add("cabinet-hardware", r.cabinets.lf * 1.5);
+      }
+      q.tallCabinets += r.cabinets.tall;
+      q.specialtyCabinets += r.cabinets.specialty;
+      add("tall-cabinet", r.cabinets.tall);
+      add("cabinet-specialty", r.cabinets.specialty);
     }
     if (r.type === "laundry" || f("washer").length) {
       q.laundries += 1;

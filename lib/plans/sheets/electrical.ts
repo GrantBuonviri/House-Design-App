@@ -171,6 +171,12 @@ function circuitRows(project: Project): string[][] {
   if (has("range") && sys.cooking === "electric") rows.push(["Range, 240V", "Electric range", "Sized to the nameplate"]);
   if (has("range") && sys.cooking === "gas") rows.push(["Range, 120V", "Gas range igniter and clock", "Small appliance circuit or its own"]);
   if (has("dryer") && sys.dryer === "electric") rows.push(["Dryer, 240V", "Electric dryer", "Sized to the nameplate"]);
+  // Each 240V outlet placed in Furnish gets its own circuit (the range's and dryer's are the rows above).
+  for (const l of h.levels)
+    for (const d of levelDevices(project, l).filter((x) => x.kind === "outlet-240" && !x.auto)) {
+      const room = h.plan(l.id).rooms.find((r) => pointInPolygon({ x: d.x, y: d.y }, r.polygon));
+      rows.push(["240V outlet", `${room?.name ?? l.name}, placed in Furnish`, "Its own circuit, sized to the equipment"]);
+    }
   if (has("dishwasher")) rows.push(["Dishwasher", "Dishwasher (and disposal, if any)", "Sized to the nameplate"]);
   rows.push(["Heating", sys.heating === "heat-pump" ? "Heat pump air handler" : sys.heating === "electric-furnace" ? "Electric furnace, 240V" : "Gas furnace blower and controls", "Sized to the nameplate"]);
   if (sys.cooling || sys.heating === "heat-pump") rows.push(["Outdoor unit, 240V", sys.heating === "heat-pump" ? "Heat pump" : "Air conditioner", "Disconnect within sight"]);

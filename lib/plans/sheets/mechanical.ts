@@ -39,12 +39,15 @@ function outsidePoints(plan: FloorPlan): { p: Point; out: Point }[] {
 
 export function dryerRuns(plan: FloorPlan): DryerRun[] {
   const walls = outsidePoints(plan);
+  // A dryer vent placed by hand in Furnish is where the duct comes out, instead of the guessed nearest outside wall.
+  const placed = (plan.devices?.added ?? []).filter((d) => d.kind === "dryer-vent");
   return plan.fixtures
     .filter((f) => f.kind === "dryer")
     .flatMap((dryer) => {
       const back = rotate({ x: 0, y: -1 }, dryer.rotation);
       const from = add({ x: dryer.x, y: dryer.y }, scale(back, dryer.depthIn / 2));
-      const best = walls.sort((a, b) => dist(a.p, from) - dist(b.p, from))[0];
+      const mine = placed.filter((d) => dist(d, from) <= 480).sort((a, b) => dist(a, from) - dist(b, from))[0];
+      const best = mine ? { p: { x: mine.x, y: mine.y } } : walls.sort((a, b) => dist(a.p, from) - dist(b.p, from))[0];
       if (!best) return [];
       const straight = dot(unit(sub(best.p, from)), back) > 0.94 || dist(best.p, from) < 8;
       const elbows = straight ? 1 : 2;
@@ -88,6 +91,9 @@ export function mechanicalSheet(project: Project, level: Level): SystemsSheet {
     items.push(...deviceSymbol(d.kind, T({ x: d.x, y: d.y }), rotate({ x: 0, y: 1 }, d.rotation), { note }));
   }
 
+  // Dryer vents placed by hand.
+  for (const d of (plan.devices?.added ?? []).filter((x) => x.kind === "dryer-vent")) items.push(...deviceSymbol("dryer-vent", T({ x: d.x, y: d.y }), rotate({ x: 0, y: 1 }, d.rotation)));
+
   // Hood over each range.
   for (const f of plan.fixtures.filter((x) => x.kind === "range")) {
     const L = (x: number, y: number) => T(add({ x: f.x, y: f.y }, rotate({ x, y }, f.rotation)));
@@ -118,6 +124,7 @@ export function mechanicalSheet(project: Project, level: Level): SystemsSheet {
   col.legend("return", "Return air grille.");
   col.legend("thermostat", `Programmable thermostat, about 54" up (${codeRef("energy.programmableThermostat")}).`);
   col.legend("fan", "Exhaust fan, ducted outside, with its airflow.");
+  if ((plan.devices?.added ?? []).some((d) => d.kind === "dryer-vent")) col.legend("dryer-vent", "Dryer vent through the wall, placed by the owner; the duct runs here.");
 
   col.heading("Ventilation");
   const fanRows: string[][] = [];

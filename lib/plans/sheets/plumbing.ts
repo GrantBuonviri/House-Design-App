@@ -1,5 +1,6 @@
 import type { Fixture, Level, Project } from "@/lib/model/schema";
 import { add, pointInPolygon, rotate } from "@/lib/plan/geometry";
+import { placedHookups } from "@/lib/plan/devices";
 import { roleOf } from "@/lib/plan/connect";
 import { codeNum, codeRef, codeText, codeEntry } from "@/lib/codes/data";
 import { DRAW_AREA } from "../frame";
@@ -76,11 +77,9 @@ export function plumbingSheet(project: Project, level: Level): SystemsSheet {
     items.push({ t: "poly", pts: [add(c, { x: -w / 2, y: -0.07 }), add(c, { x: w / 2, y: -0.07 }), add(c, { x: w / 2, y: 0.07 }), add(c, { x: -w / 2, y: 0.07 })], stroke: "fine", fill: "#ffffff" });
     items.push({ t: "text", at: c, text: tag, size: 5.5, bold: true, align: "center", valign: "middle" });
   }
-  // Gas outlets.
-  for (const f of gasFixtures(project, plan.fixtures)) {
-    const side = add({ x: f.x, y: f.y }, rotate({ x: f.widthIn / 2 - 4, y: -f.depthIn / 2 + 4 }, f.rotation));
-    items.push(...deviceSymbol("gas", T(side), { x: 0, y: 1 }));
-  }
+  // Water, drain and gas hookups: the ones fixtures bring (less any taken away) and ones placed in Furnish.
+  const hookups = placedHookups(plan, project.plans.systems).filter((d) => ["water", "drain", "gas"].includes(d.kind));
+  for (const d of hookups) items.push(...deviceSymbol(d.kind, T({ x: d.x, y: d.y }), rotate({ x: 0, y: 1 }, d.rotation)));
   // Hose bibs.
   for (const d of levelDevices(project, level).filter((x) => x.kind === "hose-bib")) items.push(...deviceSymbol("hose-bib", T({ x: d.x, y: d.y }), rotate({ x: 0, y: 1 }, d.rotation)));
 
@@ -95,7 +94,9 @@ export function plumbingSheet(project: Project, level: Level): SystemsSheet {
     col.y += 0.34;
   }
   col.legend("hose-bib", `Frost-free hose bib with backflow protection (${codeRef("plumbing.hoseBibBackflow")}).`);
-  col.legend("gas", "Gas outlet with a shutoff valve at the appliance.");
+  if (hookups.some((d) => d.kind === "water")) col.legend("water", "Hot and cold water supply stub-out, with a shutoff valve.");
+  if (hookups.some((d) => d.kind === "drain")) col.legend("drain", "Drain and vent stub-out.");
+  if (hookups.some((d) => d.kind === "gas")) col.legend("gas", "Gas outlet with a shutoff valve at the appliance.");
 
   const fu = fixtureUnits(project);
   col.heading("Fixture units, whole house");

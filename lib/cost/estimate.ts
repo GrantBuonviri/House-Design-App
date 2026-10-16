@@ -28,6 +28,8 @@ export const CATEGORIES = [
   { id: "interior", label: "Interior finishes" },
   { id: "cabinets", label: "Cabinets and counters" },
   { id: "fixtures", label: "Fixtures and appliances" },
+  { id: "builtins", label: "Built-ins and extras" },
+  { id: "hookups", label: "Extra hookups" },
   { id: "permits", label: "Permits and fees" },
   { id: "overhead", label: "Builder overhead and profit" },
   { id: "contingency", label: "Contingency" },
@@ -212,6 +214,8 @@ export function estimate(
   line("cabinets", "countertops", q.counterSqft);
   line("cabinets", "vanity", q.vanities);
   line("cabinets", "cabinet-hardware", q.cabinetHardware);
+  line("cabinets", "tall-cabinet", q.tallCabinets);
+  line("cabinets", "cabinet-specialty", q.specialtyCabinets);
 
   // Fixtures and appliances
   line("fixtures", "toilet", q.toilets);
@@ -220,6 +224,20 @@ export function estimate(
   line("fixtures", "kitchen-sink-faucet", q.kitchenSinks);
   line("fixtures", "appliance-package", q.kitchens);
   line("fixtures", "laundry-hookup", q.laundries);
+
+  // Built-ins and extras placed in Furnish, and hookups placed by hand beyond what fixtures and the code rules bring. Furniture stays unpriced.
+  const fx = q.furnish;
+  line("builtins", "built-in-cabinetry", fx.builtInLf);
+  line("builtins", "wall-shelving", fx.wallShelfLf);
+  line("builtins", "ceiling-fan", fx.ceilingFans);
+  line("builtins", "bath-accessory", fx.accessories);
+  line("builtins", "fireplace", fx.fireplaces);
+  line("hookups", "extra-water-run", fx.extraWaterRuns);
+  line("hookups", "extra-drain-run", fx.extraDrainRuns);
+  line("hookups", "gas-line-run", fx.gasRuns);
+  line("hookups", "circuit-240", fx.circuits240);
+  line("hookups", "dryer-vent-run", fx.dryerVents);
+  line("hookups", "extra-device", fx.extraDevices);
 
   applySelections(lines, p.interior.selections, q, file);
   applyExterior(lines, p.exterior.selections, file);
@@ -278,7 +296,8 @@ export function estimate(
   const ctCost: Money = { low: (before.low * ct.value[0]) / 100, likely: (before.likely * ct.value[1]) / 100, high: (before.high * ct.value[2]) / 100 };
   lines.push({ id: "contingency", category: "contingency", label: ct.label, qty: ct.value[1], unit: "percent", material: null, labor: null, cost: ctCost, source: ct.source, url: ct.url, checked: ct.checked, note: ct.note });
 
-  const categories: CostCategory[] = CATEGORIES.map((c) => {
+  // The Furnish categories only show up once something is placed for them.
+  const categories: CostCategory[] = CATEGORIES.filter((c) => (c.id !== "builtins" && c.id !== "hookups") || lines.some((l) => l.category === c.id)).map((c) => {
     const ls = lines.filter((l) => l.category === c.id);
     return { id: c.id, label: c.label, lines: ls, cost: sumMoney(ls.map((l) => l.cost)) };
   });
