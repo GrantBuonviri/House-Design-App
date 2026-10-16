@@ -1,4 +1,5 @@
 import { addRiders, mapRiders, ridersIn, type Rider } from "@/lib/furnish/ride";
+import { mirrorRailingEdits } from "./railings";
 import type { FloorPlan, Opening, PlanRoom, Point } from "@/lib/model/schema";
 import { reverseBulges, roomEdgeLength, withBulges } from "./arcs";
 import { boundsOf, dist, edgesOf, isRectangle, round1, roundPoint } from "./geometry";
@@ -154,7 +155,7 @@ export function mirrorMany(plan: FloorPlan, ids: string[], flip: Flip): FloorPla
     // A loose wall keeps its direction, so a curve that bowed to its left now bows to its right.
     walls: plan.walls.map((w) => (m.wallIds.has(w.id) ? { ...w, a: mp(w.a), b: mp(w.b), ...(w.bulge ? { bulge: -w.bulge } : {}) } : w)),
     openings,
-    stairs: plan.stairs.map((s) => (m.stairs.includes(s) ? { ...s, ...mp(s), rotation: turn(s.rotation), flip: s.shape === "l" ? !s.flip : s.flip } : s)),
+    stairs: plan.stairs.map((s) => (m.stairs.includes(s) ? { ...s, ...mp(s), rotation: turn(s.rotation), flip: s.shape === "l" ? !s.flip : s.flip, ...(s.railings ? { railings: mirrorRailingEdits(s) } : {}) } : s)),
     fixtures: plan.fixtures.map((f) => (m.fixtures.includes(f) ? { ...f, ...mp(f), rotation: turn(f.rotation) } : f)),
     furniture: plan.furniture.map((f) => (m.furniture.includes(f) ? { ...f, ...mp(f), rotation: turn(f.rotation) } : f)),
     ...mapRiders(plan, (x) => (x.roomId && m.roomIds.has(x.roomId) ? { ...x, ...mp(x), rotation: turn(x.rotation) } : x)),

@@ -1,5 +1,6 @@
 "use client";
 
+import { keepRailingEdits, resetRailings } from "@/lib/plan/railings";
 import ArrangeButtons from "./ArrangeButtons";
 import CurveFields from "./CurveFields";
 import { BayFields, RoundCornerFields } from "./ShapeFields";
@@ -430,7 +431,7 @@ export default function PlanSidePanel(props: Props) {
   if (only?.kind === "stairs") {
     const st = plan.stairs.find((x) => x.id === only.id);
     if (!st) return <FloorSummary {...props} />;
-    const set = (patch: Partial<PlanStairs>) => onChange({ ...plan, stairs: plan.stairs.map((x) => (x.id === st.id ? { ...x, ...patch } : x)) });
+    const set = (patch: Partial<PlanStairs>) => onChange({ ...plan, stairs: plan.stairs.map((x) => (x.id === st.id ? keepRailingEdits({ ...x, ...patch }) : x)) });
     const ups = levels.filter((l) => l.elevationIn > level.elevationIn);
     const to = levels.find((l) => l.id === st.toLevelId);
     const d = to ? stairsDrawing(st, riseBetween(basics, level, to)) : null;
@@ -475,6 +476,14 @@ export default function PlanSidePanel(props: Props) {
             Turn the other way
           </button>
         )}
+        <p className="field-hint mt-4">
+          Railings: edit in Furnish. They&apos;re added on their own wherever a side of the stairs or the stairwell above is open.
+        </p>
+        {st.railings?.length ? (
+          <button className="btn mt-2 w-full text-sm" onClick={() => onChange({ ...plan, stairs: plan.stairs.map((x) => (x.id === st.id ? resetRailings(x) : x)) })}>
+            Put railings back to automatic
+          </button>
+        ) : null}
         <button className="mt-4 text-sm text-red-700 hover:underline" onClick={() => remove([st.id])}>
           Delete these stairs
         </button>

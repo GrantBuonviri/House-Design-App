@@ -2,7 +2,7 @@ import type { FloorPlan, Level, Point } from "@/lib/model/schema";
 import { MAIN_LEVEL_ID } from "@/lib/brief/levels";
 import { exteriorWallIn } from "@/lib/plan/basics";
 import { planOf, type Plans } from "@/lib/plan/edit";
-import { add, boundsOf, dist, polygonArea, polygonCenter, pointInPolygon, project, rectangle, scale, sub } from "@/lib/plan/geometry";
+import { add, boundsOf, dist, lerp, polygonArea, polygonCenter, pointInPolygon, project, rectangle, scale, sub } from "@/lib/plan/geometry";
 import { areaKind } from "@/lib/plan/measure";
 import { isClosedIn, placedSteps, stairsDrawing } from "@/lib/plan/stairs";
 import { openingGeometries, solidWalls, wallPieces, wallTopIn } from "@/lib/plan/walls";
@@ -16,6 +16,8 @@ import { motionOf, PASSABLE_AMOUNT, type DoorInfo } from "./doors";
 import { openingSpan } from "./openings";
 import { openingType } from "@/lib/plan/catalog";
 import { flatPlans } from "@/lib/plan/flatten";
+import { HALF_WALL_THICK_IN, POST_IN, railingAt, railingsOn } from "@/lib/plan/railings";
+import { riseFromHeights } from "./railings";
 
 /**
  * Walking through the house in first person. Pure data and math, so it can
@@ -41,6 +43,8 @@ export const HEAD_IN = 70;
 export const WALK_IN_PER_S = 54;
 export const FAST = 2.2;
 const GRAVITY_IN_PER_S2 = 386;
+/** A sloped railing stops you in pieces this long, each as high as the slope there. */
+const RAIL_PIECE_IN = 12;
 
 /** A wall (or the side of a fixture) as a thick line you can't pass. */
 /** A closed door across a doorway is a blocker with its door's id: it stops you until the door is open enough. */
@@ -167,6 +171,27 @@ export function walkWorld(plans: Plans, ctx: HouseContext & { heights: LevelHeig
       if (rise <= 12) continue;
       for (const step of placedSteps(s, rise, isClosedIn(s, rise, holes))) {
         surfaces.push({ region: { outline: step.outline, holes: [] }, z: floorIn + step.top, under: floorIn + step.under });
+      }
+    }
+
+    // Stair railings: guards, half walls and walls stop you (in short pieces up a flight, each as high as the slope there); handrails don't.
+    for (const r of railingsOn(plans, level.id, riseFromHeights(heights))) {
+      if (r.kind === "handrail") continue;
+      if (r.kind === "wall") {
+        blockers.push({ a: r.a, b: r.b, half: HALF_WALL_THICK_IN / 2, z0: floorIn, z1: top });
+        continue;
+      }
+      const half = r.kind === "half-wall" ? HALF_WALL_THICK_IN / 2 : POST_IN / 2;
+      const n = Math.abs(r.zb - r.za) < 0.5 ? 1 : Math.max(1, Math.ceil(dist(r.a, r.b) / RAIL_PIECE_IN));
+      for (let i = 0; i < n; i++) {
+        const t0 = i / n;
+        const t1 = (i + 1) / n;
+        const [p, q] = [railingAt(r, t0), railingAt(r, t1)];
+        const low = r.low ? Math.min(r.low[0] + (r.low[1] - r.low[0]) * t0, r.low[0] + (r.low[1] - r.low[0]) * t1) : Infinity;
+        const z0 = Math.min(p.bottom, q.bottom, low);
+        const z1 = Math.max(p.top, q.top);
+        if (z1 - Math.min(p.bottom, q.bottom) < 2) continue;
+        blockers.push({ a: lerp(r.a, r.b, t0), b: lerp(r.a, r.b, t1), half, z0: floorIn + z0, z1: floorIn + z1 });
       }
     }
 

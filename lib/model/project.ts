@@ -79,6 +79,8 @@ export function migrateProject(raw: unknown): Project {
   // hand-placed cabinets and devices, hookup kinds, new cabinet kinds, the
   // Furnish stage and the Show furnishings switch. All optional or with
   // defaults, so no change beyond the version.
+  // Version 25 to 26 added railing changes on stairs (`railings`, left out
+  // means automatic), so no change beyond the version.
   return Project.parse({ ...migrated, schemaVersion: SCHEMA_VERSION });
 }
 
