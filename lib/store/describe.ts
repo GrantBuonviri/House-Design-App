@@ -21,13 +21,34 @@ export function describeChange(before: Project, after: Project): string {
   if (!same("sketch")) return "change the flow sketch settings";
   if (!same("floorPlans")) return describeLevels(before, after, "floorPlans", describePlan) ?? "change the floor plan";
   if (!same("plan")) return before.plan.basics === null && after.plan.basics ? "answer the plan basics" : "change the plan settings";
-  if (!same("house3d")) return json(before.house3d.walkLabels) !== json(after.house3d.walkLabels) ? "change the floor labels" : "change the roof";
+  if (!same("house3d")) {
+    if (json(before.house3d.topLabels) !== json(after.house3d.topLabels)) return describeTopLabels(before, after);
+    return json(before.house3d.walkLabels) !== json(after.house3d.walkLabels) ? "change the floor labels" : "change the roof";
+  }
   if (!same("cost")) return "change the water and sewer setting";
   if (!same("plans")) return "change the plan details";
   if (!same("interior")) return describeDesign(before.interior, after.interior, "inside");
   if (!same("exterior")) return describeDesign(before.exterior, after.exterior, "outside");
   if (!same("levels")) return "change the floors";
   return "last change";
+}
+
+/** Names the one room whose 3D label was hidden, shown, renamed or moved, else the general "change the 3D labels". */
+function describeTopLabels(before: Project, after: Project): string {
+  const a = before.house3d.topLabels;
+  const b = after.house3d.topLabels;
+  const { rooms: ra, ...restA } = a;
+  const { rooms: rb, ...restB } = b;
+  if (json(restA) !== json(restB)) return "change the 3D labels";
+  const ids = [...new Set([...Object.keys(ra), ...Object.keys(rb)])].filter((id) => json(ra[id]) !== json(rb[id]));
+  if (ids.length !== 1) return "change the 3D labels";
+  const id = ids[0];
+  const name = Object.values(after.floorPlans).flatMap((f) => f.rooms).find((r) => r.id === id)?.name ?? "room";
+  const x = ra[id];
+  const y = rb[id];
+  if (!!x?.hidden !== !!y?.hidden) return y?.hidden ? `hide the ${name} label` : `show the ${name} label`;
+  if (x?.text !== y?.text) return `rename the ${name} label`;
+  return `move the ${name} label`;
 }
 
 function json(v: unknown): string {

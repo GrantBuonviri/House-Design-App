@@ -3,7 +3,7 @@
 import { DEFAULT_ROUND_ROOM_IN } from "@/lib/plan/shapes";
 import dynamic from "next/dynamic";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import type { FloorPlan, Level, PlanBasics, Point, Roof } from "@/lib/model/schema";
+import type { FloorPlan, Level, PlanBasics, Point, Roof, TopLabels } from "@/lib/model/schema";
 import { useProjectStore } from "@/lib/store/projectStore";
 import { diagramOf } from "@/lib/bubbles/edit";
 import { WINTER_RING, defaultLotOffset, houseCenter, landDrawing, lotCenter } from "@/lib/bubbles/land";
@@ -37,6 +37,7 @@ import { closeGap } from "@/lib/plan/overlaps";
 import { fillBelow, fillShapes, overhangsOf, pullBack, supportOf } from "@/lib/plan/support";
 import { copyableIds } from "@/lib/plan/arrange";
 import PlanSidePanel from "./PlanSidePanel";
+import { pruneTopLabels } from "@/lib/house3d/topLabels";
 import House3DPanel from "@/components/house3d/House3DPanel";
 import type { WallsShown } from "@/components/house3d/House3DView";
 import type { DoorMode } from "@/lib/house3d/doors";
@@ -211,6 +212,10 @@ export default function PlanStage({ onContinue, onGoToSketch }: { onContinue: ()
   );
   const setLevelPlan = useCallback((pl: FloorPlan, coalesce?: string) => setPlans((ps) => ({ ...ps, [level.id]: pl }), coalesce), [setPlans, level.id]);
   const setView = (patch: Partial<typeof project.plan>) => update((p) => ({ ...p, plan: { ...p.plan, ...patch } }));
+  const setTopLabels = (next: TopLabels) => {
+    const ids = new Set(Object.values(project.floorPlans).flatMap((f) => f.rooms.map((r) => r.id)));
+    update((p) => ({ ...p, house3d: { ...p.house3d, topLabels: pruneTopLabels(next, ids) } }));
+  };
   const setRoof = (patch: Partial<Roof>) => update((p) => ({ ...p, house3d: { ...p.house3d, roof: { ...p.house3d.roof, ...patch } } }));
 
   // Where the house sits on the lot in 3D. Kept as the same object while its value doesn't change.
@@ -281,6 +286,12 @@ export default function PlanStage({ onContinue, onGoToSketch }: { onContinue: ()
         setLevelPlan(moveMany(plan, movable.map((s) => s.id), nudge[0] * step, nudge[1] * step), "nudge");
         return;
       }
+      if (display !== "plan" && (e.key === "l" || e.key === "L")) {
+        e.preventDefault();
+        const t3 = project.house3d.topLabels;
+        setTopLabels({ ...t3, hideAll: !t3.hideAll });
+        return;
+      }
       if (display === "plan" && !locked) {
         if (e.key === "l" || e.key === "L") {
           e.preventDefault();
@@ -313,7 +324,7 @@ export default function PlanStage({ onContinue, onGoToSketch }: { onContinue: ()
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [choosing, editingBasics, comparing, basics, sel, plan, drafting, lotOn, setLevelPlan, display, editing3d, labels, tape, help]);
+  }, [choosing, editingBasics, comparing, basics, sel, plan, drafting, lotOn, setLevelPlan, display, editing3d, labels, tape, help, project.house3d.topLabels]);
 
   /** The sketch as a plan, plus hallways, closets, windows and doors from the built-in rules. */
   function suggest() {
@@ -548,6 +559,7 @@ export default function PlanStage({ onContinue, onGoToSketch }: { onContinue: ()
                 setSelection(s);
               }}
               onChange={(id, pl, coalesce) => setPlans((ps) => ({ ...ps, [id]: pl }), coalesce)}
+              onTopLabels={setTopLabels}
             />
             <p className="mt-2 text-xs text-muted">
               {editing3d

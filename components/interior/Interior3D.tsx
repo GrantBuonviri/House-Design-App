@@ -1,5 +1,6 @@
 "use client";
 
+import { useProjectStore } from "@/lib/store/projectStore";
 import { useMemo, useState } from "react";
 import dynamic from "next/dynamic";
 import type { Point, Project } from "@/lib/model/schema";
@@ -15,6 +16,7 @@ const House3DView = dynamic(() => import("@/components/house3d/House3DView"), {
 
 /** The house in 3D with the picked finishes, roof off, looking into the floor of the room being picked for. */
 export default function Interior3D({ project, roomId }: { project: Project; roomId: string | null }) {
+  const update = useProjectStore((s) => s.update);
   const levels = useMemo(() => [...project.levels].sort((a, b) => a.elevationIn - b.elevationIn), [project.levels]);
   const offsetKey = JSON.stringify(lotOffsetFor(project));
   const offset = useMemo<Point>(() => JSON.parse(offsetKey), [offsetKey]);
@@ -56,6 +58,7 @@ export default function Interior3D({ project, roomId }: { project: Project; room
         height={HEIGHT}
         onSelect={() => {}}
         onChange={() => {}}
+        onTopLabels={(topLabels) => update((p) => ({ ...p, house3d: { ...p.house3d, topLabels } }))}
       />
     </div>
   );

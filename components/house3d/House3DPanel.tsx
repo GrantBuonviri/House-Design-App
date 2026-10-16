@@ -71,7 +71,7 @@ export default function House3DPanel({
           ) : (
             <>
               Drag to turn the house, right-drag (or two-finger drag) to slide, scroll to zoom. Tilt all the way down, or press Top view, to see the{" "}
-              {levelName.toLowerCase()} from above with its room names. Press Edit to select and move things.
+              {levelName.toLowerCase()} from above with its room names. The ⚙ Labels button changes what they say, and L hides or shows them all. Press Edit to select and move things.
             </>
           )}
         </p>

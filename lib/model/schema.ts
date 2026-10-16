@@ -9,7 +9,7 @@ import { z } from "zod";
  * Angles are degrees clockwise from north (0 = N, 90 = E).
  */
 
-export const SCHEMA_VERSION = 22;
+export const SCHEMA_VERSION = 23;
 
 export const Point = z.object({ x: z.number(), y: z.number() });
 export type Point = z.infer<typeof Point>;
@@ -618,10 +618,32 @@ export const WalkLabels = z.object({
 });
 export type WalkLabels = z.infer<typeof WalkLabels>;
 
+/** One room's own choices for its label in the 3D Top view. */
+export const TopLabelRoom = z.object({
+  hidden: z.boolean().optional(),
+  /** Replaces the room name on the label only. */
+  text: z.string().max(60).optional(),
+  /** Inches in plan coordinates from the label's normal spot. */
+  offset: z.object({ x: z.number(), y: z.number() }).optional(),
+});
+export type TopLabelRoom = z.infer<typeof TopLabelRoom>;
+
+/** Room labels in the 3D Top view: the walkthrough's choices, with defaults matching the old look, plus per-room changes. */
+export const TopLabels = WalkLabels.extend({
+  size: z.boolean().default(false),
+  textSize: z.enum(["small", "medium", "large"]).default("small"),
+  textColor: z.enum(["dark", "light", "auto"]).default("dark"),
+  hideAll: z.boolean().default(false),
+  rooms: z.record(z.string(), TopLabelRoom).default({}),
+});
+export type TopLabels = z.infer<typeof TopLabels>;
+
 export const House3D = z.object({
   roof: Roof.prefault({}),
   /** Room labels on the floor in the walkthrough. */
   walkLabels: WalkLabels.prefault({}),
+  /** Room labels in the 3D Top view. */
+  topLabels: TopLabels.prefault({}),
 });
 export type House3D = z.infer<typeof House3D>;
 
