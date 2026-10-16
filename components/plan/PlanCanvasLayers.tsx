@@ -171,8 +171,17 @@ export function PlanWalls({ solids, selection, s, toSaved }: { solids: SolidWall
 }
 
 /** A room or walls being drawn: the dragged rectangle, or the corners clicked so far. */
-export function DraftPreview({ rectStart, rectEnd, draft, cursor, tool, typed, bow, s }: { rectStart: Point | null; rectEnd: Point | null; draft: Point[]; cursor: Point | null; tool: PlanTool; typed: string; bow?: { left: number; snap: BendSnap } | null; s: number }) {
+export function DraftPreview({ rectStart, rectEnd, draft, cursor, tool, typed, bow, s, round = false }: { rectStart: Point | null; rectEnd: Point | null; draft: Point[]; cursor: Point | null; tool: PlanTool; typed: string; bow?: { left: number; snap: BendSnap } | null; s: number; round?: boolean }) {
   if (tool === "curve" && draft.length === 2) return <CurvePreview a={draft[0]} b={draft[1]} left={bow?.left ?? 0} snap={bow?.snap ?? null} cursor={cursor} typed={typed} s={s} />;
+  if (round && rectStart && rectEnd) {
+    const r = dist(rectStart, rectEnd);
+    return (
+      <>
+        <Circle x={rectStart.x} y={rectStart.y} radius={r} fill="rgba(47,107,79,0.12)" stroke={ACCENT} strokeWidth={2} strokeScaleEnabled={false} dash={[6, 4]} listening={false} />
+        <Text x={rectStart.x} y={rectStart.y} width={160 / s} offsetX={80 / s} offsetY={6 / s} align="center" text={`${formatFeetInches(r * 2)} across`} fontSize={12 / s} fontStyle="600" fill={ACCENT} listening={false} />
+      </>
+    );
+  }
   return (
     <>
       {rectStart && rectEnd && (

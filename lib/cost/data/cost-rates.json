@@ -326,6 +326,24 @@
       "checked": "2026-10-14",
       "note": "2x4 @16 in, double top plate, headers at openings."
     },
+    "curved-wall-framing": {
+      "label": "Curved walls: extra framing",
+      "unit": "linft",
+      "material": [
+        2.5,
+        4.5,
+        9
+      ],
+      "labor": [
+        5.5,
+        10.5,
+        21
+      ],
+      "source": "Judgment: no published curved-wall price; extra on top of straight framing for kerfed or bent plates and layout (about 1.5x to 2.5x the straight labor), from HomeAdvisor wall-install baselines",
+      "url": "https://www.homeadvisor.com/cost/walls-and-ceilings/install-a-wall/",
+      "checked": "2026-10-16",
+      "note": "Extra cost per foot of curved wall along the curve, added to the straight-wall rates. Ballpark: confirm with local bids."
+    },
     "roof-framing": {
       "label": "Roof framing (trusses + sheathing)",
       "unit": "sqft",
@@ -703,6 +721,24 @@
       "url": "https://homeguide.com/costs/drywall-installation-cost",
       "checked": "2026-10-14",
       "note": "Per sqft of wall+ceiling surface. 1/2 in walls, 5/8 ceilings/garage firewall, Level 4, orange peel/knockdown typical in Boise. ~27/73 material/labor."
+    },
+    "curved-wall-drywall": {
+      "label": "Curved walls: extra drywall",
+      "unit": "linft",
+      "material": [
+        1.2,
+        2.4,
+        4.5
+      ],
+      "labor": [
+        2.8,
+        5.6,
+        10.5
+      ],
+      "source": "Judgment: no published curved-wall price; thin 1/4 in or 3/8 in flexible board, often two layers, plus slower labor, from HomeGuide drywall baselines",
+      "url": "https://homeguide.com/costs/drywall-installation-cost",
+      "checked": "2026-10-16",
+      "note": "Extra cost per foot of curved wall along the curve (both faces), added to the straight drywall rate. Ballpark: confirm with local bids."
     },
     "plumbing-fixture-rough": {
       "label": "Plumbing lines per fixture",

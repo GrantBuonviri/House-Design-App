@@ -15,6 +15,7 @@ import { levelCabinets } from "./cabinets";
 import { cabinetCorners } from "@/lib/plan/cabinets";
 import { DRAW_AREA } from "../frame";
 import { viewTitle } from "../view";
+import { curvedWalls, radiusLabel, arcLengthLabel, CURVED_FRAMING_NOTE } from "../curves";
 import { archFeet, capHeight, DASH, ellipse, heading, HEADING_H, line, lineHeight, POCHE, rect, SCALES, table, textBlock, textWidth, readable, type Item, type Weight } from "../draw";
 import type { Project } from "@/lib/model/schema";
 
@@ -345,6 +346,21 @@ function drawPlan(project: Project, level: Level, viewNumber: number, base: bool
     ppoly([add(c, { x: -aw / 2, y: -al / 2 }), add(c, { x: aw / 2, y: -al / 2 }), add(c, { x: aw / 2, y: al / 2 }), add(c, { x: -aw / 2, y: al / 2 })], "fine", undefined, DASH.hidden);
     items.push({ t: "text", at: T(add(c, { x: 0, y: al / 2 + 6 })), text: "ATTIC ACCESS ABOVE", size: 5, align: "center", valign: "top" });
     notes.push(`Attic access: ${aw}" x ${al}" clear opening at least, in ${attic.room.name} (${codeRef("attic.accessMinWidth")}).`);
+  }
+
+  // ---------- Curved walls: radius and arc length ----------
+  const curves = curvedWalls(project, level.id);
+  if (!base) {
+    for (const arc of curves) {
+      const half = arc.start + arc.sweep / 2;
+      // Inside the curve, a hand's width in from the wall.
+      const toward = { x: -Math.cos(half), y: -Math.sin(half) };
+      const at = add(add(arc.center, { x: Math.cos(half) * arc.radius, y: Math.sin(half) * arc.radius }), scale(toward, 14));
+      const c = T(at);
+      items.push({ t: "text", at: { x: c.x, y: c.y - 0.05 }, text: radiusLabel(arc), size: 5.5, bold: true, align: "center", valign: "middle" });
+      items.push({ t: "text", at: { x: c.x, y: c.y + 0.05 }, text: arcLengthLabel(arc), size: 5, align: "center", valign: "middle" });
+    }
+    if (curves.length) notes.push(`Curved walls show their radius (R) and length along the curve (ARC). ${CURVED_FRAMING_NOTE}`);
   }
 
   // ---------- Dimensions ----------

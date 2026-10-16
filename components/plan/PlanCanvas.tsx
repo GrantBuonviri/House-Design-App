@@ -10,6 +10,7 @@ import { trimOverlap } from "@/lib/plan/overlaps";
 import { bendInfo, bendWall, bowFromPoint, planRadii, snapBow, type BendSnap, type BendTarget } from "@/lib/plan/bend";
 import { DRAW_STEP_DEG, flatPlan, roomOutline, savedHost } from "@/lib/plan/flatten";
 import { leftBulge, pointOnEdge, projectOnEdge, roomEdgeLength } from "@/lib/plan/arcs";
+import { makeRoundRoom } from "@/lib/plan/shapes";
 import { addRoom, insertCorner, insertGluedCorner, makeRoom, moveEdge, moveMany, moveOpeningTo, newPlanId, removeCorner, setCornerGlued } from "@/lib/plan/edit";
 import { add, angleOf, boundsOf, dist, leftNormal, polygonArea, project, rectangle, round1, roundPoint, scale as scaleV, sub, unit } from "@/lib/plan/geometry";
 import { curvedOpeningGuides, distanceGuides, formatLength, labelOn, openingGuides, wallSegments, type Guide } from "@/lib/plan/labels";
@@ -78,6 +79,9 @@ type Props = {
   tool: PlanTool;
   /** The Room tool fills a space closed in by walls with a click, instead of drawing a new outline. */
   fillMode?: boolean;
+  /** The Room tool draws a round room: click for the typed diameter, or drag out from the middle. */
+  roomShape?: "box" | "round";
+  roundDiameter?: number;
   /** What the Doors and windows tool and the Fixtures tool place. */
   placeOpening: string;
   placeFixture: string;
@@ -107,7 +111,7 @@ type Props = {
 
 export default function PlanCanvas(props: Props) {
   const { plan, level, levels, basics, below, support, above, sketch, tool, placeOpening, placeFixture, selection, snap, labels, tape, sides, height, land, lotMode, onLotMove } = props;
-  const { onSelect, onChange, onToolDone, onDrafting, onMessage, fillMode = false } = props;
+  const { onSelect, onChange, onToolDone, onDrafting, onMessage, fillMode = false, roomShape = "box", roundDiameter = 144 } = props;
   // Option (Alt) held while finishing a wall keeps it a divider wall, even right across a room.
   const altDown = useRef(false);
   useEffect(() => {
@@ -382,6 +386,14 @@ export default function PlanCanvas(props: Props) {
     };
     onChange({ ...plan, stairs: [...plan.stairs, st] });
     onSelect([{ kind: "stairs", id: st.id }]);
+    onToolDone();
+  }
+
+  function finishRoundRoom(center: Point, diameter: number) {
+    if (diameter < MIN_ROOM_SIDE_IN * 2) return onMessage("Drag a bigger circle, at least 4 ft across.");
+    const room = makeRoundRoom(center, diameter);
+    onChange(addRoom(plan, room));
+    onSelect([{ kind: "room", id: room.id }]);
     onToolDone();
   }
 
@@ -747,7 +759,9 @@ export default function PlanCanvas(props: Props) {
     if (!g) return;
     const { preview: pv } = latest.current;
     if (g.type === "rect") {
-      if (g.moved && rectEnd) {
+      if (tool === "room" && roomShape === "round") {
+        finishRoundRoom(g.start, g.moved && rectEnd ? Math.round(dist(rectEnd, g.start) * 2) : roundDiameter);
+      } else if (g.moved && rectEnd) {
         const w = Math.abs(rectEnd.x - g.start.x);
         const h = Math.abs(rectEnd.y - g.start.y);
         if (w >= MIN_ROOM_SIDE_IN && h >= MIN_ROOM_SIDE_IN) finishRoom(rectangle((g.start.x + rectEnd.x) / 2, (g.start.y + rectEnd.y) / 2, w, h));
@@ -1013,7 +1027,7 @@ export default function PlanCanvas(props: Props) {
               ))}
             {dragCorner && preview && <NodeReadout plan={preview} roomId={dragCorner.roomId} i={dragCorner.i} s={s} />}
 
-            <DraftPreview rectStart={rectPreview} rectEnd={rectEnd} draft={draft} cursor={cursor} tool={tool} typed={typed} bow={bow} s={s} />
+            <DraftPreview rectStart={rectPreview} rectEnd={rectEnd} draft={draft} cursor={cursor} tool={tool} typed={typed} bow={bow} s={s} round={tool === "room" && roomShape === "round"} />
 
             {ghostOpening && <OpeningSymbol g={ghostOpening.g} thickness={ghostOpening.thickness} selected scale={s} ghost />}
             {ghostFixture && <FixtureSymbol f={ghostFixture} selected={false} scale={s} ghost />}

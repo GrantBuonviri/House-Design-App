@@ -2,6 +2,7 @@
 
 import ArrangeButtons from "./ArrangeButtons";
 import CurveFields from "./CurveFields";
+import { BayFields, RoundCornerFields } from "./ShapeFields";
 import { useEffect, useRef, useState } from "react";
 import { WINDOW_OPERATIONS, type WindowOperation } from "@/lib/model/schema";
 import { defaultOperation, operationOf, OPERATION_HINT, OPERATION_LABEL } from "@/lib/codes/openings";
@@ -39,6 +40,11 @@ type Props = {
   /** The Room tool fills a space closed in by walls, instead of drawing an outline. */
   fillMode?: boolean;
   onFillMode?: (on: boolean) => void;
+  /** The Room tool draws a rectangle or any shape ("box"), or a round room ("round") of this diameter when you just click. */
+  roomShape?: "box" | "round";
+  onRoomShape?: (s: "box" | "round") => void;
+  roundDiameter?: number;
+  onRoundDiameter?: (v: number) => void;
   placeOpening: string;
   placeFixture: string;
   onPlaceOpening: (id: string) => void;
@@ -95,10 +101,29 @@ export default function PlanSidePanel(props: Props) {
           value={props.fillMode ? "fill" : "draw"}
           onPick={(id) => props.onFillMode?.(id === "fill")}
         />
+        {!props.fillMode && props.onRoomShape && (
+          <div className="mt-2">
+            <Choices
+              items={[
+                { id: "box", label: "Box or any shape" },
+                { id: "round", label: "Round room" },
+              ]}
+              value={props.roomShape ?? "box"}
+              onPick={(id) => props.onRoomShape?.(id as "box" | "round")}
+            />
+            {props.roomShape === "round" && props.onRoundDiameter && (
+              <div className="mt-2">
+                <LengthField label="Diameter" value={props.roundDiameter ?? 144} onCommit={props.onRoundDiameter} />
+              </div>
+            )}
+          </div>
+        )}
         <p className="field-hint mt-2">
           {props.fillMode
             ? "Draw the walls first with the Wall tool, then click inside the space they close in. It becomes a room shaped to those walls."
-            : "Drag a rectangle, or click corner by corner for any shape."}
+            : props.roomShape === "round"
+              ? "Click where the middle of the room goes, or drag out from the middle to set the size. It is four curved walls, so you can reshape it like any room."
+              : "Drag a rectangle, or click corner by corner for any shape."}
         </p>
       </Panel>
     );
@@ -212,6 +237,8 @@ export default function PlanSidePanel(props: Props) {
           corner, or the diamond to bend the wall into a curve; double-click a corner (or pick it and press Delete) to take it away.
         </p>
 
+        <RoundCornerFields plan={plan} roomId={room.id} onChange={onChange} />
+
         <OverhangField room={room} overhang={props.overhangs?.find((o) => o.roomId === room.id)} onSet={(v) => set({ overhang: v === "none" ? undefined : v }, "overhang")} />
 
         <TurnButtons onTurn={(deg) => onChange(rotateMany(plan, [room.id], deg, polygonCenter(room.polygon)))} />
@@ -241,6 +268,7 @@ export default function PlanSidePanel(props: Props) {
         <LengthField label="Length" value={seg.length} onCommit={(v) => onChange(setEdgeLength(plan, roomId, edge, v))} />
         <p className="field-hint">The far end moves; drag the wall on the drawing to push it in or out.</p>
         <CurveFields plan={plan} target={{ roomId, edge }} onChange={onChange} />
+        <BayFields plan={plan} roomId={roomId} edge={edge} onChange={onChange} />
         <div className="mt-4 grid grid-cols-2 gap-2">
           <button className="btn text-sm" onClick={() => addHere("door-hinged")}>
             Add a door

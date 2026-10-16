@@ -264,12 +264,17 @@ export function flatPlans(plans: Plans, stepDeg = FLAT_STEP_DEG): Plans {
 }
 
 const projectCache = new WeakMap<object, object>();
+const savedOf = new WeakMap<object, Project["floorPlans"]>();
+
+/** The floor plans as saved (curves and all), given plans that `flatProject` flattened. Anything else comes back as it is. */
+export const savedPlans = (floorPlans: Project["floorPlans"]): Project["floorPlans"] => savedOf.get(floorPlans) ?? floorPlans;
 
 /** The project with its floor plans flattened, for the PDF sheets, code checks and cost. The same object when nothing is curved. */
 export function flatProject<P extends Pick<Project, "floorPlans">>(project: P): P {
   const hit = projectCache.get(project);
   if (hit) return hit as P;
   const floorPlans = flatPlans(project.floorPlans);
+  if (floorPlans !== project.floorPlans) savedOf.set(floorPlans, project.floorPlans);
   const result = floorPlans === project.floorPlans ? project : { ...project, floorPlans };
   projectCache.set(project, result);
   return result;

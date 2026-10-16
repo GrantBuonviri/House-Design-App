@@ -155,6 +155,7 @@ export function estimate(
   line("framing", "floor-framing", q.floorFramingSqft);
   line("framing", "ext-wall-framing", q.extWallSqft + q.gableSqft);
   line("framing", "int-wall-framing", q.intWallLf);
+  line("framing", "curved-wall-framing", q.curvedWallLf, "Curved walls: extra framing");
   line("framing", "roof-framing", q.roofSqft);
   line("framing", "stairs", q.stairs);
   line("framing", "deck", q.deckSqft);
@@ -186,6 +187,7 @@ export function estimate(
   line("insulation-drywall", "wall-insulation", q.extWallSqft + q.basementWallSqft * 0.5);
   line("insulation-drywall", "attic-insulation", q.atticSqft);
   line("insulation-drywall", "drywall", q.drywallSqft);
+  line("insulation-drywall", "curved-wall-drywall", q.curvedWallLf, "Curved walls: extra drywall");
 
   // Plumbing
   line("plumbing", "plumbing-fixture-rough", q.plumbingFixtures);

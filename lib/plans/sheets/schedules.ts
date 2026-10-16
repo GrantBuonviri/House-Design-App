@@ -15,6 +15,7 @@ import { inchText, isSleeping } from "@/lib/codes/rules";
 import { DRAW_AREA } from "../frame";
 import { archFeet, capHeight, heading, HEADING_H, table, textBlock, type Item } from "../draw";
 import { houseFacts, type HouseFacts } from "../house";
+import { curveBehind, doorWindowOnCurve, radiusLabel } from "../curves";
 
 /**
  * The schedules: doors and windows (A-601), room finishes (I-601), and
@@ -123,6 +124,7 @@ export function doorWindowRows(project: Project): { doors: string[][]; windows: 
       const where = sideOf(plan, o);
       const size = `${archFeet(o.widthIn)} x ${archFeet(o.heightIn)}`;
       const safety = h.safety.get(o.id);
+      const curved = curveBehind(project, level.id, o.id);
       if (o.kind === "door") {
         const t = openingType(o.style);
         let product: Product | undefined;
@@ -150,7 +152,7 @@ export function doorWindowRows(project: Project): { doors: string[][]; windows: 
         const swing = t.swings ? (t.double ? "Pair, hinged" : "Hinged") : o.style === "door-garage" ? "Overhead" : o.style === "door-pocket" ? "Pocket" : o.style === "door-barn" ? "Barn slider" : "Sliding";
         doors.push({
           tag,
-          row: [tag, level.name, rooms.join(" / "), t.label, size, swing, construction, safety ? "Tempered" : "", [rating, energy].filter(Boolean).join("; "), productText(product)],
+          row: [tag, level.name, rooms.join(" / "), t.label, size, swing, curved ? `${construction}. Set in a curved wall (${radiusLabel(curved)})` : construction, safety ? "Tempered" : "", [rating, energy].filter(Boolean).join("; "), productText(product)],
         });
       } else if (o.kind === "window") {
         const op = operationOf(o);
@@ -164,6 +166,7 @@ export function doorWindowRows(project: Project): { doors: string[][]; windows: 
         const esc = escapeCheck(o, basement);
         const escape = bedroom || basement ? (esc.ok ? "Yes, meets" : `Too small: ${esc.problems[0] ?? ""}`) : "";
         const notes: string[] = [];
+        if (curved) notes.push(`Set in a curved wall (${radiusLabel(curved)})`);
         if (safety) notes.push(`Tempered: ${safety.join("; ")}`);
         if (!basement && level.kind !== "main" && level.elevationIn + sill > fall && sill < fallSill) notes.push(`Opening limit device or sill at ${inchText(fallSill)} (${codeRef("windowFall.minSillHeight")})`);
         windows.push({
@@ -201,6 +204,9 @@ export function doorWindowSheets(project: Project): Item[][] {
     `Window sills less than ${inchText(codeNum("windowFall.minSillHeight"))} above the floor and more than ${inchText(codeNum("windowFall.heightAboveGrade"))} above the ground outside need an opening limit device (${codeRef("windowFall.minSillHeight")}).`,
     `At least one outside door: ${inchText(codeNum("exit.doorClearWidth"))} clear wide and ${inchText(codeNum("exit.doorClearHeight"))} clear high, side-hinged (${codeRef("exit.doorClearWidth")}).`,
     "Flash every outside door and window (IRC R703.4). Install to the maker's instructions.",
+    ...(project.levels.some((l) => doorWindowOnCurve(project, l.id))
+      ? ["Units marked as set in a curved wall are flat: each sits on the chord of the curve and the framer cuts the wall around it. Frames and trim are not bent."]
+      : []),
   ];
   return flowTables(
     "Door and window schedules",

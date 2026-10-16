@@ -1,5 +1,6 @@
 "use client";
 
+import { DEFAULT_ROUND_ROOM_IN } from "@/lib/plan/shapes";
 import dynamic from "next/dynamic";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import type { FloorPlan, Level, PlanBasics, Point, Roof } from "@/lib/model/schema";
@@ -76,6 +77,8 @@ export default function PlanStage({ onContinue, onGoToSketch }: { onContinue: ()
   const [placeOpening, setPlaceOpening] = useState("door-hinged");
   const [placeFixture, setPlaceFixture] = useState("counter");
   const [fillMode, setFillMode] = useState(false);
+  const [roomShape, setRoomShape] = useState<"box" | "round">("box");
+  const [roundDiameter, setRoundDiameter] = useState(DEFAULT_ROUND_ROOM_IN);
   const [lotMode, setLotMode] = useState(false);
   const [tape, setTape] = useState(false);
   const [menu, setMenu] = useState<ContextAt | null>(null);
@@ -618,6 +621,8 @@ export default function PlanStage({ onContinue, onGoToSketch }: { onContinue: ()
               sketch={showSketch && sketch.bubbles.length ? sketch : null}
               tool={tool}
               fillMode={fillMode}
+              roomShape={roomShape}
+              roundDiameter={roundDiameter}
               placeOpening={placeOpening}
               placeFixture={placeFixture}
               selection={sel}
@@ -667,6 +672,10 @@ export default function PlanStage({ onContinue, onGoToSketch }: { onContinue: ()
               tool={tool}
               fillMode={fillMode}
               onFillMode={setFillMode}
+              roomShape={roomShape}
+              onRoomShape={setRoomShape}
+              roundDiameter={roundDiameter}
+              onRoundDiameter={setRoundDiameter}
               placeOpening={placeOpening}
               placeFixture={placeFixture}
               onPlaceOpening={setPlaceOpening}
