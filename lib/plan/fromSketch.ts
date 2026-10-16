@@ -4,7 +4,9 @@ import { roomType } from "@/lib/brief/rooms";
 import { exteriorWallIn, levelAbove, levelBelow, riseBetween } from "./basics";
 import { freeSpot, newOpening, sharedWall } from "./connect";
 import { emptyPlan, type Plans } from "./edit";
-import { add, boundsOf, clockwise, dist, dot, leftNormal, polygonArea, rectangle, rotate, roundPoint, sub, unit } from "./geometry";
+import { largestInside, supportOf, tooBigNote } from "./support";
+import { regionArea, subtractRegions, type Region } from "@/lib/house3d/footprint";
+import { add, boundsOf, type Bounds, clockwise, pointInPolygon, dist, dot, leftNormal, polygonArea, rectangle, rotate, roundPoint, sub, unit } from "./geometry";
 import { DEFAULT_STAIRS_WIDTH_IN, stairsDrawing } from "./stairs";
 import { wallPieces } from "./walls";
 
@@ -15,7 +17,8 @@ import { wallPieces } from "./walls";
  * together toward the middle of the floor until they touch, so neighbors
  * share walls, and edges that nearly line up are lined up. Rooms connected in
  * the sketch get a door where they share a wall. The stairs stay put on every
- * floor, and rooms make way for them.
+ * floor, and rooms make way for them. An upper floor is laid out inside the
+ * floor below it, so nothing hangs in the air.
  */
 
 export type PlanContext = { brief: DesignBrief | null; plot: Plot | null; levels: Level[]; basics: PlanBasics | null };
@@ -24,9 +27,11 @@ export type FromSketchResult = {
   plans: Plans;
   /** Connected rooms that ended up not sharing a wall: they'll need a hallway. */
   needHall: { levelId: string; a: string; b: string }[];
+  /** Floors that needed more room than the floor below holds, so their rooms were made smaller. */
+  notes: string[];
 };
 
-type Rect = { id: string; x0: number; y0: number; x1: number; y1: number; fixed: boolean; poly?: Point[] };
+export type Rect = { id: string; x0: number; y0: number; x1: number; y1: number; fixed: boolean; poly?: Point[] };
 
 /** Sizes are rounded to whole half-feet. */
 const STEP_IN = 6;
@@ -154,7 +159,7 @@ export function resolveOverlaps(rects: Rect[], rounds = 400): void {
  * Slide every room toward the middle of the floor, across then down, until it
  * reaches the middle or touches another room. Nearest rooms go first.
  */
-export function compact(rects: Rect[], center: Point, rounds = 60): void {
+export function compact(rects: Rect[], center: Point, rounds = 60, box?: Bounds): void {
   for (let k = 0; k < rounds; k++) {
     let total = 0;
     const order = rects.filter((r) => !r.fixed).sort((a, b) => Math.hypot(cx(a) - center.x, cy(a) - center.y) - Math.hypot(cx(b) - center.x, cy(b) - center.y));
@@ -164,6 +169,8 @@ export function compact(rects: Rect[], center: Point, rounds = 60): void {
         if (Math.abs(want) < 0.5) continue;
         const dir = Math.sign(want);
         let travel = Math.abs(want);
+        // Inside the box, when there is one.
+        if (box) travel = Math.min(travel, axis === "x" ? (dir > 0 ? box.x1 - r.x1 : r.x0 - box.x0) : dir > 0 ? box.y1 - r.y1 : r.y0 - box.y0);
         for (const o of rects) {
           if (o === r) continue;
           if (axis === "x") {
@@ -257,6 +264,122 @@ function rectArea(r: Rect) {
   return (r.x1 - r.x0) * (r.y1 - r.y0);
 }
 
+/** Upper floor rooms take up at most this share of the floor below, leaving room to shuffle them in. */
+const FIT_SHARE = 0.95;
+
+function scaleRect(r: Rect, k: number) {
+  const c = { x: cx(r), y: cy(r) };
+  const w = (r.x1 - r.x0) * k;
+  const h = (r.y1 - r.y0) * k;
+  Object.assign(r, { x0: c.x - w / 2, x1: c.x + w / 2, y0: c.y - h / 2, y1: c.y + h / 2 });
+  if (r.poly) r.poly = r.poly.map((p) => ({ x: c.x + (p.x - c.x) * k, y: c.y + (p.y - c.y) * k }));
+}
+
+/** Move a room inside a box, trimming it to the box if it's wider or taller. */
+function clampInto(r: Rect, box: Bounds) {
+  if (r.x1 - r.x0 > box.x1 - box.x0) Object.assign(r, { x0: box.x0, x1: box.x1 });
+  if (r.y1 - r.y0 > box.y1 - box.y0) Object.assign(r, { y0: box.y0, y1: box.y1 });
+  shift(r, Math.max(0, box.x0 - r.x0) - Math.max(0, r.x1 - box.x1), Math.max(0, box.y0 - r.y0) - Math.max(0, r.y1 - box.y1));
+}
+
+const outside = (r: Rect, box: Bounds) => r.x0 < box.x0 - 0.5 || r.y0 < box.y0 - 0.5 || r.x1 > box.x1 + 0.5 || r.y1 > box.y1 + 0.5;
+
+/** An area cut into boxes along the lines of its own corners (exact for straight walls that run east-west and north-south). */
+function boxesOf(regions: Region[]): Bounds[] {
+  const pts = regions.flatMap((r) => [r.outline, ...r.holes]).flat();
+  const xs = [...new Set(pts.map((p) => Math.round(p.x)))].sort((a, b) => a - b);
+  const ys = [...new Set(pts.map((p) => Math.round(p.y)))].sort((a, b) => a - b);
+  const inside = (p: Point) => regions.some((r) => pointInPolygon(p, r.outline) && !r.holes.some((h) => pointInPolygon(p, h)));
+  // Each row's runs of cells that are in the area, then runs that repeat on the next row are joined.
+  let open: Bounds[] = [];
+  const out: Bounds[] = [];
+  for (let j = 0; j + 1 < ys.length; j++) {
+    const runs: Bounds[] = [];
+    for (let i = 0; i + 1 < xs.length; i++) {
+      if (!inside({ x: (xs[i] + xs[i + 1]) / 2, y: (ys[j] + ys[j + 1]) / 2 })) continue;
+      const last = runs[runs.length - 1];
+      if (last && last.x1 === xs[i]) last.x1 = xs[i + 1];
+      else runs.push({ x0: xs[i], x1: xs[i + 1], y0: ys[j], y1: ys[j + 1] });
+    }
+    const next: Bounds[] = [];
+    for (const r of runs) {
+      const same = open.find((o) => o.x0 === r.x0 && o.x1 === r.x1);
+      if (same) {
+        same.y1 = r.y1;
+        next.push(same);
+      } else next.push(r);
+    }
+    out.push(...open.filter((o) => !next.includes(o)));
+    open = next;
+  }
+  return [...out, ...open].filter((b) => (b.x1 - b.x0) * (b.y1 - b.y0) > 144);
+}
+
+const fits = (r: Rect, box: Bounds, others: Rect[]) => !outside(r, box) && !others.some((o) => o !== r && overlapX(r, o) > 0.5 && overlapY(r, o) > 0.5);
+
+/** The top-left corner nearest where a room is now that puts it inside the box, clear of the others, against a wall or another room. */
+function nearestSpot(r: Rect, box: Bounds, others: Rect[]): Point | null {
+  const w = r.x1 - r.x0;
+  const h = r.y1 - r.y0;
+  const xs = [box.x0, box.x1 - w, ...others.flatMap((o) => [o.x1, o.x0 - w])].filter((x) => x >= box.x0 - 0.5 && x + w <= box.x1 + 0.5);
+  const ys = [box.y0, box.y1 - h, ...others.flatMap((o) => [o.y1, o.y0 - h])].filter((y) => y >= box.y0 - 0.5 && y + h <= box.y1 + 0.5);
+  let best: Point | null = null;
+  let bestD = Infinity;
+  for (const x of xs) {
+    for (const y of ys) {
+      const d = Math.hypot(x - r.x0, y - r.y0);
+      if (d >= bestD) continue;
+      const at = { ...r, x0: x, y0: y, x1: x + w, y1: y + h, poly: undefined };
+      if (fits(at, box, others)) {
+        best = { x, y };
+        bestD = d;
+      }
+    }
+  }
+  return best;
+}
+
+/**
+ * Shuffle an upper floor's rooms inside the floor below. Rooms are shrunk
+ * when they need more room than the floor below holds (the returned share is
+ * how much was asked for, over what's there). The parts of the floor below's
+ * bounding box that aren't floor (the notch of an L) hold rooms off like the
+ * stairs do. Anything still past the edge is cut off when the rooms are made.
+ */
+export function fitInside(rects: Rect[], regions: Region[]): { needSqIn: number; haveSqIn: number } {
+  const box = boundsOf(regions.flatMap((r) => r.outline))!;
+  const haveSqIn = regions.reduce((t, r) => t + regionArea(r), 0);
+  const movable = rects.filter((r) => !r.fixed);
+  const needSqIn = rects.reduce((t, r) => t + rectArea(r), 0);
+  const fixedSqIn = needSqIn - movable.reduce((t, r) => t + rectArea(r), 0);
+  if (needSqIn > haveSqIn * FIT_SHARE) {
+    const k = Math.sqrt(Math.max(0.1, (haveSqIn * FIT_SHARE - fixedSqIn) / Math.max(1, needSqIn - fixedSqIn)));
+    for (const r of movable) scaleRect(r, k);
+  }
+  const boxRegion: Region = { outline: rectangle((box.x0 + box.x1) / 2, (box.y0 + box.y1) / 2, box.x1 - box.x0, box.y1 - box.y0), holes: [] };
+  const notches = boxesOf(subtractRegions([boxRegion], regions)).map((b, i): Rect => ({ id: `notch-${i}`, ...b, fixed: true }));
+  const all = [...rects, ...notches];
+  for (const r of movable) clampInto(r, box);
+  // Biggest rooms first: each stays where it is if it fits, or moves to the nearest spot that does.
+  const placed = all.filter((r) => r.fixed);
+  for (const r of [...movable].sort((x, y) => rectArea(y) - rectArea(x))) {
+    for (let tries = 0; tries < 6 && !fits(r, box, placed); tries++) {
+      const spot = nearestSpot(r, box, placed);
+      if (spot) shift(r, spot.x - r.x0, spot.y - r.y0);
+      else scaleRect(r, 0.9);
+    }
+    placed.push(r);
+  }
+  // Pull the rooms back together around the stairs (or the middle of the floor below), staying clear of the notches.
+  const stairs = rects.filter((r) => r.fixed);
+  const c = stairs.length
+    ? { x: stairs.reduce((t, r) => t + cx(r), 0) / stairs.length, y: stairs.reduce((t, r) => t + cy(r), 0) / stairs.length }
+    : { x: (box.x0 + box.x1) / 2, y: (box.y0 + box.y1) / 2 };
+  compact(all, c, 30, box);
+  closeGaps(all, 36);
+  return { needSqIn, haveSqIn };
+}
+
 /** Where the stairs go on each level, from the sketch's stairs bubbles. */
 function stairsFor(diagrams: Record<string, BubbleDiagram>, ctx: PlanContext): Record<string, PlanStairs> {
   const out: Record<string, PlanStairs> = {};
@@ -322,10 +445,12 @@ export function outsideDoor(plan: FloorPlan, room: PlanRoom | undefined, facing:
 export function plansFromSketch(diagrams: Record<string, BubbleDiagram>, ctx: PlanContext): FromSketchResult {
   const plans: Plans = {};
   const needHall: FromSketchResult["needHall"] = [];
+  const notes: string[] = [];
   const stairs = stairsFor(diagrams, ctx);
   const exteriorIn = exteriorWallIn(ctx.basics);
 
-  for (const level of ctx.levels) {
+  // From the bottom up, so each floor's rooms can be fit on the floor below.
+  for (const level of [...ctx.levels].sort((a, b) => a.elevationIn - b.elevationIn)) {
     const d = diagrams[level.id];
     const plan = emptyPlan();
     const below = levelBelow(ctx.levels, level);
@@ -358,12 +483,19 @@ export function plansFromSketch(diagrams: Record<string, BubbleDiagram>, ctx: Pl
       alignEdges(rects);
       resolveOverlaps(rects);
       compact(rects, center, 10);
+      const support = supportOf(plans, ctx.levels, level);
+      if (support) {
+        const fit = fitInside(rects, support.regions);
+        if (fit.needSqIn > fit.haveSqIn) notes.push(tooBigNote(level, support.below, fit.needSqIn / 144, fit.haveSqIn / 144));
+      }
       closeGaps(rects);
 
       const byBubble = new Map(rects.map((r) => [r.id, r]));
       for (const b of bubbles) {
         const r = byBubble.get(b.id)!;
-        const polygon = (r.poly ?? rectangle(cx(r), cy(r), r.x1 - r.x0, r.y1 - r.y0)).map(roundPoint);
+        let polygon = (r.poly ?? rectangle(cx(r), cy(r), r.x1 - r.x0, r.y1 - r.y0)).map(roundPoint);
+        // Whatever still reaches past the floor below is cut off.
+        if (support) polygon = (largestInside(polygon, support.regions) ?? polygon).map(roundPoint);
         const type = ctx.brief?.rooms.find((x) => x.id === b.roomId)?.type;
         plan.rooms.push({
           id: `p-${b.id}`,
@@ -407,5 +539,5 @@ export function plansFromSketch(diagrams: Record<string, BubbleDiagram>, ctx: Pl
     }
     plans[level.id] = plan;
   }
-  return { plans, needHall };
+  return { plans, needHall, notes };
 }

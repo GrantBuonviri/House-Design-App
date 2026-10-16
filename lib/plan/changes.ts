@@ -1,6 +1,7 @@
-import type { FloorPlan, Opening, PlanRoom, Point } from "@/lib/model/schema";
+import type { FloorPlan, Level, Opening, PlanRoom, Point } from "@/lib/model/schema";
 import { roomType } from "@/lib/brief/rooms";
-import { exteriorWallIn } from "./basics";
+import { exteriorWallIn, levelAbove } from "./basics";
+import { hangingArea } from "./support";
 import { OUTSIDE, addDoor, freeSpot, newOpening, openingRooms, reachable, roomLinks, sharedWall } from "./connect";
 import { keepOpeningsInPlace, planOf, type Plans } from "./edit";
 import { outsideDoor, type PlanContext } from "./fromSketch";
@@ -14,7 +15,8 @@ import { openingGeometry } from "./walls";
  * them: push a wall, swap two rooms, add or take away a door, open
  * up a wall, add a window, flip the house. Code applies each one and checks
  * the result (no rooms on top of each other, every room still reachable,
- * sensible sizes); a change that fails a check is skipped.
+ * sensible sizes, and no more of an upper floor hanging past the floor below);
+ * a change that fails a check is skipped.
  */
 
 export const CHANGE_OPS = ["grow", "shrink", "swap", "door", "no_door", "open_up", "window", "mirror"] as const;
@@ -415,6 +417,12 @@ export function applyChange(plan: FloorPlan, c: PlanChange, ctx: { exteriorIn: n
 
 // ---------- A list of changes ----------
 
+/** Whether a change leaves more of this floor, or the floor above, hanging past the floor below it (by over a square foot). */
+function hangsMore(before: Plans, after: Plans, levels: Level[], level: Level): boolean {
+  const above = levelAbove(levels, level);
+  return [level, ...(above ? [above] : [])].some((l) => hangingArea(after, levels, l) > hangingArea(before, levels, l) + 144);
+}
+
 export type Applied = { plans: Plans; applied: PlanChange[]; changed: string[]; mirrored: boolean };
 
 /** Apply changes in order, skipping any that don't work. Rooms are found on whichever floor they're on. */
@@ -439,7 +447,9 @@ export function applyChanges(plans: Plans, changes: PlanChange[], ctx: PlanConte
     const seeds = (p: FloorPlan) => wayInRooms(p, stairsBoxes({ ...out, [levelId]: p }, ctx, level));
     const res = applyChange(planOf(out, levelId), c, { exteriorIn, seeds });
     if (!res) continue;
-    out = { ...out, [levelId]: res.plan };
+    const next = { ...out, [levelId]: res.plan };
+    if (hangsMore(out, next, ctx.levels, level)) continue;
+    out = next;
     applied.push(c);
     for (const id of res.rooms) changed.add(id);
   }

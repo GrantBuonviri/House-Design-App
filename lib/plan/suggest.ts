@@ -9,6 +9,7 @@ import { addHallways, addStairHalls, roomsNeedingHall } from "./hallways";
 import { connectAll } from "./doors";
 import { addClosets } from "./closets";
 import { addWindows } from "./windows";
+import { keepInside, supportOf } from "./support";
 export { HALL_IN, addHallways, addStairHalls, isWayIn, roomsNeedingHall } from "./hallways";
 export { connectAll, wayInRooms } from "./doors";
 export { addClosets } from "./closets";
@@ -55,7 +56,8 @@ export function suggestPlans(diagrams: Record<string, BubbleDiagram>, ctx: PlanC
   let closets = 0;
   let windows = 0;
   const stuck: string[] = [];
-  for (const level of ctx.levels) {
+  // From the bottom up, so hallways that push upper rooms out can be pulled back over the finished floor below.
+  for (const level of [...ctx.levels].sort((a, b) => a.elevationIn - b.elevationIn)) {
     let plan = base.plans[level.id] ?? emptyPlan();
     if (plan.rooms.length) {
       const obstacles = stairsBoxes(base.plans, ctx, level);
@@ -63,7 +65,10 @@ export function suggestPlans(diagrams: Record<string, BubbleDiagram>, ctx: PlanC
       stairHalls += sh.added;
       const h = addHallways(sh.plan, obstacles);
       halls += h.added;
-      plan = connectAll(h.plan, obstacles, ctx.brief?.openKitchen ?? false);
+      plan = h.plan;
+      const support = supportOf(plans, ctx.levels, level);
+      if (support) plan = keepInside(plan, support.regions).plan;
+      plan = connectAll(plan, obstacles, ctx.brief?.openKitchen ?? false);
       const c = addClosets(plan, exteriorIn, ctx.brief);
       closets += c.added;
       const w = addWindows(c.plan, level);
@@ -84,6 +89,7 @@ export function suggestPlans(diagrams: Record<string, BubbleDiagram>, ctx: PlanC
   const notes = [
     `Added ${count(halls + stairHalls, "hallway", "hallways")}${stairHalls ? ` (${stairHalls === 1 ? "one" : stairHalls} around the stairs)` : ""}, ${count(closets, "closet", "closets")} and ${count(windows, "window", "windows")}, with doors so every room can be reached.`,
   ];
+  notes.push(...base.notes);
   if (stuck.length) notes.push(`${stuck.join("; ")}. Push rooms around, or draw a hallway with the Room tool, if you'd rather they had their own way in.`);
   return { plans, notes };
 }

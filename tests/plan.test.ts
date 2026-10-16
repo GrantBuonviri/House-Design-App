@@ -25,7 +25,8 @@ import {
   updateOpening,
 } from "@/lib/plan/edit";
 import { sharedWall } from "@/lib/plan/connect";
-import { alignEdges, compact, plansFromSketch, resolveOverlaps, straightenOutline } from "@/lib/plan/fromSketch";
+import { alignEdges, compact, fitInside, plansFromSketch, resolveOverlaps, straightenOutline } from "@/lib/plan/fromSketch";
+import { overhangsOf, supportOf } from "@/lib/plan/support";
 import { collinearOverlap, dist, edgesOf, isRectangle, polygonArea, polygonsOverlap, rectangle, signedArea, subtractIntervals } from "@/lib/plan/geometry";
 import { houseTotals, planTotals, roomSqft } from "@/lib/plan/measure";
 import { snapAngles, snapMove, snapNode, snapPoint, snapPush, snapTargets } from "@/lib/plan/snap";
@@ -374,6 +375,60 @@ describe("turning the flow sketch into a plan", () => {
       Math.min(a.x1, b.x1) - Math.max(a.x0, b.x0) >= -0.5 &&
       Math.min(a.y1, b.y1) - Math.max(a.y0, b.y0) >= -0.5;
     expect(rects.every((r) => rects.some((o) => o !== r && touching(r, o)))).toBe(true);
+  });
+
+  it("lays out the upper floor on top of the floor below", () => {
+    const { brief, levels, diagrams } = sample(2);
+    // The sketch spreads the upstairs bubbles wider than the main floor.
+    const { plans, notes } = plansFromSketch(diagrams, { brief, plot: flat, levels, basics: defaultBasics() });
+    const upper = levels.find((l) => l.id === "floor-2")!;
+    const support = supportOf(plans, levels, upper)!;
+    expect(support.below.id).toBe("floor-1");
+    expect(plans["floor-2"].rooms).toHaveLength(diagrams["floor-2"].bubbles.filter((b) => !b.stairs).length);
+    expect(overhangsOf(plans["floor-2"].rooms, support.regions)).toEqual([]);
+    expect(notes).toEqual([]);
+    const up = plans["floor-2"].rooms;
+    for (let i = 0; i < up.length; i++) for (let j = i + 1; j < up.length; j++) expect(polygonsOverlap(up[i].polygon, up[j].polygon)).toBe(false);
+  });
+
+  it("makes an upper floor's rooms smaller when they need more room than the floor below, and says so", () => {
+    const bubble = (id: string, x: number, y: number, ft: number) => ({ id, label: id, shape: "circle" as const, x, y, rx: (ft * FT) / 2, ry: (ft * FT) / 2, rotation: 0 });
+    const levels = levelsFor(2, 0);
+    const diagrams = {
+      "floor-1": { ...emptyDiagram(), bubbles: [bubble("Kitchen", 0, 0, 16)] },
+      "floor-2": { ...emptyDiagram(), bubbles: [bubble("Bed A", -150, 0, 14), bubble("Bed B", 150, 0, 14), bubble("Bath", 0, 150, 10)] },
+    };
+    const { plans, notes } = plansFromSketch(diagrams, { brief: null, plot: null, levels, basics: null });
+    const support = supportOf(plans, levels, levels[1])!;
+    expect(notes).toHaveLength(1);
+    expect(notes[0]).toMatch(/^The second floor needs [\d,]+ sq ft but the main floor is \d+ sq ft/);
+    expect(notes[0]).toMatch(/Hangs over the floor below/);
+    expect(plans["floor-2"].rooms).toHaveLength(3);
+    expect(overhangsOf(plans["floor-2"].rooms, support.regions)).toEqual([]);
+    const up = plans["floor-2"].rooms;
+    for (let i = 0; i < up.length; i++) for (let j = i + 1; j < up.length; j++) expect(polygonsOverlap(up[i].polygon, up[j].polygon)).toBe(false);
+  });
+
+  it("moves rooms out of the notch of an L-shaped floor below", () => {
+    // An L: 30 ft by 30 ft with the top right 15 ft by 15 ft missing.
+    const L = [
+      { x: 0, y: 0 },
+      { x: 180, y: 0 },
+      { x: 180, y: 180 },
+      { x: 360, y: 180 },
+      { x: 360, y: 360 },
+      { x: 0, y: 360 },
+    ];
+    const rects = [
+      { id: "in-notch", x0: 220, y0: 20, x1: 340, y1: 140, fixed: false },
+      { id: "sticks-out", x0: -60, y0: 200, x1: 100, y1: 320, fixed: false },
+    ];
+    fitInside(rects, [{ outline: L, holes: [] }]);
+    const regions = [{ outline: L, holes: [] }];
+    const rooms = rects.map((r) => ({ ...makeRoom(rectangle((r.x0 + r.x1) / 2, (r.y0 + r.y1) / 2, r.x1 - r.x0, r.y1 - r.y0), r.id), id: r.id }));
+    expect(overhangsOf(rooms, regions)).toEqual([]);
+    // Neither was shrunk: they fit.
+    for (const r of rects) expect(r.x1 - r.x0).toBe(120 + (r.id === "sticks-out" ? 40 : 0));
   });
 
   it("lines up edges that nearly line up, without squashing rooms", () => {
