@@ -236,6 +236,7 @@ export function floorFramingSheet(project: Project, levelId: string): StructShee
     d.tag(lerp(g.a, g.b, 0.5), g.pick ? `${g.pick.size.replace(/^(\d)-/, "($1) ")} GIRDER` : `GIRDER: ${ENGINEER}`, 6, true, Math.abs(g.a.x - g.b.x) < 1 ? 90 : 0);
     for (const p of g.piers) d.poly([add(p.at, { x: -4, y: -4 }), add(p.at, { x: 4, y: -4 }), add(p.at, { x: 4, y: 4 }), add(p.at, { x: -4, y: 4 })], "fine", "#000000");
   }
+  for (const c of fr.cantilevers) d.tag(c.at, `CANTILEVER ${ft(c.depthIn).toUpperCase()}: ${c.pick.size} @ ${c.pick.spacing}"`, 5.5);
   for (const p of fr.unsupported) engineerBubble(d, p);
   for (const e of fr.engineer) if (e.at && !fr.unsupported.includes(e.at)) engineerBubble(d, e.at);
 
@@ -263,6 +264,15 @@ export function floorFramingSheet(project: Project, levelId: string): StructShee
         { title: "Jacks", width: 0.6 },
       ],
       fr.girders.map((g) => [g.pick ? g.pick.size.replace(/^(\d)-/, "($1) ") : ENGINEER, `${g.condition === "two-floors" ? "Floor and wall above" : "Floor"}, ${ft(g.widthIn)} wide`, ft(dist(g.a, g.b)), ft(g.bayIn), g.pick ? String(g.pick.jacks) : "-"]),
+    );
+  }
+  if (fr.cantilevers.length) {
+    col.heading("Cantilevers");
+    col.notes(
+      fr.cantilevers.map(
+        (c) =>
+          `${c.name}: joists ${c.pick.size} at ${c.pick.spacing}" on center run out ${ft(c.depthIn)} past the wall below (allowed ${c.pick.allowIn}" for a ${c.pick.roofWidthFt} ft roof width, ${codeRef("struct.cantilevers")}). Back span inside at least 3 times the cantilever (${ft(c.backspanIn)} here), full-depth rim joist at the end, solid blocking and an uplift connection at the wall below.`,
+      ),
     );
   }
   if (fr.engineer.length) {

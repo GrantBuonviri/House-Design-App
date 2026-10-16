@@ -175,3 +175,35 @@ export function portalMin(storiesAbove: number): number {
   const t = (codeEntry("struct.panelMinLength").value as unknown as { PFH: { oneStory: number; twoStory: number } }).PFH;
   return storiesAbove > 0 ? t.twoStory : t.oneStory;
 }
+
+// ---------- Floor cantilevers ----------
+
+export type CantileverPick = { size: JoistSize; spacing: JoistSpacing; allowIn: number; roofWidthFt: number };
+
+/** What the app tries for a cantilever, cheapest first. */
+const CANTILEVER_OPTIONS: [JoistSize, JoistSpacing][] = [
+  ["2x8", 12],
+  ["2x10", 16],
+  ["2x12", 16],
+  ["2x10", 12],
+  ["2x12", 12],
+];
+const SNOW_COLUMNS = [20, 30, 50, 70];
+const ROOF_WIDTHS = [24, 32, 40];
+
+/**
+ * The cheapest joist that can reach `depthIn` past the wall below, holding
+ * up only an outside wall and roof (IRC Table R502.3.3(1)). The roof width
+ * and ground snow load round up to the next column. Null past the table.
+ */
+export function pickCantilever(depthIn: number, roofWidthIn: number, groundSnowPsf: number): CantileverPick | null {
+  const snow = SNOW_COLUMNS.find((s) => groundSnowPsf <= s);
+  const width = ROOF_WIDTHS.find((w) => roofWidthIn / 12 <= w + 1e-6);
+  if (snow === undefined || width === undefined) return null;
+  const t = table<Table<Table<number | null>>>("struct.cantilevers");
+  for (const [size, spacing] of CANTILEVER_OPTIONS) {
+    const allowIn = t[`${size}@${spacing}`]?.[String(snow)]?.[String(width)];
+    if (typeof allowIn === "number" && allowIn >= depthIn) return { size, spacing, allowIn, roofWidthFt: width };
+  }
+  return null;
+}

@@ -1,9 +1,9 @@
 import polygonClipping, { type Polygon } from "polygon-clipping";
-import type { FloorPlan, Level, PlanRoom, Point } from "@/lib/model/schema";
-import { cleanRing, roofFootprint, subtractRegions, type Region } from "@/lib/house3d/footprint";
+import type { FloorPlan, Level, OverhangKind, PlanRoom, Point } from "@/lib/model/schema";
+import { cleanRing, COVERED, roofFootprint, subtractRegions, type Region } from "@/lib/house3d/footprint";
 import { levelBelow } from "./basics";
 import { planOf, makeRoom, reshapeRoom, type Plans } from "./edit";
-import { clockwise, dist, edgesOf, polygonArea, polygonCenter } from "./geometry";
+import { clockwise, dist, edgesOf, lerp, polygonArea, polygonCenter } from "./geometry";
 import { areaKind } from "./measure";
 import type { SnapTargets } from "./snap";
 
@@ -39,7 +39,29 @@ export type Overhang = {
   depthIn: number;
   /** The middle of the biggest piece, to look at. */
   at: Point;
+  /** How the room says it's held up. */
+  kind: OverhangKind;
+  /** Held up on purpose (a short cantilever within 2', posts, or engineered), so no warning. */
+  ok: boolean;
 };
+
+/** A short cantilever can reach this far past the wall below (inches) before it needs posts or an engineer. */
+export const CANTILEVER_MAX_IN = 24;
+
+export const OVERHANG_LABEL: Record<OverhangKind, string> = {
+  none: "No",
+  cantilever: "Short cantilever (up to 2')",
+  posts: "On posts",
+  engineered: "Engineered (beam or truss)",
+};
+
+export const overhangOf = (room: Pick<PlanRoom, "overhang">): OverhangKind => room.overhang ?? "none";
+
+/** Whether a room held up this way, reaching this far, is fine as drawn. */
+export function overhangOk(kind: OverhangKind, depthIn: number): boolean {
+  if (kind === "posts" || kind === "engineered") return true;
+  return kind === "cantilever" && depthIn <= CANTILEVER_MAX_IN;
+}
 
 function distToSegment(p: Point, a: Point, b: Point): number {
   const dx = b.x - a.x;
@@ -80,7 +102,9 @@ export function overhangsOf(rooms: PlanRoom[], regions: Region[]): Overhang[] {
     }
     if (!pieces.length) continue;
     const biggest = pieces.reduce((a, b) => (polygonArea(b) > polygonArea(a) ? b : a));
-    out.push({ roomId: room.id, pieces, depthIn: Math.round(depthIn), at: polygonCenter(biggest) });
+    const kind = overhangOf(room);
+    const depth = Math.round(depthIn);
+    out.push({ roomId: room.id, pieces, depthIn: depth, at: polygonCenter(biggest), kind, ok: overhangOk(kind, depth) });
   }
   return out;
 }
@@ -133,3 +157,53 @@ export function supportTargets(regions: Region[]): SnapTargets {
 }
 
 export const mergeTargets = (a: SnapTargets, b: SnapTargets | null): SnapTargets => (b ? { points: [...a.points, ...b.points], segments: [...a.segments, ...b.segments] } : a);
+
+/** Posts this far apart at most (inches) under the beam of a room "On posts". */
+export const POST_SPACING_IN = 96;
+
+/** The edges of an overhang piece that are its outer edges (not along the wall below). */
+export function outerEdges(piece: Point[], regions: Region[]): [Point, Point][] {
+  return edgesOf(piece)
+    .filter((e) => dist(e.a, e.b) > 6 && distToOutline(lerp(e.a, e.b, 0.5), regions) > MIN_OVERHANG_IN)
+    .map((e): [Point, Point] => [e.a, e.b]);
+}
+
+/** Posts and beams under a room held up "On posts": a beam along each outer edge, posts at its ends and every 8' between. */
+export function postsUnder(o: Pick<Overhang, "pieces">, regions: Region[]): { posts: Point[]; beams: [Point, Point][] } {
+  const posts: Point[] = [];
+  const beams: [Point, Point][] = [];
+  const addPost = (p: Point) => {
+    if (!posts.some((q) => dist(p, q) < 6)) posts.push(p);
+  };
+  for (const piece of o.pieces) {
+    for (const [a, b] of outerEdges(piece, regions)) {
+      beams.push([a, b]);
+      const n = Math.max(1, Math.ceil(dist(a, b) / POST_SPACING_IN - 1e-6));
+      // An end on the wall below already has the wall under it.
+      for (let i = 0; i <= n; i++) {
+        const p = lerp(a, b, i / n);
+        if (distToOutline(p, regions) > MIN_OVERHANG_IN) addPost(p);
+      }
+    }
+  }
+  return { posts, beams };
+}
+
+/** Rooms on this floor that sit over a covered porch or patio on the floor below, with that porch's name. */
+export function overPorches(rooms: PlanRoom[], below: FloorPlan): { roomId: string; porch: PlanRoom }[] {
+  const porches = below.rooms.filter((r) => areaKind(r) === "outdoor" && COVERED.has(r.type ?? "") && r.polygon.length >= 3);
+  const out: { roomId: string; porch: PlanRoom }[] = [];
+  for (const room of rooms) {
+    if (areaKind(room) === "outdoor" || room.polygon.length < 3) continue;
+    for (const porch of porches) {
+      let area = 0;
+      try {
+        area = polygonClipping.intersection([ring(room.polygon)], [ring(porch.polygon)]).reduce((t, poly) => t + polygonArea(fromRing(poly[0])), 0);
+      } catch {
+        continue;
+      }
+      if (area >= 144) out.push({ roomId: room.id, porch });
+    }
+  }
+  return out;
+}

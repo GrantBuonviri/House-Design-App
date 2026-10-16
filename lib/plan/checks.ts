@@ -11,7 +11,7 @@ import { areaKind, roomSqft } from "./measure";
 import { MIN_STAIRS_WIDTH_IN } from "./stairs";
 import { findGaps, type Gap } from "./overlaps";
 import { isWayIn, stairsBoxes, wayInRooms } from "./suggest";
-import { overhangsOf, pulledBack, supportOf } from "./support";
+import { CANTILEVER_MAX_IN, overhangsOf, pulledBack, supportOf } from "./support";
 
 /**
  * Friendly checks on a floor plan: rooms you can't get into, bedrooms without
@@ -86,8 +86,11 @@ export function planWarnings(plans: Plans, ctx: Ctx): PlanWarning[] {
     const support = supportOf(plans, levels, level);
     if (support) {
       for (const o of overhangsOf(plan.rooms, support.regions)) {
+        if (o.ok) continue;
         const r = byId.get(o.roomId)!;
-        add_(level.id, `overhang:${r.id}`, `${r.name} hangs ${formatFeetInches(o.depthIn)} past the outside wall of the ${support.below.name.toLowerCase()}. Nothing holds it up.`, [r], o.at);
+        const past = `${r.name} hangs ${formatFeetInches(o.depthIn)} past the outside wall of the ${support.below.name.toLowerCase()}.`;
+        const why = o.kind === "cantilever" ? ` That's more than a short cantilever's ${formatFeetInches(CANTILEVER_MAX_IN)}: set it to On posts or Engineered, or pull it back.` : " Nothing holds it up.";
+        add_(level.id, `overhang:${r.id}`, past + why, [r], o.at);
         if (pulledBack(r, support.regions)) out[out.length - 1].pullBack = { roomId: r.id };
       }
     }

@@ -62,6 +62,14 @@ describe("migrateProject", () => {
     expect(migrateProject({ ...v17, plot: v17Flat }).plot).toEqual(flat);
   });
 
+  it("gives every room on a version 18 plan no overhang", () => {
+    const p = createProject("Old rooms");
+    const v18 = { ...p, schemaVersion: 18, floorPlans: { "floor-1": { rooms: [{ id: "r", name: "Room", polygon: [{ x: 0, y: 0 }, { x: 100, y: 0 }, { x: 100, y: 100 }] }], walls: [], openings: [], stairs: [], fixtures: [], furniture: [] } } };
+    const migrated = migrateProject(JSON.parse(JSON.stringify(v18)));
+    expect(migrated.schemaVersion).toBe(SCHEMA_VERSION);
+    expect(migrated.floorPlans["floor-1"].rooms[0].overhang).toBe("none");
+  });
+
   it("round-trips a custom plot", () => {
     const plot = buildCustomPlot({
       ...newCustomLand("Creek lot"),

@@ -32,7 +32,7 @@ import KeyboardHelp from "./KeyboardHelp";
 import { duplicateAndSelect } from "./ArrangeButtons";
 import { levelAbove } from "@/lib/plan/basics";
 import { closeGap } from "@/lib/plan/overlaps";
-import { fillBelow, fillShapes, pullBack, supportOf } from "@/lib/plan/support";
+import { fillBelow, fillShapes, overhangsOf, pullBack, supportOf } from "@/lib/plan/support";
 import { copyableIds } from "@/lib/plan/arrange";
 import PlanSidePanel from "./PlanSidePanel";
 import House3DPanel from "@/components/house3d/House3DPanel";
@@ -123,6 +123,7 @@ export default function PlanStage({ onContinue, onGoToSketch }: { onContinue: ()
   const aboveLevel = levelAbove(levels, level);
   const above = useMemo(() => (aboveLevel && aboveLevel.kind !== "main" && aboveLevel.kind !== "basement" && plans[aboveLevel.id]?.rooms.length ? { name: aboveLevel.name, plan: plans[aboveLevel.id] } : null), [aboveLevel, plans]);
   const canFill = sup ? fillShapes(plan, sup.regions).length > 0 : false;
+  const overhangs = useMemo(() => (sup ? overhangsOf(plan.rooms, sup.regions) : []), [sup, plan.rooms]);
   const sketch = diagramOf(sketches, level.id);
   const sketchHasRooms = Object.values(sketches).some((d) => d.bubbles.some((b) => !b.stairs));
 
@@ -552,6 +553,7 @@ export default function PlanStage({ onContinue, onGoToSketch }: { onContinue: ()
             {sel.length > 0 && (
               <PlanSidePanel
                 plan={plan}
+                overhangs={overhangs}
                 level={level}
                 levels={levels}
                 brief={brief}
@@ -655,6 +657,7 @@ export default function PlanStage({ onContinue, onGoToSketch }: { onContinue: ()
           <div className="space-y-3">
             <PlanSidePanel
               plan={plan}
+              overhangs={overhangs}
               level={level}
               levels={levels}
               brief={brief}

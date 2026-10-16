@@ -65,7 +65,7 @@ export function structureOf(project: Project): Structure {
     const plan = h.plan(level.id);
     const regions = framedRegions(plan);
     if (!regions.length) continue;
-    framing.set(level.id, frameFloor({ level, plan, over: "floor", regions, openings: openingsOn(level), below: h.plan(above[i - 1].id), exteriorIn: h.exteriorIn, structure: settings }));
+    framing.set(level.id, frameFloor({ level, plan, over: "floor", regions, openings: openingsOn(level), below: h.plan(above[i - 1].id), exteriorIn: h.exteriorIn, structure: settings, floorAbove: i < above.length - 1 && framedRegions(h.plan(above[i + 1].id)).length > 0 }));
   }
   // The main floor over a crawlspace or basement.
   const mainPlan = h.plan(main.id);

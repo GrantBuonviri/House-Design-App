@@ -96,6 +96,20 @@ describe("measuring the house", () => {
     expect(q.slabSqft).toBeCloseTo(1200, 0);
   });
 
+  it("adds posts, footings and a beam under a room held up on posts", () => {
+    const levels = levelsFor(2, 0);
+    const plans = (overhang?: PlanRoom["overhang"]) => ({ "floor-1": plan([room("a", 0, 0, 30 * FT, 20 * FT)]), "floor-2": plan([{ ...room("b", 0, 0, 20 * FT, 26 * FT), overhang }]) });
+    const q = measurePlan(project(plans("posts"), { levels }))!;
+    // A 20' beam along the outer edge plus the two 6' sides, posts at the corners and every 8'.
+    expect(q.overhangBeamLf).toBeCloseTo(32, 0);
+    expect(q.overhangPosts).toBe(4);
+    const e = estimate(project(plans("posts"), { levels }))!;
+    expect(line(e, "overhang-post")[0].cost.likely).toBeGreaterThan(0);
+    expect(line(e, "overhang-beam")[0].cost.likely).toBeGreaterThan(0);
+    expect(measurePlan(project(plans(), { levels }))!.overhangPosts).toBe(0);
+    expect(line(estimate(project(plans(), { levels }))!, "overhang-post")).toEqual([]);
+  });
+
   it("frames the upper floor and roofs only the top", () => {
     const levels = levelsFor(2, 0);
     const q = measurePlan(project({ "floor-1": plan([room("a", 0, 0, 40 * FT, 30 * FT)]), "floor-2": plan([room("b", 0, 0, 40 * FT, 30 * FT)]) }, { levels }))!;

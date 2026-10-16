@@ -74,6 +74,8 @@ export const RATE_IDS = [
   "roof-framing",
   "stairs",
   "deck",
+  "overhang-post",
+  "overhang-beam",
   "roof-shingle",
   "roof-flat",
   "roof-hip-valley",

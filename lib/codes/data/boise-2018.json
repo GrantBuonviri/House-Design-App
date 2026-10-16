@@ -5303,6 +5303,131 @@
         "verdict": "agree",
         "source": "https://seattle.gov/documents/Departments/SDCI/Codes/SeattleResidentialCode/2018SRCChapter6.pdf"
       }
+    },
+    "struct.cantilevers": {
+      "value": {
+        "2x8@12": {
+          "20": {
+            "24": 20,
+            "32": 15,
+            "40": null
+          },
+          "30": {
+            "24": 18,
+            "32": null,
+            "40": null
+          },
+          "50": {
+            "24": null,
+            "32": null,
+            "40": null
+          },
+          "70": {
+            "24": null,
+            "32": null,
+            "40": null
+          }
+        },
+        "2x10@16": {
+          "20": {
+            "24": 29,
+            "32": 21,
+            "40": 16
+          },
+          "30": {
+            "24": 26,
+            "32": 18,
+            "40": null
+          },
+          "50": {
+            "24": 20,
+            "32": null,
+            "40": null
+          },
+          "70": {
+            "24": null,
+            "32": null,
+            "40": null
+          }
+        },
+        "2x10@12": {
+          "20": {
+            "24": 36,
+            "32": 26,
+            "40": 20
+          },
+          "30": {
+            "24": 34,
+            "32": 22,
+            "40": 16
+          },
+          "50": {
+            "24": 26,
+            "32": null,
+            "40": null
+          },
+          "70": {
+            "24": 19,
+            "32": null,
+            "40": null
+          }
+        },
+        "2x12@16": {
+          "20": {
+            "24": null,
+            "32": 32,
+            "40": 25
+          },
+          "30": {
+            "24": 36,
+            "32": 29,
+            "40": 21
+          },
+          "50": {
+            "24": 29,
+            "32": 20,
+            "40": null
+          },
+          "70": {
+            "24": 23,
+            "32": null,
+            "40": null
+          }
+        },
+        "2x12@12": {
+          "20": {
+            "24": null,
+            "32": 42,
+            "40": 31
+          },
+          "30": {
+            "24": null,
+            "32": 37,
+            "40": 27
+          },
+          "50": {
+            "24": 36,
+            "32": 27,
+            "40": 17
+          },
+          "70": {
+            "24": 31,
+            "32": 19,
+            "40": null
+          }
+        }
+      },
+      "unit": "in",
+      "code": "IRC 2018",
+      "section": "Table R502.3.3(1)",
+      "amendment": null,
+      "source": "https://www.seattle.gov/documents/departments/sdci/codes/seattleresidentialcode/2015srcchapter5.pdf",
+      "checked": "2026-10-16",
+      "note": "Most a floor joist can reach past the wall below when it holds up only a light-frame exterior wall and roof. Rows: joist size @ spacing (in); then ground snow load (psf, 20 means 20 or less); then roof width (ft). Null means the table doesn't allow it. Backspan at least 3 times the cantilever; uplift connection at the backspan support. Taken from Seattle's printing of the 2015 table, which matches the 2018 IRC table as far as could be checked.",
+      "secondCheck": {
+        "verdict": "could-not-confirm",
+        "source": null
+      }
     }
   }
 }

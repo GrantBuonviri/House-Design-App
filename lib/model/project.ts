@@ -62,6 +62,9 @@ export function migrateProject(raw: unknown): Project {
   // Version 17 to 18 added custom land: every older plot is a made-up one,
   // with no rocks, trees, extra roads, lanes or ground shapes.
   if (version < 18) migrated = migrateV17(migrated);
+  // Version 18 to 19 added how a room hanging past the floor below is held up
+  // ("none" by default, so it's still a warning).
+  if (version < 19) migrated = migrateV18(migrated);
   return Project.parse({ ...migrated, schemaVersion: SCHEMA_VERSION });
 }
 
@@ -151,4 +154,15 @@ function migrateV17(data: Raw): Raw {
     ...data,
     plot: { source: "made-up", custom: null, features: [], roads: [], lanes: [], ground: [], rolls: "gentle", ...(plot as Raw) },
   };
+}
+
+/** Version 18 to 19: every room gets "none" for how it hangs over the floor below. */
+function migrateV18(data: Raw): Raw {
+  const plans = data.floorPlans;
+  if (!plans || typeof plans !== "object") return data;
+  const withOverhang = (v: unknown) => {
+    if (!v || typeof v !== "object" || !Array.isArray((v as Raw).rooms)) return v;
+    return { ...(v as Raw), rooms: ((v as Raw).rooms as unknown[]).map((r) => (r && typeof r === "object" ? { overhang: "none", ...(r as Raw) } : r)) };
+  };
+  return { ...data, floorPlans: Object.fromEntries(Object.entries(plans as Raw).map(([k, v]) => [k, withOverhang(v)])) };
 }

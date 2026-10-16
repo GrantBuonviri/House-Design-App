@@ -380,6 +380,42 @@
       "checked": "2026-10-14",
       "note": "Includes footings, framing, decking and a simple railing."
     },
+    "overhang-post": {
+      "label": "Post and footing under a room on posts",
+      "unit": "each",
+      "material": [
+        180,
+        260,
+        380
+      ],
+      "labor": [
+        220,
+        320,
+        450
+      ],
+      "source": "Judgment based on a 6x6 treated post, post base and cap, and a 24 in square pier footing at Boise ready-mix pricing plus labor",
+      "url": null,
+      "checked": "2026-10-16",
+      "note": "Each post with its footing, below the frost line (24 in in Ada County)."
+    },
+    "overhang-beam": {
+      "label": "Beam under a room on posts",
+      "unit": "linft",
+      "material": [
+        18,
+        26,
+        38
+      ],
+      "labor": [
+        10,
+        15,
+        22
+      ],
+      "source": "Judgment based on built-up 2x12 or 3.5x11.25 LVL beam pricing at Boise lumber yards plus framing labor",
+      "url": null,
+      "checked": "2026-10-16",
+      "note": "For a room on an upper floor held up by posts and a beam. An engineer sizes the real beam."
+    },
     "roof-shingle": {
       "label": "Architectural asphalt shingle roof",
       "unit": "sqft",
