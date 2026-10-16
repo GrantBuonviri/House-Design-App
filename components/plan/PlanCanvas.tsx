@@ -15,7 +15,7 @@ import { bendInfo, bendWall, bowFromPoint, planRadii, snapBow, type BendSnap, ty
 import { DRAW_STEP_DEG, flatPlan, roomOutline, savedHost } from "@/lib/plan/flatten";
 import { leftBulge, pointOnEdge, projectOnEdge, roomEdgeLength } from "@/lib/plan/arcs";
 import { makeRoundRoom } from "@/lib/plan/shapes";
-import { addRoom, emptyPlan, insertCorner, insertGluedCorner, makeRoom, moveEdge, moveMany, moveOpeningTo, newPlanId, removeCorner, setCornerGlued, type Plans } from "@/lib/plan/edit";
+import { addRoom, emptyPlan, insertGluedCorner, makeRoom, moveEdge, moveMany, moveOpeningTo, newPlanId, removeCorner, setCornerGlued, type Plans } from "@/lib/plan/edit";
 import { railingsOn, type Railing, type RailingSlot } from "@/lib/plan/railings";
 import { add, boundsOf, dist, polygonArea, polygonsOverlap, project, rectangle, round1, roundPoint, scale as scaleV, sub, unit } from "@/lib/plan/geometry";
 import { curvedOpeningGuides, distanceGuides, formatLength, labelOn, openingGuides, wallSegments, type Guide } from "@/lib/plan/labels";
@@ -307,6 +307,12 @@ export default function PlanCanvas(props: Props) {
   const single = selection.length === 1 ? selection[0] : null;
   const selRoom = single?.kind === "room" && tool === "select" ? shown.rooms.find((r) => r.id === single.id) : undefined;
   const selRoomId = selRoom?.id;
+  // The room whose corner dots show: the picked room, and still that room while one of its walls is picked (so a second double-click can add a corner).
+  const [reveal, setReveal] = useState<string | null>(null);
+  useEffect(() => {
+    setReveal((r) => (single?.kind === "room" && tool === "select" ? single.id : single?.kind === "edge" && tool === "select" && parseEdgeId(single.id).roomId === r ? r : null));
+  }, [single, tool]);
+  const nodeRoom = selRoom ?? (single?.kind === "edge" && reveal && parseEdgeId(single.id).roomId === reveal ? shown.rooms.find((r) => r.id === reveal) : undefined);
   // The diamonds: every side of a picked room, the picked side of a room, or a picked wall.
   const bendTargets: BendTarget[] = useMemo(() => {
     if (!single) return [];
@@ -886,18 +892,21 @@ export default function PlanCanvas(props: Props) {
     const stage = e.target.getStage()!;
     const el = elementOf(e.target === stage ? null : e.target);
     if (!el || el.bend) return;
-    if (el.corner !== undefined) {
-      const room = plan.rooms.find((r) => r.id === el.id);
-      if (room && room.polygon.length > 3) onChange(removeCorner(plan, el.id, el.corner));
-      return;
-    }
+    // A corner dot does nothing here (Delete or the right-click menu removes it).
+    if (el.corner !== undefined) return;
     if (el.kind === "edge") {
       const { roomId, edge } = parseEdgeId(el.id);
       const room = plan.rooms.find((r) => r.id === roomId);
       if (!room) return;
+      // The first double-click only shows the room's corner dots; a second one, while they show, adds a corner.
+      if (reveal !== roomId) {
+        setReveal(roomId);
+        onSelect([{ kind: "room", id: roomId }]);
+        return;
+      }
       const a = room.polygon[edge];
       const b = room.polygon[(edge + 1) % room.polygon.length];
-      onChange(insertCorner(plan, roomId, edge, projectOnEdge(world(), a, b, leftBulge(room, edge)).point));
+      onChange(insertGluedCorner(plan, roomId, edge, projectOnEdge(world(), a, b, leftBulge(room, edge)).point).plan);
       onSelect([{ kind: "room", id: roomId }]);
     }
   }
@@ -1067,7 +1076,7 @@ export default function PlanCanvas(props: Props) {
             {tape && tapePts.length > 0 && <TapeLine a={tapePts[0]} b={tapePts[1] ?? tapeEnd} labels={labels} s={s} />}
 
             {/* "+" nodes in the middle of each edge, and corner dots, on the selected room. */}
-            {selRoom && !dragCorner && <MidNodes room={selRoom} s={s} />}
+            {nodeRoom && !dragCorner && <MidNodes room={nodeRoom} s={s} />}
             {furnish?.here && (
               <Group x={furnish.here.p.x} y={furnish.here.p.y} listening={false} name="you-are-here">
                 <Line points={[0, 0, (furnish.here.dir.x * 26) / s, (furnish.here.dir.y * 26) / s]} stroke="#2f7fd1" strokeWidth={4} strokeScaleEnabled={false} lineCap="round" />
@@ -1077,16 +1086,16 @@ export default function PlanCanvas(props: Props) {
             )}
             {tool === "select" && !dragCorner && !lotMode && <BendHandles targets={bendTargets} plan={shown} s={s} />}
             {bendTip && <BendTip at={bendTip.at} text={bendTip.text} s={s} />}
-            {selRoom &&
-              selRoom.polygon.map((p, i) => (
+            {nodeRoom &&
+              nodeRoom.polygon.map((p, i) => (
                 <Circle
                   key={i}
-                  id={edgeId(selRoom.id, i)}
+                  id={edgeId(nodeRoom.id, i)}
                   name="corner"
                   x={p.x}
                   y={p.y}
                   radius={5.5 / s}
-                  fill={selCorner?.roomId === selRoom.id && selCorner.i === i ? ACCENT : "#fff"}
+                  fill={selCorner?.roomId === nodeRoom.id && selCorner.i === i ? ACCENT : "#fff"}
                   stroke={ACCENT}
                   strokeWidth={2}
                   strokeScaleEnabled={false}

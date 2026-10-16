@@ -103,6 +103,11 @@ export function rotateMany(plan: FloorPlan, ids: string[], deg: number, about: P
   });
 }
 
+/** Of these ids, the rooms, loose walls and stairs: what the Turn items in the right-click menu can turn. */
+export function turnableIds(plan: FloorPlan, ids: string[]): string[] {
+  return ids.filter((id) => plan.rooms.some((r) => r.id === id) || plan.walls.some((w) => w.id === id) || plan.stairs.some((st) => st.id === id));
+}
+
 /** The middle of everything with these ids, for turning them together. */
 export function centerOfMany(plan: FloorPlan, ids: string[]): Point {
   const pts: Point[] = [];

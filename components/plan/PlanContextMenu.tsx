@@ -1,9 +1,9 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { FloorPlan } from "@/lib/model/schema";
 import { mirrorMany, copyableIds } from "@/lib/plan/arrange";
-import { removeMany, insertCorner, removeCorner } from "@/lib/plan/edit";
+import { removeMany, insertCorner, removeCorner, rotateMany, centerOfMany, turnableIds } from "@/lib/plan/edit";
 import { project } from "@/lib/plan/geometry";
 import { removeWall, restoreWall, combineRooms, whyNotCombine, whyWallStays, edgeWalls, roomsAlong } from "@/lib/plan/openWalls";
 import { updateOpening } from "@/lib/plan/edit";
@@ -13,7 +13,7 @@ import { parseEdgeId, type PlanItem, type PlanSelection } from "./types";
 import type { Point } from "@/lib/model/schema";
 
 export type ContextAt = { x: number; y: number; el: (PlanItem & { corner?: number }) | null; at: Point };
-type Item = { label: string; run: () => void; danger?: boolean; disabled?: string | boolean } | "line";
+type Item = { label: string; run: () => void; danger?: boolean; disabled?: string | boolean; ask?: (deg: number) => void } | "line";
 
 /** The right-click menu: the side panel's main actions for whatever was clicked. */
 export function contextItems(
@@ -32,6 +32,17 @@ export function contextItems(
         { label: "Duplicate  ⌘D", run: () => duplicateAndSelect(plan, copies, act.change, act.select) },
         { label: "Flip left-right", run: () => act.change(mirrorMany(plan, copies, "left-right")) },
         { label: "Flip top-bottom", run: () => act.change(mirrorMany(plan, copies, "top-bottom")) },
+      ]
+    : [];
+  const turnIds = turnableIds(plan, ids);
+  const turn = (deg: number) => act.change(rotateMany(plan, turnIds, deg, centerOfMany(plan, turnIds)));
+  const turning: Item[] = turnIds.length
+    ? [
+        { label: "Turn 90° right", run: () => turn(90) },
+        { label: "Turn 90° left", run: () => turn(-90) },
+        { label: "Turn 15° right", run: () => turn(15) },
+        { label: "Turn 15° left", run: () => turn(-15) },
+        { label: "Turn by an angle...", run: () => {}, ask: turn },
       ]
     : [];
   const remove = (label: string, rm: string[]): Item => ({ label, danger: true, run: () => (act.change(removeMany(plan, rm)), act.select([])) });
@@ -68,7 +79,7 @@ export function contextItems(
   }
   if (el.kind === "room") {
     const others = plan.rooms.filter((r) => r.id !== el.id && !whyNotCombine(plan, [el.id, r.id])).slice(0, 6);
-    const items: Item[] = [...arrange];
+    const items: Item[] = [...arrange, ...(turning.length ? (["line", ...turning] as Item[]) : [])];
     if (ids.length > 1 && ids.every((id) => plan.rooms.some((r) => r.id === id))) {
       const why = whyNotCombine(plan, ids);
       items.push({ label: "Combine into one room", disabled: why ?? false, run: () => { const out = combineRooms(plan, ids); if (out) { act.change(out.plan); act.select([{ kind: "room", id: out.keptId }]); } } });
@@ -86,11 +97,14 @@ export function contextItems(
     return items;
   }
   const noun = el.kind === "wall" ? "wall" : el.kind === "stairs" ? "stairs" : "fixture";
-  return [...arrange, ...(arrange.length ? (["line"] as Item[]) : []), remove(ids.length > 1 ? `Delete ${ids.length} things` : `Delete ${noun}`, ids.length ? ids : [el.id])];
+  const turnGroup: Item[] = el.kind === "fixture" ? [] : turning;
+  return [...arrange, ...(arrange.length ? (["line"] as Item[]) : []), ...turnGroup, ...(turnGroup.length ? (["line"] as Item[]) : []), remove(ids.length > 1 ? `Delete ${ids.length} things` : `Delete ${noun}`, ids.length ? ids : [el.id])];
 }
 
 export default function PlanContextMenu({ at, items, onClose }: { at: { x: number; y: number }; items: Item[]; onClose: () => void }) {
   const ref = useRef<HTMLDivElement>(null);
+  const [asking, setAsking] = useState<number | null>(null);
+  const [typed, setTyped] = useState("");
   useEffect(() => {
     const away = (e: Event) => {
       if (!ref.current?.contains(e.target as Node)) onClose();
@@ -115,6 +129,20 @@ export default function PlanContextMenu({ at, items, onClose }: { at: { x: numbe
       {items.map((it, i) =>
         it === "line" ? (
           <hr key={i} className="my-1 border-line" />
+        ) : it.ask && asking === i ? (
+          <form
+            key={i}
+            className="flex items-center gap-1 px-3 py-1"
+            onSubmit={(e) => {
+              e.preventDefault();
+              const deg = Number(typed.replace("°", "").trim());
+              if (typed.trim() && Number.isFinite(deg) && deg !== 0) it.ask!(deg);
+              onClose();
+            }}
+          >
+            <input autoFocus className="field w-20 py-0.5 text-sm" placeholder="degrees" inputMode="decimal" value={typed} onChange={(e) => setTyped(e.target.value)} aria-label="Degrees to turn (negative turns left)" />
+            <span className="text-xs text-muted">° right (− left)</span>
+          </form>
         ) : (
           <button
             key={i}
@@ -123,6 +151,7 @@ export default function PlanContextMenu({ at, items, onClose }: { at: { x: numbe
             title={typeof it.disabled === "string" ? it.disabled : undefined}
             className={`block w-full px-3 py-1.5 text-left hover:bg-stone-100 disabled:cursor-not-allowed disabled:opacity-40 ${it.danger ? "text-red-700" : ""}`}
             onClick={() => {
+              if (it.ask) return setAsking(i);
               it.run();
               onClose();
             }}
