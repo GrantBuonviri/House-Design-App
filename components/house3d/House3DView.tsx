@@ -4,11 +4,11 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { Canvas, useFrame, useThree, type ThreeEvent } from "@react-three/fiber";
 import { Line, OrbitControls, PerspectiveCamera } from "@react-three/drei";
 import * as THREE from "three";
-import type { FloorPlan, House3D, Level, PlanBasics, Plot, Point, Selection } from "@/lib/model/schema";
+import type { FloorPlan, House3D, Level, PlanBasics, Plot, Point, Selection, TopLabels } from "@/lib/model/schema";
 import { buildLevel, buildRoofs, dugOut, houseBounds, type HouseContext, type Part, type Pick } from "@/lib/house3d/build";
 import { isLookingDown, orbitOf, orbitPosition, topViewOrbit, tweenOrbit, type Orbit } from "@/lib/house3d/camera";
 import { levelHeights, type LevelHeights } from "@/lib/house3d/levels";
-import { IN_PER_UNIT, toScene, type Frame } from "@/lib/house3d/mesh";
+import { IN_PER_UNIT, type Frame } from "@/lib/house3d/mesh";
 import { planBounds, siteFor, type Site } from "@/lib/house3d/site";
 import { EQUINOX, sunDirection } from "@/lib/house3d/sun";
 import { groundMesh, lineOnGround, roadLinesIn3D, waterIn3D } from "@/lib/house3d/terrain";
@@ -18,8 +18,9 @@ import { roadLine } from "@/lib/land/mesh";
 import type { Plans } from "@/lib/plan/edit";
 import { planOf } from "@/lib/plan/edit";
 import { dragPlan } from "@/lib/house3d/drag";
-import { polygonCenter } from "@/lib/plan/geometry";
-import { roomSqft } from "@/lib/plan/measure";
+import { topLabelFor } from "@/lib/house3d/topLabels";
+import LabelSettingsPanel from "@/components/walk/LabelSettingsPanel";
+import { LabelPlacer, TopLabelBoxes, type LabelBridge } from "./TopLabels";
 import type { PlanSelection } from "@/components/plan/types";
 import { concatMeshes, mergeParts, toGeometry } from "./geometry";
 import { DoorLeaves } from "./DoorLeaves";
@@ -60,6 +61,8 @@ type Props = {
   height: number;
   onSelect: (levelId: string, sel: PlanSelection) => void;
   onChange: (levelId: string, plan: FloorPlan, coalesce?: string) => void;
+  /** Saves the Top view label settings (the "⚙ Labels" panel and per-label changes). */
+  onTopLabels: (next: TopLabels) => void;
 };
 
 const SKY = "#dfe9f2";
@@ -145,14 +148,24 @@ export default function House3DView(props: Props) {
   const roofs = useMemo(() => buildRoofs(plans, ctx), [plans, ctx]);
   const [bounds] = useState(() => houseBounds(plans, ctx, roofs.topIn));
 
-  // Room names and sizes, shown when looking straight down.
+  // Room labels, shown when looking straight down.
   const labelPlan = planOf(plans, levelId);
   const labelFloor = heights[levelId]?.floorIn ?? 0;
-  const labels = useMemo(
-    () => labelPlan.rooms.map((r) => ({ id: r.id, name: r.name, sqft: roomSqft(r), at: toScene(frame, polygonCenter(r.polygon), labelFloor + 2) })),
-    [labelPlan, labelFloor, frame],
+  const labelLevel = levels.find((l) => l.id === levelId);
+  const topLabels = house3d.topLabels;
+  const labelItems = useMemo(
+    () =>
+      labelLevel
+        ? labelPlan.rooms.flatMap((room) => {
+            const label = topLabelFor(room, labelLevel, basics, interior ?? [], topLabels);
+            return label ? [{ room, label }] : [];
+          })
+        : [],
+    [labelPlan, labelLevel, basics, interior, topLabels],
   );
-  const labelRefs = useRef<(HTMLDivElement | null)[]>([]);
+  const hiddenRooms = labelPlan.rooms.filter((r) => topLabels.rooms[r.id]?.hidden).map((r) => ({ id: r.id, name: r.name }));
+  const labelBridge = useRef<LabelBridge>({ toPlan: null, spots: [], els: [] });
+  const [labelPanel, setLabelPanel] = useState(false);
 
   const order = useMemo(() => Object.fromEntries(levels.map((l, i) => [l.id, i])), [levels]);
   const showUpTo = cutAway ? (order[levelId] ?? levels.length) : Infinity;
@@ -196,23 +209,9 @@ export default function House3DView(props: Props) {
             showUpTo === Infinity || i < showUpTo ? <LevelMeshes key={`roof-${l.id}`} parts={roofs.parts.filter((p) => p.levelId === l.id)} visible {...drag} /> : null,
           )}
         <Highlight parts={visibleParts} selection={props.selection} />
-        {lookingDown && <LabelPlacer labels={labels} refs={labelRefs} />}
+        {lookingDown && <LabelPlacer bridge={labelBridge} frame={frame} floorIn={labelFloor} />}
       </Canvas>
-      {lookingDown &&
-        labels.map((l, i) => (
-          <div
-            key={l.id}
-            ref={(el) => {
-              labelRefs.current[i] = el;
-            }}
-            className="pointer-events-none absolute top-0 left-0 rounded bg-white/80 px-1.5 py-0.5 text-center text-[11px] leading-tight whitespace-nowrap text-ink shadow-sm"
-            style={{ visibility: "hidden" }}
-            data-testid="room-label"
-          >
-            {l.name}
-            <span className="block text-[10px] text-muted">{l.sqft} sq ft</span>
-          </div>
-        ))}
+      {lookingDown && <TopLabelBoxes items={labelItems} settings={topLabels} bridge={labelBridge} frame={frame} floorIn={labelFloor} editing={editing} onChange={props.onTopLabels} />}
       <div className="absolute top-2 right-2 flex items-center gap-2">
         {editing && <span className="rounded-full bg-accent px-2 py-0.5 text-xs font-semibold text-white shadow-sm">Editing</span>}
         <button
@@ -221,6 +220,14 @@ export default function House3DView(props: Props) {
           onClick={() => setTopRequest((n) => n + 1)}
         >
           Top view
+        </button>
+        <button
+          className="rounded-md border border-line bg-white/95 px-3 py-1.5 text-sm font-medium shadow-sm hover:bg-white"
+          title="Choose what the room labels say in Top view"
+          aria-expanded={labelPanel}
+          onClick={() => setLabelPanel((o) => !o)}
+        >
+          ⚙ Labels
         </button>
         {!props.viewOnly && (
           <button
@@ -232,6 +239,29 @@ export default function House3DView(props: Props) {
           </button>
         )}
       </div>
+      {labelPanel && (
+        <div className="absolute top-12 right-2 z-10 max-h-[calc(100%-4rem)] w-64 overflow-y-auto rounded-lg border border-line bg-white p-3 shadow-lg">
+          <LabelSettingsPanel
+            title="Room labels"
+            note="These show in Top view. Click a label there to rename or hide it, or drag it to move it."
+            settings={topLabels}
+            onChange={props.onTopLabels}
+            allHidden={topLabels.hideAll}
+            onHideAll={() => props.onTopLabels({ ...topLabels, hideAll: !topLabels.hideAll })}
+            without={["costShare"]}
+            hiddenRooms={hiddenRooms}
+            onShowRoom={(id) => {
+              const rest = { ...topLabels.rooms[id] };
+              delete rest.hidden;
+              const rooms = { ...topLabels.rooms };
+              if (Object.keys(rest).length) rooms[id] = rest;
+              else delete rooms[id];
+              props.onTopLabels({ ...topLabels, rooms });
+            }}
+            onResetRooms={() => props.onTopLabels({ ...topLabels, hideAll: false, rooms: {} })}
+          />
+        </div>
+      )}
       {roofs.fellBack && props.roof && (
         <p className="absolute bottom-2 left-2 rounded bg-white/90 px-2 py-1 text-xs text-muted">This outline was too tricky for a sloped roof, so part of it has a flat one.</p>
       )}
@@ -443,24 +473,6 @@ function LevelMeshes(props: LevelProps) {
       {leaves.length > 0 && <DoorLeaves parts={leaves} frame={props.frame} amountOf={() => (mode === "open" ? 1 : 0)} on={editing ? handlers : undefined} />}
     </>
   );
-}
-
-/** Keeps the room labels (plain page elements over the 3D picture) over their rooms as the view moves. */
-function LabelPlacer({ labels, refs }: { labels: { at: [number, number, number] }[]; refs: React.RefObject<(HTMLDivElement | null)[]> }) {
-  const { camera, size } = useThree();
-  const v = useMemo(() => new THREE.Vector3(), []);
-  useFrame(() => {
-    labels.forEach((l, i) => {
-      const el = refs.current?.[i];
-      if (!el) return;
-      v.set(...l.at).project(camera);
-      const x = ((v.x + 1) / 2) * size.width;
-      const y = ((1 - v.y) / 2) * size.height;
-      el.style.transform = `translate(-50%, -50%) translate(${x}px, ${y}px)`;
-      el.style.visibility = v.z < 1 ? "visible" : "hidden";
-    });
-  });
-  return null;
 }
 
 /** A see-through green coat over whatever is selected. */

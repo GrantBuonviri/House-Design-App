@@ -165,6 +165,7 @@ export default function ExteriorStage({ onGoToPlan, onWalk }: { onGoToPlan: () =
                     height={HEIGHT}
                     onSelect={() => {}}
                     onChange={() => {}}
+                    onTopLabels={(topLabels) => update((p) => ({ ...p, house3d: { ...p.house3d, topLabels } }))}
                   />
                 </div>
               )}

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { House3D, type FloorPlan, type Opening, type PlanRoom, type Point } from "@/lib/model/schema";
+import { House3D, type FloorPlan, type Opening, type PlanRoom, type Point, SCHEMA_VERSION } from "@/lib/model/schema";
 import { createProject, migrateProject } from "@/lib/model/project";
 import { levelFor, MAIN_LEVEL_ID } from "@/lib/brief/levels";
 import { defaultBasics } from "@/lib/plan/basics";
@@ -197,7 +197,7 @@ describe("saved locked doors", () => {
     const p = createProject("Old");
     const old = JSON.parse(JSON.stringify({ ...p, schemaVersion: 21, floorPlans: { [MAIN_LEVEL_ID]: plan([door()]) } }));
     const m = migrateProject(old);
-    expect(m.schemaVersion).toBe(22);
+    expect(m.schemaVersion).toBe(SCHEMA_VERSION);
     expect(m.floorPlans[MAIN_LEVEL_ID].openings[0].locked).toBeUndefined();
   });
   it("keeps a lock through saving", () => {

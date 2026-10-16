@@ -71,6 +71,8 @@ export function migrateProject(raw: unknown): Project {
   // all with defaults, so older projects need no change beyond the version.
   // Version 21 to 22 added `locked` on doors (left out means unlocked), so the
   // same goes: no change beyond the version.
+  // Version 22 to 23 added the 3D Top view's label settings (`house3d.topLabels`), all with
+  // defaults, so again no change beyond the version.
   return Project.parse({ ...migrated, schemaVersion: SCHEMA_VERSION });
 }
 
