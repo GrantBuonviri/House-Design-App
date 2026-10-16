@@ -13,6 +13,7 @@ export function describeChange(before: Project, after: Project): string {
 
   if (!same("name")) return "rename the house";
   if (!same("profile")) return "change your name";
+  if (!same("plot") && before.plot?.custom && after.plot?.custom && before.plot.custom.id === after.plot.custom.id) return "change the land";
   if (!same("plot")) return after.plot ? (before.plot ? "pick other land" : "pick land") : "clear the land";
   if (!same("discovery")) return describeRooms(before, after);
   if (!same("brief")) return after.brief && before.brief ? "change the design brief" : after.brief ? "make the design brief" : "clear the design brief";

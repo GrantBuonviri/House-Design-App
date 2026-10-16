@@ -66,7 +66,7 @@ export default function PlotDetails({ plot }: { plot: Plot }) {
             </ul>
           </div>
         )}
-        <p className="text-xs text-muted">This land is made up for design practice. Land cost is always $0.</p>
+        <p className="text-xs text-muted">{plot.source === "custom" ? "This land is your own design." : "This land is made up for design practice."} Land cost is always $0.</p>
       </div>
     </div>
   );

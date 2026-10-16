@@ -34,7 +34,7 @@ export const TOUR: TourStep[] = [
     target: "stage-land",
     stage: "land",
     title: "2. Land",
-    body: "Pick a made-up plot. Each one has its own slope, sun, drainage and road side, and those shape the rest of the design.",
+    body: "Pick a made-up plot, or design your own: set its size and shape, where north is, and the slope. Each plot has its own sun, drainage and road side, and those shape the rest of the design.",
   },
   {
     target: "stage-brief",
