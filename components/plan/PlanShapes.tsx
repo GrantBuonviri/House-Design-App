@@ -6,7 +6,7 @@ import type { Fixture, Point } from "@/lib/model/schema";
 import { openingType } from "@/lib/plan/catalog";
 import { angleOf } from "@/lib/plan/geometry";
 import type { OpeningGeometry } from "@/lib/plan/walls";
-import type { StairsDrawing } from "@/lib/plan/stairs";
+import type { StairsCut, StairsDrawing } from "@/lib/plan/stairs";
 
 /** The plan symbols: doors and windows in walls, fixtures, and stairs. Sizes are real, in inches. */
 
@@ -259,33 +259,73 @@ export function FixtureSymbol({ f, selected, scale, onTransformEnd, ghost }: { f
   );
 }
 
-/** Stairs: the outline, step edges and a walking arrow. `down` draws stairs coming up from the floor below. */
-export function StairsSymbol({ id, d, selected, scale, down, onTransformEnd }: { id?: string; d: StairsDrawing; selected?: boolean; scale: number; down?: boolean; onTransformEnd?: (e: Konva.KonvaEventObject<Event>) => void }) {
+/**
+ * Stairs: the outline, step edges and a walking arrow. `down` draws stairs
+ * coming up from the floor below. With `cut`, they're drawn the way real
+ * plans draw them: going UP to a diagonal break line about 4 ft up, and the
+ * stairs from the floor below going DN from the other side of it.
+ */
+export function StairsSymbol({
+  id,
+  d,
+  cut,
+  hideAbove,
+  selected,
+  scale,
+  down,
+  onTransformEnd,
+}: {
+  id?: string;
+  d: StairsDrawing;
+  cut?: StairsCut;
+  /** Leave out this floor's stairs past the cut (stairs from below are drawn there instead). */
+  hideAbove?: boolean;
+  selected?: boolean;
+  scale: number;
+  down?: boolean;
+  onTransformEnd?: (e: Konva.KonvaEventObject<Event>) => void;
+}) {
   const color = selected ? ACCENT : INK;
-  // The label sits just off the bottom step ("Up") or the top step ("Down").
-  const [p0, p1] = down ? [d.arrow[d.arrow.length - 1], d.arrow[d.arrow.length - 2]] : [d.arrow[0], d.arrow[1]];
+  const walk = cut ? (down ? cut.down : cut.up) : down ? [...d.arrow].reverse() : d.arrow;
+  // The label sits just off where the walking line starts: the bottom step (UP) or the top step (DN).
+  const [p0, p1] = [walk[0], walk[1]];
   const len = Math.hypot(p1.x - p0.x, p1.y - p0.y) || 1;
   const off = 13 / scale;
   const at = { x: p0.x - ((p1.x - p0.x) / len) * off, y: p0.y - ((p1.y - p0.y) / len) * off };
-  const tag = down ? "Down" : "Up";
+  const tag = cut ? (down ? "DN" : "UP") : down ? "Down" : "Up";
   const w = 60 / scale;
+  const piece = (pts: Point[], k: string, faint: boolean) => (
+    <Line key={k} points={flat(pts)} closed fill={faint ? undefined : "#f1ece3"} stroke={color} strokeWidth={1} strokeScaleEnabled={false} dash={faint ? [6, 4] : undefined} opacity={faint ? 0.6 : 0.85} listening={false} />
+  );
   return (
     <Group id={id} name={down ? undefined : "stairs"} listening={!down} onTransformEnd={onTransformEnd}>
-      <Line
-        points={flat(d.footprint)}
-        closed
-        fill={down ? undefined : "#f1ece3"}
-        stroke={color}
-        strokeWidth={selected ? 2.5 : 1.4}
-        strokeScaleEnabled={false}
-        dash={down ? [6, 4] : undefined}
-        opacity={down ? 0.7 : 1}
-      />
-      {d.lines.map(([a, b], i) => (
-        <Line key={i} points={[a.x, a.y, b.x, b.y]} stroke={color} strokeWidth={1} strokeScaleEnabled={false} opacity={down ? 0.5 : 0.8} listening={false} />
-      ))}
+      {cut ? (
+        <>
+          {/* The whole outline, for picking and moving the stairs. */}
+          {!down && <Line points={flat(d.footprint)} closed fill="transparent" stroke={selected ? color : undefined} strokeWidth={selected ? 2.5 : 0} strokeScaleEnabled={false} />}
+          {down ? cut.above.map((pts, i) => piece(pts, `a${i}`, true)) : cut.below.map((pts, i) => piece(pts, `b${i}`, false))}
+          {!down && !hideAbove && cut.above.map((pts, i) => piece(pts, `a${i}`, true))}
+          <Line points={flat(cut.line)} stroke={color} strokeWidth={2} strokeScaleEnabled={false} opacity={down ? 0.7 : 1} listening={false} />
+        </>
+      ) : (
+        <>
+          <Line
+            points={flat(d.footprint)}
+            closed
+            fill={down ? undefined : "#f1ece3"}
+            stroke={color}
+            strokeWidth={selected ? 2.5 : 1.4}
+            strokeScaleEnabled={false}
+            dash={down ? [6, 4] : undefined}
+            opacity={down ? 0.7 : 1}
+          />
+          {d.lines.map(([a, b], i) => (
+            <Line key={i} points={[a.x, a.y, b.x, b.y]} stroke={color} strokeWidth={1} strokeScaleEnabled={false} opacity={down ? 0.5 : 0.8} listening={false} />
+          ))}
+        </>
+      )}
       <Arrow
-        points={flat(down ? [...d.arrow].reverse() : d.arrow)}
+        points={flat(walk)}
         stroke={color}
         fill={color}
         strokeWidth={1.4}

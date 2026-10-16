@@ -33,6 +33,8 @@ export const COLORS = {
   frame: hex("#f4f3ef"),
   glass: hex("#b5d3e6"),
   stair: hex("#b88d5f"),
+  riser: hex("#f4f1ea"),
+  stringer: hex("#e9e4da"),
   counter: hex("#f0eee9"),
   cabinet: hex("#e9e5dc"),
   steel: hex("#b9bcbf"),

@@ -3,12 +3,13 @@ import { landUnder } from "@/lib/land/onLot";
 import { placeName } from "@/lib/land/implications";
 import { formatFeetInches } from "@/lib/model/units";
 import { MAIN_LEVEL_ID } from "@/lib/brief/levels";
-import { INTERIOR_WALL_IN, levelAbove } from "./basics";
+import { INTERIOR_WALL_IN, levelAbove, riseBetween } from "./basics";
 import { OUTSIDE, openingRooms, reachable, roleOf, roomLinks } from "./connect";
 import { planOf, type Plans } from "./edit";
 import { dist, edgesOf, isRectangle, polygonCenter, polygonsOverlap, scale, add } from "./geometry";
 import { areaKind, roomSqft } from "./measure";
-import { MIN_STAIRS_WIDTH_IN } from "./stairs";
+import { MIN_STAIRS_WIDTH_IN, stackedHeadroom } from "./stairs";
+import { codeNum } from "@/lib/codes/data";
 import { findGaps, type Gap } from "./overlaps";
 import { isWayIn, stairsBoxes, wayInRooms } from "./suggest";
 import { CANTILEVER_MAX_IN, overhangsOf, pulledBack, supportOf } from "./support";
@@ -37,7 +38,23 @@ export type PlanWarning = {
   gap?: Gap;
   /** A room hanging past the floor below: the "Pull back" button trims it to fit. */
   pullBack?: { roomId: string };
+  /** Stairs stacked too tight: the "Make these U-shaped" button turns both into U-shaped stairs in the same spot. */
+  stairsU?: { lower: { levelId: string; id: string }; upper: { levelId: string; id: string } };
 };
+
+const SHAPE_NAME = { straight: "straight", l: "L-shaped", u: "U-shaped" } as const;
+
+/** "Make these U-shaped": both stairs become U-shaped in the same spot, the upper one turned the same way as the lower so the flights stack. */
+export function makeStairsU(plans: Plans, fix: NonNullable<PlanWarning["stairsU"]>): Plans {
+  const lower = planOf(plans, fix.lower.levelId).stairs.find((s) => s.id === fix.lower.id);
+  if (!lower) return plans;
+  const set = (levelId: string, id: string, patch: Partial<FloorPlan["stairs"][number]>) => {
+    const p = planOf(plans, levelId);
+    return { ...p, stairs: p.stairs.map((s) => (s.id === id ? { ...s, ...patch } : s)) };
+  };
+  const next = { ...plans, [fix.lower.levelId]: set(fix.lower.levelId, fix.lower.id, { shape: "u" }) };
+  return { ...next, [fix.upper.levelId]: set(fix.upper.levelId, fix.upper.id, { shape: "u", rotation: lower.rotation, flip: lower.flip }) };
+}
 
 const BEDROOMS = new Set(["bedroom", "primary-bedroom", "guest-suite"]);
 /** Below this, a hallway feels tight (inside, wall to wall). */
@@ -167,6 +184,23 @@ export function planWarnings(plans: Plans, ctx: Ctx): PlanWarning[] {
       add_(level.id, "nostairs", `There are no stairs up to the ${above.name.toLowerCase()} yet. Add them with the Stairs tool.`, [], null);
     }
     for (const s of plan.stairs) {
+      const to = levels.find((l) => l.id === s.toLevelId);
+      for (const u of to ? planOf(plans, to.id).stairs : []) {
+        const up = levels.find((l) => l.id === u.toLevelId);
+        if (!to || !up) continue;
+        const room = stackedHeadroom(s, riseBetween(ctx.basics, level, to), u, riseBetween(ctx.basics, to, up));
+        if (room >= codeNum("stairs.minHeadroom")) continue;
+        const both = s.shape === u.shape ? `two ${SHAPE_NAME[s.shape]} stairs stacked on top of each other leave` : `the stairs up to the ${up.name.toLowerCase()} leave`;
+        const canFix = s.shape !== "u" || u.shape !== "u" || (u.rotation ?? 0) !== (s.rotation ?? 0) || u.flip !== s.flip;
+        out.push({
+          id: `${level.id}:headroom:${s.id}:${u.id}`,
+          levelId: level.id,
+          text: `Not enough headroom over the stairs from ${level.name}: ${both} about ${formatFeetInches(Math.max(0, Math.round(room)))} over them (${formatFeetInches(codeNum("stairs.minHeadroom"))} is the minimum).${canFix ? " U-shaped stairs stack without this problem." : ""}`,
+          roomIds: [],
+          at: { x: s.x, y: s.y },
+          stairsU: canFix ? { lower: { levelId: level.id, id: s.id }, upper: { levelId: to.id, id: u.id } } : undefined,
+        });
+      }
       if (s.widthIn < MIN_STAIRS_WIDTH_IN - 0.5) add_(level.id, `stairwidth:${s.id}`, `The stairs are ${formatFeetInches(s.widthIn)} wide. 3' is the usual minimum.`, [], { x: s.x, y: s.y });
     }
 

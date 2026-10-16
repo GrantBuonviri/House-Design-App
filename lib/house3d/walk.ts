@@ -4,7 +4,7 @@ import { exteriorWallIn } from "@/lib/plan/basics";
 import { planOf, type Plans } from "@/lib/plan/edit";
 import { add, boundsOf, dist, polygonArea, polygonCenter, pointInPolygon, project, rectangle, scale, sub } from "@/lib/plan/geometry";
 import { areaKind } from "@/lib/plan/measure";
-import { stairsDrawing, stairsFrame } from "@/lib/plan/stairs";
+import { isClosedIn, placedSteps, stairsDrawing } from "@/lib/plan/stairs";
 import { openingGeometries, solidWalls, wallPieces, wallTopIn } from "@/lib/plan/walls";
 import type { HouseContext } from "./build";
 import { cutHoles, type Region } from "./footprint";
@@ -12,7 +12,6 @@ import type { LevelHeights } from "./levels";
 import { entrySteps } from "./entry";
 import { fixtureSpan } from "./fixtures";
 import { furnitureHeight, furnitureOutline, furnitureType } from "@/lib/plan/furniture";
-import { stairSteps } from "./stairs";
 import { motionOf, PASSABLE_AMOUNT, type DoorInfo } from "./doors";
 import { openingSpan } from "./openings";
 import { openingType } from "@/lib/plan/catalog";
@@ -37,6 +36,8 @@ export const STEP_UP_IN = 24;
 const KNEE_IN = 6;
 /** Anything starting this far above your feet is overhead (a door header, the floor above). */
 const CHEST_IN = 40;
+/** You can't walk under anything lower than this above your feet (the underside of stairs overhead). */
+export const HEAD_IN = 70;
 export const WALK_IN_PER_S = 54;
 export const FAST = 2.2;
 const GRAVITY_IN_PER_S2 = 386;
@@ -50,6 +51,8 @@ export type Surface = {
   z: number;
   /** A room on the lowest floors, with the foundation around it: the ground underneath is out of reach. */
   onFoundation?: boolean;
+  /** A tread or landing: the height of its underside, a ceiling for anyone walking below it. */
+  under?: number;
 };
 
 export type Spot = { p: Point; feet: number; yaw: number };
@@ -156,9 +159,8 @@ export function walkWorld(plans: Plans, ctx: HouseContext & { heights: LevelHeig
       const to = s.toLevelId && heights[s.toLevelId];
       const rise = to ? to.floorIn - floorIn : ceilingIn + 13;
       if (rise <= 12) continue;
-      const fr = stairsFrame(s, rise);
-      for (const step of stairSteps(s.shape, s.widthIn, fr.treads, fr.riserIn)) {
-        surfaces.push({ region: { outline: step.outline.map(fr.place), holes: [] }, z: floorIn + step.top });
+      for (const step of placedSteps(s, rise, isClosedIn(s, rise, holes))) {
+        surfaces.push({ region: { outline: step.outline, holes: [] }, z: floorIn + step.top, under: floorIn + step.under });
       }
     }
 
@@ -271,6 +273,16 @@ export function standOn(world: WalkWorld, p: Point, reach: number): number | nul
   return best;
 }
 
+/** How much room there is over your head here before the underside of stairs above you (Infinity when none). */
+export function headroomAt(world: WalkWorld, p: Point, feet: number): number {
+  let room = Infinity;
+  for (const s of world.surfaces) {
+    if (s.under === undefined || s.under <= feet + 1 || s.under - feet >= room) continue;
+    if (inRegion(p, s.region)) room = s.under - feet;
+  }
+  return room;
+}
+
 /** Slide out of any wall you're touching. */
 export function pushOut(world: WalkWorld, p: Point, feet: number): Point {
   let q = p;
@@ -318,7 +330,9 @@ export function walkStep(world: WalkWorld, w: Walker, input: MoveInput, dt: numb
     const next = pushOut(world, add(w.p, m), w.feet);
     const { limits: L } = world;
     if (next.x < L.x0 || next.x > L.x1 || next.y < L.y0 || next.y > L.y1) continue;
-    if (standOn(world, next, w.feet + STEP_UP_IN) === null) continue; // a ledge too high to step up
+    const feetThere = standOn(world, next, w.feet + STEP_UP_IN);
+    if (feetThere === null) continue; // a ledge too high to step up
+    if (headroomAt(world, next, feetThere) < HEAD_IN) continue; // the underside of stairs overhead
     p = next;
     break;
   }
