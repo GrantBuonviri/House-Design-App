@@ -30,6 +30,7 @@ const HELP: Record<FeatureTool, string> = {
   tree: "Click to drop a tree. Hold Shift and drag to paint a row or a clump.",
   roads: "Click a side of the lot to put a road along it (the first one is the main street). Click a road to make it the main street or remove it.",
   lane: "Click points along the lane, then double-click (or press Enter) to finish. Drag its dots to bend it.",
+  ground: "",
 };
 
 export default function FeaturePanel({

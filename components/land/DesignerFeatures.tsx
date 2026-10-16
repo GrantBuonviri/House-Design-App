@@ -29,7 +29,7 @@ const WATER_LOOK = {
   wash: { color: "#a88a5c", ft: 8 },
 } as const;
 
-export type FeatureTool = "shape" | "water" | "pond" | "lake" | "rock" | "tree" | "roads" | "lane";
+export type FeatureTool = "shape" | "water" | "pond" | "lake" | "rock" | "tree" | "roads" | "lane" | "ground";
 const PLACING: FeatureTool[] = ["water", "pond", "rock", "tree", "lane"];
 export const ROCK_DEFAULT_FT = 8;
 

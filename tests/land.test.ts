@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { type CustomLand, Plot } from "@/lib/model/schema";
-import { buildCustomPlot, newCustomLand, plotRoadEdges, rectOutline, scaleOutlineToAcres } from "@/lib/land/custom";
+import { addGround, buildingSpotGrade, clearGround, contourSegments, landContours, moveGround, setGroundAmount, setGroundRadius, stampGround, GROUND_RADIUS_MAX_FT, GROUND_RADIUS_MIN_FT, HEIGHT_MAX_FT } from "@/lib/land/groundTools";
+import { buildCustomPlot, landFrame, newCustomLand, plotRoadEdges, rectOutline, scaleOutlineToAcres } from "@/lib/land/custom";
 import {
   ACRE_SQ_IN,
   FLAT_PLOT_SEED,
@@ -358,5 +359,70 @@ describe("custom terrain", () => {
       expect(plot.ground).toEqual([]);
       expect(plot.rolls).toBe("gentle");
     }
+  });
+});
+
+describe("ground tools", () => {
+  const base = (): CustomLand => ({
+    ...newCustomLand("t1"),
+    slope: { percent: 6, downhillDeg: 180 },
+    rolls: "smooth",
+  });
+
+  it("adds, moves, resizes and clears shapes with limits", () => {
+    let l = addGround(base(), "hill", { x: 1000, y: 1000 }, 50, 6);
+    expect(l.ground).toHaveLength(1);
+    l = moveGround(l, 0, { x: 1200.4, y: 900 });
+    expect(l.ground[0].at).toEqual({ x: 1200, y: 900 });
+    expect(setGroundRadius(l, 0, 5000).ground[0].radiusFt).toBe(GROUND_RADIUS_MAX_FT);
+    expect(setGroundRadius(l, 0, 1).ground[0].radiusFt).toBe(GROUND_RADIUS_MIN_FT);
+    expect(setGroundAmount(l, 0, 99).ground[0].amount).toBe(HEIGHT_MAX_FT);
+    const f = addGround(base(), "flatter", { x: 0, y: 0 }, 40, 1);
+    expect(setGroundAmount(f, 0, 7).ground[0].amount).toBe(1);
+    expect(clearGround(l).ground).toEqual([]);
+  });
+
+  it("brush strokes stamp along the drag and skip repeats", () => {
+    const one = stampGround(base(), "steeper", { x: 0, y: 0 }, 30, 0.6);
+    expect(one.ground).toHaveLength(1);
+    expect(stampGround(one, "steeper", { x: 0, y: 0 }, 30, 0.6).ground).toHaveLength(1);
+    const line = stampGround(one, "steeper", { x: 1800, y: 0 }, 30, 0.6, { x: 0, y: 0 });
+    // 150 ft at one stamp per half radius (15 ft)
+    expect(line.ground.length).toBeGreaterThan(8);
+  });
+
+  it("a flatter brush gives a level building pad, shown by the building spot grade", () => {
+    const rect = newCustomLand("t2");
+    const land: CustomLand = { ...rect, slope: { percent: 8, downhillDeg: 180 }, rolls: "smooth" };
+    const before = buildingSpotGrade(buildCustomPlot(land));
+    const mid = { x: (Math.min(...land.outline.map((p) => p.x)) + Math.max(...land.outline.map((p) => p.x))) / 2, y: (Math.min(...land.outline.map((p) => p.y)) + Math.max(...land.outline.map((p) => p.y))) / 2 };
+    const flat = stampGround(land, "flatter", mid, 80, 1);
+    const after = buildingSpotGrade(buildCustomPlot(flat));
+    expect(before).toBeGreaterThan(6);
+    expect(after).toBeLessThan(2);
+  });
+
+  it("contour lines follow a hill and stay inside the lot", () => {
+    const land = addGround({ ...base(), slope: { percent: 0, downhillDeg: 0 } }, "hill", { x: 1200, y: 1200 }, 60, 10);
+    const { segments, stepFt } = landContours(land, buildCustomPlot(land));
+    expect(stepFt).toBeGreaterThan(0);
+    expect(segments.length).toBeGreaterThan(20);
+    for (const s of segments) expect(pointInPolygon({ x: (s[0] + s[2]) / 2, y: (s[1] + s[3]) / 2 }, land.outline)).toBe(true);
+    expect(landContours(base(), buildCustomPlot({ ...base(), slope: { percent: 0, downhillDeg: 0 } })).segments).toEqual([]);
+  });
+
+  it("contourSegments crosses a simple slope once per level", () => {
+    const segs = contourSegments((x) => x, { x0: 0, y0: 0, x1: 10, y1: 10 }, 10, 10, [4.5]);
+    expect(segs).toHaveLength(10);
+    for (const s of segs) expect(s[0]).toBeCloseTo(4.5);
+  });
+
+  it("the designer frame round-trips", () => {
+    const land = { ...newCustomLand("t3"), northDeg: 37 };
+    const fr = landFrame(land);
+    const p = { x: 500, y: 700 };
+    const back = fr.toDesigner(fr.toPlot(p));
+    expect(back.x).toBeCloseTo(p.x);
+    expect(back.y).toBeCloseTo(p.y);
   });
 });

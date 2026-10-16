@@ -10,6 +10,9 @@ import { compassName } from "@/lib/land/sun";
 import { TREE_SIZES, type PathKind, type Pick } from "@/lib/land/featureTools";
 import DesignerPanel from "./DesignerPanel";
 import FeaturePanel from "./FeaturePanel";
+import GroundPanel from "./GroundPanel";
+import type { GroundSettings } from "./DesignerGround";
+import { buildingSpotGrade, landContours } from "@/lib/land/groundTools";
 import { CANVAS_H, CANVAS_W } from "./DesignerCanvas";
 import { DRAINAGE_STYLE, plotFacts } from "./plotText";
 
@@ -32,6 +35,7 @@ export const DESIGNER_TOOLS = [
   { id: "tree", label: "Tree" },
   { id: "roads", label: "Roads" },
   { id: "lane", label: "Lane" },
+  { id: "ground", label: "Ground" },
 ] as const;
 
 /**
@@ -63,6 +67,7 @@ export default function LandDesigner({
   const [pathKind, setPathKind] = useState<PathKind>("creek");
   const [treeFt, setTreeFt] = useState<number>(TREE_SIZES[1].ft);
   const [laneFt, setLaneFt] = useState<number>(14);
+  const [ground, setGround] = useState<GroundSettings>({ kind: "hill", heightFt: 6, radiusFt: 50, strength: 1 });
   // A corner and a feature are never selected together.
   const setSelected = (i: number | null) => {
     setSelectedCorner(i);
@@ -119,6 +124,8 @@ export default function LandDesigner({
   });
 
   const plot = useMemo(() => buildCustomPlot(land), [land]);
+  const contours = useMemo(() => landContours(land, plot), [land, plot]);
+  const spot = buildingSpotGrade(plot);
   const f = plotFacts(plot);
   const imp = plotImplications(plot);
   const warn = useMemo(() => (editing ? warnings(plot, land) : []), [editing, warnings, plot, land]);
@@ -185,6 +192,8 @@ export default function LandDesigner({
                   pathKind={pathKind}
                   treeFt={treeFt}
                   laneFt={laneFt}
+                  ground={ground}
+                  contours={contours.segments}
                 />
               ) : (
                 <div className="flex h-full items-center justify-center bg-[#dfe9f2]">
@@ -199,6 +208,7 @@ export default function LandDesigner({
               <p className="text-muted">
                 {describeSlope(plot)} · {plot.slope.percent < 2 ? "Open on all sides" : `Faces ${compassName(plot.facingDeg).toLowerCase()}`}
               </p>
+              <p className="text-muted">Building spot: {spot}% grade</p>
               <p className="mt-1">
                 <span className={`mr-2 rounded-full px-2 py-0.5 text-xs ${DRAINAGE_STYLE[plot.drainage.rating]}`}>{plot.drainage.rating} drainage</span>
                 <span className="font-medium">{imp.foundation.label}.</span> <span className="text-muted">{imp.foundation.note}</span>
@@ -207,6 +217,9 @@ export default function LandDesigner({
           </div>
 
           <div className="min-w-0 flex-1 overflow-y-auto pr-1">
+            {tool === "ground" ? (
+              <GroundPanel land={land} pick={pick} settings={ground} setSettings={setGround} onChange={change} onPick={setPick} contourStepFt={contours.stepFt} />
+            ) : (
             <FeaturePanel
               land={land}
               tool={tool}
@@ -220,6 +233,7 @@ export default function LandDesigner({
               laneFt={laneFt}
               setLaneFt={setLaneFt}
             />
+            )}
             <div className="mt-5">
               <DesignerPanel land={land} onChange={change} />
             </div>
