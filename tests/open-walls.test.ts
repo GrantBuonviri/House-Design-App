@@ -187,7 +187,7 @@ describe("removed walls everywhere else", () => {
     const old = { ...createProject("Old"), schemaVersion: 15, floorPlans: { [MAIN_LEVEL_ID]: { rooms: [], walls: [], openings: [], stairs: [], fixtures: [], furniture: [] } } };
     const p = migrateProject(old);
     expect(p.schemaVersion).toBe(SCHEMA_VERSION);
-    expect(SCHEMA_VERSION).toBe(16);
+    expect(SCHEMA_VERSION).toBeGreaterThanOrEqual(16);
     expect(p.floorPlans[MAIN_LEVEL_ID].openWalls).toEqual([]);
   });
 });

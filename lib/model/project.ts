@@ -57,6 +57,8 @@ export function migrateProject(raw: unknown): Project {
   if (version < 15) migrated = migrateV14(migrated);
   // Version 15 to 16 added removed walls on each floor plan (none by default).
   if (version < 16) migrated = migrateV15(migrated);
+  // Version 16 to 17 added heights to walls drawn on their own (all full height before).
+  if (version < 17) migrated = migrateV16(migrated);
   return Project.parse({ ...migrated, schemaVersion: SCHEMA_VERSION });
 }
 
@@ -125,4 +127,15 @@ function migrateV15(data: Raw): Raw {
     ...data,
     floorPlans: Object.fromEntries(Object.entries(plans as Raw).map(([k, v]) => [k, v && typeof v === "object" ? { openWalls: [], ...(v as Raw) } : v])),
   };
+}
+
+/** Version 16 to 17: walls drawn on their own get a height; every older one was full height. */
+function migrateV16(data: Raw): Raw {
+  const plans = data.floorPlans;
+  if (!plans || typeof plans !== "object") return data;
+  const withHeight = (v: unknown) => {
+    if (!v || typeof v !== "object" || !Array.isArray((v as Raw).walls)) return v;
+    return { ...(v as Raw), walls: ((v as Raw).walls as unknown[]).map((w) => (w && typeof w === "object" ? { height: "full", ...(w as Raw) } : w)) };
+  };
+  return { ...data, floorPlans: Object.fromEntries(Object.entries(plans as Raw).map(([k, v]) => [k, withHeight(v)])) };
 }

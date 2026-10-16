@@ -13,6 +13,7 @@ import { snapFrom, snapMove, snapNode, snapPush, snapTargets, type Guides } from
 import { parseTypedLength } from "@/lib/model/units";
 import { DEFAULT_STAIRS_WIDTH_IN, stairsDrawing } from "@/lib/plan/stairs";
 import { clampOffset, nearestHost, openingGeometries, solidWalls, wallPieces, type OpeningGeometry } from "@/lib/plan/walls";
+import { fillRoomAt, splitRoom, whyNotFill } from "@/lib/plan/partitions";
 import LandLayer from "@/components/bubbles/LandLayer";
 import type { LandView, Side } from "@/components/bubbles/types";
 import { Grid, ScaleBar, SideLabels, useSpacePan, type View } from "@/components/canvas/CanvasBits";
@@ -54,6 +55,8 @@ type Props = {
   /** The flow sketch for this level, drawn faintly to trace over. */
   sketch: BubbleDiagram | null;
   tool: PlanTool;
+  /** The Room tool fills a space closed in by walls with a click, instead of drawing a new outline. */
+  fillMode?: boolean;
   /** What the Doors and windows tool and the Fixtures tool place. */
   placeOpening: string;
   placeFixture: string;
@@ -81,7 +84,18 @@ type Props = {
 
 export default function PlanCanvas(props: Props) {
   const { plan, level, levels, basics, below, sketch, tool, placeOpening, placeFixture, selection, snap, labels, tape, sides, height, land, lotMode, onLotMove } = props;
-  const { onSelect, onChange, onToolDone, onDrafting, onMessage } = props;
+  const { onSelect, onChange, onToolDone, onDrafting, onMessage, fillMode = false } = props;
+  // Option (Alt) held while finishing a wall keeps it a divider wall, even right across a room.
+  const altDown = useRef(false);
+  useEffect(() => {
+    const track = (e: KeyboardEvent) => (altDown.current = e.altKey);
+    window.addEventListener("keydown", track);
+    window.addEventListener("keyup", track);
+    return () => {
+      window.removeEventListener("keydown", track);
+      window.removeEventListener("keyup", track);
+    };
+  }, []);
   const wrapRef = useRef<HTMLDivElement>(null);
   const layerRef = useRef<Konva.Layer>(null);
   const trRef = useRef<Konva.Transformer>(null);
@@ -342,10 +356,21 @@ export default function PlanCanvas(props: Props) {
     onToolDone();
   }
 
-  function finishWalls(points: Point[]) {
+  function finishWalls(points: Point[], divider = altDown.current) {
     const pts = dedupe(points);
     setDraft([]);
     if (pts.length < 2) return;
+    // From one wall of a room to another: the room splits in two along it.
+    const split = divider ? null : splitRoom(plan, pts.map(roundPoint));
+    if (split) {
+      const was = plan.rooms.find((r) => r.id === split.roomId);
+      const made = split.plan.rooms.find((r) => r.id === split.newRoomId);
+      onChange(split.plan);
+      onSelect([{ kind: "room", id: split.newRoomId }]);
+      onMessage(`Split ${was?.name || "the room"} in two. Name the new ${made?.name ?? "room"} on the right. (Hold Option while drawing for a wall that doesn't split.)`);
+      onToolDone();
+      return;
+    }
     const walls = pts.slice(1).map((b, i) => ({ id: newPlanId("w"), a: roundPoint(pts[i]), b: roundPoint(b), thicknessIn: 4.5 }));
     onChange({ ...plan, walls: [...plan.walls, ...walls] });
     onSelect(walls.map((w) => ({ kind: "wall" as const, id: w.id })));
@@ -364,7 +389,8 @@ export default function PlanCanvas(props: Props) {
     if (!drafting) return;
     const onKey = (e: KeyboardEvent) => {
       if ((e.target as HTMLElement).closest("input, textarea, select")) return;
-      if (e.metaKey || e.ctrlKey || e.altKey) return;
+      // Option+Enter finishes too (as a divider wall that doesn't split the room).
+      if (e.metaKey || e.ctrlKey || (e.altKey && e.key !== "Enter")) return;
       const stop = () => {
         e.preventDefault();
         e.stopPropagation();
@@ -459,6 +485,15 @@ export default function PlanCanvas(props: Props) {
       onToolDone();
       return;
     }
+    if (tool === "room" && fillMode) {
+      const why = whyNotFill(plan, p);
+      const out = why ? null : fillRoomAt(plan, p);
+      if (!out) return onMessage(why ?? "There's no closed space there.");
+      onChange(out.plan);
+      onSelect([{ kind: "room", id: out.roomId }]);
+      onToolDone();
+      return;
+    }
     if (tool === "room" || tool === "wall") {
       const sp = snapFrom(draft[draft.length - 1] ?? null, p, pickTargets([]), tol, snap, shift, tool === "room" && draft.length >= 2 ? [draft[0]] : []).p;
       if (tool === "room" && draft.length === 0) {
@@ -468,7 +503,7 @@ export default function PlanCanvas(props: Props) {
       // Clicking the first corner again closes the room; clicking the last point again (a double-click) finishes.
       if (tool === "room" && draft.length >= 3 && dist(sp, draft[0]) <= tol) return finishRoom(draft);
       const last = draft[draft.length - 1];
-      if (last && dist(sp, last) <= tol / 2) return tool === "room" ? finishRoom(draft) : finishWalls(draft);
+      if (last && dist(sp, last) <= tol / 2) return tool === "room" ? finishRoom(draft) : finishWalls(draft, e.evt.altKey);
       setDraft([...draft, sp]);
       return;
     }

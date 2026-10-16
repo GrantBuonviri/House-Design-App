@@ -49,7 +49,7 @@ const feet = (inches: number) => Math.round((inches / 12) * 10) / 10;
 
 export function bracingFor(input: BracingInput): BracedLine[] {
   const { plan } = input;
-  const pieces = wallPieces(plan, input.exteriorIn).filter((p) => !p.open);
+  const pieces = wallPieces(plan, input.exteriorIn).filter((p) => !p.open && !p.height);
   const geos = openingGeometries(plan);
   const solids = solidWalls(pieces, geos);
   const wallFt = input.ceilingIn / 12;
