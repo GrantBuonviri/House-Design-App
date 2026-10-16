@@ -1,26 +1,22 @@
 "use client";
 
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
-import { Circle, Group, Layer, Line, Rect, Stage, Text, Transformer } from "react-konva";
+import { Circle, Group, Layer, Line, Stage, Transformer } from "react-konva";
 import Konva from "konva";
 import type { BubbleDiagram, Fixture, FloorPlan, Level, Opening, PlanBasics, PlanStairs, Point } from "@/lib/model/schema";
-import { CATEGORY_COLOR } from "@/lib/bubbles/shapes";
-import { roomType } from "@/lib/brief/rooms";
-import { formatFeetInches } from "@/lib/model/units";
 import { exteriorWallIn, riseBetween } from "@/lib/plan/basics";
 import { fixtureType, openingType } from "@/lib/plan/catalog";
 import { addRoom, insertCorner, makeRoom, moveEdge, moveMany, moveOpeningTo, newPlanId, removeCorner, setCorner } from "@/lib/plan/edit";
-import { add, angleOf, boundsOf, dist, edgesOf, leftNormal, polygonArea, polygonCenter, project, rectangle, round1, roundPoint, scale as scaleV, sub, unit } from "@/lib/plan/geometry";
-import { roomSqft } from "@/lib/plan/measure";
+import { add, angleOf, boundsOf, dist, leftNormal, polygonArea, project, rectangle, round1, roundPoint, scale as scaleV, sub, unit } from "@/lib/plan/geometry";
 import { snapFrom, snapMove, snapPush, snapTargets, type Guides } from "@/lib/plan/snap";
 import { DEFAULT_STAIRS_WIDTH_IN, stairsDrawing } from "@/lib/plan/stairs";
-import { furnitureOutline, furnitureType } from "@/lib/plan/furniture";
-import { clampOffset, nearestHost, openingGeometries, openingGeometry, solidWalls, wallPieces, type OpeningGeometry } from "@/lib/plan/walls";
-import BubbleShape from "@/components/bubbles/BubbleShape";
+import { clampOffset, nearestHost, openingGeometries, solidWalls, wallPieces, type OpeningGeometry } from "@/lib/plan/walls";
 import LandLayer from "@/components/bubbles/LandLayer";
 import type { LandView, Side } from "@/components/bubbles/types";
 import { Grid, ScaleBar, SideLabels, useSpacePan, type View } from "@/components/canvas/CanvasBits";
-import { ACCENT, FixtureSymbol, INK, OpeningSymbol, StairsSymbol } from "./PlanShapes";
+import { ACCENT, FixtureSymbol, OpeningSymbol, StairsSymbol } from "./PlanShapes";
+import { dedupe, flat, ghostOpeningAt, pointIn, roomFill, type Box } from "./canvasHelpers";
+import { DraftPreview, FurnitureOutlines, GuidesAndBox, PlanLabels, PlanWalls, ReferenceLayer, ZoomButtons } from "./PlanCanvasLayers";
 import { edgeId, isPicked, parseEdgeId, type PlanItem, type PlanSelection, type PlanTool } from "./types";
 
 /**
@@ -38,14 +34,11 @@ type Gesture =
   | { type: "lot"; start: Point }
   | { type: "rect"; start: Point; moved: boolean };
 
-type Box = { x0: number; y0: number; x1: number; y1: number };
-
 const MIN_SCALE = 0.04;
 const MAX_SCALE = 5;
 const SNAP_PX = 9;
 const MIN_ROOM_SIDE_IN = 24;
 const clampScale = (s: number) => Math.min(MAX_SCALE, Math.max(MIN_SCALE, s));
-const flat = (pts: Point[]) => pts.flatMap((p) => [p.x, p.y]);
 
 type Props = {
   plan: FloorPlan;
@@ -79,18 +72,6 @@ type Props = {
   /** The plan as it looks mid-drag (null once let go), for views that follow along. */
   onPreview?: (p: FloorPlan | null) => void;
 };
-
-function roomFill(type?: string): string {
-  return type ? CATEGORY_COLOR[roomType(type).category] : "#e6dfd2";
-}
-
-/** Text that reads left to right whichever way its wall runs. */
-function uprightAngle(d: Point): number {
-  let a = angleOf(d);
-  if (a > 90) a -= 180;
-  if (a <= -90) a += 180;
-  return a;
-}
 
 export default function PlanCanvas(props: Props) {
   const { plan, level, levels, basics, below, sketch, tool, placeOpening, placeFixture, selection, snap, showDims, sides, height, land, lotMode, onLotMove } = props;
@@ -599,7 +580,6 @@ export default function PlanCanvas(props: Props) {
   // ---- Drawing ----
   const panning = tool === "pan" || spaceDown;
   const cursorStyle = panning ? "grab" : lotMode ? "move" : tool === "select" ? "default" : "crosshair";
-  const roomById = new Map(shown.rooms.map((r) => [r.id, r]));
   const selectedEdge = single?.kind === "edge" ? parseEdgeId(single.id) : null;
   const ghostOpening = tool === "door" && cursor ? ghostOpeningAt(plan, cursor, placeOpening, s) : null;
   const ghostFixture = tool === "fixture" && cursor ? fixtureAt(cursor) : null;
@@ -641,19 +621,7 @@ export default function PlanCanvas(props: Props) {
 
           {land && <LandLayer land={land} scale={s} shift={lotDelta} />}
 
-          {(sketch || below) && (
-            <Layer listening={false}>
-              {sketch?.bubbles.map((b) => (
-                <Group key={b.id} opacity={0.35}>
-                  <BubbleShape b={b} fill={b.color ?? "#ead9f0"} stroke={INK} strokeWidth={1} strokeScaleEnabled={false} dash={[5, 4]} />
-                  <Text x={b.x} y={b.y - 6 / s} text={b.label} fontSize={11 / s} width={160 / s} offsetX={80 / s} align="center" fill={INK} />
-                </Group>
-              ))}
-              {below?.plan.rooms.map((r) => (
-                <Line key={r.id} points={flat(r.polygon)} closed stroke={INK} strokeWidth={1} strokeScaleEnabled={false} dash={[6, 4]} opacity={0.3} />
-              ))}
-            </Layer>
-          )}
+          {(sketch || below) && <ReferenceLayer sketch={sketch} below={below} s={s} />}
 
           <Layer ref={layerRef}>
             {shown.rooms.map((r) => (
@@ -680,115 +648,15 @@ export default function PlanCanvas(props: Props) {
               <FixtureSymbol key={f.id} f={f} selected={isPicked(selection, f.id)} scale={s} onTransformEnd={onTransformEnd} />
             ))}
 
-            {/* Furniture placed in the walkthrough: outlines only (it's moved there, with Design on). */}
-            <Group listening={false}>
-              {(shown.furniture ?? []).map((f) => {
-                const t = furnitureType(f.kind);
-                return (
-                  <Group key={f.id}>
-                    <Line points={flat(furnitureOutline(f))} closed fill={f.color ?? "#cfcac0"} opacity={t?.flat ? 0.25 : 0.45} stroke="#6f6658" strokeWidth={1} strokeScaleEnabled={false} dash={[4, 3]} />
-                    {!t?.flat && Math.min(f.widthIn, f.depthIn) * s > 28 && (
-                      <Text x={f.x} y={f.y} width={f.widthIn} offsetX={f.widthIn / 2} offsetY={5 / s} align="center" text={t?.label ?? ""} fontSize={9.5 / s} fill="#4a463f" wrap="none" ellipsis />
-                    )}
-                  </Group>
-                );
-              })}
-            </Group>
+            <FurnitureOutlines furniture={shown.furniture ?? []} s={s} />
 
-            {/* Walls, each room edge as its own hit target so it can be picked and pushed. */}
-            {solids.map((w, i) => {
-              const host = w.piece.host;
-              const id = "roomId" in host ? edgeId(host.roomId, host.edge) : host.wallId;
-              const on = isPicked(selection, id) || ("wallId" in host ? false : isPicked(selection, host.roomId) && selection.length === 1);
-              if (w.open) {
-                return (
-                  <Line key={i} id={id} name="edge" points={[w.a.x, w.a.y, w.b.x, w.b.y]} stroke={on ? ACCENT : "#7d766a"} strokeWidth={1.5} strokeScaleEnabled={false} dash={[8, 5]} hitStrokeWidth={12 / s} />
-                );
-              }
-              const u = unit(sub(w.b, w.a));
-              const half = w.thicknessIn / 2;
-              const a = w.capA ? add(w.a, scaleV(u, -half)) : w.a;
-              const b = w.capB ? add(w.b, scaleV(u, half)) : w.b;
-              return (
-                <Line
-                  key={i}
-                  id={id}
-                  name={"wallId" in host ? "wall" : "edge"}
-                  points={[a.x, a.y, b.x, b.y]}
-                  stroke={on ? ACCENT : w.exterior ? INK : "#4a463f"}
-                  strokeWidth={w.thicknessIn}
-                  hitStrokeWidth={Math.max(w.thicknessIn, 12 / s)}
-                  lineCap="butt"
-                />
-              );
-            })}
+            <PlanWalls solids={solids} selection={selection} s={s} />
 
             {geos.map((g) => (
               <OpeningSymbol key={g.opening.id} g={g} thickness={thicknessAt(g)} selected={isPicked(selection, g.opening.id)} scale={s} name="opening" />
             ))}
 
-            {/* Room names, sizes and wall lengths. */}
-            <Group listening={false}>
-              {shown.rooms.map((r) => {
-                const c = polygonCenter(r.polygon);
-                const wBox = 140 / s;
-                return (
-                  <Group key={`label-${r.id}`}>
-                    <Text x={c.x} y={c.y - 10 / s} width={wBox} offsetX={wBox / 2} align="center" text={r.name} fontSize={12.5 / s} fontStyle="600" fill={INK} wrap="none" ellipsis />
-                    <Text x={c.x} y={c.y + 5 / s} width={wBox} offsetX={wBox / 2} align="center" text={`${roomSqft(r).toLocaleString("en-US")} sq ft`} fontSize={10.5 / s} fill="#6b716c" />
-                  </Group>
-                );
-              })}
-              {showDims &&
-                shown.rooms.flatMap((r) =>
-                  edgesOf(r.polygon).map((e) => {
-                    const L = dist(e.a, e.b);
-                    if (L * s < 64) return null;
-                    const u = unit(sub(e.b, e.a));
-                    // Inside the room: corners run clockwise, so inside is to the right of each edge.
-                    const inward = scaleV(leftNormal(u), -1);
-                    const mid = add(scaleV(add(e.a, e.b), 0.5), scaleV(inward, 6 + 9 / s));
-                    const w = 80 / s;
-                    return (
-                      <Text
-                        key={`${r.id}-${e.i}`}
-                        x={mid.x}
-                        y={mid.y}
-                        offsetX={w / 2}
-                        offsetY={5 / s}
-                        width={w}
-                        align="center"
-                        rotation={uprightAngle(u)}
-                        text={formatFeetInches(L)}
-                        fontSize={9.5 / s}
-                        fill="#7a6f5e"
-                      />
-                    );
-                  }),
-                )}
-              {showDims &&
-                shown.walls.map((w) => {
-                  const L = dist(w.a, w.b);
-                  if (L * s < 64) return null;
-                  const u = unit(sub(w.b, w.a));
-                  const mid = add(scaleV(add(w.a, w.b), 0.5), scaleV(leftNormal(u), 6 + 9 / s));
-                  const bw = 80 / s;
-                  return <Text key={`wl-${w.id}`} x={mid.x} y={mid.y} offsetX={bw / 2} offsetY={5 / s} width={bw} align="center" rotation={uprightAngle(u)} text={formatFeetInches(L)} fontSize={9.5 / s} fill="#7a6f5e" />;
-                })}
-            </Group>
-
-            {/* The selected wall's length, larger. */}
-            {selectedEdge &&
-              (() => {
-                const r = roomById.get(selectedEdge.roomId);
-                if (!r) return null;
-                const a = r.polygon[selectedEdge.edge];
-                const b = r.polygon[(selectedEdge.edge + 1) % r.polygon.length];
-                const u = unit(sub(b, a));
-                const mid = add(scaleV(add(a, b), 0.5), scaleV(leftNormal(u), 10 + 12 / s));
-                const w = 100 / s;
-                return <Text x={mid.x} y={mid.y} offsetX={w / 2} offsetY={7 / s} width={w} align="center" rotation={uprightAngle(u)} text={formatFeetInches(dist(a, b))} fontSize={13 / s} fontStyle="600" fill={ACCENT} listening={false} />;
-              })()}
+            <PlanLabels plan={shown} showDims={showDims} selectedEdge={selectedEdge} s={s} />
 
             {/* Corner dots on the selected room. */}
             {selRoom &&
@@ -796,63 +664,7 @@ export default function PlanCanvas(props: Props) {
                 <Circle key={i} id={edgeId(selRoom.id, i)} name="corner" x={p.x} y={p.y} radius={5.5 / s} fill="#fff" stroke={ACCENT} strokeWidth={2} strokeScaleEnabled={false} hitStrokeWidth={10} />
               ))}
 
-            {/* Drawing in progress. */}
-            {rectPreview && rectEnd && (
-              <Rect
-                x={Math.min(rectPreview.x, rectEnd.x)}
-                y={Math.min(rectPreview.y, rectEnd.y)}
-                width={Math.abs(rectEnd.x - rectPreview.x)}
-                height={Math.abs(rectEnd.y - rectPreview.y)}
-                fill="rgba(47,107,79,0.12)"
-                stroke={ACCENT}
-                strokeWidth={2}
-                strokeScaleEnabled={false}
-                dash={[6, 4]}
-                listening={false}
-              />
-            )}
-            {rectPreview && rectEnd && (
-              <Text
-                x={(rectPreview.x + rectEnd.x) / 2}
-                y={(rectPreview.y + rectEnd.y) / 2}
-                width={160 / s}
-                offsetX={80 / s}
-                offsetY={6 / s}
-                align="center"
-                text={`${formatFeetInches(Math.abs(rectEnd.x - rectPreview.x))} × ${formatFeetInches(Math.abs(rectEnd.y - rectPreview.y))}`}
-                fontSize={12 / s}
-                fontStyle="600"
-                fill={ACCENT}
-                listening={false}
-              />
-            )}
-            {drafting && (
-              <Group listening={false}>
-                <Line
-                  points={flat(cursor ? [...draft, cursor] : draft)}
-                  closed={tool === "room"}
-                  fill={tool === "room" ? "rgba(47,107,79,0.1)" : undefined}
-                  stroke={ACCENT}
-                  strokeWidth={tool === "wall" ? 4.5 : 2}
-                  strokeScaleEnabled={tool !== "wall"}
-                  dash={tool === "room" ? [6 / s, 4 / s] : undefined}
-                  opacity={tool === "wall" ? 0.7 : 1}
-                />
-                {draft.map((p, i) => (
-                  <Circle key={i} x={p.x} y={p.y} radius={(i === 0 && tool === "room" ? 6 : 3.5) / s} fill={i === 0 ? ACCENT : "#fff"} stroke={ACCENT} strokeWidth={1.5} strokeScaleEnabled={false} />
-                ))}
-                {cursor && (
-                  <Text
-                    x={cursor.x + 10 / s}
-                    y={cursor.y + 10 / s}
-                    text={formatFeetInches(dist(draft[draft.length - 1], cursor))}
-                    fontSize={11.5 / s}
-                    fontStyle="600"
-                    fill={ACCENT}
-                  />
-                )}
-              </Group>
-            )}
+            <DraftPreview rectStart={rectPreview} rectEnd={rectEnd} draft={draft} cursor={cursor} tool={tool} s={s} />
 
             {ghostOpening && <OpeningSymbol g={ghostOpening.g} thickness={ghostOpening.thickness} selected scale={s} ghost />}
             {ghostFixture && <FixtureSymbol f={ghostFixture} selected={false} scale={s} ghost />}
@@ -862,24 +674,7 @@ export default function PlanCanvas(props: Props) {
               </Group>
             )}
 
-            {/* Lining-up guides while snapping. */}
-            {guides.x !== undefined && <Line points={[guides.x, -1e5, guides.x, 1e5]} stroke={ACCENT} strokeWidth={1} strokeScaleEnabled={false} dash={[4, 4]} opacity={0.6} listening={false} />}
-            {guides.y !== undefined && <Line points={[-1e5, guides.y, 1e5, guides.y]} stroke={ACCENT} strokeWidth={1} strokeScaleEnabled={false} dash={[4, 4]} opacity={0.6} listening={false} />}
-
-            {box && (
-              <Rect
-                x={Math.min(box.x0, box.x1)}
-                y={Math.min(box.y0, box.y1)}
-                width={Math.abs(box.x1 - box.x0)}
-                height={Math.abs(box.y1 - box.y0)}
-                fill="rgba(47,107,79,0.08)"
-                stroke={ACCENT}
-                strokeWidth={1}
-                strokeScaleEnabled={false}
-                dash={[4, 3]}
-                listening={false}
-              />
-            )}
+            <GuidesAndBox guides={guides} box={box} />
 
             <Transformer
               ref={trRef}
@@ -905,55 +700,7 @@ export default function PlanCanvas(props: Props) {
         </p>
       )}
       <ScaleBar scale={s} />
-      <div className="absolute right-3 bottom-3 flex items-center gap-1 rounded-md border border-line bg-white p-0.5 text-sm shadow-sm">
-        <button className="rounded px-2 py-1 hover:bg-stone-100" onClick={() => zoomBy(1 / 1.25)} aria-label="Zoom out" title="Zoom out">
-          −
-        </button>
-        <span className="w-12 text-center text-xs tabular-nums text-muted">{Math.round((s / 0.6) * 100)}%</span>
-        <button className="rounded px-2 py-1 hover:bg-stone-100" onClick={() => zoomBy(1.25)} aria-label="Zoom in" title="Zoom in">
-          +
-        </button>
-        <button className="rounded px-2 py-1 text-xs hover:bg-stone-100" onClick={fit} title="Fit the drawing on screen">
-          Fit
-        </button>
-      </div>
+      <ZoomButtons percent={Math.round((s / 0.6) * 100)} onZoom={zoomBy} onFit={fit} />
     </div>
   );
-}
-
-function pointIn(p: Point, poly: Point[]): boolean {
-  let inside = false;
-  for (let i = 0, j = poly.length - 1; i < poly.length; j = i++) {
-    const a = poly[i];
-    const b = poly[j];
-    if (a.y > p.y !== b.y > p.y && p.x < ((b.x - a.x) * (p.y - a.y)) / (b.y - a.y) + a.x) inside = !inside;
-  }
-  return inside;
-}
-
-function dedupe(points: Point[]): Point[] {
-  const out: Point[] = [];
-  for (const p of points) if (!out.length || dist(out[out.length - 1], p) > 1) out.push(p);
-  if (out.length > 2 && dist(out[0], out[out.length - 1]) <= 1) out.pop();
-  return out;
-}
-
-/** Where a door or window would land if placed at this point. */
-function ghostOpeningAt(plan: FloorPlan, p: Point, style: string, s: number): { g: OpeningGeometry; thickness: number } | null {
-  const near = nearestHost(plan, p, Math.max(30, 24 / s));
-  if (!near) return null;
-  const t = openingType(style);
-  const o: Opening = {
-    id: "ghost",
-    host: near.seg.host,
-    offsetIn: clampOffset(near.t, t.widths[0], near.seg.length),
-    kind: t.kind,
-    style: t.id,
-    widthIn: t.widths[0],
-    heightIn: t.heightIn,
-    side: near.side,
-    hinge: "start",
-  };
-  const g = openingGeometry(plan, o);
-  return g ? { g, thickness: 6 } : null;
 }
