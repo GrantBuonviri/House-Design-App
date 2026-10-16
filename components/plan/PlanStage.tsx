@@ -28,6 +28,7 @@ import ViewOptions, { type Overlay } from "@/components/bubbles/ViewOptions";
 import type { LandView, Side } from "@/components/bubbles/types";
 import PlanBasicsForm from "./PlanBasicsForm";
 import PlanAlternativesView from "./PlanAlternativesView";
+import { keepFurnish, layerItems, moveInside, removeItem } from "@/lib/furnish/layer";
 import PlanChecks from "./PlanChecks";
 import PlanContextMenu, { contextItems, type ContextAt } from "./PlanContextMenu";
 import KeyboardHelp from "./KeyboardHelp";
@@ -329,7 +330,7 @@ export default function PlanStage({ onContinue, onGoToSketch }: { onContinue: ()
   /** The sketch as a plan, plus hallways, closets, windows and doors from the built-in rules. */
   function suggest() {
     const res = suggestPlans(sketches, { brief, plot, levels, basics });
-    update((p) => ({ ...p, floorPlans: { ...blankPlans(levels), ...res.plans }, plan: { ...p.plan, showSketch: false } }));
+    update((p) => ({ ...p, floorPlans: keepFurnish(p.floorPlans, { ...blankPlans(levels), ...res.plans }), plan: { ...p.plan, showSketch: false } }));
     setNotes(res.notes);
     setSelection([]);
     setChoosing(false);
@@ -337,7 +338,7 @@ export default function PlanStage({ onContinue, onGoToSketch }: { onContinue: ()
 
   function fromSketch() {
     const res = plansFromSketch(sketches, { brief, plot, levels, basics });
-    update((p) => ({ ...p, floorPlans: { ...blankPlans(levels), ...res.plans }, plan: { ...p.plan, showSketch: false } }));
+    update((p) => ({ ...p, floorPlans: keepFurnish(p.floorPlans, { ...blankPlans(levels), ...res.plans }), plan: { ...p.plan, showSketch: false } }));
     setNotes([
       ...(res.needHall.length
         ? [
@@ -427,8 +428,15 @@ export default function PlanStage({ onContinue, onGoToSketch }: { onContinue: ()
   }
 
   /** Close gap on a warning: push the two rooms together. */
-  function fixWarning(w: PlanWarning) {
+  function fixWarning(w: PlanWarning, action?: "inside" | "delete") {
     const p = planOf(plans, w.levelId);
+    if (w.furnish) {
+      const item = layerItems(p).find((x) => x.id === w.furnish!.id);
+      if (!item) return;
+      setPlans((ps) => ({ ...ps, [w.levelId]: action === "delete" ? removeItem(p, item) : moveInside(p, item) }));
+      setFlash(`${action === "delete" ? "Deleted" : "Moved"} the ${item.label.toLowerCase()}. Undo puts it back.`);
+      return;
+    }
     if (w.pullBack) {
       const lv = levels.find((l) => l.id === w.levelId);
       const sup = lv && supportOf(plans, levels, lv);
@@ -517,7 +525,7 @@ export default function PlanStage({ onContinue, onGoToSketch }: { onContinue: ()
             Show me alternatives
           </button>
           <button className="btn-primary" onClick={onContinue}>
-            Next: interior →
+            Next: furnish →
           </button>
         </div>
       </div>
@@ -551,6 +559,7 @@ export default function PlanStage({ onContinue, onGoToSketch }: { onContinue: ()
               house3d={project.house3d}
               interior={project.interior.selections}
               exterior={project.exterior}
+              systems={project.plans.systems}
               plot={plot}
               offset={offset}
               levelId={level.id}

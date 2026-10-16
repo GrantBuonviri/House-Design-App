@@ -151,6 +151,7 @@ export default function ExteriorStage({ onGoToPlan, onWalk }: { onGoToPlan: () =
                     house3d={project.house3d}
                     interior={project.interior.selections}
                     exterior={exterior}
+                    systems={project.plans.systems}
                     plot={project.plot}
                     offset={offset}
                     levelId={firstUsed}

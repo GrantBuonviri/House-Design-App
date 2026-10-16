@@ -42,6 +42,10 @@ export const DEVICE_CODE: Record<DeviceKind, string> = {
   return: "RA",
   thermostat: "T",
   "hose-bib": "HB",
+  water: "W",
+  drain: "D",
+  gas: "G",
+  "dryer-vent": "DV",
 };
 
 /** Fans show with the heating and air layer too. */

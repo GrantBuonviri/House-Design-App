@@ -1,13 +1,14 @@
-import type { DesignChoices, FloorPlan, House3D, Level, PlanBasics, PlanRoom, Point, Selection } from "@/lib/model/schema";
+import { HouseSystems, type DesignChoices, type FloorPlan, type House3D, type Level, type PlanBasics, type PlanRoom, type Point, type Selection } from "@/lib/model/schema";
 import { exteriorWallIn, INTERIOR_WALL_IN } from "@/lib/plan/basics";
 import { planOf, type Plans } from "@/lib/plan/edit";
-import { add, collinearOverlap, dist, lerp, pointInPolygon, polygonArea, polygonCenter, project, scale, sub, subtractIntervals, unit } from "@/lib/plan/geometry";
+import { add, collinearOverlap, dist, lerp, pointInPolygon, polygonArea, polygonCenter, project, rectangle, scale, sub, subtractIntervals, unit } from "@/lib/plan/geometry";
 import { areaKind } from "@/lib/plan/measure";
 import { isClosedIn, stairsDrawing } from "@/lib/plan/stairs";
 import { HALF_WALL_IN, openingGeometries, roomEdgeAt, WALL_CAP_IN, WALL_CAP_OVERHANG_IN, wallPieces, type OpeningGeometry, type WallPiece } from "@/lib/plan/walls";
 import { wallKey } from "@/lib/interior/picks";
 import { COLORS, floorColor } from "./colors";
-import { drawFixture, drawFurniture } from "./fixtures";
+import { drawAddOn, drawFixture, drawFurniture, drawHookup } from "./fixtures";
+import { DEVICE_INFO, placedHookups } from "@/lib/plan/devices";
 import { roomLook, type RoomLook } from "./finishes";
 import { exteriorLook, type ExteriorLook } from "./exterior";
 import { COVERED, cutHoles, floorFootprint, offsetRing, roofFootprint, subtractRegions, type Region } from "./footprint";
@@ -20,7 +21,7 @@ import type { Site } from "./site";
 import { entrySteps } from "./entry";
 import { drawStairs, prism } from "./stairs";
 import { buildYard } from "./yard";
-import { cabinetLayout } from "@/lib/plan/cabinets";
+import { BASE_KINDS, cabinetLayout } from "@/lib/plan/cabinets";
 import { codeNum } from "@/lib/codes/data";
 import { overhangsOf, postsUnder, supportOf } from "@/lib/plan/support";
 import { ROOF_STEP_DEG, flatPlans, sourceEdge } from "@/lib/plan/flatten";
@@ -74,6 +75,8 @@ export type HouseContext = {
   interior?: Selection[];
   /** Exterior picks: siding, roof, trim, windows, doors, the deck and patio, the yard. */
   exterior?: DesignChoices;
+  /** Fuel choices, for the gas hookups behind fixtures. Left out: the usual defaults. */
+  systems?: HouseSystems;
 };
 
 /** How the outside looks: gable ends only count for gable and shed roofs. */
@@ -372,7 +375,12 @@ export function buildLevel(
   }
 
   // ---- Upper and tall cabinets (base cabinets are part of the counters) ----
-  const hung = cabinetLayout(plan, ceilingIn, codeNum("kitchen.rangeClearanceAbove")).cabinets.filter((c) => c.kind === "tall" || c.bottomIn > 24);
+  // Base boxes the app lays out are drawn as the counters; hand-placed ones of any kind are drawn as boxes.
+  const counters = plan.fixtures.filter((x) => x.kind === "counter" || x.kind === "island" || x.kind === "vanity");
+  const underCounter = (c: { x: number; y: number }) => counters.some((x) => pointInPolygon(c, rectangle(x.x, x.y, x.widthIn, x.depthIn, x.rotation)));
+  const hung = cabinetLayout(plan, ceilingIn, codeNum("kitchen.rangeClearanceAbove")).cabinets.filter(
+    (c) => !BASE_KINDS.has(c.kind) || c.bottomIn > 24 || (!c.auto && !underCounter(c)),
+  );
   if (hung.length) {
     const mb = new MeshBuilder();
     for (const c of hung) {
@@ -380,6 +388,19 @@ export function buildLevel(
       mb.block(f, { x: c.x, y: c.y }, c.rotation, c.widthIn - 0.25, c.depthIn, floorIn + c.bottomIn, floorIn + c.bottomIn + c.heightIn, look?.cabinet ?? COLORS.cabinet);
     }
     parts.push({ key: `${L}:cab`, levelId: L, layer: "fixtures", mesh: mb.build() });
+  }
+
+  // ---- Built-ins and extras, and the hookups behind fixtures ----
+  for (const a of plan.addOns ?? []) {
+    const mb = new MeshBuilder();
+    drawAddOn(mb, f, a, floorIn);
+    if (!mb.empty) parts.push({ key: `${L}:ao:${a.id}`, levelId: L, layer: "fixtures", mesh: mb.build() });
+  }
+  const hookups = placedHookups(plan, ctx.systems ?? HouseSystems.parse({}));
+  if (hookups.length) {
+    const mb = new MeshBuilder();
+    for (const d of hookups) drawHookup(mb, f, d, floorIn, DEVICE_INFO[d.kind].mountIn ?? 16);
+    if (!mb.empty) parts.push({ key: `${L}:hk`, levelId: L, layer: "fixtures", mesh: mb.build() });
   }
 
   // ---- Furniture ----

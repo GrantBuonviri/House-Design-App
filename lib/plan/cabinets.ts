@@ -38,7 +38,15 @@ export const CABINET_LABEL: Record<Cabinet["kind"], string> = {
   tall: "Tall (pantry) cabinet",
   vanity: "Vanity cabinet",
   filler: "Filler",
+  corner: "Corner cabinet (lazy susan)",
+  pantry: "Pantry cabinet",
+  "open-shelf": "Open shelves",
+  "appliance-garage": "Appliance garage",
+  wine: "Wine rack",
 };
+
+/** Kinds that stand on the floor under a counter. */
+export const BASE_KINDS = new Set<Cabinet["kind"]>(["base", "sink", "drawer", "vanity", "filler", "corner", "wine"]);
 
 const KITCHEN_RUN = new Set(["counter", "sink", "dishwasher", "range", "fridge"]);
 const LAUNDRY = new Set(["washer", "dryer", "laundry-sink"]);
@@ -99,6 +107,16 @@ export function cabinetCode(c: Pick<Cabinet, "kind" | "widthIn" | "heightIn" | "
       return `V${w}`;
     case "filler":
       return `F${Math.max(1, Math.round(c.widthIn))}`;
+    case "corner":
+      return `LS${w}`;
+    case "pantry":
+      return `P${w}${h}`;
+    case "open-shelf":
+      return `OS${w}`;
+    case "appliance-garage":
+      return `AG${w}`;
+    case "wine":
+      return `WR${w}`;
   }
 }
 
@@ -330,12 +348,19 @@ export function resetCabinets(plan: FloorPlan): FloorPlan {
 export const cabinetsEdited = (plan: FloorPlan) => Boolean(plan.cabinets && (plan.cabinets.hidden.length || plan.cabinets.added.length));
 
 function stripPlaced(c: Cabinet | PlacedCabinet): Cabinet {
-  const { id, kind, x, y, rotation, widthIn, depthIn, heightIn, bottomIn } = c;
-  return { id, kind, x, y, rotation, widthIn, depthIn, heightIn, bottomIn };
+  const { id, kind, x, y, rotation, widthIn, depthIn, heightIn, bottomIn, roomId } = c;
+  return { id, kind, x, y, rotation, widthIn, depthIn, heightIn, bottomIn, ...(roomId ? { roomId } : {}) };
 }
 
 /** A new box of a kind with its usual size, against a wall at `back` facing `n`. */
 export function newCabinet(kind: Cabinet["kind"], back: Point, rotation: number, widthIn: number, ceilingIn: number): Omit<Cabinet, "id"> {
+  const s = cabinetSize(kind, ceilingIn);
+  const c = add(back, scale(rotate({ x: 0, y: 1 }, rotation), s.d / 2));
+  return { kind, x: c.x, y: c.y, rotation, widthIn, depthIn: s.d, heightIn: s.h, bottomIn: s.z };
+}
+
+/** A kind's usual depth, height and height off the floor, inches. */
+export function cabinetSize(kind: Cabinet["kind"], ceilingIn: number): { d: number; h: number; z: number } {
   const { topIn, heightIn: upperH } = upperTop(ceilingIn);
   const size: Record<Cabinet["kind"], { d: number; h: number; z: number }> = {
     base: { d: BASE_DEPTH_IN, h: BASE_HEIGHT_IN, z: 0 },
@@ -345,10 +370,13 @@ export function newCabinet(kind: Cabinet["kind"], back: Point, rotation: number,
     tall: { d: BASE_DEPTH_IN, h: Math.min(TALL_HEIGHT_IN + 6, topIn), z: 0 },
     vanity: { d: VANITY_DEPTH_IN, h: VANITY_HEIGHT_IN, z: 0 },
     filler: { d: BASE_DEPTH_IN, h: BASE_HEIGHT_IN, z: 0 },
+    corner: { d: BASE_DEPTH_IN, h: BASE_HEIGHT_IN, z: 0 },
+    pantry: { d: BASE_DEPTH_IN, h: Math.min(TALL_HEIGHT_IN + 6, topIn), z: 0 },
+    "open-shelf": { d: 10, h: Math.min(30, upperH), z: topIn - Math.min(30, upperH) },
+    "appliance-garage": { d: 14, h: 16, z: COUNTER_TOP_IN },
+    wine: { d: BASE_DEPTH_IN, h: BASE_HEIGHT_IN, z: 0 },
   };
-  const s = size[kind];
-  const c = add(back, scale(rotate({ x: 0, y: 1 }, rotation), s.d / 2));
-  return { kind, x: c.x, y: c.y, rotation, widthIn, depthIn: s.d, heightIn: s.h, bottomIn: s.z };
+  return size[kind];
 }
 
 // ---------- Finding the runs ----------

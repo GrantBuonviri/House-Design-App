@@ -1,4 +1,4 @@
-import type { Fixture, FurnitureItem, Point } from "@/lib/model/schema";
+import type { AddOn, Device, Fixture, FurnitureItem, Point } from "@/lib/model/schema";
 import { furnitureType, piecePlace, type Material } from "@/lib/plan/furniture";
 import { add, rotate } from "@/lib/plan/geometry";
 import { COLORS } from "./colors";
@@ -112,5 +112,68 @@ export function drawFurniture(mb: MeshBuilder, f: Frame, item: FurnitureItem, fl
   for (const p of t?.pieces ?? [{ z0: 0, z1: 30, material: "main" as Material }]) {
     const { mid, w, d } = piecePlace(item, p);
     mb.block(f, mid, item.rotation ?? 0, w, d, floorIn + p.z0, floorIn + p.z1, colors[p.material]);
+  }
+}
+
+const ADDON_WOOD = hex("#a57a52");
+const ADDON_WHITE = hex("#f4f2ee");
+const GAS_YELLOW = hex("#d9b23a");
+
+/** Add-on shapes, like the fixtures': shares of the item's width and depth, heights as shares of its own height (h) or inches (z). */
+type AddOnPiece = { x?: number; y?: number; w?: number; d?: number; h0: number; h1: number; color?: RGB };
+const ADDON_SHAPES: Record<string, AddOnPiece[]> = {
+  bookcase: [
+    { d: 0.1, y: -0.45, h0: 0, h1: 1 },
+    { w: 0.04, x: -0.48, h0: 0, h1: 1 },
+    { w: 0.04, x: 0.48, h0: 0, h1: 1 },
+    ...[0, 0.25, 0.5, 0.75, 0.98].map((h) => ({ h0: h, h1: h + 0.02 })),
+  ],
+  "window-seat": [{ h0: 0, h1: 0.85 }, { h0: 0.85, h1: 1, color: ADDON_WHITE }],
+  bench: [{ h0: 0.85, h1: 1 }, { w: 0.06, x: -0.45, h0: 0, h1: 0.85 }, { w: 0.06, x: 0.45, h0: 0, h1: 0.85 }],
+  desk: [{ h0: 0.94, h1: 1 }, { w: 0.04, x: -0.48, h0: 0, h1: 0.94 }, { w: 0.3, x: 0.35, h0: 0, h1: 0.94 }],
+  "ceiling-fan": [
+    { w: 0.12, d: 0.12, h0: 0, h1: 1, color: ADDON_WHITE },
+    { d: 0.1, h0: 0.1, h1: 0.2 },
+    { w: 0.1, h0: 0.1, h1: 0.2 },
+  ],
+  mirror: [{ h0: 0, h1: 1, color: hex("#cfe0e6") }],
+  "towel-bar": [{ d: 0.5, y: 0.25, h0: 0, h1: 1, color: COLORS.steel }],
+  "grab-bar": [{ d: 0.5, y: 0.25, h0: 0, h1: 1, color: COLORS.steel }],
+  "medicine-cabinet": [{ h0: 0, h1: 1, color: ADDON_WHITE }],
+  "coat-hooks": [{ d: 0.3, y: -0.35, h0: 0, h1: 1 }, ...[-0.35, 0, 0.35].map((x) => ({ x, w: 0.04, h0: 0.2, h1: 0.6, color: COLORS.dark }))],
+  lockers: [{ h0: 0, h1: 1 }, { d: 0.6, y: 0.2, h0: 0.25, h1: 0.27, color: ADDON_WHITE }],
+};
+
+/** A built-in or extra (shelving, a window seat, a mirror, a ceiling fan) as simple boxes. */
+export function drawAddOn(mb: MeshBuilder, f: Frame, a: AddOn, floorIn: number) {
+  const main = a.color ? hex(a.color) : ADDON_WOOD;
+  const pieces = ADDON_SHAPES[a.kind] ?? [{ h0: 0, h1: 1 }];
+  const z0 = floorIn + a.bottomIn;
+  for (const p of pieces) {
+    const mid = add({ x: a.x, y: a.y }, rotate({ x: (p.x ?? 0) * a.widthIn, y: (p.y ?? 0) * a.depthIn }, a.rotation ?? 0));
+    mb.block(f, mid, a.rotation ?? 0, (p.w ?? 1) * a.widthIn, (p.d ?? 1) * a.depthIn, z0 + p.h0 * a.heightIn, z0 + p.h1 * a.heightIn, p.color ?? main);
+  }
+}
+
+/** A hookup where it comes through the wall: a valve plate, a drain stub, a gas cock or a vent hood. `mountIn` is its height. */
+export function drawHookup(mb: MeshBuilder, f: Frame, d: Device, floorIn: number, mountIn: number) {
+  const at = (x: number, y: number) => add({ x: d.x, y: d.y }, rotate({ x, y }, d.rotation ?? 0));
+  const z = floorIn + mountIn;
+  switch (d.kind) {
+    case "water":
+      mb.block(f, at(0, -0.5), d.rotation, 8, 1, z - 3, z + 3, ADDON_WHITE);
+      mb.block(f, at(-2, 1), d.rotation, 1.2, 3, z - 0.6, z + 0.6, hex("#c0392b"));
+      mb.block(f, at(2, 1), d.rotation, 1.2, 3, z - 0.6, z + 0.6, hex("#2e6fb7"));
+      break;
+    case "drain":
+      mb.block(f, at(0, 1), d.rotation, 2, 4, z - 1, z + 1, COLORS.dark);
+      break;
+    case "gas":
+      mb.block(f, at(0, 1), d.rotation, 1, 4, z - 0.5, z + 0.5, COLORS.steel);
+      mb.block(f, at(0, 2.5), d.rotation, 3, 1, z - 0.5, z + 0.5, GAS_YELLOW);
+      break;
+    case "dryer-vent":
+      mb.block(f, at(0, 0.5), d.rotation, 6, 2, z - 3, z + 3, ADDON_WHITE);
+      break;
   }
 }

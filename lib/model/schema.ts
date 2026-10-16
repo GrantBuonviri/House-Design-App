@@ -9,7 +9,7 @@ import { z } from "zod";
  * Angles are degrees clockwise from north (0 = N, 90 = E).
  */
 
-export const SCHEMA_VERSION = 24;
+export const SCHEMA_VERSION = 25;
 
 export const Point = z.object({ x: z.number(), y: z.number() });
 export type Point = z.infer<typeof Point>;
@@ -20,6 +20,7 @@ export const STAGES = [
   "brief",
   "bubbles",
   "plan",
+  "furnish",
   "interior",
   "exterior",
 ] as const;
@@ -456,7 +457,20 @@ export const FurnitureItem = z.object({
 });
 export type FurnitureItem = z.infer<typeof FurnitureItem>;
 
-export const CABINET_KINDS = ["base", "sink", "drawer", "upper", "tall", "vanity", "filler"] as const;
+export const CABINET_KINDS = [
+  "base",
+  "sink",
+  "drawer",
+  "upper",
+  "tall",
+  "vanity",
+  "filler",
+  "corner",
+  "pantry",
+  "open-shelf",
+  "appliance-garage",
+  "wine",
+] as const;
 
 /** One cabinet box. Like a fixture, its back is toward -y before it's turned by `rotation`. */
 export const Cabinet = z.object({
@@ -471,6 +485,8 @@ export const Cabinet = z.object({
   /** Height of the box, and of its bottom above the floor. */
   heightIn: z.number().positive(),
   bottomIn: z.number().min(0).default(0),
+  /** The room it was placed in by hand; it moves with that room. */
+  roomId: z.string().optional(),
 });
 export type Cabinet = z.infer<typeof Cabinet>;
 
@@ -500,6 +516,10 @@ export const DEVICE_KINDS = [
   "return",
   "thermostat",
   "hose-bib",
+  "water",
+  "drain",
+  "gas",
+  "dryer-vent",
 ] as const;
 export type DeviceKind = (typeof DEVICE_KINDS)[number];
 
@@ -510,6 +530,8 @@ export const Device = z.object({
   x: z.number(),
   y: z.number(),
   rotation: z.number().default(0),
+  /** The room it was placed in by hand; it moves with that room. */
+  roomId: z.string().optional(),
 });
 export type Device = z.infer<typeof Device>;
 
@@ -524,6 +546,23 @@ export const DeviceEdits = z.object({
 });
 export type DeviceEdits = z.infer<typeof DeviceEdits>;
 
+/** A built-in or extra placed in Furnish (shelving, window seat, mirror, ceiling fan). Kinds are in lib/furnish/catalog.ts. */
+export const AddOn = z.object({
+  id: z.string(),
+  kind: z.string(),
+  x: z.number(),
+  y: z.number(),
+  rotation: z.number().default(0),
+  widthIn: z.number().positive(),
+  depthIn: z.number().positive(),
+  heightIn: z.number().positive(),
+  /** Height of its bottom above the floor (wall-hung and ceiling ones). */
+  bottomIn: z.number().min(0).default(0),
+  color: z.string().optional(),
+  roomId: z.string().optional(),
+});
+export type AddOn = z.infer<typeof AddOn>;
+
 export const FloorPlan = z.object({
   rooms: z.array(PlanRoom).default([]),
   walls: z.array(PlanWall).default([]),
@@ -537,6 +576,8 @@ export const FloorPlan = z.object({
   cabinets: CabinetEdits.optional(),
   /** Left out until the outlets, lights, alarms, registers or hose bibs have been changed by hand. */
   devices: DeviceEdits.optional(),
+  /** Built-ins and extras placed in Furnish. Left out means none. */
+  addOns: z.array(AddOn).optional(),
 });
 export type FloorPlan = z.infer<typeof FloorPlan>;
 
@@ -587,6 +628,8 @@ export const PlanSettings = z.object({
   labels: PlanLabels.default(() => PlanLabels.parse({})),
   /** Ids of "Things to check" items the user dismissed (see lib/plan/checks.ts). */
   dismissed: z.array(z.string()).default([]),
+  /** Draw Furnish items (faded) in the floor plan editor. Left out means yes. */
+  showFurnishings: z.boolean().optional(),
 });
 export type PlanSettings = z.infer<typeof PlanSettings>;
 

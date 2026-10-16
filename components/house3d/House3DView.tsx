@@ -41,6 +41,8 @@ type Props = {
   interior?: Selection[];
   /** Exterior picks: siding, roof, windows, doors and the yard. */
   exterior?: HouseContext["exterior"];
+  /** Fuel choices, for the gas hookups behind fixtures. */
+  systems?: HouseContext["systems"];
   plot: Plot | null;
   offset: Point;
   levelId: string;
@@ -108,7 +110,7 @@ function shownGroups(walls: WallsShown): Record<keyof Groups, boolean> {
  */
 export default function House3DView(props: Props) {
   const quality = useGraphics((g) => g.quality);
-  const { plans, levels, basics, house3d, interior, exterior, plot, offset, levelId, height, editing, walls } = props;
+  const { plans, levels, basics, house3d, interior, exterior, systems, plot, offset, levelId, height, editing, walls } = props;
   const [lookingDown, setLookingDown] = useState(false);
   const [topRequest, setTopRequest] = useState(0);
   const cutAway = props.cutAway || lookingDown;
@@ -127,7 +129,7 @@ export default function House3DView(props: Props) {
 
   const heights = useMemo(() => levelHeights(levels, basics), [levels, basics]);
   const site = useMemo(() => siteFor(plot, offset, settled), [plot, offset, settled]);
-  const ctx = useMemo(() => ({ levels, basics, house3d, site, frame, heights, interior, exterior }), [levels, basics, house3d, site, frame, heights, interior, exterior]);
+  const ctx = useMemo(() => ({ levels, basics, house3d, site, frame, heights, interior, exterior, systems }), [levels, basics, house3d, site, frame, heights, interior, exterior, systems]);
 
   // Each floor is rebuilt only when it (or a floor next to it) changes.
   const cache = useRef(new Map<string, { key: unknown[]; parts: Part[] }>());

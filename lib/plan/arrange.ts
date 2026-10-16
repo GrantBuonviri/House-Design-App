@@ -1,3 +1,4 @@
+import { addRiders, mapRiders, ridersIn, type Rider } from "@/lib/furnish/ride";
 import type { FloorPlan, Opening, PlanRoom, Point } from "@/lib/model/schema";
 import { reverseBulges, roomEdgeLength, withBulges } from "./arcs";
 import { boundsOf, dist, edgesOf, isRectangle, round1, roundPoint } from "./geometry";
@@ -86,6 +87,8 @@ export function duplicateMany(plan: FloorPlan, ids: string[], d: Point = { x: CO
   const stairs = m.stairs.map((s) => ({ ...s, id: fresh(s.id, "s"), x: round1(s.x + d.x), y: round1(s.y + d.y) }));
   const fixtures = m.fixtures.map((f) => ({ ...f, id: fresh(f.id, "f"), x: round1(f.x + d.x), y: round1(f.y + d.y), roomId: f.roomId && map.has(f.roomId) ? map.get(f.roomId) : f.roomId }));
   const furniture = m.furniture.map((f) => ({ ...f, id: newPlanId("m"), x: round1(f.x + d.x), y: round1(f.y + d.y), roomId: f.roomId ? map.get(f.roomId) : f.roomId }));
+  const riders = ridersIn(plan, m.roomIds);
+  const copy = <T extends Rider>(x: T, prefix: string): T => ({ ...x, id: newPlanId(prefix), x: round1(x.x + d.x), y: round1(x.y + d.y), roomId: x.roomId ? map.get(x.roomId) : x.roomId });
   const openings: Opening[] = m.openings
     .filter((o) => !ids.includes(o.id) || ("roomId" in o.host ? m.roomIds.has(o.host.roomId) : m.wallIds.has(o.host.wallId)))
     .map((o) => ({ ...o, id: newPlanId("o"), host: "roomId" in o.host ? { roomId: map.get(o.host.roomId)!, edge: o.host.edge } : { wallId: map.get(o.host.wallId)! } }));
@@ -100,7 +103,8 @@ export function duplicateMany(plan: FloorPlan, ids: string[], d: Point = { x: CO
     fixtures: [...plan.fixtures, ...fixtures],
     furniture: [...plan.furniture, ...furniture],
   };
-  return { plan: pruneOpenWalls(next), ids: [...rooms.map((r) => r.id), ...walls.map((w) => w.id), ...stairs.map((s) => s.id), ...fixtures.filter((f) => !f.roomId || !map.has(f.roomId) || ids.includes(f.id)).map((f) => f.id)] };
+  const withRiders = addRiders(next, { addOns: riders.addOns.map((x) => copy(x, "ao")), cabinets: riders.cabinets.map((x) => copy(x, "cab")), devices: riders.devices.map((x) => copy(x, "dev")) });
+  return { plan: pruneOpenWalls(withRiders), ids: [...rooms.map((r) => r.id), ...walls.map((w) => w.id), ...stairs.map((s) => s.id), ...fixtures.filter((f) => !f.roomId || !map.has(f.roomId) || ids.includes(f.id)).map((f) => f.id)] };
 }
 
 export type Flip = "left-right" | "top-bottom";
@@ -153,6 +157,7 @@ export function mirrorMany(plan: FloorPlan, ids: string[], flip: Flip): FloorPla
     stairs: plan.stairs.map((s) => (m.stairs.includes(s) ? { ...s, ...mp(s), rotation: turn(s.rotation), flip: s.shape === "l" ? !s.flip : s.flip } : s)),
     fixtures: plan.fixtures.map((f) => (m.fixtures.includes(f) ? { ...f, ...mp(f), rotation: turn(f.rotation) } : f)),
     furniture: plan.furniture.map((f) => (m.furniture.includes(f) ? { ...f, ...mp(f), rotation: turn(f.rotation) } : f)),
+    ...mapRiders(plan, (x) => (x.roomId && m.roomIds.has(x.roomId) ? { ...x, ...mp(x), rotation: turn(x.rotation) } : x)),
   };
   return pruneOpenWalls(next);
 }

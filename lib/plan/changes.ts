@@ -1,3 +1,4 @@
+import { mapRiders } from "@/lib/furnish/ride";
 import type { FloorPlan, Level, Opening, PlanRoom, Point } from "@/lib/model/schema";
 import { roomType } from "@/lib/brief/rooms";
 import { exteriorWallIn, levelAbove } from "./basics";
@@ -5,7 +6,7 @@ import { hangingArea } from "./support";
 import { OUTSIDE, addDoor, freeSpot, newOpening, openingRooms, reachable, roomLinks, sharedWall } from "./connect";
 import { keepOpeningsInPlace, planOf, type Plans } from "./edit";
 import { outsideDoor, type PlanContext } from "./fromSketch";
-import { add, boundsOf, collinearOverlap, dist, dot, edgesOf, leftNormal, pointInPolygon, polygonArea, polygonsOverlap, round1, roundPoint, scale, signedArea, sub, unit } from "./geometry";
+import { add, boundsOf, collinearOverlap, dist, dot, edgesOf, leftNormal, polygonArea, polygonsOverlap, round1, roundPoint, scale, signedArea, sub, unit } from "./geometry";
 import { areaKind, roomSqft } from "./measure";
 import { outsideStretches, roomJustOutside, stairsBoxes, wayInRooms } from "./suggest";
 import { openingGeometry } from "./walls";
@@ -187,6 +188,7 @@ export function mirrorPlans(plans: Plans, axis: "x" | "y"): Plans {
       stairs: plan.stairs.map((s) => ({ ...s, ...flip({ x: s.x, y: s.y }), rotation: turn(s.rotation), flip: !s.flip })),
       fixtures: plan.fixtures.map((f) => ({ ...f, ...flip({ x: f.x, y: f.y }), rotation: turn(f.rotation) })),
       furniture: plan.furniture.map((f) => ({ ...f, ...flip({ x: f.x, y: f.y }), rotation: turn(f.rotation) })),
+      ...mapRiders(plan, (x) => ({ ...x, ...flip({ x: x.x, y: x.y }), rotation: turn(x.rotation) })),
     };
   }
   return out;
@@ -218,7 +220,10 @@ function sharedLengths(plan: FloorPlan): Map<string, number> {
   return out;
 }
 
-/** Windows that now look into another room, and fixtures and furniture pushed out of their room, are taken away. */
+/**
+ * Windows that now look into another room are taken away. Furnish items
+ * pushed out of their room stay: "Things to check" points them out.
+ */
 function tidy(plan: FloorPlan): FloorPlan {
   const indoors = new Set(plan.rooms.filter((r) => areaKind(r) !== "outdoor").map((r) => r.id));
   const openings = plan.openings.filter((o) => {
@@ -227,19 +232,7 @@ function tidy(plan: FloorPlan): FloorPlan {
     const [a, b] = openingRooms(plan, o);
     return !(a && b && indoors.has(a) && indoors.has(b));
   });
-  const fixtures = plan.fixtures.filter((f) => {
-    if (!f.roomId) return true;
-    const r = plan.rooms.find((x) => x.id === f.roomId);
-    return !r || pointInPolygon({ x: f.x, y: f.y }, r.polygon);
-  });
-  const furniture = plan.furniture.filter((f) => {
-    if (!f.roomId) return true;
-    const r = plan.rooms.find((x) => x.id === f.roomId);
-    return !r || pointInPolygon({ x: f.x, y: f.y }, r.polygon);
-  });
-  return openings.length === plan.openings.length && fixtures.length === plan.fixtures.length && furniture.length === plan.furniture.length
-    ? plan
-    : { ...plan, openings, fixtures, furniture };
+  return openings.length === plan.openings.length ? plan : { ...plan, openings };
 }
 
 /** Rooms keep a sensible size and shape: not folded over, not too narrow, and not far under the smallest size for their type. */
@@ -355,6 +348,9 @@ export function applyChange(plan: FloorPlan, c: PlanChange, ctx: { exteriorIn: n
           f.roomId === room.id ? { ...f, x: f.x + da.x, y: f.y + da.y, roomId: other.id } : f.roomId === other.id ? { ...f, x: f.x - da.x, y: f.y - da.y, roomId: room.id } : f,
         ),
         furniture: plan.furniture.map((f) =>
+          f.roomId === room.id ? { ...f, x: f.x + da.x, y: f.y + da.y, roomId: other.id } : f.roomId === other.id ? { ...f, x: f.x - da.x, y: f.y - da.y, roomId: room.id } : f,
+        ),
+        ...mapRiders(plan, (f) =>
           f.roomId === room.id ? { ...f, x: f.x + da.x, y: f.y + da.y, roomId: other.id } : f.roomId === other.id ? { ...f, x: f.x - da.x, y: f.y - da.y, roomId: room.id } : f,
         ),
       };

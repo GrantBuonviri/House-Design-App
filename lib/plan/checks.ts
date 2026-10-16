@@ -18,6 +18,7 @@ import { tooWideForCurve } from "./bend";
 import { pointOnEdge } from "./arcs";
 import { hostSegment } from "./walls";
 import { openingType } from "./catalog";
+import { furnishProblems, type LayerKind } from "@/lib/furnish/layer";
 
 /**
  * Friendly checks on a floor plan: rooms you can't get into, bedrooms without
@@ -40,6 +41,8 @@ export type PlanWarning = {
   pullBack?: { roomId: string };
   /** Stairs stacked too tight: the "Make these U-shaped" button turns both into U-shaped stairs in the same spot. */
   stairsU?: { lower: { levelId: string; id: string }; upper: { levelId: string; id: string } };
+  /** A Furnish item that lost its spot: "Move inside" (when it can) and "Delete" buttons. */
+  furnish?: { kind: LayerKind; id: string; canMoveInside: boolean };
 };
 
 const SHAPE_NAME = { straight: "straight", l: "L-shaped", u: "U-shaped" } as const;
@@ -212,6 +215,11 @@ export function planWarnings(plans: Plans, ctx: Ctx): PlanWarning[] {
       const f = (n: number) => Math.round(n).toLocaleString("en-US");
       if (have < want * TOO_SMALL && want - have >= 20) add_(level.id, `size:${r.id}`, `${r.name} is ${f(have)} sq ft, much smaller than the ${f(want)} your brief asked for.`, [r]);
       else if (have > want * TOO_BIG && have - want >= 30) add_(level.id, `size:${r.id}`, `${r.name} is ${f(have)} sq ft, much bigger than the ${f(want)} your brief asked for.`, [r]);
+    }
+
+    // Furnish items outside their room, off their wall, or in a doorway.
+    for (const fp of furnishProblems(planOf(saved, level.id))) {
+      out.push({ id: `${level.id}:${fp.key}`, levelId: level.id, text: fp.text, roomIds: fp.item.roomId ? [fp.item.roomId] : [], at: fp.at, furnish: { kind: fp.item.kind, id: fp.item.id, canMoveInside: fp.canMoveInside } });
     }
   }
 
