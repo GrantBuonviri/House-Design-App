@@ -11,7 +11,7 @@ import { roomOutline, wallOutline } from "@/lib/plan/flatten";
 import { roomSqft } from "@/lib/plan/measure";
 import { furnitureOutline, furnitureType } from "@/lib/plan/furniture";
 import type { OpeningHost } from "@/lib/model/schema";
-import type { SolidWall } from "@/lib/plan/walls";
+import { drawThickness, type SolidWall } from "@/lib/plan/walls";
 import type { Overhang } from "@/lib/plan/support";
 import type { Region } from "@/lib/house3d/footprint";
 import type { Guides } from "@/lib/plan/snap";
@@ -115,10 +115,10 @@ export function FurnitureOutlines({ furniture, s, names = true }: { furniture: F
 const HALF_WALL = "#9a9285";
 const CAP = "#d6cbb6";
 
-export function PlanWalls({ solids, selection, s, toSaved }: { solids: SolidWall[]; selection: PlanSelection; s: number; toSaved: (h: OpeningHost) => OpeningHost }) {
+export function PlanWalls({ solids, selection, s, toSaved, exteriorIn }: { solids: SolidWall[]; selection: PlanSelection; s: number; exteriorIn: number; toSaved: (h: OpeningHost) => OpeningHost }) {
   return (
     <>
-      {solids.map((w, i) => {
+      {[...solids].sort((p, q) => Number(p.exterior) - Number(q.exterior)).map((w, i) => {
         // A curved wall is many short pieces on screen but one wall: they all answer to the saved wall.
         const host = toSaved(w.piece.host);
         const id = "roomId" in host ? edgeId(host.roomId, host.edge) : host.wallId;
@@ -141,7 +141,8 @@ export function PlanWalls({ solids, selection, s, toSaved }: { solids: SolidWall
           );
         }
         const u = unit(sub(w.b, w.a));
-        const half = w.thicknessIn / 2;
+        const thick = drawThickness(w, exteriorIn);
+        const half = thick / 2;
         const a = w.capA ? add(w.a, scaleV(u, -half)) : w.a;
         const b = w.capB ? add(w.b, scaleV(u, half)) : w.b;
         // A half wall is drawn lighter, so it reads as lower; one with a counter cap shows the cap's overhang around it.
@@ -153,15 +154,15 @@ export function PlanWalls({ solids, selection, s, toSaved }: { solids: SolidWall
             name={"wallId" in host ? "wall" : "edge"}
             points={[a.x, a.y, b.x, b.y]}
             stroke={on ? ACCENT : w.exterior ? INK : low ? HALF_WALL : "#4a463f"}
-            strokeWidth={w.thicknessIn}
-            hitStrokeWidth={Math.max(w.thicknessIn, 12 / s)}
+            strokeWidth={thick}
+            hitStrokeWidth={Math.max(thick, 12 / s)}
             lineCap="butt"
           />
         );
         if (low !== "half-cap") return wall;
         return (
           <Group key={i}>
-            <Line points={[a.x, a.y, b.x, b.y]} stroke={CAP} strokeWidth={w.thicknessIn + 3} lineCap="butt" listening={false} />
+            <Line points={[a.x, a.y, b.x, b.y]} stroke={CAP} strokeWidth={thick + 3} lineCap="butt" listening={false} />
             {wall}
           </Group>
         );

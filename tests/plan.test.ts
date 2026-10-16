@@ -32,7 +32,7 @@ import { houseTotals, planTotals, roomSqft } from "@/lib/plan/measure";
 import { snapAngles, snapMove, snapNode, snapPoint, snapPush, snapTargets } from "@/lib/plan/snap";
 import { parseTypedLength } from "@/lib/model/units";
 import { stairsDrawing, stepsFor } from "@/lib/plan/stairs";
-import { nearestHost, openingGeometries, openingGeometry, solidWalls, wallPieces } from "@/lib/plan/walls";
+import { drawThickness, nearestHost, openingGeometries, openingGeometry, solidWalls, wallPieces } from "@/lib/plan/walls";
 
 const FT = 12;
 
@@ -79,6 +79,20 @@ describe("floor plan geometry", () => {
     const p = pair();
     expect(polygonsOverlap(p.rooms[0].polygon, p.rooms[1].polygon)).toBe(false);
     expect(polygonsOverlap(room("a", 0, 0, 10, 10).polygon, room("c", 5, 5, 10, 10).polygon)).toBe(true);
+  });
+});
+
+describe("drawn wall thickness", () => {
+  it("draws inside, outside, loose and half walls at the outside width, open edges at 0, real thickness unchanged", () => {
+    for (const ext of [6.5, 4.5]) {
+      const pieces = wallPieces(pair(), ext);
+      for (const p of pieces) expect(drawThickness(p, ext)).toBe(ext);
+      expect(pieces.find((p) => !p.exterior)!.thicknessIn).toBe(4.5);
+    }
+    expect(drawThickness({ thicknessIn: 3.5 }, 6.5)).toBe(6.5);
+    expect(drawThickness({ thicknessIn: 8 }, 6.5)).toBe(6.5);
+    expect(drawThickness({ thicknessIn: 4.5, open: true }, 6.5)).toBe(0);
+    expect(drawThickness({ thicknessIn: 0, open: true }, 6.5)).toBe(0);
   });
 });
 
