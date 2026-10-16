@@ -20,6 +20,7 @@ import { lotOffsetFor } from "@/lib/house3d/site";
 import { canPreview } from "@/lib/house3d/windowView";
 import { Note } from "@/components/brief/bits";
 import LevelTabs from "@/components/bubbles/LevelTabs";
+import LabelSettings from "./LabelSettings";
 import ViewOptions, { type Overlay } from "@/components/bubbles/ViewOptions";
 import type { LandView, Side } from "@/components/bubbles/types";
 import PlanBasicsForm from "./PlanBasicsForm";
@@ -57,7 +58,7 @@ export default function PlanStage({ onContinue, onGoToSketch }: { onContinue: ()
   const plans = project.floorPlans;
   const sketches = project.bubbles;
   const { overlays, lotOffset } = project.sketch;
-  const { basics, showSketch, showDims } = project.plan;
+  const { basics, showSketch, labels } = project.plan;
   const levels = useMemo(() => [...project.levels].sort((a, b) => a.elevationIn - b.elevationIn), [project.levels]);
 
   const [levelId, setLevelId] = useState(MAIN_LEVEL_ID);
@@ -67,6 +68,7 @@ export default function PlanStage({ onContinue, onGoToSketch }: { onContinue: ()
   const [placeOpening, setPlaceOpening] = useState("door-hinged");
   const [placeFixture, setPlaceFixture] = useState("counter");
   const [lotMode, setLotMode] = useState(false);
+  const [tape, setTape] = useState(false);
   const [editingBasics, setEditingBasics] = useState(false);
   const [choosing, setChoosing] = useState(() => !planHasContent(plans));
   const [notes, setNotes] = useState<string[]>([]);
@@ -200,6 +202,7 @@ export default function PlanStage({ onContinue, onGoToSketch }: { onContinue: ()
   const chooseTool = (t: PlanTool) => {
     setTool(t);
     setLotMode(false);
+    setTape(false);
     if (t !== "select") setSelection([]);
   };
 
@@ -226,8 +229,24 @@ export default function PlanStage({ onContinue, onGoToSketch }: { onContinue: ()
         setLevelPlan(moveMany(plan, movable.map((s) => s.id), nudge[0] * step, nudge[1] * step), "nudge");
         return;
       }
+      if (display === "plan" && !locked) {
+        if (e.key === "l" || e.key === "L") {
+          e.preventDefault();
+          setView({ labels: { ...labels, hideAll: !labels.hideAll } });
+          return;
+        }
+        if (e.key === "m" || e.key === "M") {
+          e.preventDefault();
+          setTape((on) => !on);
+          return;
+        }
+      }
       if (e.key === "Escape") {
         if (drafting) return;
+        if (tape) {
+          setTape(false);
+          return;
+        }
         if (lotOn) setLotMode(false);
         else {
           setTool("select");
@@ -241,7 +260,8 @@ export default function PlanStage({ onContinue, onGoToSketch }: { onContinue: ()
     }
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [choosing, editingBasics, comparing, basics, sel, plan, drafting, lotOn, setLevelPlan, display, editing3d]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [choosing, editingBasics, comparing, basics, sel, plan, drafting, lotOn, setLevelPlan, display, editing3d, labels, tape]);
 
   /** The sketch as a plan, plus hallways, closets, windows and doors from the built-in rules. */
   function suggest() {
@@ -365,6 +385,7 @@ export default function PlanStage({ onContinue, onGoToSketch }: { onContinue: ()
           levels={levels}
           level={level}
           basics={basics}
+          labels={labels}
           onLevel={setLevelId}
           onUse={takeAlternative}
           onAgain={() => showAlternatives(true)}
@@ -511,10 +532,11 @@ export default function PlanStage({ onContinue, onGoToSketch }: { onContinue: ()
           onLotMode={setLotMode}
           extra={
             <>
-              <label className="flex cursor-pointer items-center gap-2">
-                <input type="checkbox" className={box} checked={showDims} onChange={(e) => setView({ showDims: e.target.checked })} />
-                Wall lengths
-              </label>
+              <LabelSettings labels={labels} onChange={(l) => setView({ labels: l })} />
+              <button className={`flex items-center gap-1.5 rounded border px-2 py-0.5 ${tape ? "border-[var(--color-accent)] bg-[var(--color-accent)] text-white" : "border-line bg-white hover:bg-stone-50"}`} onClick={() => setTape(!tape)} title="Click two points to measure the distance (key M). Escape clears it.">
+                <span aria-hidden>📏</span>
+                Measure{tape ? " (click two points)" : ""}
+              </button>
               <label className={`flex items-center gap-2 ${sketch.bubbles.length ? "cursor-pointer" : "cursor-not-allowed opacity-50"}`}>
                 <input type="checkbox" className={box} checked={showSketch} disabled={!sketch.bubbles.length} onChange={(e) => setView({ showSketch: e.target.checked })} />
                 Flow sketch
@@ -539,7 +561,8 @@ export default function PlanStage({ onContinue, onGoToSketch }: { onContinue: ()
               placeFixture={placeFixture}
               selection={sel}
               snap={snap}
-              showDims={showDims}
+              labels={labels}
+              tape={tape}
               sides={sides}
               height={CANVAS_HEIGHT}
               land={land}

@@ -1,3 +1,4 @@
+import { DEFAULT_LABELS } from "@/lib/plan/labels";
 import { describe, expect, it } from "vitest";
 import { DiscoveryAnswers, House3D, Project, type ChosenRoom, type FloorPlan, type Opening, type PlanRoom, type Plot } from "@/lib/model/schema";
 import { createProject, migrateProject } from "@/lib/model/project";
@@ -26,7 +27,7 @@ const ROOF = House3D.parse({}).roof;
 
 function project(plans: Record<string, FloorPlan>, extra: Partial<Project> = {}): Project {
   const levels = extra.levels ?? [levelFor(MAIN_LEVEL_ID)];
-  return { ...createProject("Test"), plot: flat, levels, floorPlans: plans, plan: { basics: defaultBasics(), showSketch: false, showDims: true }, ...extra };
+  return { ...createProject("Test"), plot: flat, levels, floorPlans: plans, plan: { basics: defaultBasics(), showSketch: false, labels: DEFAULT_LABELS }, ...extra };
 }
 
 const cat = (e: Estimate, id: string) => e.categories.find((c) => c.id === id)!.cost.likely;
@@ -44,7 +45,7 @@ function suggestedHouse(plot: Plot, types: string[], above = 1, below = 0) {
   const bubbles = suggestDiagrams({ brief, plot, levels });
   const basics = defaultBasics();
   const plans = suggestPlans(bubbles, { brief, plot, levels, basics }).plans;
-  return { ...createProject("Test"), plot, brief, levels, bubbles, floorPlans: plans, discovery: { answers }, plan: { basics, showSketch: false, showDims: true } };
+  return { ...createProject("Test"), plot, brief, levels, bubbles, floorPlans: plans, discovery: { answers }, plan: { basics, showSketch: false, labels: DEFAULT_LABELS } };
 }
 
 const TYPICAL = ["entry", "living", "kitchen", "dining", "primary-bedroom", "primary-bath", "primary-closet", "bedroom", "bedroom", "bathroom", "laundry", "garage", "porch"];

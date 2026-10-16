@@ -1,6 +1,6 @@
 "use client";
 
-import type { Level, PlanBasics } from "@/lib/model/schema";
+import type { Level, PlanBasics, PlanLabels } from "@/lib/model/schema";
 import type { PlanAlternative } from "@/lib/plan/alternatives";
 import { exteriorWallIn } from "@/lib/plan/basics";
 import { planOf, type Plans } from "@/lib/plan/edit";
@@ -20,6 +20,7 @@ export default function PlanAlternativesView({
   levels,
   level,
   basics,
+  labels,
   onLevel,
   onUse,
   onAgain,
@@ -31,6 +32,7 @@ export default function PlanAlternativesView({
   levels: Level[];
   level: Level;
   basics: PlanBasics | null;
+  labels: PlanLabels;
   onLevel: (id: string) => void;
   onUse: (index: number, levelOnly: boolean) => void;
   onAgain: () => void;
@@ -78,7 +80,7 @@ export default function PlanAlternativesView({
       <div className="grid grid-cols-4 gap-4">
         <figure className="card overflow-hidden ring-2 ring-accent/40">
           <div className="flex justify-center border-b border-line bg-paper">
-            <MiniPlan plan={planOf(mine, level.id)} frame={frame} size={SIZE} exteriorIn={exteriorIn} stairs={stairsFootprints(mine, ctx, level)} />
+            <MiniPlan plan={planOf(mine, level.id)} frame={frame} size={SIZE} exteriorIn={exteriorIn} labels={labels} stairs={stairsFootprints(mine, ctx, level)} />
           </div>
           <figcaption className="p-3">
             <p className="text-sm font-semibold">Yours</p>
@@ -88,7 +90,7 @@ export default function PlanAlternativesView({
         {alternatives.map((alt, i) => (
           <figure key={i} className="card flex flex-col overflow-hidden">
             <div className="flex justify-center border-b border-line bg-paper">
-              <MiniPlan plan={planOf(alt.plans, level.id)} frame={frame} size={SIZE} exteriorIn={exteriorIn} stairs={stairsFootprints(alt.plans, ctx, level)} changed={changedHere(alt)} />
+              <MiniPlan plan={planOf(alt.plans, level.id)} frame={frame} size={SIZE} exteriorIn={exteriorIn} labels={labels} stairs={stairsFootprints(alt.plans, ctx, level)} changed={changedHere(alt)} />
             </div>
             <figcaption className="flex flex-1 flex-col p-3">
               <p className="text-sm font-semibold">{alt.title}</p>

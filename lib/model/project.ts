@@ -52,6 +52,9 @@ export function migrateProject(raw: unknown): Project {
   // plan details, with defaults, and device changes on each floor plan (none).
   // Version 13 to 14 added the structure settings (soil, wind exposure,
   // lumber) to the plan details, with defaults.
+  // Version 14 to 15 replaced the floor plan's "show wall lengths" switch with
+  // label settings. The old choice carries over.
+  if (version < 15) migrated = migrateV14(migrated);
   return Project.parse({ ...migrated, schemaVersion: SCHEMA_VERSION });
 }
 
@@ -101,4 +104,13 @@ function migrateV1(data: Raw): Raw {
  */
 function migrateV3(data: Raw): Raw {
   return { ...data, floorPlans: {} };
+}
+
+/** Version 14 to 15: `plan.showDims` became `plan.labels.wallLengths`. */
+function migrateV14(data: Raw): Raw {
+  const plan = data.plan;
+  if (!plan || typeof plan !== "object") return data;
+  const { showDims, ...rest } = plan as Raw;
+  const labels = (rest.labels && typeof rest.labels === "object" ? rest.labels : {}) as Raw;
+  return { ...data, plan: { ...rest, labels: typeof showDims === "boolean" ? { wallLengths: showDims, ...labels } : labels } };
 }

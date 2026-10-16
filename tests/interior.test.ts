@@ -1,3 +1,4 @@
+import { DEFAULT_LABELS } from "@/lib/plan/labels";
 import { describe, expect, it } from "vitest";
 import { House3D, SCHEMA_VERSION, WHOLE_HOUSE, type FloorPlan, type PlanRoom, type Project, type Selection } from "@/lib/model/schema";
 import { createProject, migrateProject } from "@/lib/model/project";
@@ -34,7 +35,7 @@ function project(rooms: PlanRoom[], selections: Selection[] = []): Project {
     plot: flat,
     levels: [levelFor(MAIN_LEVEL_ID)],
     floorPlans: { [MAIN_LEVEL_ID]: plan(rooms) },
-    plan: { basics: defaultBasics(), showSketch: false, showDims: true },
+    plan: { basics: defaultBasics(), showSketch: false, labels: DEFAULT_LABELS },
     interior: { ...p.interior, selections },
   };
 }
