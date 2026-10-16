@@ -3,17 +3,21 @@
 import { useEffect, useRef, useState } from "react";
 import type { FloorPlan } from "@/lib/model/schema";
 import { mirrorMany, copyableIds } from "@/lib/plan/arrange";
-import { removeMany, insertCorner, removeCorner, rotateMany, centerOfMany, turnableIds } from "@/lib/plan/edit";
-import { project } from "@/lib/plan/geometry";
+import { removeMany, rotateMany, centerOfMany, turnableIds } from "@/lib/plan/edit";
+import { combineAt, combineWalls, cornerBetween, splitEdge, splitEdgeEqual, splitWall, splitWallEqual, type WallEdit } from "@/lib/plan/wallEdits";
 import { removeWall, restoreWall, combineRooms, whyNotCombine, whyWallStays, edgeWalls, roomsAlong } from "@/lib/plan/openWalls";
 import { updateOpening } from "@/lib/plan/edit";
 import { addBay, roundCorner, roundableRadius, whyNoBay, DEFAULT_CORNER_RADIUS_IN } from "@/lib/plan/shapes";
 import { duplicateAndSelect } from "./ArrangeButtons";
-import { parseEdgeId, type PlanItem, type PlanSelection } from "./types";
+import { edgeId, parseEdgeId, type PlanItem, type PlanSelection } from "./types";
 import type { Point } from "@/lib/model/schema";
 
 export type ContextAt = { x: number; y: number; el: (PlanItem & { corner?: number }) | null; at: Point };
-type Item = { label: string; run: () => void; danger?: boolean; disabled?: string | boolean; ask?: (deg: number) => void } | "line";
+type Choice = { label: string; run: () => void; disabled?: string | false };
+type Item = { label: string; run: () => void; danger?: boolean; disabled?: string | boolean; ask?: (deg: number) => void; choices?: Choice[] } | "line";
+
+/** Equal-piece splits offered in the menu. */
+const PIECES = [2, 3, 4];
 
 /** The right-click menu: the side panel's main actions for whatever was clicked. */
 export function contextItems(
@@ -45,6 +49,24 @@ export function contextItems(
         { label: "Turn by an angle...", run: () => {}, ask: turn },
       ]
     : [];
+  // Split and combine: worked out now, so a refusal greys the item with its reason.
+  const edit = (label: string, r: WallEdit, then?: () => void): Item => ({
+    label,
+    disabled: "why" in r ? r.why : false,
+    run: () => {
+      if ("why" in r) return;
+      act.change(r.plan);
+      if (r.note) act.message(r.note);
+      then?.();
+    },
+  });
+  const pieces = (split: (n: number) => WallEdit): Item => {
+    const choices: Choice[] = PIECES.map((n) => {
+      const r = split(n);
+      return { label: String(n), disabled: "why" in r ? r.why : false, run: () => { if ("why" in r) return; act.change(r.plan); if (r.note) act.message(r.note); } };
+    });
+    return { label: "Split into equal pieces", run: () => {}, choices, disabled: choices.every((c) => c.disabled) ? (choices[0].disabled as string) : false };
+  };
   const remove = (label: string, rm: string[]): Item => ({ label, danger: true, run: () => (act.change(removeMany(plan, rm)), act.select([])) });
 
   if (el.corner !== undefined) {
@@ -55,7 +77,7 @@ export function contextItems(
         disabled: room && roundableRadius(room, el.corner, DEFAULT_CORNER_RADIUS_IN) === null ? "This corner can't be rounded: a curved wall or a nearly straight line meets it." : false,
         run: () => { const out = roundCorner(plan, el.id, el.corner!); if (out) act.change(out); },
       },
-      { label: "Remove corner", disabled: room && room.polygon.length <= 3 ? "Rooms keep at least three corners." : false, run: () => act.change(removeCorner(plan, el.id, el.corner!)) },
+      edit("Combine walls", combineAt(plan, el.id, el.corner)),
     ];
   }
   if (el.kind === "edge") {
@@ -65,7 +87,20 @@ export function contextItems(
     const walls = edgeWalls(plan, roomId, edge);
     const why = whyWallStays(plan, roomId, edge);
     const along = roomsAlong(plan, roomId, edge);
-    const items: Item[] = [{ label: "Add a corner here", run: () => act.change(insertCorner(plan, roomId, edge, project(c.at, room.polygon[edge], room.polygon[(edge + 1) % room.polygon.length]).point)) }];
+    const items: Item[] = [];
+    // Two picked walls of this room that meet: combine them.
+    const edges = picked.filter((s) => s.kind === "edge").map((s) => parseEdgeId(s.id));
+    if (edges.length === 2 && edges.every((x) => x.roomId === roomId)) {
+      const corner = cornerBetween(plan, roomId, edges[0].edge, edges[1].edge);
+      const n = room.polygon.length;
+      items.push(
+        corner === null
+          ? { label: "Combine walls", disabled: "These walls don't meet end to end.", run: () => {} }
+          : edit("Combine walls", combineAt(plan, roomId, corner), () => act.select([{ kind: "edge", id: edgeId(roomId, corner === 0 ? n - 2 : corner - 1) }])),
+        "line",
+      );
+    }
+    items.push(edit("Split wall here", splitEdge(plan, roomId, edge, c.at)), pieces((k) => splitEdgeEqual(plan, roomId, edge, k)), "line");
     if (walls.inside.length > 0 || !walls.removed.length) {
       items.push({ label: "Remove wall", disabled: why ?? false, run: () => { const out = removeWall(plan, roomId, edge); if (out) act.change(out.plan); } });
     } else items.push({ label: "Put wall back", run: () => act.change(restoreWall(plan, roomId, edge)) });
@@ -98,7 +133,14 @@ export function contextItems(
   }
   const noun = el.kind === "wall" ? "wall" : el.kind === "stairs" ? "stairs" : "fixture";
   const turnGroup: Item[] = el.kind === "fixture" ? [] : turning;
-  return [...arrange, ...(arrange.length ? (["line"] as Item[]) : []), ...turnGroup, ...(turnGroup.length ? (["line"] as Item[]) : []), remove(ids.length > 1 ? `Delete ${ids.length} things` : `Delete ${noun}`, ids.length ? ids : [el.id])];
+  const walling: Item[] = [];
+  if (el.kind === "wall") {
+    const walls = picked.filter((s) => s.kind === "wall").map((s) => s.id);
+    if (walls.length === 2) walling.push(edit("Combine walls", combineWalls(plan, walls), () => act.select([{ kind: "wall", id: walls[0] }])));
+    else if (walls.length <= 1) walling.push(edit("Split wall here", splitWall(plan, el.id, c.at)), pieces((k) => splitWallEqual(plan, el.id, k)));
+    if (walling.length) walling.push("line");
+  }
+  return [...walling, ...arrange, ...(arrange.length ? (["line"] as Item[]) : []), ...turnGroup, ...(turnGroup.length ? (["line"] as Item[]) : []), remove(ids.length > 1 ? `Delete ${ids.length} things` : `Delete ${noun}`, ids.length ? ids : [el.id])];
 }
 
 export default function PlanContextMenu({ at, items, onClose }: { at: { x: number; y: number }; items: Item[]; onClose: () => void }) {
@@ -122,13 +164,32 @@ export default function PlanContextMenu({ at, items, onClose }: { at: { x: numbe
     };
   }, [onClose]);
   if (!items.length) return null;
-  const left = Math.min(at.x, (typeof window === "undefined" ? at.x : window.innerWidth) - 230);
+  const left = Math.min(at.x, (typeof window === "undefined" ? at.x : window.innerWidth) - 262);
   const top = Math.min(at.y, (typeof window === "undefined" ? at.y : window.innerHeight) - 40 - items.length * 32);
   return (
-    <div ref={ref} role="menu" className="fixed z-50 w-56 rounded-md border border-line bg-white py-1 text-sm shadow-lg" style={{ left, top }} onContextMenu={(e) => e.preventDefault()}>
+    <div ref={ref} role="menu" className="fixed z-50 w-64 rounded-md border border-line bg-white py-1 text-sm shadow-lg" style={{ left, top }} onContextMenu={(e) => e.preventDefault()}>
       {items.map((it, i) =>
         it === "line" ? (
           <hr key={i} className="my-1 border-line" />
+        ) : it.choices ? (
+          <div key={i} className={`flex items-center gap-1 px-3 py-1 ${it.disabled ? "opacity-40" : ""}`} title={typeof it.disabled === "string" ? it.disabled : undefined}>
+            <span className="flex-1">{it.label}</span>
+            {it.choices.map((ch) => (
+              <button
+                key={ch.label}
+                role="menuitem"
+                disabled={!!ch.disabled}
+                title={typeof ch.disabled === "string" ? ch.disabled : `${ch.label} equal pieces`}
+                className="h-6 w-6 rounded border border-line text-xs hover:bg-stone-100 disabled:cursor-not-allowed"
+                onClick={() => {
+                  ch.run();
+                  onClose();
+                }}
+              >
+                {ch.label}
+              </button>
+            ))}
+          </div>
         ) : it.ask && asking === i ? (
           <form
             key={i}

@@ -14,7 +14,7 @@ const OTHER: [string, string][] = [
   ["Space + drag", "Move around the drawing"],
   ["Escape", "Let go of a tool or selection"],
   ["⌘Z / ⇧⌘Z", "Undo and redo"],
-  ["Right-click", "Menu with the main actions for what's under the pointer: on a corner, Round corner; on a room, wall or stairs, Turn 90° or 15° or by any angle; on an outside wall, Add half-round bay"],
+  ["Right-click", "Menu with the main actions for what's under the pointer: on a corner, Round corner and Combine walls; on a wall, Split wall here or into 2, 3 or 4 equal pieces (two picked walls that meet: Combine walls); on a room, wall or stairs, Turn 90° or 15° or by any angle; on an outside wall, Add half-round bay"],
   ["?", "Show or hide this card"],
 ];
 
