@@ -59,3 +59,22 @@ export function ghostOpeningAt(plan: FloorPlan, p: Point, style: string, s: numb
   const g = openingGeometry(plan, o);
   return g ? { g, thickness: 6 } : null;
 }
+
+let stripeTile: HTMLCanvasElement | null | undefined;
+
+/** A tile of red diagonal stripes for shading, made once. Null where there's no document (tests). */
+export function stripes(): HTMLCanvasElement | null {
+  if (stripeTile !== undefined) return stripeTile;
+  if (typeof document === "undefined") return (stripeTile = null);
+  const c = document.createElement("canvas");
+  c.width = c.height = 10;
+  const g = c.getContext("2d");
+  if (!g) return (stripeTile = null);
+  g.strokeStyle = "rgba(200,50,40,0.75)";
+  g.lineWidth = 2;
+  g.beginPath();
+  g.moveTo(-2, 12);
+  g.lineTo(12, -2);
+  g.stroke();
+  return (stripeTile = c);
+}

@@ -11,6 +11,7 @@ import { areaKind, roomSqft } from "./measure";
 import { MIN_STAIRS_WIDTH_IN } from "./stairs";
 import { findGaps, type Gap } from "./overlaps";
 import { isWayIn, stairsBoxes, wayInRooms } from "./suggest";
+import { overhangsOf, pulledBack, supportOf } from "./support";
 
 /**
  * Friendly checks on a floor plan: rooms you can't get into, bedrooms without
@@ -29,6 +30,8 @@ export type PlanWarning = {
   at: Point | null;
   /** Two rooms a few inches apart: the "Close gap" button pushes them together. */
   gap?: Gap;
+  /** A room hanging past the floor below: the "Pull back" button trims it to fit. */
+  pullBack?: { roomId: string };
 };
 
 const BEDROOMS = new Set(["bedroom", "primary-bedroom", "guest-suite"]);
@@ -77,6 +80,16 @@ export function planWarnings(plans: Plans, ctx: Ctx): PlanWarning[] {
       const b = byId.get(g.bId)!;
       add_(level.id, `gap:${a.id}:${b.id}`, `${a.name} and ${b.name} are ${formatFeetInches(g.gapIn)} apart.`, [a, b], g.at);
       out[out.length - 1].gap = g;
+    }
+
+    // Rooms hanging past the outside walls of the floor below.
+    const support = supportOf(plans, levels, level);
+    if (support) {
+      for (const o of overhangsOf(plan.rooms, support.regions)) {
+        const r = byId.get(o.roomId)!;
+        add_(level.id, `overhang:${r.id}`, `${r.name} hangs ${formatFeetInches(o.depthIn)} past the outside wall of the ${support.below.name.toLowerCase()}. Nothing holds it up.`, [r], o.at);
+        if (pulledBack(r, support.regions)) out[out.length - 1].pullBack = { roomId: r.id };
+      }
     }
 
     // No way in at all.

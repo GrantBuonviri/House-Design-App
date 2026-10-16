@@ -30,7 +30,9 @@ import PlanChecks from "./PlanChecks";
 import PlanContextMenu, { contextItems, type ContextAt } from "./PlanContextMenu";
 import KeyboardHelp from "./KeyboardHelp";
 import { duplicateAndSelect } from "./ArrangeButtons";
+import { levelAbove } from "@/lib/plan/basics";
 import { closeGap } from "@/lib/plan/overlaps";
+import { fillBelow, fillShapes, pullBack, supportOf } from "@/lib/plan/support";
 import { copyableIds } from "@/lib/plan/arrange";
 import PlanSidePanel from "./PlanSidePanel";
 import House3DPanel from "@/components/house3d/House3DPanel";
@@ -116,6 +118,11 @@ export default function PlanStage({ onContinue, onGoToSketch }: { onContinue: ()
   const plan = planOf(plans, level.id);
   const belowLevel = [...levels].reverse().find((l) => l.elevationIn < level.elevationIn);
   const below = belowLevel && plans[belowLevel.id] ? { name: belowLevel.name, plan: plans[belowLevel.id], level: belowLevel } : null;
+  const sup = useMemo(() => supportOf(plans, levels, level), [plans, levels, level]);
+  const support = useMemo(() => (sup ? { name: sup.below.name, regions: sup.regions } : null), [sup]);
+  const aboveLevel = levelAbove(levels, level);
+  const above = useMemo(() => (aboveLevel && aboveLevel.kind !== "main" && aboveLevel.kind !== "basement" && plans[aboveLevel.id]?.rooms.length ? { name: aboveLevel.name, plan: plans[aboveLevel.id] } : null), [aboveLevel, plans]);
+  const canFill = sup ? fillShapes(plan, sup.regions).length > 0 : false;
   const sketch = diagramOf(sketches, level.id);
   const sketchHasRooms = Object.values(sketches).some((d) => d.bubbles.some((b) => !b.stairs));
 
@@ -384,8 +391,16 @@ export default function PlanStage({ onContinue, onGoToSketch }: { onContinue: ()
 
   /** Close gap on a warning: push the two rooms together. */
   function fixWarning(w: PlanWarning) {
-    if (!w.gap) return;
     const p = planOf(plans, w.levelId);
+    if (w.pullBack) {
+      const lv = levels.find((l) => l.id === w.levelId);
+      const sup = lv && supportOf(plans, levels, lv);
+      if (!sup) return;
+      setPlans((ps) => ({ ...ps, [w.levelId]: pullBack(p, w.pullBack!.roomId, sup.regions) }));
+      setFlash("Pulled the room back over the floor below. Undo puts it back.");
+      return;
+    }
+    if (!w.gap) return;
     setPlans((ps) => ({ ...ps, [w.levelId]: closeGap(p, w.gap!) }));
     setFlash("Closed the gap. Undo puts it back.");
   }
@@ -595,6 +610,8 @@ export default function PlanStage({ onContinue, onGoToSketch }: { onContinue: ()
               levels={levels}
               basics={basics}
               below={below}
+              support={support}
+              above={above}
               sketch={showSketch && sketch.bubbles.length ? sketch : null}
               tool={tool}
               fillMode={fillMode}
@@ -618,6 +635,18 @@ export default function PlanStage({ onContinue, onGoToSketch }: { onContinue: ()
               onPreview={previewing ? setDragged : undefined}
               onContext={setMenu}
             />
+            {canFill && sup && (
+              <button
+                className="btn absolute top-2 right-3 px-2 py-1 text-xs"
+                title={`Make a room over everything the ${sup.below.name.toLowerCase()} covers. Cut it up with the Split tool.`}
+                onClick={() => {
+                  setLevelPlan(fillBelow(plan, sup.regions));
+                  setFlash(`Filled the space over the ${sup.below.name.toLowerCase()}. Use Split to cut it into rooms. Undo puts it back.`);
+                }}
+              >
+                Fill the floor below
+              </button>
+            )}
             {menu && <PlanContextMenu at={menu} items={contextItems(plan, menu, sel, { change: setLevelPlan, select: setSelection, message: setFlash })} onClose={() => setMenu(null)} />}
             {lotOn && <LotModeBanner onDone={() => setLotMode(false)} />}
             <p className="mt-2 text-xs text-muted">{hint} Pinch or hold Control and scroll to zoom; scroll to move around. Arrow keys nudge what&apos;s selected.</p>

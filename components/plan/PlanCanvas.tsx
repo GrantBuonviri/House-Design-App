@@ -11,6 +11,8 @@ import { addRoom, insertCorner, insertGluedCorner, makeRoom, moveEdge, moveMany,
 import { add, angleOf, boundsOf, dist, leftNormal, polygonArea, project, rectangle, round1, roundPoint, scale as scaleV, sub, unit } from "@/lib/plan/geometry";
 import { distanceGuides, openingGuides, wallSegments, type Guide } from "@/lib/plan/labels";
 import { snapFrom, snapMove, snapNode, snapPush, snapTargets, type Guides } from "@/lib/plan/snap";
+import { mergeTargets, overhangsOf, supportTargets } from "@/lib/plan/support";
+import { roofFootprint, type Region } from "@/lib/house3d/footprint";
 import { parseTypedLength } from "@/lib/model/units";
 import { DEFAULT_STAIRS_WIDTH_IN, stairsDrawing } from "@/lib/plan/stairs";
 import { clampOffset, nearestHost, openingGeometries, solidWalls, wallPieces, type OpeningGeometry } from "@/lib/plan/walls";
@@ -20,7 +22,7 @@ import type { LandView, Side } from "@/components/bubbles/types";
 import { Grid, ScaleBar, SideLabels, useSpacePan, type View } from "@/components/canvas/CanvasBits";
 import { ACCENT, FixtureSymbol, OpeningSymbol, StairsSymbol } from "./PlanShapes";
 import { dedupe, flat, ghostOpeningAt, pointIn, roomFill, type Box } from "./canvasHelpers";
-import { DraftPreview, FurnitureOutlines, GuidesAndBox, MidNodes, NodeReadout, PlanWalls, ReferenceLayer, ZoomButtons } from "./PlanCanvasLayers";
+import { DraftPreview, FurnitureOutlines, GuidesAndBox, MidNodes, NodeReadout, OverhangLayer, PlanWalls, ReferenceLayer, ZoomButtons } from "./PlanCanvasLayers";
 import { DistanceGuides, OutsideDims, RoomLabels, TapeLine, ThingLabels } from "./PlanMeasureLayers";
 import { labelOn } from "@/lib/plan/labels";
 import { edgeId, isPicked, parseEdgeId, type PlanItem, type PlanSelection, type PlanTool } from "./types";
@@ -53,6 +55,10 @@ type Props = {
   basics: PlanBasics | null;
   /** The level below, drawn faintly, and the stairs that come up from it. */
   below: { name: string; plan: FloorPlan; level: Level } | null;
+  /** What holds this floor up (the floor below's outline), for the overhang shading and snapping. */
+  support?: { name: string; regions: Region[] } | null;
+  /** The floor above, drawn faintly, with the parts of it that hang past this floor shaded. */
+  above?: { name: string; plan: FloorPlan } | null;
   /** The flow sketch for this level, drawn faintly to trace over. */
   sketch: BubbleDiagram | null;
   tool: PlanTool;
@@ -86,7 +92,7 @@ type Props = {
 };
 
 export default function PlanCanvas(props: Props) {
-  const { plan, level, levels, basics, below, sketch, tool, placeOpening, placeFixture, selection, snap, labels, tape, sides, height, land, lotMode, onLotMove } = props;
+  const { plan, level, levels, basics, below, support, above, sketch, tool, placeOpening, placeFixture, selection, snap, labels, tape, sides, height, land, lotMode, onLotMove } = props;
   const { onSelect, onChange, onToolDone, onDrafting, onMessage, fillMode = false } = props;
   // Option (Alt) held while finishing a wall keeps it a divider wall, even right across a room.
   const altDown = useRef(false);
@@ -122,6 +128,9 @@ export default function PlanCanvas(props: Props) {
   const [dragCorner, setDragCorner] = useState<{ roomId: string; i: number } | null>(null);
   const { spaceDown, hovering } = useSpacePan();
   const shown = preview ?? plan;
+  const overhangs = useMemo(() => (support ? overhangsOf(shown.rooms, support.regions) : []), [shown, support]);
+  const aboveOver = useMemo(() => (above ? overhangsOf(above.plan.rooms, roofFootprint(shown)) : []), [shown, above]);
+  const supportSnap = useMemo(() => (support ? supportTargets(support.regions) : null), [support]);
   const onPreview = props.onPreview;
   useEffect(() => onPreview?.(preview), [preview, onPreview]);
   const latest = useRef({ plan, preview, selection });
@@ -278,7 +287,7 @@ export default function PlanCanvas(props: Props) {
     return null;
   }
 
-  const pickTargets = (skip: string[]) => snapTargets(latest.current.plan, skip);
+  const pickTargets = (skip: string[]) => mergeTargets(snapTargets(latest.current.plan, skip), supportSnap);
 
   // ---- Placing things ----
   function placeOpeningAt(p: Point) {
@@ -604,7 +613,7 @@ export default function PlanCanvas(props: Props) {
       const here = room.polygon[g.i];
       const glue = !e.evt.altKey;
       // Corners of other rooms sitting right here are glued to this one, so they aren't snap targets.
-      const others = { ...snapTargets(from, [g.roomId]) };
+      const others = { ...mergeTargets(snapTargets(from, [g.roomId]), supportSnap) };
       others.points = [...others.points.filter((q) => !glue || dist(q, here) > 1), ...room.polygon.filter((_, k) => k !== g.i)];
       const sp = snapNode(p, [room.polygon[(g.i - 1 + n) % n], room.polygon[(g.i + 1) % n]], others, tol, snap, shift);
       g.moved = true;
@@ -842,7 +851,7 @@ export default function PlanCanvas(props: Props) {
 
           {land && <LandLayer land={land} scale={s} shift={lotDelta} />}
 
-          {(sketch || below) && <ReferenceLayer sketch={sketch} below={below} s={s} />}
+          {(sketch || below || above) && <ReferenceLayer sketch={sketch} below={below} support={support?.regions} above={above?.plan} s={s} />}
 
           <Layer ref={layerRef}>
             {shown.rooms.map((r) => (
@@ -929,13 +938,15 @@ export default function PlanCanvas(props: Props) {
               keepRatio={false}
             />
           </Layer>
+          {overhangs.length > 0 && <OverhangLayer overhangs={overhangs} s={s} />}
+          {aboveOver.length > 0 && <OverhangLayer overhangs={aboveOver} s={s} past="this floor's wall (upstairs)" />}
         </Stage>
       )}
 
       <SideLabels sides={sides} />
-      {(below || sketch) && (
+      {(below || sketch || above) && (
         <p className="pointer-events-none absolute top-2 left-3 rounded bg-white/80 px-2 py-0.5 text-xs text-muted">
-          {[sketch ? "Faint bubbles: your flow sketch" : null, below ? `Dashed: ${below.name}` : null].filter(Boolean).join(" · ")}
+          {[sketch ? "Faint bubbles: your flow sketch" : null, below ? `Dashed: ${below.name}` : null, support ? `Solid: its outside walls` : null, above ? `Dotted: ${above.name}` : null].filter(Boolean).join(" · ")}
         </p>
       )}
       <ScaleBar scale={s} />

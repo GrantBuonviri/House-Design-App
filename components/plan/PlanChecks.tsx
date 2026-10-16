@@ -37,6 +37,11 @@ export default function PlanChecks({ warnings, levels, levelId, onPick, onFix }:
                     {multi && <span className="font-medium text-muted">{name(w.levelId)}: </span>}
                     {w.text}
                   </button>
+                  {w.pullBack && onFix && (
+                    <button className="btn mx-2 mb-1 px-2 py-0.5 text-xs" onClick={() => onFix(w)}>
+                      Pull back
+                    </button>
+                  )}
                   {w.gap && onFix && (
                     <button className="btn mx-2 mb-1 px-2 py-0.5 text-xs" onClick={() => onFix(w)}>
                       Close gap
