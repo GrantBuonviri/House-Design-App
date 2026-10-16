@@ -61,8 +61,25 @@ export function siteSheet(project: Project): { items: Item[]; scaleLabel: string
     }
     for (const w of land.water) {
       const pts = w.points.map((p) => sub(p, off));
-      pline(w.closed ? [...pts, pts[0]] : pts, "fine", DASH.dotted);
+      pline(w.closed ? [...pts, pts[0]] : pts, w.kind === "river" ? "medium" : "fine", DASH.dotted);
+      if (w.kind === "river" || w.kind === "creek") {
+        const i = Math.floor(pts.length / 2);
+        if (pts.length > 1 && inside(pts[i], site.outline, 0)) label(pts[i], w.kind.toUpperCase(), 5.5, { rotate: readable(sub(pts[Math.min(i + 1, pts.length - 1)], pts[Math.max(i - 1, 0)])), color: GREY });
+      }
     }
+    // Private lanes: both edges, with a label along the middle.
+    for (const l of land.lanes) {
+      const pts = l.points.map((p) => sub(p, off));
+      for (const k of [-1, 1]) pline(offsetLine(pts, (k * l.width) / 2), "fine");
+      const i = Math.max(0, Math.floor(pts.length / 2) - 1);
+      label(lerp(pts[i], pts[i + 1], 0.5), `${Math.round(l.width / 12)}' PRIVATE LANE`, 5.5, { rotate: readable(sub(pts[i + 1], pts[i])) });
+    }
+    for (const r of land.rocks) {
+      const c = sub(r.at, off);
+      items.push({ t: "circle", c: T(c), r: (r.size / 2) * s, stroke: "fine", fill: LIGHT });
+      label(add(c, { x: 0, y: r.size / 2 + 0.1 / s }), `${Math.round(r.size / 12)}' ROCK`, 5, { color: GREY });
+    }
+    for (const t of land.trees) items.push({ t: "circle", c: T(sub(t.at, off)), r: (t.size / 2) * s, stroke: "hair" });
   }
 
   // ---------- Easements and setbacks ----------
@@ -170,7 +187,7 @@ export function siteSheet(project: Project): { items: Item[]; scaleLabel: string
   }
 
   if (!site.real) {
-    items.push({ t: "text", at: { x: (area.x0 + area.x1) / 2, y: DRAW_AREA.y0 + 0.45 }, text: "SAMPLE LOT, NOT A REAL PROPERTY", size: 26, bold: true, align: "center", color: "#9a9a9a" });
+    items.push({ t: "text", at: { x: (area.x0 + area.x1) / 2, y: DRAW_AREA.y0 + 0.45 }, text: designed(project) ? "DESIGNED LOT, NOT A SURVEYED PROPERTY" : "SAMPLE LOT, NOT A REAL PROPERTY", size: 26, bold: true, align: "center", color: "#9a9a9a" });
   }
 
   // ---------- Lot data, setbacks and notes ----------
@@ -191,12 +208,12 @@ function notesColumn(project: Project, site: SiteLayout, footprint: number, amou
   const rows: string[][] = [
     ["Site address", project.plans.address.trim() || "TBD"],
     ["Parcel number", project.plans.parcel.trim() || "TBD"],
-    ["Lot", site.real ? "From the owner's entry of the recorded plat (My real lot)" : `Sample lot from the app, not a real property${project.plot ? ` (${plotAcres(project.plot).toFixed(2)} acres)` : ""}`],
+    ["Lot", site.real ? "From the owner's entry of the recorded plat (My real lot)" : designed(project) ? `Land designed in the app${project.plot?.name ? ` ("${project.plot.name}")` : ""}, not a surveyed property` : `Sample lot from the app, not a real property${project.plot ? ` (${plotAcres(project.plot).toFixed(2)} acres)` : ""}`],
     ["Lot area", `${Math.round(site.areaSqft).toLocaleString("en-US")} sq ft (${acres.toFixed(2)} acres)`],
     ["House footprint", `${Math.round(footprint).toLocaleString("en-US")} sq ft, with garage and covered porches`],
     ["Lot coverage", `${((footprint / Math.max(1, site.areaSqft)) * 100).toFixed(1)}%`],
     ...(amounts ? [["Driveway and walk", `${Math.round(amounts.driveSqft + amounts.walkSqft).toLocaleString("en-US")} sq ft of paving`]] : []),
-    ["Street", `On the ${({ N: "north", E: "east", S: "south", W: "west" } as const)[site.streetSide]} side${site.real && lot?.sideStreet !== "none" ? `, side street on the ${lot?.sideStreet}` : ""}`],
+    ["Street", `On the ${({ N: "north", E: "east", S: "south", W: "west" } as const)[site.streetSide]} side${site.real && lot?.sideStreet !== "none" ? `, side street on the ${lot?.sideStreet}` : ""}${!site.real ? sideStreets(site) : ""}`],
     ...(site.real && lot?.heightLimitFt ? [["Height limit", `${lot.heightLimitFt} ft (zoning, as entered)`]] : []),
   ];
   let tb = table(nx, ny, [{ title: "", width: 1.7 }, { title: "", width: NOTES_W - 1.7 }], rows, { size: 7, boldFirst: true });
@@ -217,7 +234,9 @@ function notesColumn(project: Project, site: SiteLayout, footprint: number, amou
   const notes = [
     site.real
       ? "Lot lines and lengths are as the owner entered them from the recorded plat. The plat or a licensed survey governs; find the property corners before building."
-      : "This lot is the app's sample land. Fill in My real lot with the lot from the recorded plat before this sheet is used for a permit.",
+      : designed(project)
+        ? "This lot was designed in the app. Fill in My real lot with the lot from the recorded plat (or copy it from your designed land) before this sheet is used for a permit."
+        : "This lot is the app's sample land. Fill in My real lot with the lot from the recorded plat before this sheet is used for a permit.",
     "Distances to the lot lines are measured square to each line, from the outside face of the walls. The roof edge (dashed) reaches past the walls.",
     `Slope finished grade away from the house at least ${inchText(codeNum("site.gradeFall"))} in the first ${codeNum("site.gradeFallDistance")} ft (${codeRef("site.gradeFall")}). Carry roof water from the downspouts away from the foundation.`,
     `Walls closer than ${codeNum("fire.ratedWallDistance")} ft to a side or rear lot line need a 1-hour fire rating and no openings; eaves stay at least ${codeNum("fire.projectionMinDistance")} ft from the line (${codeRef("fire.ratedWallDistance")}, as amended by Idaho).`,
@@ -232,6 +251,27 @@ function notesColumn(project: Project, site: SiteLayout, footprint: number, amou
     ny += b.height + 0.08;
   });
   return items;
+}
+
+/** The land was drawn in the land designer rather than made up by the app. */
+function designed(project: Project): boolean {
+  return project.plot?.source === "custom";
+}
+
+/** ", side street on the left" for a designed corner lot. */
+function sideStreets(site: SiteLayout): string {
+  const sides = [...new Set(site.lines.filter((l) => l.street && l.side !== "front").map((l) => l.side))];
+  return sides.length ? `, side street on the ${sides.join(" and ")}` : "";
+}
+
+/** A polyline moved sideways by d (left of its direction for positive d). */
+function offsetLine(pts: Point[], d: number): Point[] {
+  return pts.map((p, i) => {
+    const a = pts[Math.max(0, i - 1)];
+    const b = pts[Math.min(pts.length - 1, i + 1)];
+    const n = leftNormal(unit(sub(b, a)));
+    return add(p, scale(n, d));
+  });
 }
 
 function pickWord(project: Project, id: "driveway", fallback: string): string {

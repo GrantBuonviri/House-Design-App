@@ -1,6 +1,7 @@
 import type { Point, Project } from "@/lib/model/schema";
 import { isHeated } from "@/lib/brief/rooms";
 import { plotImplications, type FoundationType } from "@/lib/land/implications";
+import { nearestAccess } from "@/lib/land/onLot";
 import { boundsOf, dist, lerp, SQ_IN_PER_SQ_FT } from "@/lib/plan/geometry";
 import { lightsFor } from "@/lib/catalog/categories";
 import { wallKey } from "@/lib/interior/picks";
@@ -36,6 +37,8 @@ export type Quantities = {
   basementWallSqft: number;
   waterproofSqft: number;
   retainingWallSqft: number;
+  /** Big rocks under the house, broken up and hauled away. */
+  rockCuyd: number;
   excavationCuyd: number;
   driveSqft: number;
   trenchLf: number;
@@ -180,6 +183,7 @@ export function empty(source: Quantities["source"]): Quantities {
     basementWallSqft: 0,
     waterproofSqft: 0,
     retainingWallSqft: 0,
+    rockCuyd: 0,
     excavationCuyd: 0,
     driveSqft: 0,
     trenchLf: 0,
@@ -231,14 +235,11 @@ export function siteFacts(p: Ctx, q: Quantities) {
   q.drainage = imp.drainageWork;
 }
 
-/** How far a point (plan inches) is from the road edge of the lot, in inches. */
+/** How far a point (plan inches) is from where its driveway meets the main road or a lane, in inches. */
 export function toRoad(p: Ctx, pt: Point, offset: Point): number {
   if (!p.plot) return 40 * 12;
-  const bb = boundsOf(p.plot.outline.length ? p.plot.outline : [{ x: 0, y: 0 }, { x: p.plot.widthIn, y: p.plot.depthIn }])!;
-  const x = pt.x + offset.x;
-  const y = pt.y + offset.y;
-  const d = { N: y - bb.y0, S: bb.y1 - y, W: x - bb.x0, E: bb.x1 - x }[p.plot.roadSide];
-  return Math.max(20 * 12, d);
+  const at = { x: pt.x + offset.x, y: pt.y + offset.y };
+  return Math.max(20 * 12, dist(at, nearestAccess(p.plot, at).at));
 }
 
 export type MeasuredRoom = { id: string; name: string; type: string; sqft: number; fixtures: { kind: string; widthIn: number; depthIn: number }[]; edgesIn?: number[] };

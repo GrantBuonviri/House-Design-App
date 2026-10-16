@@ -2,6 +2,8 @@ import type { Plot, Point } from "@/lib/model/schema";
 import { pointInPolygon } from "@/lib/land/geometry";
 import { landTint, landView } from "@/lib/land/view";
 import { waterLevels } from "@/lib/land/terrain";
+import { plotRoadEdges } from "@/lib/land/custom";
+import { bearingVector } from "@/lib/land/generate";
 import { toScene, type Frame, type Vec3 } from "./mesh";
 import type { Site } from "./site";
 
@@ -197,4 +199,23 @@ export function lineOnGround(site: Site, f: Frame, points: Point[], opts: { clos
   }
   if (pts.length) out.push(at(pts[pts.length - 1]));
   return out;
+}
+
+/**
+ * The roads around a designed lot, as lines (plot points) along the middle of
+ * each road just outside its real lot edge, running a little past the corners.
+ * Made-up plots have no roads listed and draw their one road from the land view.
+ */
+export function roadLinesIn3D(plot: Plot): Point[][] {
+  return plotRoadEdges(plot).map(({ road, a, b, facingDeg }) => {
+    const out = bearingVector(facingDeg);
+    const len = Math.hypot(b.x - a.x, b.y - a.y) || 1;
+    const u = { x: (b.x - a.x) / len, y: (b.y - a.y) / len };
+    const gap = (road.widthFt * 12) / 2 + 3 * 12;
+    const past = Math.min(80 * 12, len * 0.5);
+    return [
+      { x: a.x - u.x * past + out.x * gap, y: a.y - u.y * past + out.y * gap },
+      { x: b.x + u.x * past + out.x * gap, y: b.y + u.y * past + out.y * gap },
+    ];
+  });
 }

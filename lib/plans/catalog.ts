@@ -123,7 +123,7 @@ export function readiness(project: Project): Readiness {
     const site = siteLayout(project);
     if (!site) return { status: "needs", reasons: [{ text: "Fill in My real lot", action: "lot" }, { text: "Or pick a piece of land", stage: "land" }] };
     const reasons: Reason[] = [];
-    if (!site.real) reasons.push({ text: "Sample lot, not a real property: fill in My real lot", action: "lot" });
+    if (!site.real) reasons.push({ text: project.plot?.source === "custom" ? "Designed lot, not a surveyed property: fill in My real lot (it can copy your designed land)" : "Sample lot, not a real property: fill in My real lot", action: "lot" });
     for (const p of site.problems) reasons.push({ text: p, action: "lot" });
     for (const c of site.checks) {
       if (c.ok === false) reasons.push({ text: `${c.name} setback: the house is ${c.providedFt.toFixed(1)} ft from the lot line, ${c.requiredFt} ft needed`, action: "lot" });

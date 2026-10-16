@@ -3,13 +3,16 @@ import { exteriorWallIn } from "@/lib/plan/basics";
 import { planOf, type Plans } from "@/lib/plan/edit";
 import { add, boundsOf, dist, lerp, pointInPolygon, project, scale, sub, unit } from "@/lib/plan/geometry";
 import { distanceToPolygonEdge } from "@/lib/land/geometry";
+import { mainRoad, nearestAccess } from "@/lib/land/onLot";
+import { bearingVector } from "@/lib/land/generate";
 import { areaKind } from "@/lib/plan/measure";
 import { openingGeometries, wallPieces, type OpeningGeometry } from "@/lib/plan/walls";
 import { levelHeights } from "@/lib/house3d/levels";
 
 /**
  * The yard around the house, laid out by code from the floor plan and the
- * lot: a driveway from the garage door to the road, a front walk from the
+ * lot: a driveway from the garage door to the road (the main road's real
+ * lot edge, or a private lane through the land when that's closer), a front walk from the
  * front door to the driveway, planting beds with shrubs along the outside
  * walls, a few trees, and lawn over the rest near the house. The 3D view
  * draws it and the cost estimate measures it, so they always agree.
@@ -85,20 +88,14 @@ export function yardLayout(plans: Plans, levels: Level[], basics: PlanBasics | n
   if (!hb) return null;
   const lot = lotOutline(plot, offset, hb);
   const lb = boundsOf(lot)!;
-  const roadDir = ROAD[plot?.roadSide ?? "S"];
+  // Toward the main road: its real edge's facing on designed land, the box side on made-up land.
+  const main = plot?.roads.length ? mainRoad(plot) : null;
+  const roadDir = main ? bearingVector(main.facingDeg) : ROAD[plot?.roadSide ?? "S"];
   const side = { x: -roadDir.y, y: roadDir.x };
-  /** The point on the road edge straight out from p. */
+  /** Where a driveway from p meets the road or a lane. */
   const toRoad = (p: Point): Point => {
-    switch (plot?.roadSide ?? "S") {
-      case "N":
-        return { x: p.x, y: lb.y0 };
-      case "S":
-        return { x: p.x, y: lb.y1 };
-      case "E":
-        return { x: lb.x1, y: p.y };
-      case "W":
-        return { x: lb.x0, y: p.y };
-    }
+    if (plot) return sub(nearestAccess(plot, add(p, offset)).at, offset);
+    return roadDir.y ? { x: p.x, y: roadDir.y > 0 ? lb.y1 : lb.y0 } : { x: roadDir.x > 0 ? lb.x1 : lb.x0, y: p.y };
   };
   // Each room's box, so most points can skip the slower outline checks.
   const boxes = all.map((poly) => boundsOf(poly)!);
@@ -140,7 +137,9 @@ export function yardLayout(plans: Plans, levels: Level[], basics: PlanBasics | n
   if (garage) {
     const width = Math.max(12 * FT, garage.og.opening.widthIn + 4 * FT);
     const start = add(garage.og.center, scale(garage.out, exteriorIn / 2));
-    if (garage.out.x * roadDir.x + garage.out.y * roadDir.y > 0.7) driveway.push({ a: start, b: toRoad(start), width });
+    const end = toRoad(start);
+    const toward = dist(start, end) > 1 ? unit(sub(end, start)) : roadDir;
+    if (garage.out.x * toward.x + garage.out.y * toward.y > 0.7) driveway.push({ a: start, b: end, width });
     else {
       // A side-load garage: an apron out from the door, then a turn to the road.
       const apron = add(start, scale(garage.out, 24 * FT));

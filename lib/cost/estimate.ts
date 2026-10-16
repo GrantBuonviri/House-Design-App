@@ -130,6 +130,7 @@ export function estimate(
   if (q.drainage === "some") line("site", "drainage-some", 1);
   if (q.drainage === "major") line("site", "drainage-major", 1);
   line("site", "retaining-wall", q.retainingWallSqft);
+  line("site", "rock-removal", q.rockCuyd);
   line("site", "utility-trench", q.trenchLf);
   line("site", "front-walk", q.walkSqft);
   line("site", "lawn", q.lawnSqft);

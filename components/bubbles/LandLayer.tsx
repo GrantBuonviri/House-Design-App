@@ -9,13 +9,16 @@ const LOT = "#5b6b5f";
 const WATER = "#4a86b0";
 const WASH = "#a88a5c";
 const INK = "#3d3a35";
+const LANE = "#b9a27c";
+const ROCK = "#8a8580";
+const TREE = "#5f8a4f";
 const SEASON = { summer: { color: "#e8892b", month: "June" }, winter: { color: "#d8b43a", month: "Dec" } } as const;
 
 const flat = (pts: Point[]) => pts.flatMap((p) => [p.x, p.y]);
 
 /**
- * The land under the flow sketch: the lot line, water, contours, a downhill
- * arrow and the sun paths. It only shows things, so the drawing tools pass
+ * The land under the flow sketch: the lot line and roads, water, lanes, rocks,
+ * trees, contours, a downhill arrow and the sun paths. It only shows things, so the drawing tools pass
  * straight through it. `shift` is how far the lot is being dragged right now.
  */
 export default function LandLayer({ land, scale, shift }: { land: LandView; scale: number; shift: { dx: number; dy: number } | null }) {
@@ -47,6 +50,15 @@ export default function LandLayer({ land, scale, shift }: { land: LandView; scal
         )}
 
         {show.land &&
+          drawing.lanes.map((l, i) => (
+            <Group key={`lane${i}`}>
+              <Line points={flat(l.points)} stroke={LANE} strokeWidth={l.width} lineCap="round" lineJoin="round" opacity={0.45} />
+              <Line points={flat(l.points)} stroke={LANE} strokeWidth={1} strokeScaleEnabled={false} dash={[10, 8]} />
+              {label("Lane", l.points[Math.floor(l.points.length / 2)], "#7d6a48", 11)}
+            </Group>
+          ))}
+
+        {show.land &&
           drawing.water.map((w, i) =>
             w.closed ? (
               <Line key={i} points={flat(w.points)} closed fill="rgba(96,140,170,0.3)" stroke={WATER} strokeWidth={1.5} strokeScaleEnabled={false} tension={0.3} />
@@ -55,7 +67,7 @@ export default function LandLayer({ land, scale, shift }: { land: LandView; scal
                 key={i}
                 points={flat(w.points)}
                 stroke={w.kind === "wash" ? WASH : WATER}
-                strokeWidth={w.kind === "wash" ? 2 : 3}
+                strokeWidth={w.kind === "wash" ? 2 : w.kind === "river" ? 7 : 3}
                 strokeScaleEnabled={false}
                 dash={w.kind === "wash" ? [8, 5] : undefined}
                 tension={0.4}
@@ -65,15 +77,27 @@ export default function LandLayer({ land, scale, shift }: { land: LandView; scal
             ),
           )}
 
+        {show.land &&
+          drawing.trees.map((t, i) => (
+            <Circle key={`tree${i}`} x={t.at.x} y={t.at.y} radius={t.size / 2} fill={TREE} opacity={0.35} stroke={TREE} strokeWidth={1.5} strokeScaleEnabled={false} />
+          ))}
+        {show.land &&
+          drawing.rocks.map((r, i) => (
+            <Group key={`rock${i}`}>
+              <Circle x={r.at.x} y={r.at.y} radius={r.size / 2} fill={ROCK} opacity={0.6} stroke="#5d5955" strokeWidth={1.5} strokeScaleEnabled={false} />
+              {label("Rock", { x: r.at.x, y: r.at.y + r.size / 2 + px(10) }, "#5d5955", 10)}
+            </Group>
+          ))}
+
         {show.property && (
           <>
             <Line points={flat(drawing.outline)} closed stroke={LOT} strokeWidth={2} strokeScaleEnabled={false} dash={[10, 6]} />
-            {drawing.road && (
-              <>
-                <Line points={[drawing.road.a.x, drawing.road.a.y, drawing.road.b.x, drawing.road.b.y]} stroke="#8d8f8c" strokeWidth={6} strokeScaleEnabled={false} lineCap="round" />
-                {label("Road", drawing.road.label, "#5f625f", 13)}
-              </>
-            )}
+            {drawing.roads.map((r, i) => (
+              <Group key={`road${i}`}>
+                <Line points={[r.a.x, r.a.y, r.b.x, r.b.y]} stroke="#8d8f8c" strokeWidth={r.main ? 6 : 4} strokeScaleEnabled={false} lineCap="round" />
+                {label(r.text, r.label, "#5f625f", r.main ? 13 : 11)}
+              </Group>
+            ))}
           </>
         )}
 
