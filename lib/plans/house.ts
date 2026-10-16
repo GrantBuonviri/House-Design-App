@@ -5,6 +5,9 @@ import { stairsDrawing } from "@/lib/plan/stairs";
 import { openingGeometries } from "@/lib/plan/walls";
 import { safetyGlazing } from "@/lib/codes/openings";
 import { flatProject } from "@/lib/plan/flatten";
+import { railingsOn, type Railing } from "@/lib/plan/railings";
+import { riseFromHeights } from "@/lib/house3d/railings";
+import { levelHeights } from "@/lib/house3d/levels";
 
 /**
  * Everything the plan sheets and code checks share about the house, worked
@@ -25,6 +28,8 @@ export type HouseFacts = {
   riseFor: (s: Pick<PlanStairs, "toLevelId">, from: Level) => number;
   /** Stairs outlines on a floor: its own stairs and the ones coming up from below. */
   stairsOn: (levelId: string) => Point[][];
+  /** Stair railings built on a floor (its own stairs', and the guards around a stairwell coming up into it), with the changes made in Furnish applied. */
+  railings: (levelId: string) => Railing[];
   /** "D3" or "W7", by opening id, numbered through the house lowest floor first. */
   tags: Map<string, string>;
   /** Openings that need safety glass, with the reasons. */
@@ -53,6 +58,16 @@ export function houseFacts(project: Project): HouseFacts {
     return [...own, ...up];
   };
 
+  const railCache = new Map<string, Railing[]>();
+  const railings = (levelId: string) => {
+    let hit = railCache.get(levelId);
+    if (!hit) {
+      const plans = Object.fromEntries(levels.map((l) => [l.id, plan(l.id)]));
+      railCache.set(levelId, (hit = railingsOn(plans, levelId, riseFromHeights(levelHeights(levels, basics)))));
+    }
+    return hit;
+  };
+
   const tags = new Map<string, string>();
   let d = 0;
   let w = 0;
@@ -75,6 +90,7 @@ export function houseFacts(project: Project): HouseFacts {
     exteriorIn: exteriorWallIn(basics),
     riseFor,
     stairsOn,
+    railings,
     tags,
     safety,
   };

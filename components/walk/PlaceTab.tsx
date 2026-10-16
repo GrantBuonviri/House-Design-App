@@ -32,13 +32,22 @@ export function FinishesHelp() {
  * The Place tab: everything Furnish can put in the house, by group with a
  * search box (furniture too), and Furnish for me for the room you're in.
  */
-export function PlaceTab({ picked, onPick, roomName, canFurnish, onFurnishForMe, notes }: { picked: string | null; onPick: (e: CatalogEntry) => void; roomName: string | null; canFurnish: boolean; onFurnishForMe: () => void; notes: string[] }) {
+export function PlaceTab({ picked, onPick, roomName, canFurnish, onFurnishForMe, notes, onAddRailing }: { picked: string | null; onPick: (e: CatalogEntry) => void; roomName: string | null; canFurnish: boolean; onFurnishForMe: () => void; notes: string[]; onAddRailing?: () => void }) {
   return (
     <div className="space-y-3" data-testid="place-tab">
       <p className="text-xs text-muted">
         Pick something, then aim where it goes and click. Floor things back onto a wall when they&apos;re close; wall things stick flat to the wall you aim at, and the scroll wheel raises or lowers shelves and cabinets. R turns it, Esc cancels. Doors and windows go on the wall you aim at. For a wall, click where it starts and where it ends.
       </p>
       <FurnishCatalog isPicked={(e) => e.id === picked} onPick={onPick} />
+      {onAddRailing && (
+        <div className="card space-y-2 p-3 text-sm" data-testid="walk-add-railing">
+          <h3 className="text-sm font-semibold">Stair railing</h3>
+          <p className="text-xs text-muted">Aim at a side of the stairs or stairwell with no railing and click to add one. Click a railing that&apos;s there to change or remove it.</p>
+          <button className="btn w-full justify-center" onClick={onAddRailing} data-testid="walk-add-railing-go">
+            Add a railing
+          </button>
+        </div>
+      )}
       <div className="card space-y-2 p-3 text-sm" data-testid="walk-furnish-for-me">
         <h3 className="text-sm font-semibold">Furnish for me</h3>
         <p className="text-xs text-muted">{roomName ? `Fills in what the ${roomName.toLowerCase()} needs, skipping anything already there.` : "Walk into a room first."}</p>

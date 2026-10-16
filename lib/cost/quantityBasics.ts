@@ -78,6 +78,11 @@ export type Quantities = {
   /** Ceilings under the roof, for attic insulation. */
   atticSqft: number;
   stairs: number;
+  /** Feet of stair railing by kind: guards by look, and half walls (a full wall counts double). */
+  stairGuardWoodLf: number;
+  stairGuardMetalLf: number;
+  stairGuardGlassLf: number;
+  stairHalfWallLf: number;
 
   // Doors and windows
   windowSqft: number;
@@ -213,6 +218,10 @@ export function empty(source: Quantities["source"]): Quantities {
     eaveLf: 0,
     atticSqft: 0,
     stairs: 0,
+    stairGuardWoodLf: 0,
+    stairGuardMetalLf: 0,
+    stairGuardGlassLf: 0,
+    stairHalfWallLf: 0,
     windowSqft: 0,
     windows: 0,
     patioDoors: 0,

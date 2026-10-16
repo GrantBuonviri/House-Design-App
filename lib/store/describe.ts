@@ -1,3 +1,4 @@
+import { describeRailingEdit } from "@/lib/plan/railings";
 import type { BubbleDiagram, DesignChoices, FloorPlan, Project } from "@/lib/model/schema";
 import { openingType, fixtureType } from "@/lib/plan/catalog";
 import { furnitureType } from "@/lib/plan/furniture";
@@ -132,7 +133,7 @@ function describePlan(a: FloorPlan | undefined, b: FloorPlan | undefined): strin
       !!was.locked !== !!now.locked ? (now.locked ? "lock a door" : "unlock a door") : was.host === now.host || json(was.host) === json(now.host) ? (was.offsetIn !== now.offsetIn && was.widthIn === now.widthIn ? `move ${article(openingType(now.style).label, true)}` : `change ${article(openingType(now.style).label, true)}`) : `move ${article(openingType(now.style).label, true)}`,
     ),
     describeList(a.stairs, b.stairs, () => "the stairs", (was, now) =>
-      moved(was, now) ? "move the stairs" : json({ ...was, railings: null }) === json({ ...now, railings: null }) ? (now.railings ? "change the railings" : "put the railings back to automatic") : "change the stairs",
+      moved(was, now) ? "move the stairs" : json({ ...was, railings: null }) === json({ ...now, railings: null }) ? (describeRailingEdit(was, now) ?? (now.railings ? "change the railings" : "put the railings back to automatic")) : "change the stairs",
     ),
     describeList(a.fixtures, b.fixtures, (f) => article(fixtureType(f.kind).label), (was, now) =>
       moved(was, now) ? `move ${article(fixtureType(now.kind).label, true)}` : `change ${article(fixtureType(now.kind).label, true)}`,

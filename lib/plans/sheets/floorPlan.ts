@@ -5,6 +5,7 @@ import { openingRooms, roleOf, sharedWall } from "@/lib/plan/connect";
 import { roomSqft } from "@/lib/plan/measure";
 import { ceilingFor, INTERIOR_WALL_IN } from "@/lib/plan/basics";
 import { stairsCut, stairsDrawing } from "@/lib/plan/stairs";
+import { HALF_WALL_THICK_IN, railingShortName } from "@/lib/plan/railings";
 import { HALF_WALL_IN, openingGeometries, solidWalls, wallPieces, type OpeningGeometry, type WallPiece } from "@/lib/plan/walls";
 import { floorFootprint, offsetRing } from "@/lib/house3d/footprint";
 import { codeNum, codeRef } from "@/lib/codes/data";
@@ -209,7 +210,7 @@ function drawPlan(project: Project, level: Level, viewNumber: number, base: bool
     const start = T(cut.up[0]);
     const towards = unit(sub(T(cut.up[1]), start));
     items.push({ t: "text", at: sub(start, scale(towards, 0.16)), text: `UP ${d.risers}R`, size: 6, bold: true, align: "center", valign: "middle" });
-    if (d.risers >= codeNum("stairs.handrailRequiredRisers")) {
+    if (d.risers >= codeNum("stairs.handrailRequiredRisers") && !(!base && h.railings(level.id).some((r) => r.stairsId === st.id && r.kind === "handrail"))) {
       const c = T(polygonCenter(d.footprint));
       items.push({ t: "text", at: add(c, { x: 0, y: 0 }), text: "HANDRAIL", size: 5, align: "center", valign: "middle", rotate: readable(sub(d.arrow[1], d.arrow[0])) - 90 });
     }
@@ -226,6 +227,32 @@ function drawPlan(project: Project, level: Level, viewNumber: number, base: bool
     const end = T(cut.down[0]);
     const back = unit(sub(T(cut.down[1]), end));
     items.push({ t: "text", at: sub(end, scale(back, 0.16)), text: "DN", size: 6, bold: true, align: "center", valign: "middle" });
+  }
+
+  // ---------- Stair railings (guards around the stairwell are on the floor above) ----------
+  if (!base) {
+    for (const r of h.railings(level.id)) {
+      const u = unit(sub(r.b, r.a));
+      const n = leftNormal(u);
+      const len = dist(r.a, r.b);
+      if (r.kind === "guard") {
+        pline([add(r.a, scale(n, 1.5)), add(r.b, scale(n, 1.5))], "hair");
+        pline([add(r.a, scale(n, -1.5)), add(r.b, scale(n, -1.5))], "hair");
+        for (const p of [r.a, r.b]) {
+          const q = 1.75;
+          ppoly([add(p, { x: -q, y: -q }), add(p, { x: q, y: -q }), add(p, { x: q, y: q }), add(p, { x: -q, y: q })], "fine", "#ffffff");
+        }
+      } else if (r.kind === "handrail") {
+        pline([r.a, r.b], "medium");
+      } else {
+        const half = HALF_WALL_THICK_IN / 2;
+        ppoly([add(r.a, scale(n, half)), add(r.b, scale(n, half)), add(r.b, scale(n, -half)), add(r.a, scale(n, -half))], "fine", r.kind === "wall" ? "#d0d0d0" : HALF_WALL_FILL);
+      }
+      if (len >= 30) {
+        const off = r.kind === "half-wall" || r.kind === "wall" ? HALF_WALL_THICK_IN / 2 + 6 : 8;
+        items.push({ t: "text", at: T(add(scale(add(r.a, r.b), 0.5), scale(n, off))), text: railingShortName(r), size: 4.5, align: "center", valign: "middle", rotate: readable(u) });
+      }
+    }
   }
 
   // ---------- Fixtures ----------

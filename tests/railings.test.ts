@@ -200,8 +200,8 @@ describe("undo labels", () => {
     const p = createProject("R");
     const a = { ...p, floorPlans: { "floor-1": plan([room("r1")], [stairs("u")]) } };
     const b = { ...p, floorPlans: { "floor-1": plan([room("r1")], [editRailing(stairs("u"), "middle", { removed: true })]) } };
-    expect(describeChange(a, b)).toBe("change the railings");
-    expect(describeChange(b, a)).toBe("put the railings back to automatic");
+    expect(describeChange(a, b)).toBe("remove a railing");
+    expect(describeChange(b, a)).toBe("put a railing back to automatic");
   });
 });
 

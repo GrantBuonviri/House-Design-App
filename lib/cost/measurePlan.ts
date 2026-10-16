@@ -12,6 +12,8 @@ import { rockCuyd, rocksUnder } from "@/lib/land/onLot";
 import { yardAmounts, yardLayout } from "@/lib/exterior/yard";
 import { type Quantities, sqft, ft, FROST_DEPTH_IN, JOIST_DEPTH_IN, OVERDIG_IN, SHALLOW_DIG_IN, ringLength, samplesAround, type Ctx, empty, siteFacts, toRoad, type MeasuredRoom, roomFixtures, centerOf, applyRoof } from "./quantityBasics";
 import { measureRoof } from "./measureRoof";
+import { railingLengths, railingsOn } from "@/lib/plan/railings";
+import { riseFromHeights } from "@/lib/house3d/railings";
 import { cabinetsByRoom, furnishExtras } from "./furnishQuantities";
 import { overhangsOf, postsUnder, supportOf } from "@/lib/plan/support";
 import { flatProject, savedPlans, savedRoom } from "@/lib/plan/flatten";
@@ -202,6 +204,16 @@ export function measurePlan(p: Ctx): Quantities | null {
     }
     if (!isBelow) q.extWallSqft += Math.max(0, sqft(extLen * story - extOpenings));
     q.stairs += plan.stairs.length;
+  }
+
+  // Stair railings with Grant's changes from Furnish (wall-mounted handrails are inside the stairs rate).
+  const rise = riseFromHeights(levelHeights(p.levels, basics));
+  for (const l of p.levels) {
+    const len = railingLengths(railingsOn(plans, l.id, rise));
+    q.stairGuardWoodLf += len.guard.wood;
+    q.stairGuardMetalLf += len.guard.metal;
+    q.stairGuardGlassLf += len.guard.glass;
+    q.stairHalfWallLf += len.halfWall + len.wall * 2;
   }
 
   const roof = measureRoof(plans, p.levels, basics, p.house3d.roof);

@@ -24,6 +24,8 @@ import PlanChecks from "@/components/plan/PlanChecks";
 import type { PlanSelection } from "@/components/plan/types";
 import FurnishCatalog from "./FurnishCatalog";
 import FurnishItemPanel from "./FurnishItemPanel";
+import RailingPanel from "./RailingPanel";
+import { changeRailingIn, railingTarget, stageRailings, type RailingChange } from "@/lib/furnish/railings";
 
 const PlanCanvas = dynamic(() => import("@/components/plan/PlanCanvas"), {
   ssr: false,
@@ -105,13 +107,23 @@ export default function FurnishStage({
   const ceilingIn = ceilingFor(basics, level);
   const layouts = useMemo(() => furnishLayouts(project, level), [project, level]);
   const items = useMemo(() => stageItems(plan, layouts), [plan, layouts]);
+  const stairRails = useMemo(() => stageRailings(plans, levels, basics, level.id), [plans, levels, basics, level.id]);
   const counts = Object.fromEntries(levels.map((l) => [l.id, plans[l.id]?.rooms.length ?? 0]));
 
   // What's picked and still there (Undo can take things away).
-  const live = new Set([...items.map((i) => i.id), ...plan.openings.map((o) => o.id)]);
+  const live = new Set([...items.map((i) => i.id), ...plan.openings.map((o) => o.id), ...stairRails.railings.map((r) => r.key), ...stairRails.bare.map((x) => x.key)]);
   const sel = selection.filter((s) => live.has(s.id));
   const single = sel.length === 1 ? sel[0] : null;
   const item = single?.kind === "furnish" ? items.find((i) => i.id === single.id) : undefined;
+
+  const railTarget = single?.kind === "railing" ? railingTarget(stairRails, single.id) : null;
+  const changeRail = (change: RailingChange) => {
+    if (!railTarget) return;
+    const pl = changeRailingIn(plans, railTarget, change);
+    if (pl) setPlansFor(railTarget.stairsLevelId, pl);
+    // Pick the same side again: its key stays the same unless it was removed.
+    if (change === "remove") setFlash("Removed the railing. Undo puts it back, or pick the dotted line to add one.");
+  };
 
   const setLevelPlan = useCallback(
     (pl: FloorPlan, coalesce?: string) => update((p) => ({ ...p, floorPlans: { ...p.floorPlans, [level.id]: pl } }), coalesce ? { coalesce: `furnish.${coalesce}` } : undefined),
@@ -172,6 +184,13 @@ export default function FurnishStage({
           setLevelPlan(deleteItem(plan, item));
           setSelection([]);
           if (isClosetRod(item.id)) setFlash(CLOSET_DELETED);
+        } else if (single.kind === "railing") {
+          const t = railingTarget(stairRails, single.id);
+          if (t?.railing) {
+            const pl = changeRailingIn(plans, t, "remove");
+            if (pl) setPlansFor(t.stairsLevelId, pl);
+            setFlash("Removed the railing. Undo puts it back.");
+          }
         } else if (single.kind === "opening") setFlash("Doors and windows can't be deleted from Furnish. Delete them on the floor plan.");
         return;
       }
@@ -361,7 +380,7 @@ export default function FurnishStage({
             land={null}
             lotMode={false}
             mode="furnish"
-            furnish={{ layouts, pick, turn, wallHeight, ceilingIn, closetSize, here: walk && walk.here.levelId === level.id ? walk.here : undefined }}
+            furnish={{ railings: stairRails.railings, bareRailings: stairRails.bare, layouts, pick, turn, wallHeight, ceilingIn, closetSize, here: walk && walk.here.levelId === level.id ? walk.here : undefined }}
             focus={focus}
             onLotMove={() => {}}
             onSelect={setSelection}
@@ -406,6 +425,8 @@ export default function FurnishStage({
             </div>
           ) : item ? (
             <FurnishItemPanel plan={plan} item={item} ceilingIn={ceilingIn} roomName={roomName} onApply={apply} onDelete={(pl) => { setLevelPlan(pl); setSelection([]); if (isClosetRod(item.id)) setFlash(CLOSET_DELETED); }} onMessage={setFlash} />
+          ) : railTarget ? (
+            <RailingPanel target={railTarget} edited={!!plans[railTarget.stairsLevelId]?.stairs.find((x) => x.id === railTarget.stairsId)?.railings?.some((e) => e.edge === railTarget.edge)} onChange={changeRail} />
           ) : single?.kind === "opening" ? (
             <PlanSidePanel
               plan={plan}
@@ -425,7 +446,7 @@ export default function FurnishStage({
           ) : (
             <div className="card p-4 text-sm text-muted" data-testid="furnish-empty-panel">
               <h3 className="mb-2 text-sm font-semibold text-ink">Nothing picked</h3>
-              <p>Pick something in the list to place it, or click a toilet, cabinet, outlet or other item on the plan to change its size, turn it, move it away from a wall, swap it or delete it.</p>
+              <p>Pick something in the list to place it, or click a toilet, cabinet, outlet or other item on the plan to change its size, turn it, move it away from a wall, swap it or delete it. Stair railings are there too: click one to change its kind or look, or a dotted line along the stairs to add one.</p>
               <p className="mt-2">{items.length} {items.length === 1 ? "item" : "items"} on {level.name.toLowerCase()}, counting the cabinets and outlets the app placed.</p>
               {(cabinetsEdited(plan) || devicesEdited(plan)) && (
                 <div className="mt-3 space-y-1">

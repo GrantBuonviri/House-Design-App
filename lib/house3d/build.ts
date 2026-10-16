@@ -37,7 +37,7 @@ import { ROOF_STEP_DEG, flatPlans, sourceEdge } from "@/lib/plan/flatten";
  */
 
 export type PickKind = "room" | "opening" | "stairs" | "fixture" | "yard";
-export type Pick = { kind: PickKind; id: string; levelId: string };
+export type Pick = { kind: PickKind; id: string; levelId: string; /** A stair railing's key (its stairs are `id`): the walkthrough aims at the railing, everything else at the stairs. */ railing?: string };
 
 export type Layer = "walls" | "footprints" | "floors" | "ceilings" | "openings" | "stairs" | "fixtures" | "furniture" | "roof" | "foundation" | "yard";
 
@@ -364,21 +364,14 @@ export function buildLevel(
   }
 
   // ---- Railings: this floor's stairs, and guards around stairwells coming up into it ----
-  const rails = new Map<string, { pick: Pick; m: RailingMeshes }>();
   for (const r of railingsOn(plans, L, riseFromHeights(heights))) {
-    let g = rails.get(r.stairsId);
-    if (!g) {
-      g = { pick: { kind: "stairs", id: r.stairsId, levelId: r.stairsLevelId }, m: { solid: new MeshBuilder(), glass: new MeshBuilder(), balusters: new MeshBuilder(), panel: new MeshBuilder() } };
-      rails.set(r.stairsId, g);
-    }
-    drawRailing(g.m, f, r, floorIn, ceilingIn);
-  }
-  for (const [id, { pick, m }] of rails) {
-    const base = { levelId: L, layer: "stairs" as const, pick };
-    if (!m.solid.empty) parts.push({ ...base, key: `${L}:rail:${id}`, mesh: m.solid.build() });
-    if (!m.glass.empty) parts.push({ ...base, key: `${L}:railg:${id}`, mesh: m.glass.build(), glass: true });
-    if (!m.balusters.empty) parts.push({ ...base, key: `${L}:railb:${id}`, mesh: m.balusters.build(), quality: "pretty" });
-    if (!m.panel.empty) parts.push({ ...base, key: `${L}:railp:${id}`, mesh: m.panel.build(), glass: true, quality: "fast" });
+    const m: RailingMeshes = { solid: new MeshBuilder(), glass: new MeshBuilder(), balusters: new MeshBuilder(), panel: new MeshBuilder() };
+    drawRailing(m, f, r, floorIn, ceilingIn);
+    const base = { levelId: L, layer: "stairs" as const, pick: { kind: "stairs" as const, id: r.stairsId, levelId: r.stairsLevelId, railing: r.key } };
+    if (!m.solid.empty) parts.push({ ...base, key: `${L}:rail:${r.key}`, mesh: m.solid.build() });
+    if (!m.glass.empty) parts.push({ ...base, key: `${L}:railg:${r.key}`, mesh: m.glass.build(), glass: true });
+    if (!m.balusters.empty) parts.push({ ...base, key: `${L}:railb:${r.key}`, mesh: m.balusters.build(), quality: "pretty" });
+    if (!m.panel.empty) parts.push({ ...base, key: `${L}:railp:${r.key}`, mesh: m.panel.build(), glass: true, quality: "fast" });
   }
 
   // ---- Steps down to the ground from outside doors and porches ----

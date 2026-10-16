@@ -42,6 +42,8 @@ export type Aim =
     }
   /** Something placed in Furnish (furniture, a fixture, cabinet, outlet, hookup or built-in): click to move, turn, size, swap or delete it. */
   | { kind: "furnish"; levelId: string; id: string; label: string; item: LayerKind }
+  /** A stair railing (`id` is its key), in the Place tab or when nothing else is under the dot: click to change, replace or remove it. `levelId` is the floor it stands on. */
+  | { kind: "railing"; levelId: string; id: string; label: string }
   /** A door or window, in the Place tab: click to slide it along its wall or change it. */
   | { kind: "opening"; levelId: string; id: string; label: string }
   | { kind: "none"; label?: string; hint?: string };
@@ -139,8 +141,10 @@ export function aimAt(
   if (!furnish) return surfaceAim(plan, part, hit, basics, below);
   const found = part.layer === "yard" || part.layer === "roof" ? null : itemAt(furnish.items, hit);
   const item: Aim | null = found ? { kind: "furnish", levelId: L, id: found.id, label: found.label, item: found.kind } : null;
+  const rail: Aim | null = part.pick?.railing ? { kind: "railing", levelId: L, id: part.pick.railing, label: "Stair railing" } : null;
   if (furnish.tab === "place") {
     if (item) return item;
+    if (rail) return rail;
     if (part.layer === "openings" && part.pick?.kind === "opening") {
       const o = plan.openings.find((x) => x.id === part.pick!.id);
       if (o) return { kind: "opening", levelId: L, id: o.id, label: openingType(o.style).label };
@@ -148,7 +152,7 @@ export function aimAt(
     return { kind: "none", hint: "Pick something in the Place list to put here." };
   }
   const surface = surfaceAim(plan, part, hit, basics, below);
-  return surface.kind === "none" && item ? item : surface;
+  return surface.kind === "none" ? (item ?? rail ?? surface) : surface;
 }
 
 function surfaceAim(plan: FloorPlan, part: AimPart, hit: AimHit, basics: Parameters<typeof exteriorWallIn>[0], below?: { levelId: string; plan: FloorPlan }): Aim {
