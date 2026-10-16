@@ -1,4 +1,4 @@
-import type { Plot, Point } from "@/lib/model/schema";
+import type { Plot, Point, WaterFeature } from "@/lib/model/schema";
 import { compassName } from "./sun";
 import { createRng, hashSeeds, type Rng } from "./random";
 
@@ -18,7 +18,7 @@ const NAME_SECOND = [
   "Rise", "Point", "Hill", "Canyon", "Springs", "Crossing", "Overlook",
 ] as const;
 
-type Soil = { name: string; note: string; drainage: number };
+export type Soil = { name: string; note: string; drainage: number };
 const SOILS: readonly (readonly [Soil, number])[] = [
   [{ name: "Sandy loam", note: "Sandy loam: drains well and is easy to dig.", drainage: 1 }, 4],
   [{ name: "Decomposed granite", note: "Decomposed granite, typical of the Boise foothills: drains fast but erodes on steep cuts.", drainage: 1 }, 3],
@@ -27,6 +27,14 @@ const SOILS: readonly (readonly [Soil, number])[] = [
   [{ name: "Caliche", note: "Gravelly loam over a caliche hardpan: water can't soak in deep, and digging is harder.", drainage: -1 }, 2],
   [{ name: "Heavy clay", note: "Heavy clay: drains poorly and may need engineered fill under the house.", drainage: -2 }, 1],
 ];
+
+/** The six soils made-up plots use, for picking one by hand. */
+export const SOIL_TYPES: readonly Soil[] = SOILS.map(([soil]) => soil);
+
+/** The fields every plot has that only custom land fills in, left empty. */
+function extras(): Pick<Plot, "source" | "custom" | "features" | "roads" | "lanes" | "ground" | "rolls"> {
+  return { source: "made-up", custom: null, features: [], roads: [], lanes: [], ground: [], rolls: "gentle" };
+}
 
 export type GenerateOptions = { flat?: boolean };
 
@@ -95,7 +103,7 @@ export function generatePlot(seed: number, opts: GenerateOptions = {}): Plot {
     : null;
   const waterFeatures = waterKind ? [makeWater(waterKind, widthIn, depthIn, downhillDeg, rng)] : [];
 
-  const drainage = rateDrainage(slopePercent, soil, waterKind);
+  const drainage = rateDrainage(slopePercent, soil, waterKind ? [waterKind] : []);
 
   return {
     seed,
@@ -111,6 +119,7 @@ export function generatePlot(seed: number, opts: GenerateOptions = {}): Plot {
     soilNote: soil.note,
     waterFeatures,
     roadSide,
+    ...extras(),
   };
 }
 
@@ -135,6 +144,7 @@ function flatPlot(seed: number): Plot {
     soilNote: "Compacted engineered fill over sandy loam: an easy, predictable base to build on.",
     waterFeatures: [],
     roadSide: "S",
+    ...extras(),
   };
 }
 
@@ -261,18 +271,22 @@ export function nearestSide(bearingDeg: number): "N" | "E" | "S" | "W" {
   return (["N", "E", "S", "W"] as const)[Math.round((((bearingDeg % 360) + 360) % 360) / 90) % 4];
 }
 
-function rateDrainage(
+/**
+ * Rate how well the land drains, with the main reason. Standing or running
+ * water counts once (the first one listed), and a wash counts once.
+ */
+export function rateDrainage(
   slopePercent: number,
   soil: Soil,
-  water: "creek" | "pond" | "lake" | "wash" | null,
+  water: readonly WaterFeature["kind"][],
 ): Plot["drainage"] {
   const factors: { score: number; text: string }[] = [{ score: soil.drainage, text: soilReason(soil) }];
   if (slopePercent < 1.5) factors.push({ score: -1.25, text: "the ground is nearly level, so rain can pond" });
   else if (slopePercent <= 12) factors.push({ score: 0.5, text: "a gentle slope carries rain away" });
   else if (slopePercent > 18) factors.push({ score: -0.75, text: "steep ground sends fast runoff toward any cut" });
-  if (water === "creek" || water === "pond" || water === "lake")
-    factors.push({ score: -1, text: `the ${water} means a higher water table` });
-  if (water === "wash") factors.push({ score: -1, text: "a seasonal wash floods across it in spring storms" });
+  const wet = water.find((w) => w !== "wash");
+  if (wet) factors.push({ score: -1, text: `the ${wet} means a higher water table` });
+  if (water.includes("wash")) factors.push({ score: -1, text: "a seasonal wash floods across it in spring storms" });
 
   const total = factors.reduce((s, f) => s + f.score, 0);
   const rating = total >= 0.5 ? "good" : total >= -0.75 ? "fair" : "poor";
