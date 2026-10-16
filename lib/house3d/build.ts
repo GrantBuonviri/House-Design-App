@@ -12,6 +12,7 @@ import { roomLook, type RoomLook } from "./finishes";
 import { exteriorLook, type ExteriorLook } from "./exterior";
 import { COVERED, cutHoles, floorFootprint, offsetRing, roofFootprint, subtractRegions, type Region } from "./footprint";
 import { levelHeights, type LevelHeights } from "./levels";
+import { against, faceOf, stretchOf, wallFootprints } from "./joints";
 import { MeshBuilder, toScene, type Frame, type MeshData, type Vec3 } from "./mesh";
 import { drawOpening, openingSpan, type DoorMotion } from "./openings";
 import { drawRoof, roofShape, roofTop, ROOF_THICK_IN } from "./roof";
@@ -153,13 +154,32 @@ export function buildLevel(
   // Where each wall stands on the floor: shown in its place when the wall is hidden.
   const prints = { outside: new MeshBuilder(), inside: new MeshBuilder() };
   const found = new MeshBuilder();
-  for (const p of pieces) {
-    if (p.open) continue;
+  const standing = pieces.filter((p) => !p.open && dist(p.a, p.b) > 0.01);
+  // Outside walls run up to the next floor where there's one above, so there's no gap at the floor structure.
+  // A half wall stops at 42" (its counter cap, if any, goes on top below).
+  const upTos = standing.map((p) =>
+    p.height ? floorIn + Math.min(HALF_WALL_IN, ceilingIn) : p.exterior && above && covers(abovePolys, lerp(p.a, p.b, 0.5)) ? heights[above.id].floorIn : topIn,
+  );
+  // Where walls meet, their ends are mitered or cut to each other's faces (see joints.ts), so no two overlap.
+  const jp = standing.map((p) => ({ a: p.a, b: p.b, thicknessIn: p.thicknessIn, exterior: p.exterior }));
+  const feet = wallFootprints(jp);
+  // The counter caps on half walls, a little wider than the wall (and past a free end), meet the same way.
+  const capFeet = standing.some((p) => p.height === "half-cap")
+    ? wallFootprints(
+        standing.map((p, i) => ({ ...jp[i], thicknessIn: p.thicknessIn + (p.height === "half-cap" ? WALL_CAP_OVERHANG_IN * 2 : 0) })),
+        () => WALL_CAP_OVERHANG_IN,
+      )
+    : [];
+  // The foundation under outside walls, an inch wider than the wall, where nothing is underneath.
+  const founded = standing.map((p, i) => ({ p, i })).filter(({ p }) => p.exterior && floorIn <= 1 && !covers(belowPolys, lerp(p.a, p.b, 0.5), 2));
+  const foundJp = founded.map(({ p }) => ({ a: p.a, b: p.b, thicknessIn: p.thicknessIn + 1, exterior: true }));
+  const foundFeet = wallFootprints(foundJp, (i) => foundJp[i].thicknessIn / 2);
+  standing.forEach((p, pi) => {
     const len = dist(p.a, p.b);
     const mid = lerp(p.a, p.b, 0.5);
-    // Outside walls run up to the next floor where there's one above, so there's no gap at the floor structure.
-    // A half wall stops at 42" (its counter cap, if any, goes on top below).
-    const upTo = p.height ? floorIn + Math.min(HALF_WALL_IN, ceilingIn) : p.exterior && above && covers(abovePolys, mid) ? heights[above.id].floorIn : topIn;
+    const upTo = upTos[pi];
+    // Where the wall runs up into the floor above, its top is inside the floor structure (and would flicker with the floor).
+    const buried = !p.height && above !== undefined && upTo === heights[above.id].floorIn;
     // Each side of a wall takes the paint of the room it faces, or that wall's own accent paint
     // (the left side of an outside wall is the siding).
     const side = (sign: 1 | -1) => {
@@ -171,9 +191,17 @@ export function buildLevel(
       return (edge !== null && look.accents.get(wallKey(sourceEdge(r, edge)))) || look.wall;
     };
     const color = p.exterior
-      ? { left: ext.siding.color, leftPattern: ext.siding.pattern, right: side(-1), ends: ext.siding.color, top: COLORS.wallTop }
-      : { left: side(1), right: side(-1), ends: COLORS.drywall, top: COLORS.wallTop };
+      ? { left: ext.siding.color, leftPattern: ext.siding.pattern, right: side(-1), ends: ext.siding.color }
+      : { left: side(1), right: side(-1), ends: COLORS.drywall };
     const bandColor = band && { ...color, left: band.color, leftPattern: band.pattern, ends: band.color };
+    const paint = (c: typeof color) => (a: Point, b: Point) => {
+      const which = faceOf(jp[pi], a, b);
+      if (which === "left") return { color: c.left, pattern: c.leftPattern };
+      if (which === "right") return { color: c.right };
+      // An end against another wall shows only above that wall.
+      const j = against(feet, pi, a, b);
+      return { color: c.ends, pattern: p.exterior ? c.leftPattern : undefined, from: j >= 0 ? upTos[j] : -Infinity };
+    };
     const tol = Math.max(2, p.thicknessIn / 2 + 0.5);
     const cuts: { t0: number; t1: number; og: OpeningGeometry }[] = [];
     for (const og of ogs) {
@@ -181,50 +209,41 @@ export function buildLevel(
       if (o) cuts.push({ t0: o[0], t1: o[1], og });
     }
     const group: WallGroup = p.exterior ? "outside" : "inside";
-    // Run on past a corner by half the wall's thickness, for a clean corner.
-    const ends = (t0: number, t1: number, capA: boolean, capB: boolean) => [
-      lerp(p.a, p.b, (t0 - (capA ? p.thicknessIn / 2 : 0)) / len),
-      lerp(p.a, p.b, (t1 + (capB ? p.thicknessIn / 2 : 0)) / len),
-    ];
-    const piece = (t0: number, t1: number, z0: number, z1: number, capA: boolean, capB: boolean) => {
-      const [a, b] = ends(t0, t1, capA, capB);
+    const piece = (t0: number, t1: number, z0: number, z1: number) => {
       const top = band && p.exterior ? floorIn + band.heightIn : -Infinity;
-      if (bandColor && z0 < top) {
-        walls[group].box(f, a, b, p.thicknessIn, z0, Math.min(z1, top), bandColor);
-        if (z1 > top) walls[group].box(f, a, b, p.thicknessIn, top, z1, color);
-      } else walls[group].box(f, a, b, p.thicknessIn, z0, z1, color);
+      for (const r of stretchOf(feet[pi], jp[pi], t0, t1)) {
+        if (bandColor && z0 < top) {
+          walls[group].prism(f, r, z0, Math.min(z1, top), paint(bandColor), z1 > top ? null : COLORS.wallTop);
+          if (z1 > top) walls[group].prism(f, r, top, z1, paint(color), buried && z1 >= upTo ? null : COLORS.wallTop);
+        } else walls[group].prism(f, r, z0, z1, paint(color), buried && z1 >= upTo ? null : COLORS.wallTop);
+      }
     };
-    for (const [t0, t1] of subtractIntervals(len, cuts.map((c) => [c.t0, c.t1]))) piece(t0, t1, floorIn, upTo, t0 < 0.01, t1 > len - 0.01);
+    for (const [t0, t1] of subtractIntervals(len, cuts.map((c) => [c.t0, c.t1]))) piece(t0, t1, floorIn, upTo);
     for (const c of cuts) {
       const { bottom, top } = openingSpan(c.og, ceilingIn);
-      if (bottom > 0.5) piece(c.t0, c.t1, floorIn, Math.min(upTo, floorIn + bottom), false, false);
-      if (floorIn + top < upTo - 0.5) piece(c.t0, c.t1, floorIn + top, upTo, false, false);
+      if (bottom > 0.5) piece(c.t0, c.t1, floorIn, Math.min(upTo, floorIn + bottom));
+      if (floorIn + top < upTo - 0.5) piece(c.t0, c.t1, floorIn + top, upTo);
     }
     if (p.height === "half-cap") {
-      const [a, b] = ends(0, len, true, true);
-      const c = lookAt(mid)?.counter ?? COLORS.counter;
-      walls[group].box(f, a, b, p.thicknessIn + WALL_CAP_OVERHANG_IN * 2, upTo, upTo + WALL_CAP_IN, { left: c, right: c, ends: c, top: c });
+      const cc = lookAt(mid)?.counter ?? COLORS.counter;
+      for (const r of capFeet[pi]) walls[group].prism(f, r, upTo, upTo + WALL_CAP_IN, (a, b) => (against(capFeet, pi, a, b) >= 0 ? null : { color: cc }), cc);
     }
     // The footprint: everywhere the wall meets the floor, so only doorways (openings down to the floor) leave gaps.
     const doorways = cuts.filter((c) => openingSpan(c.og, ceilingIn).bottom <= 0.5).map((c): [number, number] => [c.t0, c.t1]);
-    for (const [t0, t1] of subtractIntervals(len, doorways)) {
-      const [a, b] = ends(t0, t1, t0 < 0.01, t1 > len - 0.01);
-      prints[group].box(f, a, b, p.thicknessIn, floorIn, floorIn + FOOTPRINT_IN, FOOTPRINT_COLOR[group]);
-    }
+    const fc = FOOTPRINT_COLOR[group];
+    for (const [t0, t1] of subtractIntervals(len, doorways))
+      for (const r of stretchOf(feet[pi], jp[pi], t0, t1)) prints[group].prism(f, r, floorIn, floorIn + FOOTPRINT_IN, (a, b) => (against(feet, pi, a, b) >= 0 ? null : { color: fc.left }), fc.top);
     // Foundation: from below the ground up to this floor, where nothing is underneath.
-    if (p.exterior && floorIn <= 1 && !covers(belowPolys, mid, 2)) {
+    const fi = founded.findIndex((x) => x.i === pi);
+    if (fi >= 0) {
       let low = Infinity;
-      const n = Math.max(2, Math.ceil(len / 24));
-      for (let k = 0; k <= n; k++) low = Math.min(low, site.groundAt(lerp(p.a, p.b, k / n)));
+      const steps = Math.max(2, Math.ceil(len / 24));
+      for (let k = 0; k <= steps; k++) low = Math.min(low, site.groundAt(lerp(p.a, p.b, k / steps)));
       const bottom = Math.min(low - 12, floorIn - GROUND_SLAB_IN);
-      if (floorIn - bottom > 2) {
-        const a = lerp(p.a, p.b, -p.thicknessIn / 2 / len);
-        const b = lerp(p.a, p.b, 1 + p.thicknessIn / 2 / len);
-        const c = COLORS.foundation;
-        found.box(f, a, b, p.thicknessIn + 1, bottom, floorIn, { left: c, right: c, ends: c, top: c });
-      }
+      const c = COLORS.foundation;
+      if (floorIn - bottom > 2) for (const r of foundFeet[fi]) found.prism(f, r, bottom, floorIn, (a, b) => (against(foundFeet, fi, a, b) >= 0 ? null : { color: c }), c);
     }
-  }
+  });
   for (const g of ["outside", "inside"] as const) {
     if (!walls[g].empty) parts.push({ key: `${L}:walls:${g}`, levelId: L, layer: "walls", wall: g, mesh: walls[g].build() });
     if (!prints[g].empty) parts.push({ key: `${L}:footprints:${g}`, levelId: L, layer: "footprints", wall: g, mesh: prints[g].build() });
@@ -397,22 +416,26 @@ function skirt(mb: MeshBuilder, f: Frame, room: PlanRoom, z0: number, z1: number
 }
 
 /** Roofs over every part of the house with nothing built on top. */
-export function buildRoofs(plans: Plans, ctx: HouseContext & { heights: LevelHeights }): { parts: Part[]; fellBack: boolean; topIn: number } {
+export function buildRoofs(plans: Plans, ctx: HouseContext & { heights: LevelHeights }): { parts: Part[]; fellBack: boolean; leansOnWall: boolean; topIn: number } {
   plans = flatPlans(plans, ROOF_STEP_DEG);
   const { heights, frame: f } = ctx;
   const ordered = stack(ctx.levels, heights);
   const exteriorIn = exteriorWallIn(ctx.basics);
   const parts: Part[] = [];
   let fellBack = false;
+  let leansOnWall = false;
   let topIn = -Infinity;
   ordered.forEach((level, i) => {
     const regions = roofFootprint(planOf(plans, level.id));
     if (!regions.length) return;
     // Whatever the next floor up doesn't cover needs a roof (even where a floor further up hangs over it).
     const next = ordered.slice(i + 1).find((l) => (plans[l.id]?.rooms.length ?? 0) > 0);
-    const exposed = subtractRegions(regions, next ? floorFootprint(planOf(plans, next.id)) : []);
+    const above = next ? floorFootprint(planOf(plans, next.id)) : [];
+    const exposed = subtractRegions(regions, above);
     if (!exposed.length) return;
     const { floorIn, ceilingIn } = heights[level.id];
+    // Where this roof meets the next floor's walls, it stops at their face.
+    const upper = next && { regions: above, topIn: heights[next.id].floorIn + heights[next.id].ceilingIn };
     const mb = { roof: new MeshBuilder(), trim: new MeshBuilder(), siding: new MeshBuilder() };
     const ext = lookOutside(ctx);
     // Below ground floors that stick out get a flat top (usually a deck or patio over them).
@@ -420,14 +443,15 @@ export function buildRoofs(plans: Plans, ctx: HouseContext & { heights: LevelHei
     for (const found of exposed) {
       // Small pockets between rooms get roofed over rather than left as tiny open-air wells.
       const r = { ...found, holes: found.holes.filter((h) => polygonArea(h) > 150 * 144) };
-      const shape = roofShape(r, floorIn + ceilingIn, exteriorIn, ctx.house3d.roof, flat);
+      const shape = roofShape(r, floorIn + ceilingIn, exteriorIn, ctx.house3d.roof, flat, upper);
+      leansOnWall ||= !!shape.leansOnWall;
       fellBack ||= shape.fellBack;
       topIn = Math.max(topIn, roofTop(shape));
       drawRoof(mb, f, shape, ROOF_THICK_IN, ext);
     }
     for (const [k, b] of Object.entries(mb)) if (!b.empty) parts.push({ key: `${level.id}:roof:${k}`, levelId: level.id, layer: "roof", mesh: b.build() });
   });
-  return { parts, fellBack, topIn };
+  return { parts, fellBack, leansOnWall, topIn };
 }
 
 /** Basements and other floors below the ground, grown to the outside of their walls: where the ground is dug out. */
