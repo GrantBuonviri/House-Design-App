@@ -16,7 +16,7 @@ import { curvedWallLength } from "@/lib/cost/measurePlan";
 const flat = generatePlot(FLAT_PLOT_SEED, { flat: true });
 const room = (id: string, x: number, y: number, w: number, h: number): PlanRoom => ({ id, name: id, type: "living", polygon: rectangle(x + w / 2, y + h / 2, w, h) });
 const plan = (rooms: PlanRoom[]): FloorPlan => ({ rooms, walls: [], openings: [], stairs: [], fixtures: [], furniture: [] });
-const project = (plans: Record<string, FloorPlan>) => ({ ...createProject("Shapes"), plot: flat, levels: [levelFor(MAIN_LEVEL_ID)], floorPlans: plans, plan: { basics: defaultBasics(), showSketch: false, labels: DEFAULT_LABELS } });
+const project = (plans: Record<string, FloorPlan>) => ({ ...createProject("Shapes"), plot: flat, levels: [levelFor(MAIN_LEVEL_ID)], floorPlans: plans, plan: { basics: defaultBasics(), showSketch: false, labels: DEFAULT_LABELS, dismissed: [] } });
 
 describe("round corner", () => {
   it("cuts a 2' quarter circle off a corner and takes that much off the area", () => {

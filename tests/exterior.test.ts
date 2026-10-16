@@ -36,7 +36,7 @@ function suggestedHouse(plot: Plot = flat, types = TYPICAL): Project {
   const bubbles = suggestDiagrams({ brief, plot, levels });
   const basics = defaultBasics();
   const plans = suggestPlans(bubbles, { brief, plot, levels, basics }).plans;
-  return { ...createProject("Test"), plot, brief, levels, bubbles, floorPlans: plans, discovery: { ...createProject("x").discovery, answers }, plan: { basics, showSketch: false, labels: DEFAULT_LABELS } };
+  return { ...createProject("Test"), plot, brief, levels, bubbles, floorPlans: plans, discovery: { ...createProject("x").discovery, answers }, plan: { basics, showSketch: false, labels: DEFAULT_LABELS, dismissed: [] } };
 }
 
 const house = suggestedHouse();

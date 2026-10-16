@@ -114,3 +114,13 @@ describe("undo and redo", () => {
     expect(useProjectStore.getState().project!.name).toBe("Undo house");
   });
 });
+
+describe("dismiss labels", () => {
+  const base = createProject("Test");
+  const withDismissed = (d: string[]): Project => ({ ...base, plan: { ...base.plan, dismissed: d } });
+  it("names dismissing and bringing back", () => {
+    expect(describeChange(withDismissed([]), withDismissed(["a"]))).toBe("dismiss a thing to check");
+    expect(describeChange(withDismissed(["a", "b"]), withDismissed(["b"]))).toBe("bring back a thing to check");
+    expect(describeChange(withDismissed(["a", "b"]), withDismissed([]))).toBe("bring back all things to check");
+  });
+});

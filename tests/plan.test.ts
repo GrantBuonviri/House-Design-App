@@ -474,11 +474,11 @@ describe("saved projects", () => {
     const migrated = migrateProject(older);
     expect(migrated.schemaVersion).toBe(SCHEMA_VERSION);
     expect(migrated.floorPlans).toEqual({});
-    expect(migrated.plan).toEqual({ basics: null, showSketch: false, labels: DEFAULT_LABELS });
+    expect(migrated.plan).toEqual({ basics: null, showSketch: false, labels: DEFAULT_LABELS, dismissed: [] });
   });
 
   it("round-trip a floor plan", () => {
-    const p = { ...createProject("Plan"), floorPlans: { "floor-1": pair() }, plan: { basics: defaultBasics(), showSketch: true, labels: { ...DEFAULT_LABELS, wallLengths: false } } };
+    const p = { ...createProject("Plan"), floorPlans: { "floor-1": pair() }, plan: { basics: defaultBasics(), showSketch: true, labels: { ...DEFAULT_LABELS, wallLengths: false }, dismissed: [] } };
     expect(Project.safeParse(p).success).toBe(true);
     expect(migrateProject(JSON.parse(JSON.stringify(p)))).toEqual(p);
   });
@@ -585,5 +585,40 @@ describe("label settings in saved data", () => {
     expect(createProject("New").plan.labels).toEqual(DEFAULT_LABELS);
     expect(labelOn({ ...DEFAULT_LABELS, hideAll: true }, "roomNames")).toBe(false);
     expect(labelOn(DEFAULT_LABELS, "roomNames")).toBe(true);
+  });
+});
+
+import { dismissWarning, restoreWarning, splitDismissed, type PlanWarning } from "@/lib/plan/checks";
+
+describe("dismissing things to check", () => {
+  const w = (id: string): PlanWarning => ({ id, levelId: "floor-1", text: id, roomIds: [], at: null });
+  const all = [w("a"), w("b"), w("c")];
+
+  it("splits active from dismissed by id", () => {
+    const s = splitDismissed(all, ["b"]);
+    expect(s.active.map((x) => x.id)).toEqual(["a", "c"]);
+    expect(s.dismissed.map((x) => x.id)).toEqual(["b"]);
+  });
+
+  it("keeps an item dismissed when only its wording changes", () => {
+    const changed = [{ ...w("a"), text: "different numbers now" }];
+    expect(splitDismissed(changed, ["a"]).active).toEqual([]);
+  });
+
+  it("drops saved ids that no longer match a current warning when dismissing", () => {
+    expect(dismissWarning(["gone", "a"], "b", all)).toEqual(["a", "b"]);
+  });
+
+  it("restores one item", () => {
+    expect(restoreWarning(["a", "b"], "a")).toEqual(["b"]);
+  });
+
+  it("loads an old project with nothing dismissed", () => {
+    const old = { ...createProject("Old"), schemaVersion: 23 } as Record<string, unknown>;
+    const plan = { ...(old.plan as object) } as Record<string, unknown>;
+    delete plan.dismissed;
+    const migrated = migrateProject({ ...old, plan });
+    expect(migrated.plan.dismissed).toEqual([]);
+    expect(migrated.schemaVersion).toBe(SCHEMA_VERSION);
   });
 });

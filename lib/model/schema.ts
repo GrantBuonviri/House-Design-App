@@ -9,7 +9,7 @@ import { z } from "zod";
  * Angles are degrees clockwise from north (0 = N, 90 = E).
  */
 
-export const SCHEMA_VERSION = 23;
+export const SCHEMA_VERSION = 24;
 
 export const Point = z.object({ x: z.number(), y: z.number() });
 export type Point = z.infer<typeof Point>;
@@ -585,6 +585,8 @@ export const PlanSettings = z.object({
   showSketch: z.boolean().default(false),
   /** Which labels show on the drawing, and how. */
   labels: PlanLabels.default(() => PlanLabels.parse({})),
+  /** Ids of "Things to check" items the user dismissed (see lib/plan/checks.ts). */
+  dismissed: z.array(z.string()).default([]),
 });
 export type PlanSettings = z.infer<typeof PlanSettings>;
 
