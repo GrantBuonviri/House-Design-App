@@ -1,7 +1,7 @@
 import type { FloorPlan, OpenWall, Opening, OpeningHost, Point, WallHeight } from "@/lib/model/schema";
 import { INTERIOR_WALL_IN } from "./basics";
 import { areaKind } from "./measure";
-import { leftBulge, projectOnEdge, roomEdgeLength, wallLength } from "./arcs";
+import { arcBetween, leftBulge, projectOnEdge, roomEdgeLength, wallLength } from "./arcs";
 import { add, collinearOverlap, dist, dot, edgesOf, leftNormal, lerp, polygonCenter, project, scale, sub, subtractIntervals, unit } from "./geometry";
 
 /**
@@ -223,13 +223,17 @@ export function solidWalls(pieces: WallPiece[], openings: OpeningGeometry[]): So
 }
 
 /** The closest wall to a point, within `maxDist` inches: where along it, and which side the point is on. */
-export function nearestHost(plan: FloorPlan, p: Point, maxDist: number): { seg: HostSegment; t: number; d: number; side: 1 | -1 } | null {
-  let best: { seg: HostSegment; t: number; d: number; side: 1 | -1 } | null = null;
+export function nearestHost(plan: FloorPlan, p: Point, maxDist: number): { seg: HostSegment; t: number; d: number; side: 1 | -1; point: Point; u: Point } | null {
+  let best: { seg: HostSegment; t: number; d: number; side: 1 | -1; point: Point; u: Point } | null = null;
   for (const seg of hostSegments(plan)) {
     const pr = projectOnEdge(p, seg.a, seg.b, seg.bulge);
     if (pr.d > maxDist || (best && pr.d >= best.d - 0.01)) continue;
-    const n = leftNormal(unit(sub(seg.b, seg.a)));
-    best = { seg, t: pr.t, d: pr.d, side: dot(sub(p, pr.point), n) >= 0 ? 1 : -1 };
+    const arc = arcBetween(seg.a, seg.b, seg.bulge ?? 0);
+    // Which way the wall runs where the point lands (square to the radius on a curve).
+    const radial = arc ? unit(sub(pr.point, arc.center)) : null;
+    const u = arc && radial ? (Math.sign(arc.sweep) >= 0 ? { x: -radial.y, y: radial.x } : { x: radial.y, y: -radial.x }) : unit(sub(seg.b, seg.a));
+    const n = leftNormal(u);
+    best = { seg, t: pr.t, d: pr.d, side: dot(sub(p, pr.point), n) >= 0 ? 1 : -1, point: pr.point, u };
   }
   return best;
 }

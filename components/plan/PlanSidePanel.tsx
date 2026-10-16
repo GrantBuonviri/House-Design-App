@@ -1,6 +1,7 @@
 "use client";
 
 import ArrangeButtons from "./ArrangeButtons";
+import CurveFields from "./CurveFields";
 import { useEffect, useRef, useState } from "react";
 import { WINDOW_OPERATIONS, type WindowOperation } from "@/lib/model/schema";
 import { defaultOperation, operationOf, OPERATION_HINT, OPERATION_LABEL } from "@/lib/codes/openings";
@@ -9,6 +10,7 @@ import { formatFeetInches, parseFeetInches } from "@/lib/model/units";
 import { ceilingFor, riseBetween, STAIRS_LABEL } from "@/lib/plan/basics";
 import { FIXTURE_GROUPS, FIXTURE_TYPES, OPENING_TYPES, fixtureType, openingType } from "@/lib/plan/catalog";
 import { centerOfMany, insertCorner, removeMany, rotateMany, setEdgeLength, setWallLength, updateOpening, updateRoom } from "@/lib/plan/edit";
+import { roomHasCurves, wallLength } from "@/lib/plan/arcs";
 import { dist, isRectangle, lerp, polygonCenter } from "@/lib/plan/geometry";
 import { planTotals, roomSqft, totalsText } from "@/lib/plan/measure";
 import { MIN_STAIRS_WIDTH_IN, stairsDrawing } from "@/lib/plan/stairs";
@@ -148,7 +150,7 @@ export default function PlanSidePanel(props: Props) {
   // ---- A room ----
   if (room) {
     const brRoom = brief?.rooms.find((r) => r.id === room.briefRoomId);
-    const rect = isRectangle(room.polygon);
+    const rect = isRectangle(room.polygon) && !roomHasCurves(room);
     const set = (patch: Parameters<typeof updateRoom>[2], key: string) => onChange(updateRoom(plan, room.id, patch), `${key}.${room.id}`);
     return (
       <Panel title="Room">
@@ -207,7 +209,7 @@ export default function PlanSidePanel(props: Props) {
         )}
         <p className="field-hint">
           {rect ? "Type a size, drag a wall to push it, or drag a corner dot." : `${room.polygon.length} corners. Drag a wall to push it, or a corner dot to reshape it.`} Drag the + on a wall to add a
-          corner; double-click a corner (or pick it and press Delete) to take it away.
+          corner, or the diamond to bend the wall into a curve; double-click a corner (or pick it and press Delete) to take it away.
         </p>
 
         <OverhangField room={room} overhang={props.overhangs?.find((o) => o.roomId === room.id)} onSet={(v) => set({ overhang: v === "none" ? undefined : v }, "overhang")} />
@@ -238,6 +240,7 @@ export default function PlanSidePanel(props: Props) {
       <Panel title={`Wall of ${r.name}`}>
         <LengthField label="Length" value={seg.length} onCommit={(v) => onChange(setEdgeLength(plan, roomId, edge, v))} />
         <p className="field-hint">The far end moves; drag the wall on the drawing to push it in or out.</p>
+        <CurveFields plan={plan} target={{ roomId, edge }} onChange={onChange} />
         <div className="mt-4 grid grid-cols-2 gap-2">
           <button className="btn text-sm" onClick={() => addHere("door-hinged")}>
             Add a door
@@ -266,7 +269,8 @@ export default function PlanSidePanel(props: Props) {
     if (!w) return <FloorSummary {...props} />;
     return (
       <Panel title="Wall">
-        <LengthField label="Length" value={dist(w.a, w.b)} onCommit={(v) => onChange(setWallLength(plan, w.id, v))} />
+        <LengthField label="Length" value={wallLength(w)} onCommit={(v) => onChange(setWallLength(plan, w.id, v))} />
+        <CurveFields plan={plan} target={{ wallId: w.id }} onChange={onChange} />
         <label className="field-label mt-4" htmlFor="wall-thick">
           Thickness
         </label>

@@ -3,6 +3,7 @@ import { CATEGORY_COLOR } from "@/lib/bubbles/shapes";
 import { roomType } from "@/lib/brief/rooms";
 import { openingType } from "@/lib/plan/catalog";
 import { angleOf, dist } from "@/lib/plan/geometry";
+import { DRAW_STEP_DEG, flatPlan } from "@/lib/plan/flatten";
 import { clampOffset, nearestHost, openingGeometry, type OpeningGeometry } from "@/lib/plan/walls";
 
 /** Small helpers for the floor plan canvas (PlanCanvas.tsx and PlanCanvasLayers.tsx). */
@@ -56,7 +57,9 @@ export function ghostOpeningAt(plan: FloorPlan, p: Point, style: string, s: numb
     side: near.side,
     hinge: "start",
   };
-  const g = openingGeometry(plan, o);
+  // On a curve the unit stands as a flat chord: work out where from the flattened wall.
+  const withIt = near.seg.bulge ? flatPlan({ ...plan, openings: [o] }, DRAW_STEP_DEG) : { ...plan, openings: [o] };
+  const g = openingGeometry(withIt, withIt.openings[0]);
   return g ? { g, thickness: 6 } : null;
 }
 

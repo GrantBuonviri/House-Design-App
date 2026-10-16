@@ -1,6 +1,6 @@
-import type { FloorPlan, OpenWall, Opening, PlanRoom, PlanWall, Point, Project } from "@/lib/model/schema";
+import type { FloorPlan, OpenWall, Opening, OpeningHost, PlanRoom, PlanWall, Point, Project } from "@/lib/model/schema";
 import type { Plans } from "./edit";
-import { type Arc, angleAlong, isCurved, pointAtAngle, pointOnArc, projectOnArc, roomEdgeArc, roomHasCurves, wallArc } from "./arcs";
+import { type Arc, angleAlong, arcBetween, isCurved, pointAtAngle, pointOnArc, projectOnArc, roomEdgeArc, roomHasCurves, wallArc } from "./arcs";
 import { dist } from "./geometry";
 
 /**
@@ -102,6 +102,37 @@ export function flattenArc(arc: Arc, stepDeg = FLAT_STEP_DEG, breaks: Break[] = 
     ...marks.map((m) => ({ p: r2p(pointAtAngle(arc, m.ang)), t: m.u * arc.radius })),
     { p: arc.b, t: arc.length },
   ];
+}
+
+/** Fine step for drawing curves on screen. */
+export const DRAW_STEP_DEG = 3;
+
+/** A room's outline with its curves as short straight pieces, for drawing and measuring. The corners themselves when nothing is curved. */
+export function roomOutline(room: Pick<PlanRoom, "polygon" | "bulges">, stepDeg = DRAW_STEP_DEG): Point[] {
+  if (!roomHasCurves(room)) return room.polygon;
+  const out: Point[] = [];
+  room.polygon.forEach((p, i) => {
+    out.push(p);
+    const arc = roomEdgeArc(room, i);
+    if (arc) out.push(...flattenArc(arc, stepDeg).slice(1, -1).map((q) => q.p));
+  });
+  return out;
+}
+
+/** A wall from a to b with this left bulge as points, ends included. */
+export function wallOutline(a: Point, b: Point, bulge: number | undefined, stepDeg = DRAW_STEP_DEG): Point[] {
+  const arc = arcBetween(a, b, bulge ?? 0);
+  return arc ? flattenArc(arc, stepDeg).map((q) => q.p) : [a, b];
+}
+
+/** The saved wall (room edge or loose wall) behind a host on a flattened plan. */
+export function savedHost(flat: FloorPlan, host: OpeningHost): OpeningHost {
+  if ("roomId" in host) {
+    const room = flat.rooms.find((r) => r.id === host.roomId);
+    return room ? { roomId: host.roomId, edge: sourceEdge(room, host.edge) } : host;
+  }
+  const at = host.wallId.indexOf("~");
+  return at < 0 ? host : { wallId: host.wallId.slice(0, at) };
 }
 
 /** Whether a floor plan has any curved walls. */

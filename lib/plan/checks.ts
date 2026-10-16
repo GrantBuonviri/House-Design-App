@@ -13,6 +13,10 @@ import { findGaps, type Gap } from "./overlaps";
 import { isWayIn, stairsBoxes, wayInRooms } from "./suggest";
 import { CANTILEVER_MAX_IN, overhangsOf, pulledBack, supportOf } from "./support";
 import { flatPlans } from "./flatten";
+import { tooWideForCurve } from "./bend";
+import { pointOnEdge } from "./arcs";
+import { hostSegment } from "./walls";
+import { openingType } from "./catalog";
 
 /**
  * Friendly checks on a floor plan: rooms you can't get into, bedrooms without
@@ -54,6 +58,7 @@ type Ctx = {
 const isEgress = (o: FloorPlan["openings"][number]) => o.kind === "window" && o.widthIn >= 24 && o.heightIn >= 24 && (o.sillIn ?? 30) <= 44;
 
 export function planWarnings(plans: Plans, ctx: Ctx): PlanWarning[] {
+  const saved = plans;
   plans = flatPlans(plans);
   const out: PlanWarning[] = [];
   const levels = [...ctx.levels].sort((a, b) => a.elevationIn - b.elevationIn);
@@ -82,6 +87,17 @@ export function planWarnings(plans: Plans, ctx: Ctx): PlanWarning[] {
       const b = byId.get(g.bId)!;
       add_(level.id, `gap:${a.id}:${b.id}`, `${a.name} and ${b.name} are ${formatFeetInches(g.gapIn)} apart.`, [a, b], g.at);
       out[out.length - 1].gap = g;
+    }
+
+    // Doors and windows are flat, so a tight curve can't take a wide one.
+    for (const w of tooWideForCurve(planOf(saved, level.id))) {
+      const o = w.opening;
+      const seg = hostSegment(planOf(saved, level.id), o.host);
+      const at = seg ? pointOnEdge(seg.a, seg.b, seg.bulge ?? 0, o.offsetIn) : null;
+      const host = "roomId" in o.host ? byId.get(o.host.roomId) : undefined;
+      const label = openingType(o.style).label;
+      const fix = w.fits >= 12 ? `Try one ${formatFeetInches(w.fits)} wide or less` : "Make the curve gentler";
+      add_(level.id, `curvewide:${o.id}`, `${label} too wide for this curve: it's ${formatFeetInches(o.widthIn)} across but the wall bends away from it. ${fix}.`, host ? [host] : [], at);
     }
 
     // Rooms hanging past the outside walls of the floor below.

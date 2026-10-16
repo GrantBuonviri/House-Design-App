@@ -2,6 +2,7 @@ import type { FloorPlan, PlanLabels, Point } from "@/lib/model/schema";
 import { CATEGORY_COLOR } from "@/lib/bubbles/shapes";
 import { roomType } from "@/lib/brief/rooms";
 import type { Bounds } from "@/lib/plan/geometry";
+import { DRAW_STEP_DEG, flatPlan } from "@/lib/plan/flatten";
 import { polygonCenter } from "@/lib/plan/geometry";
 import { labelOn } from "@/lib/plan/labels";
 import { openingGeometries, solidWalls, wallPieces } from "@/lib/plan/walls";
@@ -33,12 +34,14 @@ export default function MiniPlan({
   const pad = 14 * Math.max((frame.x1 - frame.x0) / size, (frame.y1 - frame.y0) / size);
   const vb = `${frame.x0 - pad} ${frame.y0 - pad} ${frame.x1 - frame.x0 + 2 * pad} ${frame.y1 - frame.y0 + 2 * pad}`;
   const k = Math.max(frame.x1 - frame.x0 + 2 * pad, frame.y1 - frame.y0 + 2 * pad) / size;
-  const geos = openingGeometries(plan);
-  const walls = solidWalls(wallPieces(plan, exteriorIn), geos);
+  // Curves are drawn as short straight pieces.
+  const fp = flatPlan(plan, DRAW_STEP_DEG);
+  const geos = openingGeometries(fp);
+  const walls = solidWalls(wallPieces(fp, exteriorIn), geos);
   const hot = new Set(changed);
   return (
     <svg viewBox={vb} width={size} height={size} role="img" aria-label="Floor plan">
-      {plan.rooms.map((r) => (
+      {fp.rooms.map((r) => (
         <polygon
           key={r.id}
           points={r.polygon.map((p) => `${p.x},${p.y}`).join(" ")}
@@ -60,7 +63,7 @@ export default function MiniPlan({
         <polygon key={i} points={pts.map((p) => `${p.x},${p.y}`).join(" ")} fill="#d6c7b4" fillOpacity={0.7} stroke="#8a7a66" strokeWidth={0.8 * k} />
       ))}
       {(!labels || labelOn(labels, "roomNames")) &&
-        plan.rooms.map((r) => {
+        fp.rooms.map((r) => {
         const c = polygonCenter(r.polygon);
         return (
           <text key={r.id} x={c.x} y={c.y} fontSize={10 * k * (labels?.textSize ?? 1)} textAnchor="middle" dominantBaseline="middle" fill="#3b3b3b" style={{ fontFamily: "inherit" }}>
