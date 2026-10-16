@@ -9,6 +9,7 @@ import { openingType } from "@/lib/plan/catalog";
 import { catalogEntry } from "@/lib/furnish/catalog";
 import { dragItem, ghostAt, placeGhost, stageItems, wallGaps, type Layouts } from "@/lib/furnish/stage";
 import { FurnishGhost, FurnishItems } from "@/components/furnish/FurnishLayers";
+import type { ClosetSize } from "@/lib/furnish/closets";
 import { trimOverlap } from "@/lib/plan/overlaps";
 import { bendInfo, bendWall, bowFromPoint, planRadii, snapBow, type BendSnap, type BendTarget } from "@/lib/plan/bend";
 import { DRAW_STEP_DEG, flatPlan, roomOutline, savedHost } from "@/lib/plan/flatten";
@@ -93,7 +94,7 @@ type Props = {
   /** The floor plan shows furnish items faded (the Show furnishings switch). */
   showFurnishings?: boolean;
   /** The Furnish page: the app's own cabinets and devices, the catalog entry being placed, how far it is turned, the wall the Wall tool draws, and the ceiling. */
-  furnish?: { layouts?: Layouts; pick: string | null; turn: number; wallHeight: WallHeight; ceilingIn: number };
+  furnish?: { layouts?: Layouts; pick: string | null; turn: number; wallHeight: WallHeight; ceilingIn: number; closetSize?: ClosetSize };
   selection: PlanSelection;
   snap: boolean;
   labels: PlanLabels;
@@ -375,7 +376,7 @@ export default function PlanCanvas(props: Props) {
 
   /** Where the catalog item being placed would land with the mouse at `p`, and whether it fits. */
   function ghostFor(p: Point) {
-    return furnish?.pick ? ghostAt(plan, furnish.pick, p, furnish.turn, baseItems, furnish.ceilingIn) : null;
+    return furnish?.pick ? ghostAt(plan, furnish.pick, p, furnish.turn, baseItems, furnish.ceilingIn, furnish.closetSize) : null;
   }
 
   function placeFurnishAt(p: Point) {

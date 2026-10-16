@@ -29,6 +29,9 @@ import type { LandView, Side } from "@/components/bubbles/types";
 import PlanBasicsForm from "./PlanBasicsForm";
 import PlanAlternativesView from "./PlanAlternativesView";
 import { keepFurnish, layerItems, moveInside, removeItem } from "@/lib/furnish/layer";
+import { leftoverClosets, removeLeftoverCloset } from "@/lib/furnish/closets";
+import { furnishLevel, furnishSummary } from "@/lib/furnish/autoFurnish";
+import { ceilingFor } from "@/lib/plan/basics";
 import PlanChecks from "./PlanChecks";
 import PlanContextMenu, { contextItems, type ContextAt } from "./PlanContextMenu";
 import KeyboardHelp from "./KeyboardHelp";
@@ -90,6 +93,8 @@ export default function PlanStage({ onContinue, onGoToSketch, onGoToFurnish }: {
   const [editingBasics, setEditingBasics] = useState(false);
   const [choosing, setChoosing] = useState(() => !planHasContent(plans));
   const [notes, setNotes] = useState<string[]>([]);
+  /** After Suggest a plan: offer Furnish for me for the new plan. */
+  const [offerFurnish, setOfferFurnish] = useState(false);
   const [flash, setFlash] = useState<string>();
   const [drafting, setDrafting] = useState(false);
   const [focus, setFocus] = useState<{ at: Point; key: number } | null>(null);
@@ -340,6 +345,27 @@ export default function PlanStage({ onContinue, onGoToSketch, onGoToFurnish }: {
     setNotes(res.notes);
     setSelection([]);
     setChoosing(false);
+    setOfferFurnish(true);
+  }
+
+  /** Furnish for me on every floor, in one step. */
+  function furnishAll() {
+    const next: typeof plans = {};
+    let placed = 0;
+    const rooms: string[] = [];
+    const found: string[] = [];
+    for (const l of levels) {
+      if (!plans[l.id]) continue;
+      const res = furnishLevel(plans[l.id], ceilingFor(basics, l));
+      next[l.id] = res.plan;
+      placed += res.placed;
+      rooms.push(...res.rooms);
+      found.push(...res.notes);
+    }
+    if (placed) update((p) => ({ ...p, floorPlans: { ...p.floorPlans, ...next } }));
+    setOfferFurnish(false);
+    setNotes(found);
+    setFlash(furnishSummary({ placed, rooms }));
   }
 
   function fromSketch() {
@@ -370,6 +396,7 @@ export default function PlanStage({ onContinue, onGoToSketch, onGoToFurnish }: {
   /** Back to the start choices. The plan stays until a new start is picked (and Undo brings it back after). */
   function startOver() {
     setNotes([]);
+    setOfferFurnish(false);
     setSelection([]);
     setLotMode(false);
     setTool("select");
@@ -434,8 +461,15 @@ export default function PlanStage({ onContinue, onGoToSketch, onGoToFurnish }: {
   }
 
   /** Close gap on a warning: push the two rooms together. */
-  function fixWarning(w: PlanWarning, action?: "inside" | "delete") {
+  function fixWarning(w: PlanWarning, action?: "inside" | "delete" | "plan") {
     const p = planOf(plans, w.levelId);
+    if (w.closetWalls) {
+      const lc = leftoverClosets(p).find((x) => x.stem === w.closetWalls!.stem);
+      if (!lc) return;
+      setPlans((ps) => ({ ...ps, [w.levelId]: removeLeftoverCloset(p, lc) }));
+      setFlash("Removed the closet's walls and door. Undo puts them back.");
+      return;
+    }
     if (w.furnish) {
       const item = layerItems(p).find((x) => x.id === w.furnish!.id);
       if (!item) return;
@@ -540,6 +574,17 @@ export default function PlanStage({ onContinue, onGoToSketch, onGoToFurnish }: {
       {notes.map((n) => (
         <Note key={n} text={n} />
       ))}
+      {offerFurnish && (
+        <div className="flex flex-wrap items-center gap-2 rounded-md bg-accent-soft px-3 py-2 text-sm text-accent" data-testid="offer-furnish">
+          <span>The new plan has its doors, windows and closets. Furnish for me can fill in the kitchen, baths, laundry and the rest.</span>
+          <button className="btn px-2 py-0.5 text-xs" onClick={furnishAll} data-testid="offer-furnish-go">
+            Furnish for me
+          </button>
+          <button className="text-xs hover:underline" onClick={() => setOfferFurnish(false)}>
+            No thanks
+          </button>
+        </div>
+      )}
       {flash && <p className="rounded-md bg-accent-soft px-3 py-2 text-sm text-accent">{flash}</p>}
 
       <div className="flex flex-wrap items-center justify-between gap-3">

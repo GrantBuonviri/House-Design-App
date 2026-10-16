@@ -63,7 +63,7 @@ export const PASSABLE_AMOUNT = 0.5;
 const TRIGGER_DEPTH_IN = 42;
 const BODY_IN = 10;
 
-export const motionOf = (style: string): DoorMotionKind => (style === "door-garage" ? "roll" : style === "door-slider" || style === "door-pocket" || style === "door-barn" ? "slide" : "swing");
+export const motionOf = (style: string): DoorMotionKind => (style === "door-garage" ? "roll" : style === "door-slider" || style === "door-pocket" || style === "door-barn" || style === "door-bifold" ? "slide" : "swing");
 
 const shut = (): DoorState => ({ amount: 0, open: false, hand: false, idle: 0 });
 

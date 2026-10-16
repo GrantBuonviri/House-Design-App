@@ -7,10 +7,7 @@ import { formatFeetInches } from "@/lib/model/units";
 /** The left panel of the Furnish page: everything that can be placed, by group, with a search box. */
 export default function FurnishCatalog({ isPicked, onPick }: { isPicked: (e: CatalogEntry) => boolean; onPick: (e: CatalogEntry) => void }) {
   const [search, setSearch] = useState("");
-  // Closet pieces arrive with their own placer; doors, windows and walls are placed with the floor plan's tools.
-  const groups = catalogGroups(search)
-    .map((g) => ({ ...g, entries: g.entries.filter((e) => e.kind !== "closet") }))
-    .filter((g) => g.entries.length);
+  const groups = catalogGroups(search);
   return (
     <div className="card flex max-h-[640px] flex-col p-3" data-testid="furnish-catalog">
       <input className="input mb-2" placeholder="Search: toilet, outlet, bookcase…" value={search} onChange={(e) => setSearch(e.target.value)} aria-label="Search the catalog" />

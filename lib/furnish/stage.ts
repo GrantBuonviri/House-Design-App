@@ -7,6 +7,7 @@ import { levelCabinets } from "@/lib/plans/sheets/cabinets";
 import type { PlacedCabinet } from "@/lib/plan/cabinets";
 import type { PlacedDevice } from "@/lib/plan/devices";
 import { catalogEntry, type CatalogEntry } from "./catalog";
+import { CLOSET_SIZES, closetSpotAt, placeCloset, type ClosetSize, type ClosetSpot, type ClosetType } from "./closets";
 import { layerItems, placeCheck, placeItem, removeItem, snapToWall, swapItem, updateItem, type FurnishCheck, type ItemPatch, type LayerItem } from "./layer";
 
 /**
@@ -73,6 +74,8 @@ export type Ghost = {
   heightIn: number;
   bottomIn: number;
   check: FurnishCheck;
+  /** A closet piece: where its walls, door and rod go. */
+  closet?: ClosetSpot;
 };
 
 /** The size a catalog entry is placed at on this floor (ceiling items hang from the real ceiling). */
@@ -86,9 +89,15 @@ function placedSize(e: CatalogEntry, ceilingIn: number) {
  * nearest wall (or flat on it, for wall-hung things), turned a further
  * `turn` degrees, and whether it can go there.
  */
-export function ghostAt(plan: FloorPlan, entryId: string, cursor: Point, turn: number, items: LayerItem[], ceilingIn = 96): Ghost | null {
+export function ghostAt(plan: FloorPlan, entryId: string, cursor: Point, turn: number, items: LayerItem[], ceilingIn = 96, closetSize?: ClosetSize): Ghost | null {
   const e = catalogEntry(entryId);
-  if (!e || e.kind === "opening" || e.kind === "wall" || e.kind === "closet") return null;
+  if (!e || e.kind === "opening" || e.kind === "wall") return null;
+  if (e.kind === "closet") {
+    const type = e.type as ClosetType;
+    const spot = closetSpotAt(plan, type, cursor, closetSize ?? CLOSET_SIZES[type], items);
+    if (!spot) return { entryId, x: round1(cursor.x), y: round1(cursor.y), rotation: 0, widthIn: e.widthIn, depthIn: e.depthIn, heightIn: e.heightIn, bottomIn: 0, check: { ok: false, problem: "A closet goes against a wall of a room.", blocksDoors: [] } };
+    return { entryId, x: spot.x, y: spot.y, rotation: spot.rotation, widthIn: spot.widthIn, depthIn: spot.depthIn, heightIn: e.heightIn, bottomIn: 0, check: { ok: spot.ok, roomId: spot.roomId, problem: spot.problem, blocksDoors: [] }, closet: spot };
+  }
   const size = placedSize(e, ceilingIn);
   const snap = snapToWall(plan, cursor, { widthIn: size.widthIn, depthIn: size.depthIn, mount: e.mount });
   const at = snap ?? { x: round1(cursor.x), y: round1(cursor.y), rotation: 0 };
@@ -100,6 +109,7 @@ export function ghostAt(plan: FloorPlan, entryId: string, cursor: Point, turn: n
 /** Drop the ghost: the new plan and the id of what was placed (nothing when it doesn't fit). */
 export function placeGhost(plan: FloorPlan, g: Ghost, ceilingIn = 96): { plan: FloorPlan; id: string | null } {
   if (!g.check.ok) return { plan, id: null };
+  if (g.closet) return placeCloset(plan, g.closet);
   return placeItem(plan, g.entryId, { x: g.x, y: g.y }, { rotation: g.rotation, widthIn: g.widthIn, depthIn: g.depthIn, heightIn: g.heightIn, bottomIn: g.bottomIn, ceilingIn });
 }
 

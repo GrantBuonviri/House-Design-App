@@ -19,6 +19,7 @@ import { pointOnEdge } from "./arcs";
 import { hostSegment } from "./walls";
 import { openingType } from "./catalog";
 import { furnishProblems, type LayerKind } from "@/lib/furnish/layer";
+import { leftoverClosets } from "@/lib/furnish/closets";
 
 /**
  * Friendly checks on a floor plan: rooms you can't get into, bedrooms without
@@ -43,6 +44,8 @@ export type PlanWarning = {
   stairsU?: { lower: { levelId: string; id: string }; upper: { levelId: string; id: string } };
   /** A Furnish item that lost its spot: "Move inside" (when it can) and "Delete" buttons. */
   furnish?: { kind: LayerKind; id: string; canMoveInside: boolean };
+  /** A closet piece whose rod and shelf were deleted in Furnish: "Remove the closet walls" (on the floor plan). */
+  closetWalls?: { stem: string };
 };
 
 const SHAPE_NAME = { straight: "straight", l: "L-shaped", u: "U-shaped" } as const;
@@ -220,6 +223,11 @@ export function planWarnings(plans: Plans, ctx: Ctx): PlanWarning[] {
     // Furnish items outside their room, off their wall, or in a doorway.
     for (const fp of furnishProblems(planOf(saved, level.id))) {
       out.push({ id: `${level.id}:${fp.key}`, levelId: level.id, text: fp.text, roomIds: fp.item.roomId ? [fp.item.roomId] : [], at: fp.at, furnish: { kind: fp.item.kind, id: fp.item.id, canMoveInside: fp.canMoveInside } });
+    }
+    // Closet walls and doors left after the closet's rod and shelf were deleted.
+    for (const lc of leftoverClosets(planOf(saved, level.id))) {
+      const what = lc.roomId ? "The walk-in closet's walls and door are" : "The closet's walls and door are";
+      out.push({ id: `${level.id}:closet-left:${lc.stem}`, levelId: level.id, text: `${what} still there after its rod and shelf were deleted.`, roomIds: lc.roomId ? [lc.roomId] : [], at: lc.at, closetWalls: { stem: lc.stem } });
     }
   }
 

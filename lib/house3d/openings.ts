@@ -139,6 +139,15 @@ export function drawOpening(
     l.solid.box(f, at(og, CASING_IN), at(og, w - CASING_IN), SLAB_IN, z0 + 0.5, slabTop, plain(look?.door ?? COLORS.door));
     return leaves;
   }
+  if (style === "door-bifold") {
+    // Two pairs of panels; each folds toward its own end and out into the room.
+    const half = (w - 2 * CASING_IN) / 2;
+    for (const [from, dir] of [[CASING_IN, 1], [w - CASING_IN, -1]] as const) {
+      const l = newLeaf({ kind: "slide", shift: add(scale(og.u, -dir * half * 0.7), scale(swing, half * 0.35)) });
+      l.solid.box(f, at(og, from), at(og, from + dir * half), SLAB_IN, z0 + 0.5, slabTop, plain(look?.door ?? COLORS.door));
+    }
+    return leaves;
+  }
   if (style === "door-barn") {
     // Slides along the wall face, past the end of the opening.
     const off = scale(swing, wallIn / 2 + 1.5);

@@ -2,6 +2,7 @@ import type { BubbleDiagram, DesignChoices, FloorPlan, Project } from "@/lib/mod
 import { openingType, fixtureType } from "@/lib/plan/catalog";
 import { furnitureType } from "@/lib/plan/furniture";
 import { layerItems } from "@/lib/furnish/layer";
+import { isClosetRod } from "@/lib/furnish/closets";
 
 /**
  * A short, plain description of what changed between two versions of a
@@ -116,7 +117,7 @@ function moved(a: object, b: object): boolean {
 function describePlan(a: FloorPlan | undefined, b: FloorPlan | undefined): string | null {
   if (!a || !b) return b ? "start the floor plan" : "clear the floor plan";
   const roomName = (r: FloorPlan["rooms"][number]) => r.name || "a room";
-  const special = describeBend(a, b, roomName) ?? describeOpenWalls(a, b, roomName) ?? describeSplit(a, b, roomName) ?? describeTrim(a, b, roomName) ?? describeFurnish(a, b, roomName);
+  const special = describeBend(a, b, roomName) ?? describeOpenWalls(a, b, roomName) ?? describeSplit(a, b, roomName) ?? describeTrim(a, b, roomName) ?? describeCloset(a, b, roomName) ?? describeFurnish(a, b, roomName);
   if (special) return special;
   const rooms = describeList(a.rooms, b.rooms, roomName, (was, now) =>
     was.name !== now.name ? `rename ${roomName(was)}` : moved(was, now) ? `move ${roomName(now)}` : `change ${roomName(now)}`,
@@ -224,6 +225,16 @@ function describeOpenWalls(a: FloorPlan, b: FloorPlan, roomName: (r: FloorPlan["
 }
 
 /** "a window", "an island"; with `the`, "the window". */
+/** A closet piece put in: its walls, door and rod in one step. */
+function describeCloset(a: FloorPlan, b: FloorPlan, roomName: (r: FloorPlan["rooms"][number]) => string): string | null {
+  const had = new Set(a.fixtures.map((f) => f.id));
+  const added = b.fixtures.filter((f) => !had.has(f.id));
+  if (added.length !== 1 || !isClosetRod(added[0].id)) return null;
+  const room = b.rooms.find((r) => r.id === added[0].roomId);
+  if (room && !a.rooms.some((r) => r.id === room.id)) return "add a walk-in closet";
+  return `add a closet${room ? ` in ${roomName(room)}` : ""}`;
+}
+
 /** One thing placed, moved, changed or deleted on the furnish layer ("place a toilet in Bath 1"). */
 function describeFurnish(a: FloorPlan, b: FloorPlan, roomName: (r: FloorPlan["rooms"][number]) => string): string | null {
   if ([json(a.rooms) !== json(b.rooms), json(a.walls) !== json(b.walls), json(a.openings) !== json(b.openings), json(a.stairs) !== json(b.stairs)].some(Boolean)) return null;
