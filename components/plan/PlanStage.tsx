@@ -38,6 +38,7 @@ import { copyableIds } from "@/lib/plan/arrange";
 import PlanSidePanel from "./PlanSidePanel";
 import House3DPanel from "@/components/house3d/House3DPanel";
 import type { WallsShown } from "@/components/house3d/House3DView";
+import type { DoorMode } from "@/lib/house3d/doors";
 import { PLAN_TOOLS, parseEdgeId, type PlanSelection, type PlanTool } from "./types";
 import { DisplayTabs, LotModeBanner, PlanStartChoices, PlanToolbar, type Display } from "./PlanStageParts";
 
@@ -98,6 +99,7 @@ export default function PlanStage({ onContinue, onGoToSketch }: { onContinue: ()
   const [editing3d, setEditing3d] = useState(false);
   const [showRoof, setShowRoof] = useState(true);
   const [walls3d, setWalls3d] = useState<WallsShown>("all");
+  const [doors3d, setDoors3d] = useState<DoorMode>("normal");
   // The Preview window popup: which window, and the 2D plan mid-drag so it follows along.
   const [previewing, setPreviewing] = useState<{ levelId: string; openingId: string } | null>(null);
   const [dragged, setDragged] = useState<FloorPlan | null>(null);
@@ -520,6 +522,7 @@ export default function PlanStage({ onContinue, onGoToSketch }: { onContinue: ()
               cutAway={cutAway}
               roof={showRoof}
               walls={walls3d}
+              doors={doors3d}
               editing={editing3d}
               onEditing={(on) => {
                 setEditing3d(on);
@@ -549,6 +552,8 @@ export default function PlanStage({ onContinue, onGoToSketch }: { onContinue: ()
               cutAway={cutAway}
               showRoof={showRoof}
               walls={walls3d}
+              doors={doors3d}
+              onDoors={setDoors3d}
               onCutAway={setCutAway}
               onShowRoof={setShowRoof}
               onWalls={setWalls3d}

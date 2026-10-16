@@ -13,6 +13,9 @@ import { entrySteps } from "./entry";
 import { fixtureSpan } from "./fixtures";
 import { furnitureHeight, furnitureOutline, furnitureType } from "@/lib/plan/furniture";
 import { stairSteps } from "./stairs";
+import { motionOf, PASSABLE_AMOUNT, type DoorInfo } from "./doors";
+import { openingSpan } from "./openings";
+import { openingType } from "@/lib/plan/catalog";
 import { flatPlans } from "@/lib/plan/flatten";
 
 /**
@@ -39,7 +42,8 @@ export const FAST = 2.2;
 const GRAVITY_IN_PER_S2 = 386;
 
 /** A wall (or the side of a fixture) as a thick line you can't pass. */
-export type Blocker = { a: Point; b: Point; half: number; z0: number; z1: number };
+/** A closed door across a doorway is a blocker with its door's id: it stops you until the door is open enough. */
+export type Blocker = { a: Point; b: Point; half: number; z0: number; z1: number; door?: string };
 /** Somewhere you can stand. */
 export type Surface = {
   region: Region;
@@ -60,12 +64,15 @@ export type WalkWorld = {
   start: Spot;
   rooms: RoomStop[];
   levels: { id: string; name: string; floorIn: number }[];
+  /** Every door you can open, and how open each is now (0 shut to 1 open; missing means shut). The walkthrough keeps `doorAmount` up to date. */
+  doors: DoorInfo[];
+  doorAmount: Record<string, number>;
 };
 
 export type Walker = { p: Point; feet: number; vz: number; yaw: number; pitch: number };
 
-/** Doors you can walk through: all but the (closed) garage door. Windows stay solid. */
-const walkable = (style: string, kind: string) => kind === "opening" || (kind === "door" && style !== "door-garage");
+/** Doorways you can walk through: doors (which close across them) and bare openings. Windows stay solid. */
+const walkable = (kind: string) => kind === "opening" || kind === "door";
 
 const inRegion = (p: Point, r: Region) => pointInPolygon(p, r.outline) && !r.holes.some((h) => pointInPolygon(p, h));
 
@@ -81,6 +88,7 @@ export function walkWorld(plans: Plans, ctx: HouseContext & { heights: LevelHeig
   const blockers: Blocker[] = [];
   const surfaces: Surface[] = [];
   const rooms: RoomStop[] = [];
+  const doors: DoorInfo[] = [];
   const levels = ctx.levels
     .filter((l) => heights[l.id] && (plans[l.id]?.rooms.length ?? 0) > 0)
     .sort((a, b) => heights[a.id].floorIn - heights[b.id].floorIn);
@@ -92,11 +100,34 @@ export function walkWorld(plans: Plans, ctx: HouseContext & { heights: LevelHeig
     const top = above ? heights[above.id].floorIn : floorIn + ceilingIn;
 
     // Walls, with gaps at doors and openings.
-    const ogs = openingGeometries(plan).filter((g) => walkable(g.opening.style, g.opening.kind));
+    const ogs = openingGeometries(plan).filter((g) => walkable(g.opening.kind));
     for (const w of solidWalls(wallPieces(plan, exteriorIn), ogs)) {
       if (w.open || w.thicknessIn <= 0) continue;
       // A half wall still stops you walking through it, but only stands 42" tall.
       blockers.push({ a: w.a, b: w.b, half: w.thicknessIn / 2, z0: floorIn, z1: w.piece.height ? floorIn + wallTopIn(w.piece, ceilingIn) : top });
+    }
+    // A door across each doorway: it stops you while it's shut.
+    for (const og of ogs) {
+      if (og.opening.kind !== "door") continue;
+      const { bottom, top } = openingSpan(og, ceilingIn);
+      const probe = (k: number) => add(og.center, scale(og.n, k * 18));
+      const room = [...plan.rooms].sort((x, y) => polygonArea(x.polygon) - polygonArea(y.polygon)).find((r) => pointInPolygon(probe(1), r.polygon) || pointInPolygon(probe(-1), r.polygon));
+      const kindName = openingType(og.opening.style).label.toLowerCase();
+      doors.push({
+        id: og.opening.id,
+        levelId: level.id,
+        style: og.opening.style,
+        label: room && !og.opening.style.includes("garage") && !og.opening.style.includes("entry") ? `${room.name} ${kindName}` : openingType(og.opening.style).label,
+        center: og.center,
+        u: og.u,
+        n: og.n,
+        widthIn: og.opening.widthIn,
+        z0: floorIn + bottom,
+        z1: floorIn + top,
+        motion: motionOf(og.opening.style),
+        locked: !!og.opening.locked,
+      });
+      blockers.push({ a: og.a, b: og.b, half: 1, z0: floorIn + bottom, z1: floorIn + top, door: og.opening.id });
     }
     // Counters, tubs, the fridge and so on.
     for (const fx of plan.fixtures) {
@@ -160,6 +191,8 @@ export function walkWorld(plans: Plans, ctx: HouseContext & { heights: LevelHeig
     start: { p: { x: (house.x0 + house.x1) / 2, y: house.y1 + 120 }, feet: 0, yaw: 0 },
     rooms,
     levels: levels.map((l) => ({ id: l.id, name: l.name, floorIn: heights[l.id].floorIn })),
+    doors,
+    doorAmount: {},
   };
   world.start = frontDoorSpot(world, plans, levels, heights) ?? outsideSpot(world, house);
   for (const r of world.rooms) r.spot = settle(world, r.spot);
@@ -245,6 +278,7 @@ export function pushOut(world: WalkWorld, p: Point, feet: number): Point {
     let moved = false;
     for (const b of world.blockers) {
       if (b.z1 <= feet + KNEE_IN || b.z0 >= feet + CHEST_IN) continue;
+      if (b.door !== undefined && (world.doorAmount[b.door] ?? 0) >= PASSABLE_AMOUNT) continue;
       const pr = project(q, b.a, b.b);
       const need = b.half + BODY_RADIUS_IN;
       if (pr.d >= need) continue;
@@ -302,6 +336,31 @@ export function walkStep(world: WalkWorld, w: Walker, input: MoveInput, dt: numb
     if (feet === ground) vz = 0;
   }
   return { ...w, p, feet, vz };
+}
+
+/** Where the eyes are and which way they look (a unit vector; z is up), for aiming at a door. */
+export function eyeRay(w: Walker): { eye: { x: number; y: number; z: number }; dir: { x: number; y: number; z: number } } {
+  const h = heading(w.yaw);
+  const c = Math.cos(w.pitch);
+  return { eye: { x: w.p.x, y: w.p.y, z: w.feet + EYE_IN }, dir: { x: h.x * c, y: h.y * c, z: Math.sin(w.pitch) } };
+}
+
+/** Open every door (for walking through a house without stopping at its doors). */
+export function openAllDoors(world: WalkWorld) {
+  for (const d of world.doors) world.doorAmount[d.id] = 1;
+}
+
+/** True when a wall (not a door) stands between two plan points at height `z`, so you can't reach through it. */
+export function sightBlocked(world: WalkWorld, a: Point, b: Point, z: number): boolean {
+  const cross = (o: Point, p: Point, q: Point) => (p.x - o.x) * (q.y - o.y) - (p.y - o.y) * (q.x - o.x);
+  return world.blockers.some((k) => {
+    if (k.door !== undefined || z < k.z0 || z > k.z1) return false;
+    const d1 = cross(a, b, k.a);
+    const d2 = cross(a, b, k.b);
+    const d3 = cross(k.a, k.b, a);
+    const d4 = cross(k.a, k.b, b);
+    return d1 * d2 < 0 && d3 * d4 < 0;
+  });
 }
 
 /** The floor and room you're in, for the label on screen. */

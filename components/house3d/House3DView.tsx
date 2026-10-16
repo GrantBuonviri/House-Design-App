@@ -22,6 +22,8 @@ import { polygonCenter } from "@/lib/plan/geometry";
 import { roomSqft } from "@/lib/plan/measure";
 import type { PlanSelection } from "@/components/plan/types";
 import { concatMeshes, mergeParts, toGeometry } from "./geometry";
+import { DoorLeaves } from "./DoorLeaves";
+import type { DoorMode } from "@/lib/house3d/doors";
 import { withPatterns } from "./patternMaterial";
 import { canvasSettings, useGraphics } from "@/lib/graphics";
 
@@ -46,6 +48,8 @@ type Props = {
   /** Show the roofs at all. */
   roof: boolean;
   walls: WallsShown;
+  /** The Doors picker: Normal and All closed show doors shut. Left out means Normal. */
+  doors?: DoorMode;
   /** Clicking and dragging select and move things only while editing; otherwise dragging just turns the view. */
   editing: boolean;
   onEditing: (on: boolean) => void;
@@ -153,6 +157,7 @@ export default function House3DView(props: Props) {
   const order = useMemo(() => Object.fromEntries(levels.map((l, i) => [l.id, i])), [levels]);
   const showUpTo = cutAway ? (order[levelId] ?? levels.length) : Infinity;
   const shown = shownGroups(walls);
+  const doorMode = props.doors ?? "normal";
 
   const center: [number, number, number] = bounds
     ? [(bounds.min[0] + bounds.max[0]) / 2, Math.max(0, (bounds.min[1] + bounds.max[1]) / 3), (bounds.min[2] + bounds.max[2]) / 2]
@@ -164,9 +169,9 @@ export default function House3DView(props: Props) {
       levels.flatMap((l, i) => {
         if (i > showUpTo) return [];
         const g = groupsOf(levelParts[l.id]);
-        return (Object.keys(g) as (keyof Groups)[]).flatMap((k) => (shown[k] ? g[k] : []));
+        return (Object.keys(g) as (keyof Groups)[]).flatMap((k) => (shown[k] ? g[k].filter((p) => !p.door || doorMode === "normal" || doorMode === "closed") : []));
       }),
-    [levels, levelParts, showUpTo, shown.outside, shown.inside], // eslint-disable-line react-hooks/exhaustive-deps
+    [levels, levelParts, showUpTo, shown.outside, shown.inside, doorMode], // eslint-disable-line react-hooks/exhaustive-deps
   );
 
   const drag = { ...props, frame, heights, onDragging: setDragging };
@@ -417,8 +422,11 @@ type LevelProps = DragProps & { parts: Part[]; visible: boolean };
  */
 function LevelMeshes(props: LevelProps) {
   const { parts, visible, editing } = props;
-  const solid = useMemo(() => mergeParts(parts.filter((p) => !p.glass && p.layer !== "ceilings")), [parts]);
-  const glass = useMemo(() => mergeParts(parts.filter((p) => p.glass)), [parts]);
+  const mode = props.doors ?? "normal";
+  // Door leaves are drawn on their own (shut or open), or not at all with No doors.
+  const solid = useMemo(() => mergeParts(parts.filter((p) => !p.glass && p.layer !== "ceilings" && !p.door)), [parts]);
+  const glass = useMemo(() => mergeParts(parts.filter((p) => p.glass && !p.door)), [parts]);
+  const leaves = useMemo(() => (mode === "none" ? [] : parts.filter((p) => p.door)), [parts, mode]);
   useEffect(() => () => solid?.geometry.dispose(), [solid]);
   useEffect(() => () => glass?.geometry.dispose(), [glass]);
   const handlers = useDrag(props);
@@ -429,6 +437,7 @@ function LevelMeshes(props: LevelProps) {
     <>
       {solid && <mesh geometry={solid.geometry} material={solidMaterial} castShadow receiveShadow {...on(solid.picks)} />}
       {glass && <mesh geometry={glass.geometry} material={glassMaterial} {...on(glass.picks)} />}
+      {leaves.length > 0 && <DoorLeaves parts={leaves} frame={props.frame} amountOf={() => (mode === "open" ? 1 : 0)} on={editing ? handlers : undefined} />}
     </>
   );
 }

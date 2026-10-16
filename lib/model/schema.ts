@@ -9,7 +9,7 @@ import { z } from "zod";
  * Angles are degrees clockwise from north (0 = N, 90 = E).
  */
 
-export const SCHEMA_VERSION = 21;
+export const SCHEMA_VERSION = 22;
 
 export const Point = z.object({ x: z.number(), y: z.number() });
 export type Point = z.infer<typeof Point>;
@@ -404,6 +404,8 @@ export const Opening = z.object({
   hinge: z.enum(["start", "end"]).default("start"),
   /** Windows: how it opens. */
   operation: WindowOperation.optional(),
+  /** Doors: in the walkthrough a locked door only opens when you click it. Left out means unlocked. */
+  locked: z.boolean().optional(),
 });
 export type Opening = z.infer<typeof Opening>;
 

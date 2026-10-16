@@ -1,6 +1,8 @@
 "use client";
 
 import type { Roof } from "@/lib/model/schema";
+import type { DoorMode } from "@/lib/house3d/doors";
+import DoorsPicker from "./DoorsPicker";
 import type { WallsShown } from "./House3DView";
 
 const STYLES: { id: Roof["style"]; label: string; note: string }[] = [
@@ -34,6 +36,8 @@ export default function House3DPanel({
   cutAway,
   showRoof,
   walls,
+  doors,
+  onDoors,
   onCutAway,
   onShowRoof,
   onWalls,
@@ -46,6 +50,8 @@ export default function House3DPanel({
   cutAway: boolean;
   showRoof: boolean;
   walls: WallsShown;
+  doors: DoorMode;
+  onDoors: (m: DoorMode) => void;
   onCutAway: (on: boolean) => void;
   onShowRoof: (on: boolean) => void;
   onWalls: (w: WallsShown) => void;
@@ -90,6 +96,9 @@ export default function House3DPanel({
             </button>
           ))}
         </div>
+        <p className="field-label pt-1">Doors</p>
+        <DoorsPicker value={doors} onChange={onDoors} />
+        {doors === "none" && <p className="text-xs text-muted">Frames and trim stay; the doors themselves are taken off.</p>}
         {walls !== "all" && <p className="text-xs text-muted">Hidden walls leave a strip on the floor where they stand, without their doors and windows.</p>}
       </div>
 

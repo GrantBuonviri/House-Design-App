@@ -13,7 +13,9 @@ import { levelHeights } from "@/lib/house3d/levels";
 import { IN_PER_UNIT, type Frame } from "@/lib/house3d/mesh";
 import { lotOffsetFor, planBounds, siteFor } from "@/lib/house3d/site";
 import { SEASONS, daylight, type SeasonId } from "@/lib/house3d/sun";
-import { heading, walkStep, walkWorld, whereAmI, type Spot, type Walker } from "@/lib/house3d/walk";
+import { eyeRay, heading, sightBlocked, walkStep, walkWorld, whereAmI, type Spot, type Walker } from "@/lib/house3d/walk";
+import { DOOR_MODES, aimDoor, newDoorStates, stepDoors, toggleDoor, type DoorInfo, type DoorMode, type DoorStates } from "@/lib/house3d/doors";
+import { DoorLeaves } from "@/components/house3d/DoorLeaves";
 import { planOf } from "@/lib/plan/edit";
 import { add, scale } from "@/lib/plan/geometry";
 import { checkPlacement, defaultFurnitureColor, furnitureType, newFurniture, type PlaceCheck } from "@/lib/plan/furniture";
@@ -31,6 +33,17 @@ import { lockAxis, snap, tapeCandidates, TAPE_KEEP, type Tape, type TapePoint } 
 import type { WalkLabels } from "@/lib/model/schema";
 import { effectiveExterior } from "@/lib/exterior/style";
 import { canvasSettings, useGraphics } from "@/lib/graphics";
+import { useFrame } from "@react-three/fiber";
+
+/** Moves the doors every frame: opens the ones you walk into, shuts the ones you left, and keeps the world's blockers in step. */
+function DoorDriver({ world, walker, states, modeRef }: { world: ReturnType<typeof walkWorld>; walker: React.RefObject<Walker>; states: React.MutableRefObject<DoorStates>; modeRef: React.RefObject<DoorMode> }) {
+  useFrame((_, dt) => {
+    const w = walker.current;
+    states.current = stepDoors(states.current, world.doors, { p: w.p, feet: w.feet }, Math.min(dt, 0.1), modeRef.current);
+    for (const d of world.doors) world.doorAmount[d.id] = states.current[d.id].amount;
+  });
+  return null;
+}
 
 /** What the panel on the right shows: what you clicked, or the list of furniture to add. */
 type Panel =
@@ -73,6 +86,13 @@ export default function Walkthrough({ project, cost, onClose }: { project: Proje
   const shiftDown = useRef(false);
   const labelSettings = project.house3d.walkLabels;
   const setLabelSettings = (next: WalkLabels) => update((p) => ({ ...p, house3d: { ...p.house3d, walkLabels: next } }));
+  // Doors: the Doors picker (not saved; each walkthrough starts on Normal), how open each is, and the door under the dot.
+  const [doorMode, setDoorMode] = useState<DoorMode>("normal");
+  const doorStates = useRef<DoorStates>({});
+  const doorModeRef = useRef<DoorMode>("normal");
+  doorModeRef.current = doorMode;
+  const doorsGroup = useRef<THREE.Group | null>(null);
+  const [doorHint, setDoorHint] = useState<string | null>(null);
   const [aim, setAim] = useState<Aim | null>(null);
   const [panel, setPanel] = useState<Panel | null>(null);
   const [carry, setCarry] = useState<Carry | null>(null);
@@ -103,6 +123,11 @@ export default function Walkthrough({ project, cost, onClose }: { project: Proje
   );
   const model = useMemo(() => buildHouse(plans, ctx), [plans, ctx]);
   const world = useMemo(() => walkWorld(plans, { ...ctx, heights }), [plans, ctx, heights]);
+  const doorParts = useMemo(() => (doorMode === "none" ? [] : model.parts.filter((p) => p.door)), [model.parts, doorMode]);
+  // The latest world, for the key and mouse handlers.
+  const worldRef = useRef(world);
+  worldRef.current = world;
+  if (Object.keys(doorStates.current).length === 0) doorStates.current = newDoorStates(world.doors);
 
   const [season, setSeason] = useState<SeasonId>("summer");
   const seasonInfo = SEASONS.find((s) => s.id === season)!;
@@ -121,6 +146,33 @@ export default function Walkthrough({ project, cost, onClose }: { project: Proje
   const snapPoints = useMemo(() => tapeCandidates(project.floorPlans, heights, levels.map((l) => l.id)), [project.floorPlans, heights, levels]);
   const latest = useRef({ aim, carry, panel, design, locked, plans: project.floorPlans, tapeOn, tape, snapPoints });
   latest.current = { aim, carry, panel, design, locked, plans: project.floorPlans, tapeOn, tape, snapPoints };
+
+  /** The door under the dot, if you're close enough and no wall is in between. */
+  const doorUnderDot = useCallback((): DoorInfo | null => {
+    const { eye, dir } = eyeRay(walker.current);
+    const w = worldRef.current;
+    return aimDoor(w.doors, eye, dir, 90, (a, b, z) => sightBlocked(w, a, b, z));
+  }, []);
+
+  /** Click a door: open it (it stays open) or close it. */
+  const clickDoor = () => {
+    const d = doorUnderDot();
+    if (!d) return false;
+    const w = walker.current;
+    const r = toggleDoor(doorStates.current, d, { p: w.p, feet: w.feet }, doorModeRef.current);
+    doorStates.current = r.states;
+    if (r.said) say(r.said);
+    return true;
+  };
+
+  /** K: lock or unlock the door under the dot (saved with the plan). */
+  const lockDoor = () => {
+    const d = doorUnderDot();
+    if (!d) return say("Aim at a door and press K to lock it.");
+    const nowLocked = !d.locked;
+    setPlan(d.levelId, (pl) => ({ ...pl, openings: pl.openings.map((o) => (o.id === d.id ? { ...o, locked: nowLocked ? true : undefined } : o)) }));
+    say(`${d.label} ${nowLocked ? "locked. It only opens when you click it." : "unlocked."}`);
+  };
 
   function jump(spot: Spot, keepYaw = true) {
     walker.current = { ...walker.current, p: spot.p, feet: spot.feet, vz: 0, yaw: keepYaw ? walker.current.yaw : spot.yaw };
@@ -300,6 +352,17 @@ export default function Walkthrough({ project, cost, onClose }: { project: Proje
         setLabelsOn((v) => !v);
         return;
       }
+      if (e.code === "KeyK" && !c) {
+        lockDoor();
+        return;
+      }
+      if (e.code === "KeyO" && !c) {
+        const modes = DOOR_MODES.map((m) => m.id);
+        const next = modes[(modes.indexOf(doorModeRef.current) + 1) % modes.length];
+        setDoorMode(next);
+        say(`Doors: ${DOOR_MODES.find((m) => m.id === next)?.label}`);
+        return;
+      }
       if (e.code === "KeyT" && !c) {
         const next = !latest.current.tapeOn;
         setTapeOn(next);
@@ -340,6 +403,7 @@ export default function Walkthrough({ project, cost, onClose }: { project: Proje
         setTape((t) => (!first ? { ...t, first: at } : { done: [...t.done, { a: first, b: at }].slice(-TAPE_KEEP), first: null, hover: null }));
         return;
       }
+      if (!d && clickDoor()) return;
       if (!d || !a) return;
       if (a.kind === "finish") {
         setPanel({ kind: "finish", aim: a });
@@ -411,7 +475,9 @@ export default function Walkthrough({ project, cost, onClose }: { project: Proje
         <PerspectiveCamera makeDefault fov={70} near={0.3} far={6000} />
         <Sky day={seasonInfo.day} hour={shownHour} span={span} version={model} center={model.bounds ? [(model.bounds.min[0] + model.bounds.max[0]) / 2, 0, (model.bounds.min[2] + model.bounds.max[2]) / 2] : [0, 0, 0]} />
         <Ground site={site} frame={frame} plans={plans} ctx={ctx} heights={heights} yard={false} />
-        <HouseMeshes parts={model.parts} aimRef={aimTarget} />
+        <HouseMeshes parts={model.parts} aimRef={aimTarget} doorsApart />
+        <DoorLeaves parts={doorParts} frame={frame} amountOf={(id) => world.doorAmount[id] ?? 0} groupRef={doorsGroup} />
+        <DoorDriver world={world} walker={walker} states={doorStates} modeRef={doorModeRef} />
         {labelsOn && <FloorLabels project={project} settings={labelSettings} frame={frame} heights={heights} walker={walker} costTotal={cost?.total.likely} />}
         <TapeMeasure done={tape.done} first={tape.first} hover={tapeOn ? tape.hover : null} frame={frame} units={labelSettings.units} />
         {carry && <FurnitureGhost item={carry.item} floorIn={heights[carry.levelId]?.floorIn ?? 0} frame={frame} ok={carry.check.ok} />}
@@ -423,7 +489,13 @@ export default function Walkthrough({ project, cost, onClose }: { project: Proje
           onWhere={(w) => {
             const next = whereAmI(world, plans, w);
             setWhere((cur) => (cur.levelName === next.levelName && cur.roomName === next.roomName ? cur : next));
+            // The door under the dot, for the hint below it.
+            const { eye, dir } = eyeRay(w);
+            const d = latest.current.locked && !latest.current.design && !latest.current.tapeOn && !latest.current.carry ? aimDoor(world.doors, eye, dir, 90, (a, b, z) => sightBlocked(world, a, b, z)) : null;
+            const hint = d ? `${d.label}: click to ${doorStates.current[d.id]?.open ? "close" : "open"} · K to ${d.locked ? "unlock" : "lock"}${d.locked ? " (locked)" : ""}` : null;
+            setDoorHint((cur) => (cur === hint ? cur : hint));
           }}
+          doorsRef={doorsGroup}
           aimTarget={aimTarget}
           looking={locked && (design || !!carry || tapeOn)}
           fastLook={!!carry}
@@ -463,6 +535,12 @@ export default function Walkthrough({ project, cost, onClose }: { project: Proje
         <button className="absolute inset-0 cursor-pointer" onClick={start} aria-label="Keep walking" />
       ) : (
         <WalkHelp onStart={start} />
+      )}
+
+      {locked && doorHint && !design && !tapeOn && !carry && (
+        <div className="pointer-events-none absolute top-1/2 left-1/2 mt-5 -translate-x-1/2 rounded-md bg-black/65 px-3 py-1.5 text-center text-sm text-white" data-testid="door-hint">
+          {doorHint}
+        </div>
       )}
 
       {locked && tapeOn && (
@@ -524,6 +602,8 @@ export default function Walkthrough({ project, cost, onClose }: { project: Proje
           daylightSaving={seasonInfo.daylightSaving}
           season={season}
           world={world}
+          doorMode={doorMode}
+          onDoorMode={setDoorMode}
           onHour={setHour}
           onSeason={setSeason}
           onJump={jump}

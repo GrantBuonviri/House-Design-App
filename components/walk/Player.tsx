@@ -52,6 +52,7 @@ export function Player({
   looking,
   fastLook,
   onLook,
+  doorsRef,
 }: {
   walker: React.RefObject<Walker>;
   locked: boolean;
@@ -62,6 +63,8 @@ export function Player({
   looking: boolean;
   fastLook: boolean;
   onLook: (look: Look) => void;
+  /** The door leaves, drawn apart from the house, which can be aimed at too. */
+  doorsRef?: React.RefObject<THREE.Object3D | null>;
 }) {
   const { camera } = useThree();
   const keys = useRef(new Set<string>());
@@ -134,10 +137,17 @@ export function Player({
       camera.updateMatrixWorld();
       ray.setFromCamera(CENTER, camera);
       const t = aimTarget.current;
-      const h = t ? ray.intersectObject(t.mesh, false)[0] : undefined;
-      const owner = h && h.faceIndex != null ? t!.owners[h.faceIndex] : undefined;
+      let h: THREE.Intersection | undefined = t ? ray.intersectObject(t.mesh, false)[0] : undefined;
+      let owner = h && h.faceIndex != null ? t!.owners[h.faceIndex] : undefined;
       // The side you're looking at, whichever way the triangle happens to be wound.
-      const normal = h?.face ? h.face.normal.clone() : undefined;
+      let normal = h?.face ? h.face.normal.clone() : undefined;
+      const doors = doorsRef?.current;
+      const dh = doors ? ray.intersectObjects(doors.children, true)[0] : undefined;
+      if (dh && (!h || dh.distance < h.distance) && dh.object.userData.part) {
+        h = dh;
+        owner = dh.object.userData.part;
+        normal = dh.face ? dh.face.normal.clone().transformDirection(dh.object.matrixWorld) : undefined;
+      }
       if (normal && normal.dot(ray.ray.direction) > 0) normal.negate();
       onLook({
         origin: ray.ray.origin.clone(),
