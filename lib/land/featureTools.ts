@@ -1,5 +1,6 @@
 import type { CustomLand, Point, Road, WaterFeature } from "@/lib/model/schema";
 import { centroid } from "./geometry";
+import { groundLabel } from "./groundTools";
 
 /**
  * Editing helpers for the designer's natural features, roads and lanes. Pure
@@ -15,6 +16,7 @@ export type Pick =
   | { type: "feature"; index: number }
   | { type: "lane"; index: number }
   | { type: "road"; index: number }
+  | { type: "ground"; index: number }
   | null;
 
 export type PathKind = "creek" | "river" | "wash";
@@ -157,6 +159,7 @@ export function removePick(land: CustomLand, pick: NonNullable<Pick>): CustomLan
   if (pick.type === "road") return removeRoad(land, pick.index);
   if (pick.type === "water") return { ...land, water: drop(land.water) };
   if (pick.type === "feature") return { ...land, features: drop(land.features) };
+  if (pick.type === "ground") return { ...land, ground: drop(land.ground) };
   return { ...land, lanes: drop(land.lanes) };
 }
 
@@ -202,6 +205,7 @@ export function flowsUphill(land: CustomLand, points: Point[]): boolean {
 export function pickLabel(land: CustomLand, pick: NonNullable<Pick>): string {
   if (pick.type === "road") return land.roads[pick.index]?.kind === "main" ? "Main street" : "Side street";
   if (pick.type === "lane") return "Lane";
+  if (pick.type === "ground") return groundLabel(land.ground[pick.index]?.kind);
   if (pick.type === "feature") return land.features[pick.index]?.kind === "rock" ? "Big rock" : "Tree";
   const w = land.water[pick.index];
   return w ? { creek: "Creek", river: "River", wash: "Dry wash", pond: "Pond", lake: "Lake" }[w.kind] : "";

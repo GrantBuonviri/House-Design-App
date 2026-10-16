@@ -75,6 +75,26 @@ export function drawingToCompass(northDeg: number) {
   };
 }
 
+/**
+ * Converts between the designer's drawing frame and the plot's compass frame,
+ * without rounding, so drawings built on the plot's terrain (contour lines)
+ * can be placed back on the designer canvas.
+ */
+export function landFrame(settings: CustomLand) {
+  const t = drawingToCompass(settings.northDeg);
+  const back = drawingToCompass(-settings.northDeg);
+  const turned = settings.outline.map(t.turn);
+  const minX = Math.min(...turned.map((p) => p.x));
+  const minY = Math.min(...turned.map((p) => p.y));
+  return {
+    toPlot: (p: Point): Point => {
+      const q = t.turn(p);
+      return { x: q.x - minX, y: q.y - minY };
+    },
+    toDesigner: (p: Point): Point => back.turn({ x: p.x + minX, y: p.y + minY }),
+  };
+}
+
 /** Turn designer settings into a full plot (compass frame, origin at the north-west of the lot's box). */
 export function buildCustomPlot(settings: CustomLand): Plot {
   const t = drawingToCompass(settings.northDeg);

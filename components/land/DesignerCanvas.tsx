@@ -6,6 +6,7 @@ import type Konva from "konva";
 import type { CustomLand, Point } from "@/lib/model/schema";
 import { removePick, pickLabel, setMainRoad, type PathKind, type Pick } from "@/lib/land/featureTools";
 import DesignerFeatures, { type FeatureTool } from "./DesignerFeatures";
+import DesignerGround, { ContourLines, type GroundSettings } from "./DesignerGround";
 import { boxOf, insertCorner, removeCorner, sideLengthFt, snapCorner } from "@/lib/land/designer";
 import { edgeEnds } from "@/lib/land/custom";
 
@@ -26,6 +27,8 @@ export default function DesignerCanvas({
   pathKind,
   treeFt,
   laneFt,
+  ground,
+  contours,
 }: {
   land: CustomLand;
   onChange: (l: CustomLand) => void;
@@ -37,6 +40,8 @@ export default function DesignerCanvas({
   pathKind: PathKind;
   treeFt: number;
   laneFt: number;
+  ground: GroundSettings;
+  contours: number[][];
 }) {
   const [dragging, setDragging] = useState(false);
   const [menu, setMenu] = useState<{ pick: NonNullable<Pick>; at: Point } | null>(null);
@@ -147,6 +152,7 @@ export default function DesignerCanvas({
             listening={false}
           />
         )}
+        <ContourLines segments={contours} px={px} strong={tool === "ground"} />
         <DesignerFeatures
           land={land}
           tool={tool}
@@ -165,6 +171,21 @@ export default function DesignerCanvas({
           pts={pts}
           size={{ w: CANVAS_W, h: CANVAS_H }}
           onMenu={(p, at) => setMenu({ pick: p, at })}
+        />
+        <DesignerGround
+          land={land}
+          active={tool === "ground"}
+          pick={pick}
+          onPick={(p) => {
+            onSelect(null);
+            onPick(p);
+          }}
+          onChange={onChange}
+          settings={ground}
+          scale={view.s}
+          px={px}
+          inch={inch}
+          size={{ w: CANVAS_W, h: CANVAS_H }}
         />
         {pts.map((a, i) => {
           const b = pts[(i + 1) % n];
