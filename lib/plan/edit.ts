@@ -1,3 +1,4 @@
+import { mapRiders } from "@/lib/furnish/ride";
 import type { FloorPlan, Opening, PlanRoom, Point } from "@/lib/model/schema";
 import { newElementId } from "@/lib/bubbles/edit";
 import { add, clockwise, collinearOverlap, dist, dot, edgesOf, polygonCenter, rotate, round1, roundPoint, scale, sub, unit } from "./geometry";
@@ -56,6 +57,14 @@ export function removeMany(plan: FloorPlan, ids: string[]): FloorPlan {
     // Fixtures stay when their room goes; they just stop following it.
     fixtures: plan.fixtures.filter((f) => !gone.has(f.id)).map((f) => (f.roomId && gone.has(f.roomId) ? { ...f, roomId: undefined } : f)),
     furniture: plan.furniture.filter((f) => !gone.has(f.id)).map((f) => (f.roomId && gone.has(f.roomId) ? { ...f, roomId: undefined } : f)),
+    ...(plan.cabinets ? { cabinets: plan.cabinets } : {}),
+    ...(plan.devices ? { devices: plan.devices } : {}),
+    ...(plan.addOns ? { addOns: plan.addOns } : {}),
+    // Furnish items stay too, and stop following a room that's gone.
+    ...mapRiders(
+      { ...plan, addOns: plan.addOns?.filter((a) => !gone.has(a.id)) },
+      (x) => (x.roomId && gone.has(x.roomId) ? { ...x, roomId: undefined } : x),
+    ),
   });
 }
 
@@ -74,6 +83,7 @@ export function moveMany(plan: FloorPlan, ids: string[], dx: number, dy: number)
     stairs: plan.stairs.map((s) => (ids_.has(s.id) ? { ...s, ...mv(s) } : s)),
     fixtures: plan.fixtures.map((f) => (ids_.has(f.id) || (f.roomId && ids_.has(f.roomId)) ? { ...f, ...mv(f) } : f)),
     furniture: plan.furniture.map((f) => (f.roomId && ids_.has(f.roomId) ? { ...f, ...mv(f) } : f)),
+    ...mapRiders(plan, (x) => (x.roomId && ids_.has(x.roomId) ? { ...x, ...mv(x) } : x)),
   });
 }
 
@@ -89,6 +99,7 @@ export function rotateMany(plan: FloorPlan, ids: string[], deg: number, about: P
     stairs: plan.stairs.map((s) => (ids_.has(s.id) ? { ...s, ...rt(s), rotation: turn(s.rotation) } : s)),
     fixtures: plan.fixtures.map((f) => (ids_.has(f.id) || (f.roomId && ids_.has(f.roomId)) ? { ...f, ...rt(f), rotation: turn(f.rotation) } : f)),
     furniture: plan.furniture.map((f) => (f.roomId && ids_.has(f.roomId) ? { ...f, ...rt(f), rotation: turn(f.rotation) } : f)),
+    ...mapRiders(plan, (x) => (x.roomId && ids_.has(x.roomId) ? { ...x, ...rt(x), rotation: turn(x.rotation) } : x)),
   });
 }
 

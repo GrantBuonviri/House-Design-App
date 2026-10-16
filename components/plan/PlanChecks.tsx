@@ -8,7 +8,7 @@ import type { PlanWarning } from "@/lib/plan/checks";
  * "Things to check": the plan's friendly warnings, all floors at once.
  * Clicking one goes to its floor, selects the room and centers it.
  */
-export default function PlanChecks({ warnings, dismissed = [], levels, levelId, onPick, onFix, onDismiss, onRestore, onRestoreAll }: { warnings: PlanWarning[]; dismissed?: PlanWarning[]; levels: Level[]; levelId: string; onPick: (w: PlanWarning) => void; onFix?: (w: PlanWarning) => void; onDismiss?: (w: PlanWarning) => void; onRestore?: (w: PlanWarning) => void; onRestoreAll?: () => void }) {
+export default function PlanChecks({ warnings, dismissed = [], levels, levelId, onPick, onFix, onDismiss, onRestore, onRestoreAll }: { warnings: PlanWarning[]; dismissed?: PlanWarning[]; levels: Level[]; levelId: string; onPick: (w: PlanWarning) => void; onFix?: (w: PlanWarning, action?: "inside" | "delete") => void; onDismiss?: (w: PlanWarning) => void; onRestore?: (w: PlanWarning) => void; onRestoreAll?: () => void }) {
   const [open, setOpen] = useState(true);
   const [showDismissed, setShowDismissed] = useState(false);
   const multi = new Set(warnings.map((w) => w.levelId)).size > 1 || warnings.some((w) => w.levelId !== levelId);
@@ -55,6 +55,18 @@ export default function PlanChecks({ warnings, dismissed = [], levels, levelId, 
                     <button className="btn mx-2 mb-1 px-2 py-0.5 text-xs" onClick={() => onFix(w)}>
                       Make these U-shaped
                     </button>
+                  )}
+                  {w.furnish && onFix && (
+                    <span className="mx-2 mb-1 flex gap-1">
+                      {w.furnish.canMoveInside && (
+                        <button className="btn px-2 py-0.5 text-xs" onClick={() => onFix(w, "inside")}>
+                          Move inside
+                        </button>
+                      )}
+                      <button className="btn px-2 py-0.5 text-xs" onClick={() => onFix(w, "delete")}>
+                        Delete
+                      </button>
+                    </span>
                   )}
                   {w.gap && onFix && (
                     <button className="btn mx-2 mb-1 px-2 py-0.5 text-xs" onClick={() => onFix(w)}>

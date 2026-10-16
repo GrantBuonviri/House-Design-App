@@ -1,3 +1,4 @@
+import { mapRiders } from "@/lib/furnish/ride";
 import type { FloorPlan, Opening, OpeningHost, PlanRoom, PlanWall, Point } from "@/lib/model/schema";
 import { cleanRing } from "@/lib/house3d/footprint";
 import { makeRoom } from "./edit";
@@ -150,7 +151,7 @@ export function splitRoom(plan: FloorPlan, cut: Cut): { plan: FloorPlan; roomId:
   const rooms = plan.rooms.flatMap((r) => (r.id === room.id ? [kept, made] : [r]));
   const into = (x: { x: number; y: number }) => (pointInPolygon(x, small) ? made.id : room.id);
   const regroup = <T extends { x: number; y: number; roomId?: string }>(x: T): T => (x.roomId === room.id ? { ...x, roomId: into(x) } : x);
-  const next: FloorPlan = { ...plan, rooms, fixtures: plan.fixtures.map(regroup), furniture: plan.furniture.map(regroup) };
+  const next: FloorPlan = { ...plan, rooms, fixtures: plan.fixtures.map(regroup), furniture: plan.furniture.map(regroup), ...mapRiders(plan, regroup) };
   return { plan: pruneOpenWalls(rehost(plan, next, new Set([room.id]))), roomId: room.id, newRoomId: made.id };
 }
 

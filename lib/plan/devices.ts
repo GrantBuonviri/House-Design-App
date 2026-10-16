@@ -37,7 +37,69 @@ export const DEVICE_INFO: Record<DeviceKind, { label: string; system: DeviceSyst
   return: { label: "Return air grille", system: "mechanical", wall: true, mountIn: 12 },
   thermostat: { label: "Thermostat", system: "mechanical", wall: true, mountIn: 54 },
   "hose-bib": { label: "Frost-free hose bib", system: "plumbing", wall: true, mountIn: 18 },
+  water: { label: "Water supply (hot and cold)", system: "plumbing", wall: true, mountIn: 20 },
+  drain: { label: "Drain", system: "plumbing", wall: true, mountIn: 16 },
+  gas: { label: "Gas shutoff", system: "plumbing", wall: true, mountIn: 10 },
+  "dryer-vent": { label: "Dryer vent", system: "mechanical", wall: true, mountIn: 30 },
 };
+
+/** Hookups: where water, drains, gas and the dryer vent come through the wall. Fixtures bring their own; more can be added by hand. */
+export const HOOKUP_KINDS: DeviceKind[] = ["water", "drain", "gas", "dryer-vent"];
+export const isHookup = (k: DeviceKind) => HOOKUP_KINDS.includes(k);
+
+/** What each fixture needs behind it. Gas ones depend on the house's fuel choices. */
+function hookupsFor(kind: string, systems: HouseSystems): DeviceKind[] {
+  switch (kind) {
+    case "toilet":
+      return ["water", "drain"];
+    case "sink":
+    case "vanity":
+    case "laundry-sink":
+    case "tub":
+    case "shower":
+    case "dishwasher":
+      return ["water", "drain"];
+    case "washer":
+      return ["water", "drain"];
+    case "water-heater":
+      return systems.waterHeater === "gas" || systems.waterHeater === "tankless-gas" ? ["water", "gas"] : ["water"];
+    case "range":
+      return systems.cooking === "gas" ? ["gas"] : [];
+    case "dryer":
+      return systems.dryer === "gas" ? ["gas", "dryer-vent"] : ["dryer-vent"];
+    case "furnace":
+      return systems.heating === "gas-furnace" ? ["gas"] : [];
+    case "fireplace":
+      return ["gas"];
+    default:
+      return [];
+  }
+}
+
+/** The hookups behind each fixture, with ids `hk:<fixture id>:<kind>` so they follow the fixture and can be hidden or moved like any device. */
+export function fixtureHookups(plan: FloorPlan, systems: HouseSystems): Device[] {
+  const out: Device[] = [];
+  for (const f of plan.fixtures) {
+    const kinds = hookupsFor(f.kind, systems);
+    if (!kinds.length) continue;
+    const back = rotate({ x: 0, y: 1 }, f.rotation);
+    const across = rotate({ x: 1, y: 0 }, f.rotation);
+    // On the wall behind, spread a little apart across the fixture's width.
+    const spread = Math.min(6, f.widthIn / 4);
+    kinds.forEach((kind, i) => {
+      const off = (i - (kinds.length - 1) / 2) * spread * 2;
+      const p = add(add({ x: f.x, y: f.y }, scale(back, -f.depthIn / 2 + 1)), scale(across, off));
+      out.push({ id: `hk:${f.id}:${kind}`, kind, x: round1(p.x), y: round1(p.y), rotation: f.rotation });
+    });
+  }
+  return out;
+}
+
+/** The hookups that are on a floor now: the fixtures' own (less hidden ones) and hand-added ones. Used by the 3D view. */
+export function placedHookups(plan: FloorPlan, systems: HouseSystems): Device[] {
+  const hidden = new Set(plan.devices?.hidden ?? []);
+  return [...fixtureHookups(plan, systems).filter((d) => !hidden.has(d.id)), ...(plan.devices?.added ?? []).filter((d) => isHookup(d.kind))];
+}
 
 export const isLight = (k: DeviceKind) => k === "light" || k === "light-recessed" || k === "light-wall";
 export const isSwitch = (k: DeviceKind) => k === "switch" || k === "switch-3way";
@@ -378,6 +440,8 @@ export function autoDevices(ctx: DeviceContext): Device[] {
     }
   }
 
+  out.push(...fixtureHookups(plan, ctx.systems));
+
   // Stairs: 3-way switches at the bottom and the top, and a light.
   ctx.stairEnds.forEach((p, i) => {
     const room = roomOf(p);
@@ -695,7 +759,7 @@ export function deviceLayout(ctx: DeviceContext): PlacedDevice[] {
 }
 
 const editsOf = (plan: FloorPlan): DeviceEdits => plan.devices ?? { hidden: [], added: [] };
-const strip = ({ id, kind, x, y, rotation }: Device): Device => ({ id, kind, x, y, rotation });
+const strip = ({ id, kind, x, y, rotation, roomId }: Device): Device => ({ id, kind, x, y, rotation, ...(roomId ? { roomId } : {}) });
 
 export function removeDevice(plan: FloorPlan, id: string): FloorPlan {
   const e = editsOf(plan);

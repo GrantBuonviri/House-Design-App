@@ -13,7 +13,7 @@ export default function StageBar({ current, onSelect }: { current: Stage; onSele
             <button
               onClick={() => onSelect(s.id)}
               data-tour={`stage-${s.id}`}
-              className={`flex items-center gap-2 rounded-md px-3 py-2 text-sm whitespace-nowrap ${
+              className={`flex items-center gap-2 rounded-md px-2 py-2 text-sm whitespace-nowrap ${
                 active ? "bg-accent text-white" : "text-ink hover:bg-stone-100"
               }`}
             >

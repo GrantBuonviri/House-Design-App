@@ -1,3 +1,4 @@
+import { mapRiders } from "@/lib/furnish/ride";
 import polygonClipping, { type Polygon } from "polygon-clipping";
 import type { FloorPlan, OpenWall, Opening, PlanRoom, Point } from "@/lib/model/schema";
 import { cleanRing } from "@/lib/house3d/footprint";
@@ -226,6 +227,7 @@ export function combineRooms(plan: FloorPlan, ids: string[]): { plan: FloorPlan;
     openings,
     fixtures: plan.fixtures.map(re),
     furniture: plan.furniture.map(re),
+    ...mapRiders(plan, re),
   };
   return { plan: pruneOpenWalls(next), keptId: keep.id, removedOpenings: gone };
 }

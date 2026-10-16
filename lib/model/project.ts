@@ -75,6 +75,10 @@ export function migrateProject(raw: unknown): Project {
   // defaults, so again no change beyond the version.
   // Version 23 to 24 added `plan.dismissed` (dismissed Things to check, empty by default), so
   // once more no change beyond the version.
+  // Version 24 to 25 added Furnish: add-ons on each floor plan, rooms on
+  // hand-placed cabinets and devices, hookup kinds, new cabinet kinds, the
+  // Furnish stage and the Show furnishings switch. All optional or with
+  // defaults, so no change beyond the version.
   return Project.parse({ ...migrated, schemaVersion: SCHEMA_VERSION });
 }
 

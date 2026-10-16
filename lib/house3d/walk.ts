@@ -138,6 +138,12 @@ export function walkWorld(plans: Plans, ctx: HouseContext & { heights: LevelHeig
       const box = rectangle(fx.x, fx.y, fx.widthIn, fx.depthIn, fx.rotation);
       box.forEach((a, i) => blockers.push({ a, b: box[(i + 1) % 4], half: 0.5, z0: floorIn + span.z0, z1: floorIn + span.z1 }));
     }
+    // Built-ins standing on the floor (bookcases, benches, lockers).
+    for (const a of plan.addOns ?? []) {
+      if (a.bottomIn > 0) continue;
+      const box = rectangle(a.x, a.y, a.widthIn, a.depthIn, a.rotation);
+      box.forEach((p, i) => blockers.push({ a: p, b: box[(i + 1) % 4], half: 0.5, z0: floorIn, z1: floorIn + a.heightIn }));
+    }
     // Furniture (rugs you walk over).
     for (const item of plan.furniture) {
       if (furnitureType(item.kind)?.flat) continue;
