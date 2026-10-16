@@ -134,6 +134,45 @@ export function setCorner(plan: FloorPlan, roomId: string, i: number, p: Point):
   });
 }
 
+/**
+ * Move one corner of a room, and (when `glue` is on) every other room corner
+ * and loose wall end sitting on the same spot, so shared walls stay shared.
+ */
+export function setCornerGlued(plan: FloorPlan, roomId: string, i: number, p: Point, glue = true): FloorPlan {
+  const room = plan.rooms.find((r) => r.id === roomId);
+  if (!room || !room.polygon[i]) return plan;
+  if (!glue) return setCorner(plan, roomId, i, p);
+  const from = room.polygon[i];
+  const to = roundPoint(p);
+  const here = (q: Point) => dist(q, from) <= 1;
+  return keepOpeningsInPlace(plan, {
+    ...plan,
+    rooms: plan.rooms.map((r) => {
+      const hit = r.polygon.some((q, k) => (r.id === roomId ? k === i : here(q)));
+      return hit ? { ...r, polygon: r.polygon.map((q, k) => ((r.id === roomId ? k === i : here(q)) ? to : q)) } : r;
+    }),
+    walls: plan.walls.map((w) => (here(w.a) || here(w.b) ? { ...w, a: here(w.a) ? to : w.a, b: here(w.b) ? to : w.b } : w)),
+  });
+}
+
+/**
+ * Add a corner on an edge, and on any other room's edge that runs through the
+ * same spot, so a shared wall gets its node on both sides. Returns the new
+ * plan, with the new corner's index in the first room.
+ */
+export function insertGluedCorner(plan: FloorPlan, roomId: string, edge: number, p: Point): { plan: FloorPlan; index: number } {
+  let next = insertCorner(plan, roomId, edge, p);
+  for (const r of plan.rooms) {
+    if (r.id === roomId) continue;
+    const hit = edgesOf(r.polygon).find((e) => {
+      const pr = project(p, e.a, e.b);
+      return pr.d <= 1 && pr.t > 1 && pr.t < pr.length - 1;
+    });
+    if (hit) next = insertCorner(next, r.id, hit.i, p);
+  }
+  return { plan: next, index: edge + 1 };
+}
+
 /** Give a room a new outline, keeping each door and window as close as it can to where it was. */
 export function reshapeRoom(plan: FloorPlan, roomId: string, polygon: Point[]): FloorPlan {
   const room = plan.rooms.find((r) => r.id === roomId);
@@ -200,7 +239,7 @@ export function setEdgeLength(plan: FloorPlan, roomId: string, edge: number, len
  * Push one edge of a room by `d` (both its corners move), and the same stretch
  * of wall in any room that shares it, so neighbors stay together.
  */
-export function moveEdge(plan: FloorPlan, roomId: string, edge: number, d: Point): FloorPlan {
+export function moveEdge(plan: FloorPlan, roomId: string, edge: number, d: Point, glue = true): FloorPlan {
   const room = plan.rooms.find((r) => r.id === roomId);
   if (!room) return plan;
   const a = room.polygon[edge];
@@ -211,7 +250,7 @@ export function moveEdge(plan: FloorPlan, roomId: string, edge: number, d: Point
       const moveIdx = new Set<number>();
       for (const e of edgesOf(r.polygon)) {
         const mine = r.id === roomId && e.i === edge;
-        if (mine || (r.id !== roomId && collinearOverlap(a, b, e.a, e.b, 1))) {
+        if (mine || (glue && r.id !== roomId && collinearOverlap(a, b, e.a, e.b, 1))) {
           moveIdx.add(e.i);
           moveIdx.add((e.i + 1) % r.polygon.length);
         }

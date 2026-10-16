@@ -17,15 +17,18 @@ import {
   moveOpeningTo,
   removeCorner,
   removeMany,
+  insertGluedCorner,
   rotateMany,
+  setCornerGlued,
   setEdgeLength,
   updateOpening,
 } from "@/lib/plan/edit";
 import { sharedWall } from "@/lib/plan/connect";
 import { alignEdges, compact, plansFromSketch, resolveOverlaps, straightenOutline } from "@/lib/plan/fromSketch";
-import { collinearOverlap, dist, isRectangle, polygonArea, polygonsOverlap, rectangle, signedArea, subtractIntervals } from "@/lib/plan/geometry";
+import { collinearOverlap, dist, edgesOf, isRectangle, polygonArea, polygonsOverlap, rectangle, signedArea, subtractIntervals } from "@/lib/plan/geometry";
 import { houseTotals, planTotals, roomSqft } from "@/lib/plan/measure";
-import { snapMove, snapPoint, snapPush, snapTargets } from "@/lib/plan/snap";
+import { snapAngles, snapMove, snapNode, snapPoint, snapPush, snapTargets } from "@/lib/plan/snap";
+import { parseTypedLength } from "@/lib/model/units";
 import { stairsDrawing, stepsFor } from "@/lib/plan/stairs";
 import { nearestHost, openingGeometry, solidWalls, wallPieces } from "@/lib/plan/walls";
 
@@ -408,5 +411,49 @@ describe("saved projects", () => {
     const p = { ...createProject("Plan"), floorPlans: { "floor-1": pair() }, plan: { basics: defaultBasics(), showSketch: true, showDims: false } };
     expect(Project.safeParse(p).success).toBe(true);
     expect(migrateProject(JSON.parse(JSON.stringify(p)))).toEqual(p);
+  });
+});
+
+describe("reshaping with nodes", () => {
+  // Room a is 0-120 wide, b sits right of it (120-240); they share the wall at x = 120.
+  const corner = (p: FloorPlan, id: string, x: number, y: number) => p.rooms.find((r) => r.id === id)!.polygon.findIndex((q) => q.x === x && q.y === y);
+
+  it("moves a neighbor's corner along with a dragged corner, unless detached", () => {
+    const p = pair();
+    const i = corner(p, "a", 120, 0);
+    const glued = setCornerGlued(p, "a", i, { x: 120, y: -30 });
+    expect(glued.rooms.find((r) => r.id === "b")!.polygon.some((q) => q.x === 120 && q.y === -30)).toBe(true);
+    const alone = setCornerGlued(p, "a", i, { x: 120, y: -30 }, false);
+    expect(alone.rooms.find((r) => r.id === "b")!.polygon.some((q) => q.y === -30)).toBe(false);
+  });
+
+  it("puts a new node in both rooms on a shared wall", () => {
+    const p = pair();
+    const edge = edgesOf(p.rooms.find((r) => r.id === "a")!.polygon).find((e) => e.a.x === 120 && e.b.x === 120)!.i;
+    const { plan: next, index } = insertGluedCorner(p, "a", edge, { x: 120, y: 60 });
+    expect(next.rooms.find((r) => r.id === "a")!.polygon).toHaveLength(5);
+    expect(next.rooms.find((r) => r.id === "b")!.polygon).toHaveLength(5);
+    expect(next.rooms.find((r) => r.id === "a")!.polygon[index]).toEqual({ x: 120, y: 60 });
+    const pulled = setCornerGlued(next, "a", index, { x: 150, y: 60 });
+    expect(pulled.rooms.find((r) => r.id === "b")!.polygon.some((q) => q.x === 150 && q.y === 60)).toBe(true);
+  });
+
+  it("snaps to 90 and 45 degree lines from neighbors, and not at all with Shift", () => {
+    const t = snapTargets(emptyPlan());
+    const up = snapNode({ x: 3, y: -98 }, [{ x: 0, y: 0 }], t, 9, false, false);
+    expect(up.p.x).toBeCloseTo(0, 5);
+    const diag = snapNode({ x: 101, y: 98 }, [{ x: 0, y: 0 }], t, 9, false, false);
+    expect(diag.p.x).toBeCloseTo(diag.p.y, 5);
+    const both = snapAngles({ x: 98, y: 103 }, [{ x: 0, y: 100 }, { x: 100, y: 0 }], 9);
+    expect(both!.x).toBeCloseTo(100, 5);
+    expect(both!.y).toBeCloseTo(100, 5);
+    expect(snapNode({ x: 3, y: -98 }, [{ x: 0, y: 0 }], t, 9, false, true).p).toEqual({ x: 3, y: -98 });
+  });
+
+  it("reads typed lengths: feet and inches, or inches alone", () => {
+    expect(parseTypedLength("12'6")).toBe(150);
+    expect(parseTypedLength("150")).toBe(150);
+    expect(parseTypedLength("12'")).toBe(144);
+    expect(parseTypedLength("abc")).toBeNull();
   });
 });

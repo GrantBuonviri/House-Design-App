@@ -6,9 +6,10 @@ import Konva from "konva";
 import type { BubbleDiagram, Fixture, FloorPlan, Level, Opening, PlanBasics, PlanStairs, Point } from "@/lib/model/schema";
 import { exteriorWallIn, riseBetween } from "@/lib/plan/basics";
 import { fixtureType, openingType } from "@/lib/plan/catalog";
-import { addRoom, insertCorner, makeRoom, moveEdge, moveMany, moveOpeningTo, newPlanId, removeCorner, setCorner } from "@/lib/plan/edit";
+import { addRoom, insertCorner, insertGluedCorner, makeRoom, moveEdge, moveMany, moveOpeningTo, newPlanId, removeCorner, setCornerGlued } from "@/lib/plan/edit";
 import { add, angleOf, boundsOf, dist, leftNormal, polygonArea, project, rectangle, round1, roundPoint, scale as scaleV, sub, unit } from "@/lib/plan/geometry";
-import { snapFrom, snapMove, snapPush, snapTargets, type Guides } from "@/lib/plan/snap";
+import { snapFrom, snapMove, snapNode, snapPush, snapTargets, type Guides } from "@/lib/plan/snap";
+import { parseTypedLength } from "@/lib/model/units";
 import { DEFAULT_STAIRS_WIDTH_IN, stairsDrawing } from "@/lib/plan/stairs";
 import { clampOffset, nearestHost, openingGeometries, solidWalls, wallPieces, type OpeningGeometry } from "@/lib/plan/walls";
 import LandLayer from "@/components/bubbles/LandLayer";
@@ -16,7 +17,7 @@ import type { LandView, Side } from "@/components/bubbles/types";
 import { Grid, ScaleBar, SideLabels, useSpacePan, type View } from "@/components/canvas/CanvasBits";
 import { ACCENT, FixtureSymbol, OpeningSymbol, StairsSymbol } from "./PlanShapes";
 import { dedupe, flat, ghostOpeningAt, pointIn, roomFill, type Box } from "./canvasHelpers";
-import { DraftPreview, FurnitureOutlines, GuidesAndBox, PlanLabels, PlanWalls, ReferenceLayer, ZoomButtons } from "./PlanCanvasLayers";
+import { DraftPreview, FurnitureOutlines, GuidesAndBox, MidNodes, NodeReadout, PlanLabels, PlanWalls, ReferenceLayer, ZoomButtons } from "./PlanCanvasLayers";
 import { edgeId, isPicked, parseEdgeId, type PlanItem, type PlanSelection, type PlanTool } from "./types";
 
 /**
@@ -27,7 +28,7 @@ import { edgeId, isPicked, parseEdgeId, type PlanItem, type PlanSelection, type 
 
 type Gesture =
   | { type: "move"; start: Point; ids: string[]; moved: boolean }
-  | { type: "corner"; roomId: string; i: number }
+  | { type: "corner"; roomId: string; i: number; base?: FloorPlan; born?: boolean; moved: boolean }
   | { type: "edge"; roomId: string; edge: number; start: Point; moved: boolean }
   | { type: "opening"; id: string; moved: boolean }
   | { type: "box"; start: Point; additive: boolean; base: PlanSelection }
@@ -90,6 +91,9 @@ export default function PlanCanvas(props: Props) {
   const [draft, setDraft] = useState<Point[]>([]);
   const [cursor, setCursor] = useState<Point | null>(null);
   const [rectEnd, setRectEnd] = useState<Point | null>(null);
+  const [typed, setTyped] = useState("");
+  const [selCorner, setSelCorner] = useState<{ roomId: string; i: number } | null>(null);
+  const [dragCorner, setDragCorner] = useState<{ roomId: string; i: number } | null>(null);
   const { spaceDown, hovering } = useSpacePan();
   const shown = preview ?? plan;
   const onPreview = props.onPreview;
@@ -113,9 +117,12 @@ export default function PlanCanvas(props: Props) {
   // A drawing in progress is dropped when the tool or level changes.
   useEffect(() => {
     setDraft([]);
+    setTyped("");
     setRectEnd(null);
     gesture.current = null;
     setPreview(null);
+    setSelCorner(null);
+    setDragCorner(null);
   }, [tool, level.id]);
 
   const drafting = draft.length > 0;
@@ -189,6 +196,10 @@ export default function PlanCanvas(props: Props) {
   const single = selection.length === 1 ? selection[0] : null;
   const selRoom = single?.kind === "room" && tool === "select" ? shown.rooms.find((r) => r.id === single.id) : undefined;
   const selFixture = single?.kind === "fixture" && tool === "select" ? shown.fixtures.find((f) => f.id === single.id) : undefined;
+  const selRoomId = selRoom?.id;
+  useEffect(() => {
+    setSelCorner((c) => (c && c.roomId === selRoomId ? c : null));
+  }, [selRoomId]);
   const transformTarget = !lotMode && !preview ? (selFixture?.id ?? selRoom?.id) : undefined;
 
   useEffect(() => {
@@ -202,8 +213,13 @@ export default function PlanCanvas(props: Props) {
   const world = () => layerRef.current?.getRelativePointerPosition() ?? { x: 0, y: 0 };
 
   /** The plan element under a Konva node. */
-  function elementOf(node: Konva.Node | null): (PlanItem & { corner?: number }) | null {
+  function elementOf(node: Konva.Node | null): (PlanItem & { corner?: number; mid?: number }) | null {
     if (!node) return null;
+    const mid = node.findAncestor(".mid", true);
+    if (mid) {
+      const { roomId, edge } = parseEdgeId(mid.id());
+      return { kind: "room", id: roomId, mid: edge };
+    }
     const corner = node.findAncestor(".corner", true);
     if (corner) {
       const { roomId, edge } = parseEdgeId(corner.id());
@@ -307,21 +323,67 @@ export default function PlanCanvas(props: Props) {
     onToolDone();
   }
 
-  // Enter finishes a room or walls being clicked out; Escape drops it.
+  /** The next point for a line from `last`: `length` inches toward the cursor (east when the cursor is on top of it). */
+  function pointAtLength(last: Point, length: number): Point {
+    const toward = cursor && dist(cursor, last) > 0.5 ? unit(sub(cursor, last)) : { x: 1, y: 0 };
+    return roundPoint(add(last, scaleV(toward, length)));
+  }
+
+  // While a room or walls are being clicked out: Enter finishes (or places a typed length), Escape drops it.
+  // Digits, ' and " type a length for the line being drawn, e.g. 12'6 or 150 (inches).
   useEffect(() => {
     if (!drafting) return;
     const onKey = (e: KeyboardEvent) => {
       if ((e.target as HTMLElement).closest("input, textarea, select")) return;
-      if (e.key === "Enter") {
+      if (e.metaKey || e.ctrlKey || e.altKey) return;
+      const stop = () => {
         e.preventDefault();
-        if (tool === "room") finishRoom(draft);
+        e.stopPropagation();
+      };
+      if (/^[0-9'".]$/.test(e.key) || (e.key === " " && typed)) {
+        stop();
+        setTyped(typed + e.key);
+      } else if (e.key === "Backspace" && typed) {
+        stop();
+        setTyped(typed.slice(0, -1));
+      } else if (e.key === "Enter") {
+        stop();
+        if (typed) {
+          const len = parseTypedLength(typed);
+          if (len === null) {
+            onMessage(`I couldn't read "${typed}" as a length. Try 12'6 or 150 (inches).`);
+          } else {
+            setDraft([...draft, pointAtLength(draft[draft.length - 1], len)]);
+            setTyped("");
+          }
+        } else if (tool === "room") finishRoom(draft);
         else if (tool === "wall") finishWalls(draft);
       } else if (e.key === "Escape") {
-        setDraft([]);
+        stop();
+        if (typed) setTyped("");
+        else setDraft([]);
       }
     };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
+    window.addEventListener("keydown", onKey, true);
+    return () => window.removeEventListener("keydown", onKey, true);
+  });
+
+  // Delete takes away the corner dot that's picked (before the room itself would go).
+  useEffect(() => {
+    if (!selCorner || tool !== "select") return;
+    const onKey = (e: KeyboardEvent) => {
+      if ((e.key !== "Delete" && e.key !== "Backspace") || e.metaKey || e.ctrlKey || e.altKey) return;
+      if ((e.target as HTMLElement).closest("input, textarea, select, [contenteditable]")) return;
+      e.preventDefault();
+      e.stopPropagation();
+      const room = plan.rooms.find((r) => r.id === selCorner.roomId);
+      if (!room) return;
+      if (room.polygon.length <= 3) onMessage("A room needs at least three corners.");
+      else onChange(removeCorner(plan, selCorner.roomId, selCorner.i));
+      setSelCorner(null);
+    };
+    window.addEventListener("keydown", onKey, true);
+    return () => window.removeEventListener("keydown", onKey, true);
   });
 
   // ---- Mouse ----
@@ -346,7 +408,7 @@ export default function PlanCanvas(props: Props) {
       return;
     }
     if (tool === "room" || tool === "wall") {
-      const sp = snapFrom(draft[draft.length - 1] ?? null, p, pickTargets([]), tol, snap, shift).p;
+      const sp = snapFrom(draft[draft.length - 1] ?? null, p, pickTargets([]), tol, snap, shift, tool === "room" && draft.length >= 2 ? [draft[0]] : []).p;
       if (tool === "room" && draft.length === 0) {
         gesture.current = { type: "rect", start: sp, moved: false };
         return;
@@ -366,8 +428,22 @@ export default function PlanCanvas(props: Props) {
       setBox({ x0: p.x, y0: p.y, x1: p.x, y1: p.y });
       return;
     }
+    if (el.mid !== undefined) {
+      // A new corner is born in the middle of the edge and pulled out with the mouse.
+      const room = plan.rooms.find((r) => r.id === el.id);
+      if (!room) return;
+      const a = room.polygon[el.mid];
+      const b = room.polygon[(el.mid + 1) % room.polygon.length];
+      const born = insertGluedCorner(plan, el.id, el.mid, scaleV(add(a, b), 0.5));
+      gesture.current = { type: "corner", roomId: el.id, i: born.index, base: born.plan, born: true, moved: false };
+      setSelCorner({ roomId: el.id, i: born.index });
+      setDragCorner({ roomId: el.id, i: born.index });
+      return;
+    }
     if (el.corner !== undefined) {
-      gesture.current = { type: "corner", roomId: el.id, i: el.corner };
+      gesture.current = { type: "corner", roomId: el.id, i: el.corner, moved: false };
+      setSelCorner({ roomId: el.id, i: el.corner });
+      setDragCorner({ roomId: el.id, i: el.corner });
       return;
     }
     if (shift) {
@@ -393,7 +469,7 @@ export default function PlanCanvas(props: Props) {
     if (tool === "door" || tool === "fixture" || tool === "stairs" || drafting) setCursor(p);
     const g = gesture.current;
     if (!g) {
-      if (drafting) setCursor(snapFrom(draft[draft.length - 1], p, pickTargets([]), tol, snap, shift).p);
+      if (drafting) setCursor(snapFrom(draft[draft.length - 1], p, pickTargets([]), tol, snap, shift, tool === "room" && draft.length >= 2 ? [draft[0]] : []).p);
       return;
     }
     const base = latest.current.plan;
@@ -414,14 +490,19 @@ export default function PlanCanvas(props: Props) {
       setGuides(m.guides);
       setPreview(moveMany(base, g.ids, m.dx, m.dy));
     } else if (g.type === "corner") {
-      const room = base.rooms.find((r) => r.id === g.roomId);
+      const from = g.base ?? base;
+      const room = from.rooms.find((r) => r.id === g.roomId);
       if (!room) return;
-      const prev = room.polygon[(g.i - 1 + room.polygon.length) % room.polygon.length];
-      const others = { ...pickTargets([g.roomId]) };
-      others.points = [...others.points, ...room.polygon.filter((_, k) => k !== g.i)];
-      const sp = snapFrom(prev, p, others, tol, snap, shift);
+      const n = room.polygon.length;
+      const here = room.polygon[g.i];
+      const glue = !e.evt.altKey;
+      // Corners of other rooms sitting right here are glued to this one, so they aren't snap targets.
+      const others = { ...snapTargets(from, [g.roomId]) };
+      others.points = [...others.points.filter((q) => !glue || dist(q, here) > 1), ...room.polygon.filter((_, k) => k !== g.i)];
+      const sp = snapNode(p, [room.polygon[(g.i - 1 + n) % n], room.polygon[(g.i + 1) % n]], others, tol, snap, shift);
+      g.moved = true;
       setGuides(sp.guides);
-      setPreview(setCorner(base, g.roomId, g.i, sp.p));
+      setPreview(setCornerGlued(from, g.roomId, g.i, sp.p, glue));
     } else if (g.type === "edge") {
       const room = base.rooms.find((r) => r.id === g.roomId);
       if (!room) return;
@@ -432,7 +513,7 @@ export default function PlanCanvas(props: Props) {
       const b = room.polygon[(g.edge + 1) % room.polygon.length];
       const still = pickTargets([g.roomId]).points;
       const { d, n } = snapPush(a, b, drag, still, tol, snap);
-      setPreview(moveEdge(base, g.roomId, g.edge, scaleV(n, d)));
+      setPreview(moveEdge(base, g.roomId, g.edge, scaleV(n, d), !e.evt.altKey));
     } else if (g.type === "opening") {
       g.moved = true;
       setPreview(moveOpeningTo(base, g.id, p, Math.max(18, 14 / s)));
@@ -447,6 +528,7 @@ export default function PlanCanvas(props: Props) {
     const g = gesture.current;
     gesture.current = null;
     setGuides({});
+    setDragCorner(null);
     if (!g) return;
     const { preview: pv } = latest.current;
     if (g.type === "rect") {
@@ -473,7 +555,11 @@ export default function PlanCanvas(props: Props) {
       setLotDelta(null);
       return;
     }
-    if (pv && (g.type === "corner" || ("moved" in g && g.moved))) onChange(pv);
+    if (g.type === "corner") {
+      // A click on a "+" without pulling still adds the corner, in the middle.
+      if (pv) onChange(pv);
+      else if (g.born && g.base) onChange(g.base);
+    } else if (pv && "moved" in g && g.moved) onChange(pv);
     setPreview(null);
   }
 
@@ -658,13 +744,27 @@ export default function PlanCanvas(props: Props) {
 
             <PlanLabels plan={shown} showDims={showDims} selectedEdge={selectedEdge} s={s} />
 
-            {/* Corner dots on the selected room. */}
+            {/* "+" nodes in the middle of each edge, and corner dots, on the selected room. */}
+            {selRoom && !dragCorner && <MidNodes room={selRoom} s={s} />}
             {selRoom &&
               selRoom.polygon.map((p, i) => (
-                <Circle key={i} id={edgeId(selRoom.id, i)} name="corner" x={p.x} y={p.y} radius={5.5 / s} fill="#fff" stroke={ACCENT} strokeWidth={2} strokeScaleEnabled={false} hitStrokeWidth={10} />
+                <Circle
+                  key={i}
+                  id={edgeId(selRoom.id, i)}
+                  name="corner"
+                  x={p.x}
+                  y={p.y}
+                  radius={5.5 / s}
+                  fill={selCorner?.roomId === selRoom.id && selCorner.i === i ? ACCENT : "#fff"}
+                  stroke={ACCENT}
+                  strokeWidth={2}
+                  strokeScaleEnabled={false}
+                  hitStrokeWidth={10}
+                />
               ))}
+            {dragCorner && preview && <NodeReadout plan={preview} roomId={dragCorner.roomId} i={dragCorner.i} s={s} />}
 
-            <DraftPreview rectStart={rectPreview} rectEnd={rectEnd} draft={draft} cursor={cursor} tool={tool} s={s} />
+            <DraftPreview rectStart={rectPreview} rectEnd={rectEnd} draft={draft} cursor={cursor} tool={tool} typed={typed} s={s} />
 
             {ghostOpening && <OpeningSymbol g={ghostOpening.g} thickness={ghostOpening.thickness} selected scale={s} ghost />}
             {ghostFixture && <FixtureSymbol f={ghostFixture} selected={false} scale={s} ghost />}

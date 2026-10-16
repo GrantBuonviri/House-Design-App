@@ -158,8 +158,8 @@ export default function PlanSidePanel(props: Props) {
           </div>
         )}
         <p className="field-hint">
-          {rect ? "Type a size, drag a wall to push it, or drag a corner dot." : `${room.polygon.length} corners. Drag a wall to push it, or a corner dot to reshape it.`} Double-click a wall to add a
-          corner; double-click a corner to take it away.
+          {rect ? "Type a size, drag a wall to push it, or drag a corner dot." : `${room.polygon.length} corners. Drag a wall to push it, or a corner dot to reshape it.`} Drag the + on a wall to add a
+          corner; double-click a corner (or pick it and press Delete) to take it away.
         </p>
 
         <TurnButtons onTurn={(deg) => onChange(rotateMany(plan, [room.id], deg, polygonCenter(room.polygon)))} />
