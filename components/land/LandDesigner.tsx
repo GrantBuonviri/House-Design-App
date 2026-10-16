@@ -7,7 +7,9 @@ import { buildCustomPlot } from "@/lib/land/custom";
 import { describeSlope } from "@/lib/land/generate";
 import { plotImplications } from "@/lib/land/implications";
 import { compassName } from "@/lib/land/sun";
+import { TREE_SIZES, type PathKind, type Pick } from "@/lib/land/featureTools";
 import DesignerPanel from "./DesignerPanel";
+import FeaturePanel from "./FeaturePanel";
 import { CANVAS_H, CANVAS_W } from "./DesignerCanvas";
 import { DRAINAGE_STYLE, plotFacts } from "./plotText";
 
@@ -21,7 +23,16 @@ const PlotTerrain3D = dynamic(() => import("./PlotTerrain3D"), { ssr: false });
  * The toolbar above the drawing. Each tool is one button; the land step's
  * later parts (natural features, roads, lanes, shaping the ground) add theirs here.
  */
-export const DESIGNER_TOOLS = [{ id: "shape", label: "Shape the lot" }] as const;
+export const DESIGNER_TOOLS = [
+  { id: "shape", label: "Shape the lot" },
+  { id: "water", label: "River / creek" },
+  { id: "pond", label: "Pond" },
+  { id: "lake", label: "Lake" },
+  { id: "rock", label: "Big rock" },
+  { id: "tree", label: "Tree" },
+  { id: "roads", label: "Roads" },
+  { id: "lane", label: "Lane" },
+] as const;
 
 /**
  * The "Design your own land" page. It edits a local copy of the settings
@@ -47,7 +58,25 @@ export default function LandDesigner({
   const [land, setLand] = useState(start);
   const [view, setView] = useState<"2d" | "3d">("2d");
   const [tool, setTool] = useState<(typeof DESIGNER_TOOLS)[number]["id"]>("shape");
-  const [selected, setSelected] = useState<number | null>(null);
+  const [selected, setSelectedCorner] = useState<number | null>(null);
+  const [pick, setPickRaw] = useState<Pick>(null);
+  const [pathKind, setPathKind] = useState<PathKind>("creek");
+  const [treeFt, setTreeFt] = useState<number>(TREE_SIZES[1].ft);
+  const [laneFt, setLaneFt] = useState<number>(14);
+  // A corner and a feature are never selected together.
+  const setSelected = (i: number | null) => {
+    setSelectedCorner(i);
+    if (i !== null) setPickRaw(null);
+  };
+  const setPick = (p: Pick) => {
+    setPickRaw(p);
+    if (p) setSelectedCorner(null);
+  };
+  const chooseTool = (id: (typeof DESIGNER_TOOLS)[number]["id"]) => {
+    setTool(id);
+    setPick(null);
+    setSelected(null);
+  };
 
   const lastEdit = useRef(0);
   const change = (next: CustomLand) => {
@@ -65,6 +94,7 @@ export default function LandDesigner({
     setLand(past[past.length - 1]);
     setPast(past.slice(0, -1));
     setSelected(null);
+    setPick(null);
   };
   const redo = () => {
     if (!future.length) return;
@@ -72,6 +102,7 @@ export default function LandDesigner({
     setLand(future[0]);
     setFuture(future.slice(1));
     setSelected(null);
+    setPick(null);
   };
 
   useEffect(() => {
@@ -120,9 +151,9 @@ export default function LandDesigner({
         <div className="flex min-h-0 flex-1 gap-5 overflow-auto p-5">
           <div className="shrink-0" style={{ width: CANVAS_W }}>
             <div className="mb-2 flex items-center justify-between">
-              <div data-designer-tools className="flex gap-1.5">
+              <div data-designer-tools className="flex flex-wrap gap-1.5">
                 {DESIGNER_TOOLS.map((t) => (
-                  <button key={t.id} onClick={() => setTool(t.id)} className={tool === t.id ? "btn-primary" : "btn"}>
+                  <button key={t.id} onClick={() => chooseTool(t.id)} className={tool === t.id ? "btn-primary" : "btn"}>
                     {t.label}
                   </button>
                 ))}
@@ -143,7 +174,18 @@ export default function LandDesigner({
             </div>
             <div className="overflow-hidden rounded-lg border border-line" style={{ width: CANVAS_W, height: CANVAS_H }}>
               {view === "2d" ? (
-                <DesignerCanvas land={land} onChange={change} selected={selected} onSelect={setSelected} />
+                <DesignerCanvas
+                  land={land}
+                  onChange={change}
+                  selected={selected}
+                  onSelect={setSelected}
+                  tool={tool}
+                  pick={pick}
+                  onPick={setPick}
+                  pathKind={pathKind}
+                  treeFt={treeFt}
+                  laneFt={laneFt}
+                />
               ) : (
                 <div className="flex h-full items-center justify-center bg-[#dfe9f2]">
                   <PlotTerrain3D plot={plot} size={CANVAS_H} />
@@ -165,7 +207,22 @@ export default function LandDesigner({
           </div>
 
           <div className="min-w-0 flex-1 overflow-y-auto pr-1">
-            <DesignerPanel land={land} onChange={change} />
+            <FeaturePanel
+              land={land}
+              tool={tool}
+              pick={pick}
+              onChange={change}
+              onPick={setPick}
+              pathKind={pathKind}
+              setPathKindNext={setPathKind}
+              treeFt={treeFt}
+              setTreeFt={setTreeFt}
+              laneFt={laneFt}
+              setLaneFt={setLaneFt}
+            />
+            <div className="mt-5">
+              <DesignerPanel land={land} onChange={change} />
+            </div>
           </div>
         </div>
 

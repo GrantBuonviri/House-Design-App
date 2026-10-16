@@ -5,7 +5,7 @@ import { Canvas } from "@react-three/fiber";
 import { Line, OrbitControls } from "@react-three/drei";
 import * as THREE from "three";
 import type { Plot } from "@/lib/model/schema";
-import { SCENE_SIZE, buildTerrainMesh, drapeLine, landScene, roadLine, waterSurfaces } from "@/lib/land/mesh";
+import { SCENE_SIZE, buildTerrainMesh, drapeLine, featureSpots, landScene, ribbonMesh, roadStrips, waterSurfaces, type RibbonMesh } from "@/lib/land/mesh";
 import { dayArc, sunPosition, SUMMER_SOLSTICE, WINTER_SOLSTICE } from "@/lib/land/sun";
 import { useGraphics } from "@/lib/graphics";
 
@@ -27,6 +27,22 @@ function sunArc(day: number): [number, number, number][] {
     pts.push(skyPoint(s.azimuthDeg, Math.max(0, s.altitudeDeg)));
   }
   return pts;
+}
+
+/** A flat strip (river, lane or road) as a mesh. */
+function Strip({ data, color, opacity = 1 }: { data: RibbonMesh; color: string; opacity?: number }) {
+  const geometry = useMemo(() => {
+    const g = new THREE.BufferGeometry();
+    g.setAttribute("position", new THREE.BufferAttribute(data.positions, 3));
+    g.setIndex(new THREE.BufferAttribute(data.indices, 1));
+    g.computeVertexNormals();
+    return g;
+  }, [data]);
+  return (
+    <mesh geometry={geometry}>
+      <meshLambertMaterial color={color} side={THREE.DoubleSide} transparent={opacity < 1} opacity={opacity} />
+    </mesh>
+  );
 }
 
 function Land({ plot }: { plot: Plot }) {
@@ -53,7 +69,23 @@ function Land({ plot }: { plot: Plot }) {
   );
 
   const outline = useMemo(() => drapeLine(plot.outline, scene, { closed: true, liftIn: 10 }), [plot, scene]);
-  const road = useMemo(() => drapeLine(roadLine(plot, scene), scene, { liftIn: 6 }), [plot, scene]);
+  const roads = useMemo(
+    () =>
+      roadStrips(plot).flatMap((r) => {
+        const data = ribbonMesh(r.points, r.widthIn, scene, 6);
+        return data ? [{ data, main: r.main }] : [];
+      }),
+    [plot, scene],
+  );
+  const lanes = useMemo(
+    () => plot.lanes.flatMap((l) => ribbonMesh(l.points, l.widthFt * 12, scene, 14) ?? []),
+    [plot, scene],
+  );
+  const rivers = useMemo(
+    () => plot.waterFeatures.filter((w) => w.kind === "river").flatMap((w) => ribbonMesh(w.points, 36 * 12, scene, 3) ?? []),
+    [plot, scene],
+  );
+  const spots = useMemo(() => featureSpots(plot, scene), [plot, scene]);
   const streams = useMemo(
     () =>
       plot.waterFeatures
@@ -88,7 +120,34 @@ function Land({ plot }: { plot: Plot }) {
           <Line key={i} points={s.points} color="#a88a5c" lineWidth={2.5} dashed dashSize={0.15} gapSize={0.1} />
         ),
       )}
-      {road.length > 1 && <Line points={road} color="#7d7f7c" lineWidth={6} />}
+      {rivers.map((r, i) => (
+        <Strip key={`river${i}`} data={r} color="#4a86b8" opacity={0.9} />
+      ))}
+      {lanes.map((l, i) => (
+        <Strip key={`lane${i}`} data={l} color="#e3d6b0" />
+      ))}
+      {roads.map((r, i) => (
+        <Strip key={`road${i}`} data={r.data} color={r.main ? "#7d7f7c" : "#92948f"} />
+      ))}
+      {spots.map((s) =>
+        s.kind === "rock" ? (
+          <mesh key={s.id} position={[s.position[0], s.position[1] + s.radius * 0.2, s.position[2]]} scale={[1, 0.65, 1]}>
+            <dodecahedronGeometry args={[s.radius, 0]} />
+            <meshLambertMaterial color="#8b8a85" flatShading />
+          </mesh>
+        ) : (
+          <group key={s.id} position={s.position}>
+            <mesh position={[0, s.radius * 0.35, 0]}>
+              <cylinderGeometry args={[s.radius * 0.1, s.radius * 0.14, s.radius * 0.7, 6]} />
+              <meshLambertMaterial color="#6b4f33" />
+            </mesh>
+            <mesh position={[0, s.radius * 1.1, 0]}>
+              <coneGeometry args={[s.radius, s.radius * 1.9, 8]} />
+              <meshLambertMaterial color="#4f7f43" flatShading />
+            </mesh>
+          </group>
+        ),
+      )}
       {outline.length > 1 && (
         <Line points={outline} color="#1f2421" lineWidth={1.8} dashed dashSize={0.18} gapSize={0.1} />
       )}

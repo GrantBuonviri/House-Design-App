@@ -4,6 +4,8 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { Arrow, Circle, Group, Layer, Line, Rect, Stage, Text } from "react-konva";
 import type Konva from "konva";
 import type { CustomLand, Point } from "@/lib/model/schema";
+import { removePick, pickLabel, setMainRoad, type PathKind, type Pick } from "@/lib/land/featureTools";
+import DesignerFeatures, { type FeatureTool } from "./DesignerFeatures";
 import { boxOf, insertCorner, removeCorner, sideLengthFt, snapCorner } from "@/lib/land/designer";
 import { edgeEnds } from "@/lib/land/custom";
 
@@ -18,13 +20,26 @@ export default function DesignerCanvas({
   onChange,
   selected,
   onSelect,
+  tool,
+  pick,
+  onPick,
+  pathKind,
+  treeFt,
+  laneFt,
 }: {
   land: CustomLand;
   onChange: (l: CustomLand) => void;
   selected: number | null;
   onSelect: (i: number | null) => void;
+  tool: FeatureTool;
+  pick: Pick;
+  onPick: (p: Pick) => void;
+  pathKind: PathKind;
+  treeFt: number;
+  laneFt: number;
 }) {
   const [dragging, setDragging] = useState(false);
+  const [menu, setMenu] = useState<{ pick: NonNullable<Pick>; at: Point } | null>(null);
   // While a corner is dragged the view stays put, so the lot doesn't rescale under the pointer.
   const frozen = useRef(land.outline);
   if (!dragging) frozen.current = land.outline;
@@ -45,8 +60,13 @@ export default function DesignerCanvas({
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      if (selected === null || (e.target as HTMLElement).closest("input, textarea, select")) return;
-      if (e.key === "Delete" || e.key === "Backspace") {
+      if ((e.target as HTMLElement).closest("input, textarea, select")) return;
+      if (e.key !== "Delete" && e.key !== "Backspace") return;
+      if (pick) {
+        e.preventDefault();
+        onChange(removePick(land, pick));
+        onPick(null);
+      } else if (selected !== null) {
         e.preventDefault();
         onChange(removeCorner(land, selected));
         onSelect(null);
@@ -54,14 +74,26 @@ export default function DesignerCanvas({
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [selected, land, onChange, onSelect]);
+  }, [selected, pick, land, onChange, onSelect, onPick]);
+  useEffect(() => setMenu(null), [land, tool]);
 
   const centre = pts.reduce((a, p) => ({ x: a.x + p.x / n, y: a.y + p.y / n }), { x: 0, y: 0 });
 
   return (
-    <Stage width={CANVAS_W} height={CANVAS_H} onMouseDown={(e) => e.target === e.target.getStage() && onSelect(null)}>
+    <div className="relative" style={{ width: CANVAS_W, height: CANVAS_H }} onContextMenu={(e) => e.preventDefault()}>
+    <Stage
+      width={CANVAS_W}
+      height={CANVAS_H}
+      onMouseDown={(e) => {
+        setMenu(null);
+        if (e.target === e.target.getStage()) {
+          onSelect(null);
+          onPick(null);
+        }
+      }}
+    >
       <Layer>
-        <Rect width={CANVAS_W} height={CANVAS_H} fill="#f5f4f0" />
+        <Rect width={CANVAS_W} height={CANVAS_H} fill="#f5f4f0" listening={false} />
         {/* Roads sit just outside their side of the lot. */}
         {land.roads.map((r) => {
           if (r.edge >= n) return null;
@@ -115,6 +147,25 @@ export default function DesignerCanvas({
             listening={false}
           />
         )}
+        <DesignerFeatures
+          land={land}
+          tool={tool}
+          pick={pick}
+          onPick={(p) => {
+            onSelect(null);
+            onPick(p);
+          }}
+          onChange={onChange}
+          pathKind={pathKind}
+          treeFt={treeFt}
+          laneFt={laneFt}
+          scale={view.s}
+          px={px}
+          inch={inch}
+          pts={pts}
+          size={{ w: CANVAS_W, h: CANVAS_H }}
+          onMenu={(p, at) => setMenu({ pick: p, at })}
+        />
         {pts.map((a, i) => {
           const b = pts[(i + 1) % n];
           const mx = (a.x + b.x) / 2;
@@ -138,6 +189,7 @@ export default function DesignerCanvas({
                 fill="#57534e"
                 listening={false}
               />
+              {tool === "shape" && (
               <Circle
                 key={`${n}-${i}-${o[i].x}-${o[i].y}-${o[(i + 1) % n].x}-${o[(i + 1) % n].y}`}
                 x={mx}
@@ -159,11 +211,12 @@ export default function DesignerCanvas({
                 onMouseEnter={(e) => (e.target.getStage()!.container().style.cursor = "copy")}
                 onMouseLeave={(e) => (e.target.getStage()!.container().style.cursor = "")}
               />
-              <Text x={mx - 4} y={my - 7} text="+" fontSize={13} fontStyle="bold" fill="#2f6f4f" listening={false} />
+              )}
+              {tool === "shape" && <Text x={mx - 4} y={my - 7} text="+" fontSize={13} fontStyle="bold" fill="#2f6f4f" listening={false} />}
             </Group>
           );
         })}
-        {pts.map((p, i) => (
+        {tool === "shape" && pts.map((p, i) => (
           <Circle
             key={`corner-${i}`}
             x={p.x}
@@ -198,5 +251,34 @@ export default function DesignerCanvas({
         </Group>
       </Layer>
     </Stage>
+    {menu && (
+      <div
+        className="absolute z-10 min-w-36 rounded-md border border-line bg-white py-1 text-sm shadow-lg"
+        style={{ left: menu.at.x, top: menu.at.y }}
+      >
+        {menu.pick.type === "road" && land.roads[menu.pick.index]?.kind !== "main" && (
+          <button
+            className="block w-full px-3 py-1.5 text-left hover:bg-stone-100"
+            onClick={() => {
+              onChange(setMainRoad(land, menu.pick.index));
+              setMenu(null);
+            }}
+          >
+            Make main street
+          </button>
+        )}
+        <button
+          className="block w-full px-3 py-1.5 text-left text-red-700 hover:bg-stone-100"
+          onClick={() => {
+            onChange(removePick(land, menu.pick));
+            onPick(null);
+            setMenu(null);
+          }}
+        >
+          Remove {pickLabel(land, menu.pick).toLowerCase()}
+        </button>
+      </div>
+    )}
+    </div>
   );
 }
