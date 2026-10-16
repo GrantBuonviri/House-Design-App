@@ -39,3 +39,25 @@ export function centroid(points: Point[]): Point {
     y: points.reduce((s, p) => s + p.y, 0) / n,
   };
 }
+
+/** The nearest point on a polyline to p. */
+export function closestPointOnPolyline(p: Point, line: Point[]): Point {
+  if (line.length === 1) return line[0];
+  let best = line[0];
+  let bestD = Infinity;
+  for (let i = 0; i < line.length - 1; i++) {
+    const a = line[i];
+    const b = line[i + 1];
+    const dx = b.x - a.x;
+    const dy = b.y - a.y;
+    const len2 = dx * dx + dy * dy;
+    const t = len2 === 0 ? 0 : Math.max(0, Math.min(1, ((p.x - a.x) * dx + (p.y - a.y) * dy) / len2));
+    const q = { x: a.x + t * dx, y: a.y + t * dy };
+    const d = Math.hypot(p.x - q.x, p.y - q.y);
+    if (d < bestD) {
+      bestD = d;
+      best = q;
+    }
+  }
+  return best;
+}

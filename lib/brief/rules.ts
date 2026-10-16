@@ -155,6 +155,10 @@ function rulePriorities(ctx: BriefContext): string[] {
       out.push(`Walkout basement on the ${compassName(plot.slope.downhillDeg)} (downhill) side`);
     }
     out.push(`Entry and garage on the ${SIDE_NAME[plot.roadSide]} side, facing the road`);
+    if (plot.roads.some((r) => r.kind === "side")) out.push("A corner lot: keep the side street side tidy, since it shows too");
+    if (plot.features.some((f) => f.kind === "rock")) out.push("Place the house around the big rock, or budget to remove it");
+    if (plot.features.some((f) => f.kind === "tree")) out.push("Keep the trees for shade and privacy");
+    if (plot.lanes.length) out.push("Keep the house clear of the private lane");
   }
   return [...new Set(out)];
 }

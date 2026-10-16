@@ -1,4 +1,6 @@
 import { describe, expect, it } from "vitest";
+import { FLAT_PLOT_SEED, feedPlotSeed, generatePlot } from "@/lib/land/generate";
+import { buildCustomPlot, newCustomLand } from "@/lib/land/custom";
 import { createProject, duplicateProject, migrateProject } from "@/lib/model/project";
 import { Project, SCHEMA_VERSION } from "@/lib/model/schema";
 
@@ -43,6 +45,33 @@ describe("migrateProject", () => {
     expect(migrated.bubbles).toEqual({});
     expect(migrated.floorPlans).toEqual({});
     expect(migrated.plot).toBeNull();
+  });
+
+  it("turns version 17 plots into made-up plots with no custom land extras", () => {
+    const plot = generatePlot(feedPlotSeed(321, 4));
+    const { source, custom, features, roads, lanes, ground, rolls, ...v17Plot } = plot;
+    void [source, custom, features, roads, lanes, ground, rolls];
+    const v17 = { ...createProject("Old land"), schemaVersion: 17, plot: v17Plot };
+    const migrated = migrateProject(JSON.parse(JSON.stringify(v17)));
+    expect(migrated.schemaVersion).toBe(SCHEMA_VERSION);
+    expect(migrated.plot).toEqual(plot);
+    expect(migrated.plot?.source).toBe("made-up");
+    const flat = generatePlot(FLAT_PLOT_SEED, { flat: true });
+    const { source: s2, custom: c2, features: f2, roads: r2, lanes: l2, ground: g2, rolls: o2, ...v17Flat } = flat;
+    void [s2, c2, f2, r2, l2, g2, o2];
+    expect(migrateProject({ ...v17, plot: v17Flat }).plot).toEqual(flat);
+  });
+
+  it("round-trips a custom plot", () => {
+    const plot = buildCustomPlot({
+      ...newCustomLand("Creek lot"),
+      northDeg: 30,
+      water: [{ kind: "river", points: [{ x: 0, y: 600 }, { x: 1800, y: 900 }] }],
+      features: [{ id: "t", kind: "tree", at: { x: 400, y: 400 }, sizeFt: 30 }],
+      ground: [{ id: "g", kind: "flatter", at: { x: 900, y: 1200 }, radiusFt: 40, amount: 1 }],
+    });
+    const p = { ...createProject("Custom"), plot };
+    expect(migrateProject(JSON.parse(JSON.stringify(p)))).toEqual(p);
   });
 
   it("refuses projects from a newer app version", () => {

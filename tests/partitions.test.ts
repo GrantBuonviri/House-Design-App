@@ -177,8 +177,7 @@ describe("half walls", () => {
   it("keeps old projects opening: version 16 walls become full height", () => {
     const old = { ...createProject("Old"), schemaVersion: 16, floorPlans: { [MAIN_LEVEL_ID]: { rooms: [], walls: [{ id: "w", a: { x: 0, y: 0 }, b: { x: 100, y: 0 }, thicknessIn: 4.5 }], openWalls: [], openings: [], stairs: [], fixtures: [], furniture: [] } } };
     const p = migrateProject(old);
-    expect(SCHEMA_VERSION).toBe(17);
-    expect(p.schemaVersion).toBe(17);
+    expect(p.schemaVersion).toBe(SCHEMA_VERSION);
     expect(p.floorPlans[MAIN_LEVEL_ID].walls[0].height).toBe("full");
     expect(wallPieces(p.floorPlans[MAIN_LEVEL_ID], 6.5)[0].height).toBeUndefined();
   });

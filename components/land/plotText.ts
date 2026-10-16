@@ -21,6 +21,7 @@ export function plotFacts(plot: Plot) {
 
 export const WATER_LABEL = {
   creek: "Creek",
+  river: "River",
   pond: "Pond",
   lake: "Lake frontage",
   wash: "Seasonal wash",

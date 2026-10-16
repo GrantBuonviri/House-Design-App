@@ -1,6 +1,6 @@
 import Dexie, { type EntityTable, type Table } from "dexie";
 import { migrateProject } from "@/lib/model/project";
-import type { Project } from "@/lib/model/schema";
+import { CustomLand, type Project } from "@/lib/model/schema";
 
 /** Projects are saved in the browser's IndexedDB under the name "house-design-app". */
 class HouseDb extends Dexie {
@@ -9,13 +9,19 @@ class HouseDb extends Dexie {
   history!: Table<HistoryRow, [string, number]>;
   /** Where each project's undo history is up to. */
   historyMeta!: EntityTable<HistoryMeta, "projectId">;
+  /** "My land": custom plots saved for use in any house. */
+  myLand!: EntityTable<MyLandRow, "id">;
 
   constructor() {
     super("house-design-app");
     this.version(1).stores({ projects: "id, updatedAt, name" });
     this.version(2).stores({ history: "[projectId+n], projectId", historyMeta: "projectId" });
+    this.version(3).stores({ myLand: "id, updatedAt, name" });
   }
 }
+
+/** One saved custom plot: the designer's settings, keyed by their id. */
+export type MyLandRow = { id: string; name: string; updatedAt: string; land: CustomLand };
 
 /** One saved version of a project. Versions are numbered in order; `n` only grows. */
 export type HistoryRow = { projectId: string; n: number; project: Project };
@@ -97,4 +103,26 @@ export async function saveHistory(meta: HistoryMeta, put: HistoryRow[]): Promise
 
 export async function projectExists(id: string): Promise<boolean> {
   return (await getDb().projects.get(id)) !== undefined;
+}
+
+/** Saved custom plots, most recently changed first. Rows that no longer read are left out. */
+export async function listMyLand(): Promise<MyLandRow[]> {
+  const rows = await getDb().myLand.orderBy("updatedAt").reverse().toArray();
+  const out: MyLandRow[] = [];
+  for (const row of rows) {
+    const land = CustomLand.safeParse(row.land);
+    if (land.success) out.push({ ...row, land: land.data });
+  }
+  return out;
+}
+
+/** Save (or update) a custom plot in "My land". */
+export async function saveMyLand(land: CustomLand): Promise<MyLandRow> {
+  const row: MyLandRow = { id: land.id, name: land.name, updatedAt: new Date().toISOString(), land: CustomLand.parse(land) };
+  await getDb().myLand.put(row);
+  return row;
+}
+
+export async function deleteMyLand(id: string): Promise<void> {
+  await getDb().myLand.delete(id);
 }

@@ -59,6 +59,9 @@ export function migrateProject(raw: unknown): Project {
   if (version < 16) migrated = migrateV15(migrated);
   // Version 16 to 17 added heights to walls drawn on their own (all full height before).
   if (version < 17) migrated = migrateV16(migrated);
+  // Version 17 to 18 added custom land: every older plot is a made-up one,
+  // with no rocks, trees, extra roads, lanes or ground shapes.
+  if (version < 18) migrated = migrateV17(migrated);
   return Project.parse({ ...migrated, schemaVersion: SCHEMA_VERSION });
 }
 
@@ -138,4 +141,14 @@ function migrateV16(data: Raw): Raw {
     return { ...(v as Raw), walls: ((v as Raw).walls as unknown[]).map((w) => (w && typeof w === "object" ? { height: "full", ...(w as Raw) } : w)) };
   };
   return { ...data, floorPlans: Object.fromEntries(Object.entries(plans as Raw).map(([k, v]) => [k, withHeight(v)])) };
+}
+
+/** Version 17 to 18: older plots were all made up, with none of the custom land extras. */
+function migrateV17(data: Raw): Raw {
+  const plot = data.plot;
+  if (!plot || typeof plot !== "object") return data;
+  return {
+    ...data,
+    plot: { source: "made-up", custom: null, features: [], roads: [], lanes: [], ground: [], rolls: "gentle", ...(plot as Raw) },
+  };
 }

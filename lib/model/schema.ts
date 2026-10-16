@@ -9,7 +9,7 @@ import { z } from "zod";
  * Angles are degrees clockwise from north (0 = N, 90 = E).
  */
 
-export const SCHEMA_VERSION = 17;
+export const SCHEMA_VERSION = 18;
 
 export const Point = z.object({ x: z.number(), y: z.number() });
 export type Point = z.infer<typeof Point>;
@@ -52,22 +52,101 @@ export type Profile = z.infer<typeof Profile>;
 // ---------- 2. Land ----------
 
 export const WaterFeature = z.object({
-  kind: z.enum(["creek", "pond", "lake", "wash"]),
-  /** Polyline (creek, wash, lake shore) or polygon (pond), in inches, plot-local. */
+  /** A river is wider and deeper than a creek. */
+  kind: z.enum(["creek", "river", "pond", "lake", "wash"]),
+  /** Polyline (creek, river, wash, lake shore) or polygon (pond), in inches, plot-local. */
   points: z.array(Point),
 });
+export type WaterFeature = z.infer<typeof WaterFeature>;
+
+/** A big rock or a tree on the land. */
+export const LandFeature = z.object({
+  id: z.string(),
+  kind: z.enum(["rock", "tree"]),
+  at: Point,
+  /** Rocks: across, 3 to 20 ft. Trees: canopy across. */
+  sizeFt: z.number().positive(),
+});
+export type LandFeature = z.infer<typeof LandFeature>;
+
+/** A road along one edge of the lot: the edge from outline[edge] to the next corner. */
+export const Road = z.object({
+  id: z.string(),
+  edge: z.number().int().min(0),
+  /** The main street is the one the driveway and front door face. */
+  kind: z.enum(["main", "side"]),
+  widthFt: z.number().positive().default(26),
+});
+export type Road = z.infer<typeof Road>;
+
+/** A private lane through the land: a path of points, graded flat across its width. */
+export const Lane = z.object({
+  id: z.string(),
+  points: z.array(Point),
+  widthFt: z.number().min(8).max(30).default(14),
+});
+export type Lane = z.infer<typeof Lane>;
 
 /**
- * A made-up piece of land. Everything here can be rebuilt from `seed` (and
- * `isFlat`) with generatePlot, so terrain heights are never stored.
+ * A shape pressed into the ground. Hills and dips: `amount` is the height or
+ * depth in feet. Steeper and flatter: `amount` is the strength, 0 to 1
+ * (flatter at 1 makes level ground inside the circle).
+ */
+export const GroundShape = z.object({
+  id: z.string(),
+  kind: z.enum(["hill", "dip", "steeper", "flatter"]),
+  at: Point,
+  radiusFt: z.number().positive(),
+  amount: z.number().min(0),
+});
+export type GroundShape = z.infer<typeof GroundShape>;
+
+/** How bumpy the ground is: smooth is a true even slope. */
+export const GroundRolls = z.enum(["smooth", "gentle", "bumpy"]);
+
+/**
+ * What the land designer saves: everything as typed and placed, in the frame
+ * it was drawn in (x right, y down on the screen, inches), plus where north
+ * points. `buildCustomPlot` turns these into the plot's compass-frame fields.
+ */
+export const CustomLand = z.object({
+  /** Stays the same across edits; the "My land" list uses it. */
+  id: z.string(),
+  name: z.string(),
+  /** Random, made once per custom plot, so terrain rolls are its own. */
+  seed: z.number().int(),
+  /** Lot corners in drawing order. */
+  outline: z.array(Point).min(3),
+  /** Where the north arrow points on the drawing, degrees clockwise from straight up. */
+  northDeg: z.number(),
+  /** Downhill direction as drawn, degrees clockwise from straight up on the drawing. */
+  slope: z.object({ percent: z.number().min(0).max(40), downhillDeg: z.number() }),
+  rolls: GroundRolls.default("gentle"),
+  /** One of the soil names in SOIL_TYPES (lib/land/generate.ts). */
+  soil: z.string(),
+  water: z.array(WaterFeature).default([]),
+  features: z.array(LandFeature).default([]),
+  roads: z.array(Road).default([]),
+  lanes: z.array(Lane).default([]),
+  ground: z.array(GroundShape).default([]),
+});
+export type CustomLand = z.infer<typeof CustomLand>;
+
+/**
+ * A piece of land: made up from `seed` (and `isFlat`) by generatePlot, or
+ * designed by hand (`source: "custom"`, settings in `custom`). Terrain
+ * heights are never stored; lib/land/terrain.ts rebuilds them.
  * Plot-local coordinates are inches with x pointing east and y pointing
  * south, origin at the north-west corner of the bounding box.
  */
 export const Plot = z.object({
   seed: z.number().int(),
   isFlat: z.boolean(),
+  source: z.enum(["made-up", "custom"]).default("made-up"),
+  /** The designer's settings for a custom plot, null for made-up ones. */
+  custom: CustomLand.nullable().default(null),
   name: z.string().optional(),
-  shape: z.enum(["rectangle", "wide", "deep", "corner", "irregular"]).optional(),
+  shape: z.enum(["rectangle", "wide", "deep", "corner", "irregular", "custom"]).optional(),
   widthIn: z.number().positive(),
   depthIn: z.number().positive(),
   outline: z.array(Point),
@@ -83,7 +162,16 @@ export const Plot = z.object({
   }),
   soilNote: z.string(),
   waterFeatures: z.array(WaterFeature).default([]),
+  /** The compass side of the main road. Custom plots also list every road in `roads`. */
   roadSide: z.enum(["N", "E", "S", "W"]),
+  /** Big rocks and trees. */
+  features: z.array(LandFeature).default([]),
+  /** Roads along the lot's real edges (empty for made-up plots: they use roadSide). */
+  roads: z.array(Road).default([]),
+  lanes: z.array(Lane).default([]),
+  ground: z.array(GroundShape).default([]),
+  /** How bumpy the ground is. Made-up plots are "gentle". */
+  rolls: GroundRolls.default("gentle"),
 });
 export type Plot = z.infer<typeof Plot>;
 

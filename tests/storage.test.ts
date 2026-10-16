@@ -1,7 +1,8 @@
 import "fake-indexeddb/auto";
 import { describe, expect, it } from "vitest";
 import { createProject } from "@/lib/model/project";
-import { deleteProject, listProjects, loadProject, saveProject } from "@/lib/storage/db";
+import { deleteMyLand, deleteProject, listMyLand, listProjects, loadProject, saveMyLand, saveProject } from "@/lib/storage/db";
+import { newCustomLand } from "@/lib/land/custom";
 import { exportProjectJson, importProjectJson } from "@/lib/storage/exchange";
 
 describe("IndexedDB save and load", () => {
@@ -17,6 +18,24 @@ describe("IndexedDB save and load", () => {
     expect(await loadProject(a.id)).toEqual(a);
     await deleteProject(a.id);
     expect(await loadProject(a.id)).toBeNull();
+  });
+});
+
+describe("My land", () => {
+  it("saves custom land for any house, updates it in place and deletes it", async () => {
+    const a = newCustomLand("Hill lot");
+    const b = newCustomLand("Creek lot");
+    await saveMyLand(a);
+    await saveMyLand(b);
+    expect((await listMyLand()).map((r) => r.name).sort()).toEqual(["Creek lot", "Hill lot"]);
+
+    await saveMyLand({ ...a, name: "Hill lot 2", slope: { percent: 12, downhillDeg: 90 } });
+    const rows = await listMyLand();
+    expect(rows).toHaveLength(2);
+    expect(rows.find((r) => r.id === a.id)?.land.slope.percent).toBe(12);
+
+    await deleteMyLand(b.id);
+    expect((await listMyLand()).map((r) => r.id)).toEqual([a.id]);
   });
 });
 
