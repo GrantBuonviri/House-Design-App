@@ -2,7 +2,7 @@ import type { FloorPlan, Opening, PlanRoom, Point } from "@/lib/model/schema";
 import { newElementId } from "@/lib/bubbles/edit";
 import { add, clockwise, collinearOverlap, dist, dot, edgesOf, polygonCenter, rotate, round1, roundPoint, scale, sub, unit } from "./geometry";
 import { clampOffset, hostSegment, nearestHost, sameHost } from "./walls";
-import { bulgeOf, leftBulge, pointOnEdge, projectOnEdge, reverseBulges, roomEdgeArc, roomEdgeLength, scaledBulge, withBulges } from "./arcs";
+import { bulgeOf, leftBulge, pointOnEdge, projectOnEdge, reverseBulges, roomEdgeArc, roomEdgeLength, scaledBulge, wallArc, wallLength, withBulges } from "./arcs";
 import { carryOpenWalls, pruneOpenWalls } from "./openWalls";
 
 /**
@@ -309,7 +309,13 @@ export function moveEdge(plan: FloorPlan, roomId: string, edge: number, d: Point
 export function setWallLength(plan: FloorPlan, wallId: string, lengthIn: number): FloorPlan {
   return {
     ...plan,
-    walls: plan.walls.map((w) => (w.id === wallId && lengthIn >= 1 ? { ...w, b: roundPoint(add(w.a, scale(unit(sub(w.b, w.a)), lengthIn))) } : w)),
+    walls: plan.walls.map((w) => {
+      if (w.id !== wallId || lengthIn < 1) return w;
+      // A curved wall keeps its shape: `lengthIn` is along the curve, and the bow grows with it.
+      const chord = wallArc(w) ? (dist(w.a, w.b) * lengthIn) / wallLength(w) : lengthIn;
+      const next = { ...w, b: roundPoint(add(w.a, scale(unit(sub(w.b, w.a)), chord))) };
+      return w.bulge ? { ...next, bulge: scaledBulge(w.bulge, dist(w.a, w.b), chord) } : next;
+    }),
   };
 }
 

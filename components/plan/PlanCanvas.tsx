@@ -3,28 +3,30 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { Circle, Group, Layer, Line, Stage, Transformer } from "react-konva";
 import Konva from "konva";
-import type { BubbleDiagram, Fixture, FloorPlan, Level, Opening, PlanBasics, PlanLabels, PlanStairs, Point } from "@/lib/model/schema";
+import type { BubbleDiagram, Fixture, FloorPlan, Level, Opening, OpeningHost, PlanBasics, PlanLabels, PlanStairs, Point } from "@/lib/model/schema";
 import { exteriorWallIn, riseBetween } from "@/lib/plan/basics";
 import { fixtureType, openingType } from "@/lib/plan/catalog";
 import { trimOverlap } from "@/lib/plan/overlaps";
+import { bendInfo, bendWall, bowFromPoint, planRadii, snapBow, type BendSnap, type BendTarget } from "@/lib/plan/bend";
+import { DRAW_STEP_DEG, flatPlan, roomOutline, savedHost } from "@/lib/plan/flatten";
+import { leftBulge, pointOnEdge, projectOnEdge, roomEdgeLength } from "@/lib/plan/arcs";
 import { addRoom, insertCorner, insertGluedCorner, makeRoom, moveEdge, moveMany, moveOpeningTo, newPlanId, removeCorner, setCornerGlued } from "@/lib/plan/edit";
 import { add, angleOf, boundsOf, dist, leftNormal, polygonArea, project, rectangle, round1, roundPoint, scale as scaleV, sub, unit } from "@/lib/plan/geometry";
-import { distanceGuides, openingGuides, wallSegments, type Guide } from "@/lib/plan/labels";
+import { curvedOpeningGuides, distanceGuides, formatLength, labelOn, openingGuides, wallSegments, type Guide } from "@/lib/plan/labels";
 import { snapFrom, snapMove, snapNode, snapPush, snapTargets, type Guides } from "@/lib/plan/snap";
 import { mergeTargets, overhangsOf, supportTargets } from "@/lib/plan/support";
 import { roofFootprint, type Region } from "@/lib/house3d/footprint";
 import { parseTypedLength } from "@/lib/model/units";
 import { DEFAULT_STAIRS_WIDTH_IN, stairsDrawing } from "@/lib/plan/stairs";
-import { clampOffset, nearestHost, openingGeometries, solidWalls, wallPieces, type OpeningGeometry } from "@/lib/plan/walls";
+import { clampOffset, hostSegment, nearestHost, sameHost, openingGeometries, solidWalls, wallPieces, type OpeningGeometry } from "@/lib/plan/walls";
 import { fillRoomAt, splitRoom, whyNotFill } from "@/lib/plan/partitions";
 import LandLayer from "@/components/bubbles/LandLayer";
 import type { LandView, Side } from "@/components/bubbles/types";
 import { Grid, ScaleBar, SideLabels, useSpacePan, type View } from "@/components/canvas/CanvasBits";
 import { ACCENT, FixtureSymbol, OpeningSymbol, StairsSymbol } from "./PlanShapes";
 import { dedupe, flat, ghostOpeningAt, pointIn, roomFill, type Box } from "./canvasHelpers";
-import { DraftPreview, FurnitureOutlines, GuidesAndBox, MidNodes, NodeReadout, OverhangLayer, PlanWalls, ReferenceLayer, ZoomButtons } from "./PlanCanvasLayers";
+import { BendHandles, BendTip, DraftPreview, FurnitureOutlines, GuidesAndBox, MidNodes, NodeReadout, OverhangLayer, PlanWalls, ReferenceLayer, ZoomButtons } from "./PlanCanvasLayers";
 import { DistanceGuides, OutsideDims, RoomLabels, TapeLine, ThingLabels } from "./PlanMeasureLayers";
-import { labelOn } from "@/lib/plan/labels";
 import { edgeId, isPicked, parseEdgeId, type PlanItem, type PlanSelection, type PlanTool } from "./types";
 
 /**
@@ -37,10 +39,21 @@ type Gesture =
   | { type: "move"; start: Point; ids: string[]; moved: boolean }
   | { type: "corner"; roomId: string; i: number; base?: FloorPlan; born?: boolean; moved: boolean }
   | { type: "edge"; roomId: string; edge: number; start: Point; moved: boolean }
+  | { type: "bend"; target: BendTarget; alone: boolean; moved: boolean }
   | { type: "opening"; id: string; moved: boolean }
   | { type: "box"; start: Point; additive: boolean; base: PlanSelection }
   | { type: "lot"; start: Point }
   | { type: "rect"; start: Point; moved: boolean };
+
+/** What to say beside the diamond while a wall is bent: radius and length, or that it snapped flat or to a half circle. */
+function bendReadout(plan: FloorPlan, target: BendTarget, snap: BendSnap): { at: Point; text: string } | null {
+  const info = bendInfo(plan, target);
+  if (!info) return null;
+  const at = scaleV(add(info.a, info.b), 0.5);
+  if (!info.radius) return { at, text: `Straight · ${formatLength(info.chord)}` };
+  const note = snap === "half" ? "half circle · " : snap === "radius" ? "matches a curve · " : "";
+  return { at, text: `${note}R ${formatLength(info.radius)} · arc ${formatLength(info.length)}` };
+}
 
 const MIN_SCALE = 0.04;
 const MAX_SCALE = 5;
@@ -121,7 +134,8 @@ export default function PlanCanvas(props: Props) {
   const [rectEnd, setRectEnd] = useState<Point | null>(null);
   const [typed, setTyped] = useState("");
   const [selCorner, setSelCorner] = useState<{ roomId: string; i: number } | null>(null);
-  const [hoverWall, setHoverWall] = useState<{ a: Point; b: Point } | null>(null);
+  const [hoverWall, setHoverWall] = useState<OpeningHost | null>(null);
+  const [bendTip, setBendTip] = useState<{ at: Point; text: string } | null>(null);
   const [dragGuides, setDragGuides] = useState<Guide[]>([]);
   const [tapePts, setTapePts] = useState<Point[]>([]);
   const [tapeEnd, setTapeEnd] = useState<Point | null>(null);
@@ -227,8 +241,10 @@ export default function PlanCanvas(props: Props) {
   }, [focus?.key]);
 
   // ---- What's drawn ----
-  const pieces = useMemo(() => wallPieces(shown, exteriorIn), [shown, exteriorIn]);
-  const geos = useMemo(() => openingGeometries(shown), [shown]);
+  // Curves are drawn as many short straight pieces; the saved plan keeps them as single curved walls.
+  const fp = useMemo(() => flatPlan(shown, DRAW_STEP_DEG), [shown]);
+  const pieces = useMemo(() => wallPieces(fp, exteriorIn), [fp, exteriorIn]);
+  const geos = useMemo(() => openingGeometries(fp), [fp]);
   const solids = useMemo(() => solidWalls(pieces, geos), [pieces, geos]);
   const thicknessAt = useCallback(
     (g: OpeningGeometry) => {
@@ -252,6 +268,14 @@ export default function PlanCanvas(props: Props) {
   const selRoom = single?.kind === "room" && tool === "select" ? shown.rooms.find((r) => r.id === single.id) : undefined;
   const selFixture = single?.kind === "fixture" && tool === "select" ? shown.fixtures.find((f) => f.id === single.id) : undefined;
   const selRoomId = selRoom?.id;
+  // The diamonds: every side of a picked room, the picked side of a room, or a picked wall.
+  const bendTargets: BendTarget[] = useMemo(() => {
+    if (!single) return [];
+    if (single.kind === "room" && selRoom) return selRoom.polygon.map((_, edge) => ({ roomId: selRoom.id, edge }));
+    if (single.kind === "edge") return [{ roomId: parseEdgeId(single.id).roomId, edge: parseEdgeId(single.id).edge }];
+    if (single.kind === "wall") return [{ wallId: single.id }];
+    return [];
+  }, [single, selRoom]);
   useEffect(() => {
     setSelCorner((c) => (c && c.roomId === selRoomId ? c : null));
   }, [selRoomId]);
@@ -268,13 +292,15 @@ export default function PlanCanvas(props: Props) {
   const world = () => layerRef.current?.getRelativePointerPosition() ?? { x: 0, y: 0 };
 
   /** The plan element under a Konva node. */
-  function elementOf(node: Konva.Node | null): (PlanItem & { corner?: number; mid?: number }) | null {
+  function elementOf(node: Konva.Node | null): (PlanItem & { corner?: number; mid?: number; bend?: string }) | null {
     if (!node) return null;
     const mid = node.findAncestor(".mid", true);
     if (mid) {
       const { roomId, edge } = parseEdgeId(mid.id());
       return { kind: "room", id: roomId, mid: edge };
     }
+    const bend = node.findAncestor(".bend", true);
+    if (bend) return bend.id().includes("#") ? { kind: "room", id: bend.id().split("#")[0], bend: bend.id() } : { kind: "wall", id: bend.id(), bend: bend.id() };
     const corner = node.findAncestor(".corner", true);
     if (corner) {
       const { roomId, edge } = parseEdgeId(corner.id());
@@ -321,9 +347,9 @@ export default function PlanCanvas(props: Props) {
     const f: Fixture = { id: newPlanId("f"), kind: t.id, x: Math.round(p.x), y: Math.round(p.y), rotation: 0, widthIn: t.widthIn, depthIn: t.depthIn };
     const near = nearestHost(plan, p, t.depthIn / 2 + 18);
     if (near) {
-      const u = unit(sub(near.seg.b, near.seg.a));
+      const u = near.u;
       const inward = scaleV(leftNormal(u), near.side);
-      const along = add(near.seg.a, scaleV(u, clampOffset(near.t, t.widthIn, near.seg.length)));
+      const along = pointOnEdge(near.seg.a, near.seg.b, near.seg.bulge ?? 0, clampOffset(near.t, t.widthIn, near.seg.length));
       const at = add(along, scaleV(inward, t.depthIn / 2 + 2.5));
       f.x = round1(at.x);
       f.y = round1(at.y);
@@ -527,13 +553,19 @@ export default function PlanCanvas(props: Props) {
       setBox({ x0: p.x, y0: p.y, x1: p.x, y1: p.y });
       return;
     }
+    if (el.bend !== undefined) {
+      // The diamond: pull the wall into a curve. Option bends one room's side alone.
+      const target: BendTarget = el.bend.includes("#") ? { roomId: parseEdgeId(el.bend).roomId, edge: parseEdgeId(el.bend).edge } : { wallId: el.bend };
+      gesture.current = { type: "bend", target, alone: e.evt.altKey, moved: false };
+      return;
+    }
     if (el.mid !== undefined) {
       // A new corner is born in the middle of the edge and pulled out with the mouse.
       const room = plan.rooms.find((r) => r.id === el.id);
       if (!room) return;
       const a = room.polygon[el.mid];
       const b = room.polygon[(el.mid + 1) % room.polygon.length];
-      const born = insertGluedCorner(plan, el.id, el.mid, scaleV(add(a, b), 0.5));
+      const born = insertGluedCorner(plan, el.id, el.mid, pointOnEdge(a, b, leftBulge(room, el.mid), roomEdgeLength(room, el.mid) / 2));
       gesture.current = { type: "corner", roomId: el.id, i: born.index, base: born.plan, born: true, moved: false };
       setSelCorner({ roomId: el.id, i: born.index });
       setDragCorner({ roomId: el.id, i: born.index });
@@ -574,14 +606,16 @@ export default function PlanCanvas(props: Props) {
     if (!g) {
       // Hovering a wall shows its length, even when wall lengths are hidden.
       if (tool === "select" && !drafting) {
-        let best: { a: Point; b: Point; d: number } | null = null;
+        let best: { host: OpeningHost; d: number } | null = null;
         for (const pc of pieces) {
           if (pc.open) continue;
           const d = project(p, pc.a, pc.b).d;
-          if (d <= Math.max(pc.thicknessIn / 2 + 2, 7 / s) && (!best || d < best.d)) best = { a: pc.a, b: pc.b, d };
+          if (d > Math.max(pc.thicknessIn / 2 + 2, 7 / s) || (best && d >= best.d)) continue;
+          // A curved wall is one wall: measure it end to end, not by its short pieces.
+          best = { host: savedHost(fp, pc.host), d };
         }
         const hit = best;
-        setHoverWall((h) => (hit ? (h && h.a === hit.a && h.b === hit.b ? h : { a: hit.a, b: hit.b }) : null));
+        setHoverWall((h) => (hit ? (h && sameHost(h, hit.host) ? h : hit.host) : null));
       }
       if (drafting) setCursor(snapFrom(draft[draft.length - 1], p, pickTargets([]), tol, snap, shift, tool === "room" && draft.length >= 2 ? [draft[0]] : []).p);
       return;
@@ -634,8 +668,23 @@ export default function PlanCanvas(props: Props) {
       g.moved = true;
       const next = moveOpeningTo(base, g.id, p, Math.max(18, 14 / s));
       setPreview(next);
-      const og = openingGeometries(next).find((x) => x.opening.id === g.id);
-      setDragGuides(og ? openingGuides(og) : []);
+      const moved = next.openings.find((x) => x.id === g.id);
+      const seg = moved && hostSegment(next, moved.host);
+      if (moved && seg?.bulge) setDragGuides(curvedOpeningGuides(seg, moved));
+      else {
+        const og = openingGeometries(next).find((x) => x.opening.id === g.id);
+        setDragGuides(og ? openingGuides(og) : []);
+      }
+    } else if (g.type === "bend") {
+      const info = bendInfo(base, g.target);
+      if (!info) return;
+      const alone = g.alone || e.evt.altKey;
+      const raw = bowFromPoint(info.a, info.b, p);
+      const sn = snapBow(info.chord, raw, planRadii(base, [g.target]), s, shift);
+      g.moved = true;
+      const next = bendWall(base, g.target, sn.left, alone);
+      setPreview(next);
+      setBendTip(bendReadout(next, g.target, sn.snap));
     } else if (g.type === "box") {
       setBox({ x0: g.start.x, y0: g.start.y, x1: p.x, y1: p.y });
     } else if (g.type === "lot") {
@@ -649,6 +698,7 @@ export default function PlanCanvas(props: Props) {
     setGuides({});
     setDragGuides([]);
     setDragCorner(null);
+    setBendTip(null);
     if (!g) return;
     const { preview: pv } = latest.current;
     if (g.type === "rect") {
@@ -698,11 +748,11 @@ export default function PlanCanvas(props: Props) {
     if (tool !== "select" || tape || lotMode || spaceDown || !props.onContext) return;
     const stage = e.target.getStage()!;
     const el = elementOf(e.target === stage ? null : e.target);
-    if (el && el.mid === undefined) {
+    if (el && el.mid === undefined && !el.bend) {
       if (el.corner !== undefined) setSelCorner({ roomId: el.id, i: el.corner });
       if (el.corner !== undefined || !isPicked(selection, el.id)) onSelect([el.corner !== undefined ? { kind: "room", id: el.id } : { kind: el.kind, id: el.id }]);
     }
-    props.onContext({ x: e.evt.clientX, y: e.evt.clientY, el: el && el.mid === undefined ? el : null, at: world() });
+    props.onContext({ x: e.evt.clientX, y: e.evt.clientY, el: el && el.mid === undefined && !el.bend ? el : null, at: world() });
   }
 
   function onDblClick(e: Konva.KonvaEventObject<MouseEvent>) {
@@ -710,7 +760,7 @@ export default function PlanCanvas(props: Props) {
     if (tool !== "select") return;
     const stage = e.target.getStage()!;
     const el = elementOf(e.target === stage ? null : e.target);
-    if (!el) return;
+    if (!el || el.bend) return;
     if (el.corner !== undefined) {
       const room = plan.rooms.find((r) => r.id === el.id);
       if (room && room.polygon.length > 3) onChange(removeCorner(plan, el.id, el.corner));
@@ -722,7 +772,7 @@ export default function PlanCanvas(props: Props) {
       if (!room) return;
       const a = room.polygon[edge];
       const b = room.polygon[(edge + 1) % room.polygon.length];
-      onChange(insertCorner(plan, roomId, edge, project(world(), a, b).point));
+      onChange(insertCorner(plan, roomId, edge, projectOnEdge(world(), a, b, leftBulge(room, edge)).point));
       onSelect([{ kind: "room", id: roomId }]);
     }
   }
@@ -808,6 +858,7 @@ export default function PlanCanvas(props: Props) {
   // ---- Drawing ----
   const panning = tool === "pan" || spaceDown;
   const cursorStyle = panning ? "grab" : lotMode ? "move" : tape || tool !== "select" ? "crosshair" : "default";
+  const hoverSeg = hoverWall ? hostSegment(shown, hoverWall) : null;
   const selectedEdge = single?.kind === "edge" ? parseEdgeId(single.id) : null;
   const ghostOpening = tool === "door" && cursor ? ghostOpeningAt(plan, cursor, placeOpening, s) : null;
   const ghostFixture = tool === "fixture" && cursor ? fixtureAt(cursor) : null;
@@ -840,7 +891,10 @@ export default function PlanCanvas(props: Props) {
           onMouseDown={onMouseDown}
           onMouseMove={onMouseMove}
           onMouseUp={onMouseUp}
-          onMouseLeave={onMouseUp}
+          onMouseLeave={() => {
+            setHoverWall(null);
+            onMouseUp();
+          }}
           onDblClick={onDblClick}
           onContextMenu={onContextMenu}
           onWheel={onWheel}
@@ -859,7 +913,7 @@ export default function PlanCanvas(props: Props) {
                 key={r.id}
                 id={r.id}
                 name="room"
-                points={flat(r.polygon)}
+                points={flat(roomOutline(r))}
                 closed
                 fill={roomFill(r.type)}
                 opacity={isPicked(selection, r.id) ? 0.85 : 0.55}
@@ -880,7 +934,7 @@ export default function PlanCanvas(props: Props) {
 
             <FurnitureOutlines furniture={shown.furniture ?? []} s={s} names={labelOn(labels, "fixtureNames")} />
 
-            <PlanWalls solids={solids} selection={selection} s={s} />
+            <PlanWalls solids={solids} selection={selection} s={s} toSaved={(h) => savedHost(fp, h)} />
 
             {geos.map((g) => (
               <OpeningSymbol key={g.opening.id} g={g} thickness={thicknessAt(g)} selected={isPicked(selection, g.opening.id)} scale={s} name="opening" />
@@ -888,12 +942,14 @@ export default function PlanCanvas(props: Props) {
 
             <OutsideDims plan={shown} labels={labels} s={s} />
             <ThingLabels plan={shown} geos={geos} labels={labels} s={s} />
-            <RoomLabels plan={shown} labels={labels} selectedEdge={selectedEdge} selectedRoomId={selRoom?.id} hoverWall={hoverWall} s={s} />
+            <RoomLabels plan={shown} labels={labels} selectedEdge={selectedEdge} selectedRoomId={selRoom?.id} hoverWall={hoverSeg ? { a: hoverSeg.a, b: hoverSeg.b, bulge: hoverSeg.bulge } : null} s={s} />
             {dragGuides.length > 0 && <DistanceGuides guides={dragGuides} labels={labels} s={s} />}
             {tape && tapePts.length > 0 && <TapeLine a={tapePts[0]} b={tapePts[1] ?? tapeEnd} labels={labels} s={s} />}
 
             {/* "+" nodes in the middle of each edge, and corner dots, on the selected room. */}
             {selRoom && !dragCorner && <MidNodes room={selRoom} s={s} />}
+            {tool === "select" && !dragCorner && !lotMode && <BendHandles targets={bendTargets} plan={shown} s={s} />}
+            {bendTip && <BendTip at={bendTip.at} text={bendTip.text} s={s} />}
             {selRoom &&
               selRoom.polygon.map((p, i) => (
                 <Circle

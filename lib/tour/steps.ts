@@ -52,7 +52,7 @@ export const TOUR: TourStep[] = [
     target: "stage-plan",
     stage: "plan",
     title: "5. Floor plan",
-    body: "Real walls, doors, windows, stairs and fixtures. Pick a room and drag the + on a wall to reshape it. Start from your sketch or a blank page, then switch to 3D to see the whole house on the land.",
+    body: "Real walls, doors, windows, stairs and fixtures. Pick a room and drag the + on a wall to reshape it, or the diamond to bend a wall into a curve. Start from your sketch or a blank page, then switch to 3D to see the whole house on the land.",
   },
   {
     target: "stage-interior",

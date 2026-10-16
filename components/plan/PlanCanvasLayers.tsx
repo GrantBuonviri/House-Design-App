@@ -4,8 +4,13 @@ import { Circle, Group, Layer, Line, Rect, Text } from "react-konva";
 import type { BubbleDiagram, FloorPlan, FurnitureItem, Level, PlanRoom, Point } from "@/lib/model/schema";
 import { formatFeetInches } from "@/lib/model/units";
 import { add, dist, edgesOf, leftNormal, scale as scaleV, sub, unit } from "@/lib/plan/geometry";
+import { bendInfo, type BendTarget } from "@/lib/plan/bend";
+import { leftBulge, pointOnEdge, roomEdgeLength } from "@/lib/plan/arcs";
+import { edgeFrame } from "@/lib/plan/labels";
+import { roomOutline } from "@/lib/plan/flatten";
 import { roomSqft } from "@/lib/plan/measure";
 import { furnitureOutline, furnitureType } from "@/lib/plan/furniture";
+import type { OpeningHost } from "@/lib/model/schema";
 import type { SolidWall } from "@/lib/plan/walls";
 import type { Overhang } from "@/lib/plan/support";
 import type { Region } from "@/lib/house3d/footprint";
@@ -28,10 +33,10 @@ export function ReferenceLayer({ sketch, below, support, above, s }: { sketch: B
         </Group>
       ))}
       {below?.plan.rooms.map((r) => (
-        <Line key={r.id} points={flat(r.polygon)} closed stroke={INK} strokeWidth={1} strokeScaleEnabled={false} dash={[6, 4]} opacity={0.3} />
+        <Line key={r.id} points={flat(roomOutline(r))} closed stroke={INK} strokeWidth={1} strokeScaleEnabled={false} dash={[6, 4]} opacity={0.3} />
       ))}
       {above?.rooms.map((r) => (
-        <Line key={`above-${r.id}`} points={flat(r.polygon)} closed stroke={INK} strokeWidth={1} strokeScaleEnabled={false} dash={[2, 4]} opacity={0.3} />
+        <Line key={`above-${r.id}`} points={flat(roomOutline(r))} closed stroke={INK} strokeWidth={1} strokeScaleEnabled={false} dash={[2, 4]} opacity={0.3} />
       ))}
       {support?.flatMap((r, i) => [r.outline, ...r.holes].map((ring, k) => <Line key={`support-${i}-${k}`} points={flat(ring)} closed stroke={INK} strokeWidth={2} strokeScaleEnabled={false} opacity={0.55} />))}
     </Layer>
@@ -110,11 +115,12 @@ export function FurnitureOutlines({ furniture, s, names = true }: { furniture: F
 const HALF_WALL = "#9a9285";
 const CAP = "#d6cbb6";
 
-export function PlanWalls({ solids, selection, s }: { solids: SolidWall[]; selection: PlanSelection; s: number }) {
+export function PlanWalls({ solids, selection, s, toSaved }: { solids: SolidWall[]; selection: PlanSelection; s: number; toSaved: (h: OpeningHost) => OpeningHost }) {
   return (
     <>
       {solids.map((w, i) => {
-        const host = w.piece.host;
+        // A curved wall is many short pieces on screen but one wall: they all answer to the saved wall.
+        const host = toSaved(w.piece.host);
         const id = "roomId" in host ? edgeId(host.roomId, host.edge) : host.wallId;
         const on = isPicked(selection, id) || ("wallId" in host ? false : isPicked(selection, host.roomId) && selection.length === 1);
         if (w.open) {
@@ -221,13 +227,14 @@ export function DraftPreview({ rectStart, rectEnd, draft, cursor, tool, typed, s
   );
 }
 
-/** A small "+" in the middle of each edge of the selected room: drag one to make a new corner. */
+/** A small "+" on each edge of the selected room, a little off the middle (the diamond bends the wall there): drag one to make a new corner. */
 export function MidNodes({ room, s }: { room: PlanRoom; s: number }) {
   return (
     <>
       {edgesOf(room.polygon).map((e) => {
-        if (dist(e.a, e.b) * s < 28) return null;
-        const m = scaleV(add(e.a, e.b), 0.5);
+        const length = roomEdgeLength(room, e.i);
+        if (length * s < 56) return null;
+        const m = pointOnEdge(e.a, e.b, leftBulge(room, e.i), length * 0.3);
         const r = 5 / s;
         return (
           <Group key={e.i} id={edgeId(room.id, e.i)} name="mid" x={m.x} y={m.y}>
@@ -241,23 +248,57 @@ export function MidNodes({ room, s }: { room: PlanRoom; s: number }) {
   );
 }
 
+/** A small diamond in the middle of each picked wall: drag it sideways to bow the wall into a curve. */
+export function BendHandles({ targets, plan, s }: { targets: BendTarget[]; plan: FloorPlan; s: number }) {
+  return (
+    <>
+      {targets.map((t) => {
+        const info = bendInfo(plan, t);
+        if (!info || info.length * s < 28) return null;
+        const m = pointOnEdge(info.a, info.b, info.left, info.length / 2);
+        const r = 6 / s;
+        const id = "roomId" in t ? edgeId(t.roomId, t.edge) : t.wallId;
+        return (
+          <Group key={id} id={id} name="bend" x={m.x} y={m.y}>
+            <Line points={[0, -r, r, 0, 0, r, -r, 0]} closed fill={info.radius ? ACCENT : "#fff"} stroke={ACCENT} strokeWidth={1.5} strokeScaleEnabled={false} hitStrokeWidth={8} />
+          </Group>
+        );
+      })}
+    </>
+  );
+}
+
+/** What the wall measures while it's being bent, on a white tag in the middle of the straight line across it. */
+export function BendTip({ at, text, s }: { at: Point; text: string; s: number }) {
+  const w = (text.length * 6.6 + 14) / s;
+  const h = 20 / s;
+  return (
+    <Group x={at.x} y={at.y} listening={false}>
+      <Rect x={-w / 2} y={-h / 2} width={w} height={h} fill="rgba(255,255,255,0.94)" stroke={ACCENT} strokeWidth={1} strokeScaleEnabled={false} cornerRadius={4 / s} />
+      <Text x={-w / 2} y={-6.5 / s} width={w} align="center" text={text} fontSize={12 / s} fontStyle="600" fill={ACCENT} wrap="none" />
+    </Group>
+  );
+}
+
 /** While a corner is dragged: the two edge lengths beside it and the room's square feet. */
 export function NodeReadout({ plan, roomId, i, s }: { plan: FloorPlan; roomId: string; i: number; s: number }) {
   const room = plan.rooms.find((r) => r.id === roomId);
   if (!room || !room.polygon[i]) return null;
   const n = room.polygon.length;
   const p = room.polygon[i];
-  const tag = (a: Point, b: Point, key: string) => {
-    const u = unit(sub(b, a));
-    const mid = add(scaleV(add(a, b), 0.5), scaleV(leftNormal(u), -(10 + 8 / s)));
+  const tag = (i: number, key: string) => {
+    const a = room.polygon[i];
+    const b = room.polygon[(i + 1) % n];
+    const f = edgeFrame(a, b, leftBulge(room, i));
+    const mid = add(f.mid, scaleV(leftNormal(f.u), -(10 + 8 / s)));
     const w = 90 / s;
-    return <Text key={key} x={mid.x} y={mid.y} offsetX={w / 2} offsetY={6 / s} width={w} align="center" rotation={uprightAngle(u)} text={formatFeetInches(dist(a, b))} fontSize={12 / s} fontStyle="600" fill={ACCENT} />;
+    return <Text key={key} x={mid.x} y={mid.y} offsetX={w / 2} offsetY={6 / s} width={w} align="center" rotation={uprightAngle(f.u)} text={formatFeetInches(roomEdgeLength(room, i))} fontSize={12 / s} fontStyle="600" fill={ACCENT} listening={false} />;
   };
   const w = 120 / s;
   return (
     <Group listening={false}>
-      {tag(room.polygon[(i - 1 + n) % n], p, "in")}
-      {tag(p, room.polygon[(i + 1) % n], "out")}
+      {tag((i - 1 + n) % n, "in")}
+      {tag(i, "out")}
       <Text x={p.x} y={p.y - 24 / s} offsetX={w / 2} width={w} align="center" text={`${roomSqft(room).toLocaleString("en-US")} sq ft`} fontSize={11.5 / s} fontStyle="600" fill={ACCENT} />
     </Group>
   );

@@ -1,7 +1,9 @@
-import type { FloorPlan, PlanLabels, Point } from "@/lib/model/schema";
+import type { FloorPlan, Opening, PlanLabels, Point, PlanRoom } from "@/lib/model/schema";
 import { formatFeetInches } from "@/lib/model/units";
 import { add, boundsOf, dist, isRectangle, scale as scaleV, sub, unit, type Bounds } from "./geometry";
-import type { OpeningGeometry } from "./walls";
+import { arcBetween, pointOnEdge, roomEdgeArc } from "./arcs";
+import { roomOutline, wallOutline } from "./flatten";
+import type { HostSegment, OpeningGeometry } from "./walls";
 
 /**
  * What the floor plan's labels say, and the measuring math behind them:
@@ -37,8 +39,9 @@ export function formatLength(inches: number, units: PlanLabels["units"] = "feet"
 }
 
 /** "12' 6" × 14'" for a rectangle; for other shapes, the longest width and depth. */
-export function roomSizeText(polygon: Point[], units: PlanLabels["units"] = "feet"): string {
-  if (isRectangle(polygon, 1)) {
+export function roomSizeText(polygon: Point[], units: PlanLabels["units"] = "feet", bulges?: PlanRoom["bulges"]): string {
+  if (bulges?.some((b) => b)) polygon = roomOutline({ polygon, bulges });
+  else if (isRectangle(polygon, 1)) {
     const w = dist(polygon[0], polygon[1]);
     const d = dist(polygon[1], polygon[2]);
     return `${formatLength(w, units)} × ${formatLength(d, units)}`;
@@ -87,7 +90,7 @@ function cluster(values: number[], tol = 3): number[] {
  */
 export function outsideDimensions(plan: FloorPlan, units: PlanLabels["units"] = "feet"): DimLine[] {
   const living = plan.rooms.filter((r) => r.polygon.length >= 3);
-  const all = boundsOf(living.flatMap((r) => r.polygon));
+  const all = boundsOf(living.flatMap((r) => roomOutline(r)));
   if (!all) return [];
   const lines: DimLine[] = [];
   const reach = 6;
@@ -103,7 +106,19 @@ export function outsideDimensions(plan: FloorPlan, units: PlanLabels["units"] = 
       return sd.horizontal ? { x: along, y: sd.edge + sd.out.y * off } : { x: sd.edge + sd.out.x * off, y: along };
     };
     const span = (b: Bounds): [number, number] => (sd.horizontal ? [b.x0, b.x1] : [b.y0, b.y1]);
-    const touching = living.map((r) => boundsOf(r.polygon)!).filter(sd.touches);
+    const touching = living.map((r) => boundsOf(roomOutline(r))!).filter(sd.touches);
+    // A curve on this side makes its stretch read "R 12' 0" too.
+    const curveNote = (p: number, q: number) => {
+      for (const r of living)
+        for (let i = 0; i < r.polygon.length; i++) {
+          const arc = roomEdgeArc(r, i);
+          const eb = arc && boundsOf(wallOutline(arc.a, arc.b, arc.bulge));
+          if (!arc || !eb || !sd.touches(eb)) continue;
+          const [e0, e1] = span(eb);
+          if (e0 >= p - 3 && e1 <= q + 3) return ` · R ${formatLength(arc.radius, units)}`;
+        }
+      return "";
+    };
     const breaks = cluster(touching.flatMap((b) => span(b)));
     const [lo, hi] = sd.horizontal ? [all.x0, all.x1] : [all.y0, all.y1];
     const stretches: [number, number][] = [];
@@ -113,10 +128,11 @@ export function outsideDimensions(plan: FloorPlan, units: PlanLabels["units"] = 
       if (q - p >= MIN_STRETCH_IN && touching.some((b) => span(b)[0] <= mid && mid <= span(b)[1])) stretches.push([p, q]);
     }
     // One stretch that is the whole side adds nothing beside the overall string.
-    if (stretches.length > 1 || (stretches.length === 1 && hi - lo - (stretches[0][1] - stretches[0][0]) > 3)) {
-      for (const [p, q] of stretches) lines.push({ a: at(p, 1), b: at(q, 1), text: formatLength(q - p, units), side: sd.side, row: 1, out: sd.out });
+    const strings = stretches.length > 1 || (stretches.length === 1 && hi - lo - (stretches[0][1] - stretches[0][0]) > 3);
+    if (strings) {
+      for (const [p, q] of stretches) lines.push({ a: at(p, 1), b: at(q, 1), text: formatLength(q - p, units) + curveNote(p, q), side: sd.side, row: 1, out: sd.out });
     }
-    lines.push({ a: at(lo, 2), b: at(hi, 2), text: formatLength(hi - lo, units), side: sd.side, row: 2, out: sd.out });
+    lines.push({ a: at(lo, 2), b: at(hi, 2), text: formatLength(hi - lo, units) + (strings ? "" : curveNote(lo, hi)), side: sd.side, row: 2, out: sd.out });
   }
   return lines;
 }
@@ -144,9 +160,14 @@ export function wallSegments(plan: FloorPlan, skipRooms: string[] = [], skipWall
   const segs: Seg[] = [];
   for (const r of plan.rooms) {
     if (skipRooms.includes(r.id)) continue;
-    r.polygon.forEach((a, i) => segs.push({ a, b: r.polygon[(i + 1) % r.polygon.length] }));
+    const outline = roomOutline(r);
+    outline.forEach((a, i) => segs.push({ a, b: outline[(i + 1) % outline.length] }));
   }
-  for (const w of plan.walls) if (!skipWalls.includes(w.id)) segs.push({ a: w.a, b: w.b });
+  for (const w of plan.walls) {
+    if (skipWalls.includes(w.id)) continue;
+    const pts = wallOutline(w.a, w.b, w.bulge);
+    for (let i = 0; i + 1 < pts.length; i++) segs.push({ a: pts[i], b: pts[i + 1] });
+  }
   return segs;
 }
 
@@ -194,4 +215,30 @@ export function tapeReading(a: Point, b: Point): { inches: number; angle: number
   const d = unit(sub(b, a));
   const deg = (Math.atan2(-d.y, d.x) * 180) / Math.PI;
   return { inches: dist(a, b), angle: Math.round(((deg % 360) + 360) % 360 * 10) / 10 };
+}
+
+// ---------- Curved walls ----------
+
+/** Where a wall's label goes: the middle of the wall along the wall, which way the wall runs there, its length and its radius (null when straight). */
+export function edgeFrame(a: Point, b: Point, bulge: number | undefined): { mid: Point; u: Point; length: number; radius: number | null } {
+  const arc = arcBetween(a, b, bulge ?? 0);
+  if (!arc) return { mid: scaleV(add(a, b), 0.5), u: unit(sub(b, a)), length: dist(a, b), radius: null };
+  const mid = pointOnEdge(a, b, bulge ?? 0, arc.length / 2);
+  // The tangent at the middle runs square to the radius, the way the wall runs.
+  const r = unit(sub(mid, arc.center));
+  const t = { x: -r.y, y: r.x };
+  const forward = Math.sign(arc.sweep) >= 0 ? t : scaleV(t, -1);
+  return { mid, u: forward, length: arc.length, radius: arc.radius };
+}
+
+/** The same distance guides as `openingGuides`, for a door or window on a curve: measured along the curve. */
+export function curvedOpeningGuides(seg: HostSegment, o: Opening): Guide[] {
+  const bulge = seg.bulge ?? 0;
+  const at = (s: number) => pointOnEdge(seg.a, seg.b, bulge, Math.max(0, Math.min(seg.length, s)));
+  const lo = o.offsetIn - o.widthIn / 2;
+  const hi = o.offsetIn + o.widthIn / 2;
+  const out: Guide[] = [];
+  if (lo > 0.5) out.push({ from: seg.a, to: at(lo), inches: lo });
+  if (seg.length - hi > 0.5) out.push({ from: at(hi), to: seg.b, inches: seg.length - hi });
+  return out;
 }

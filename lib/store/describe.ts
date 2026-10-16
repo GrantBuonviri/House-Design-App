@@ -86,7 +86,7 @@ function moved(a: object, b: object): boolean {
 function describePlan(a: FloorPlan | undefined, b: FloorPlan | undefined): string | null {
   if (!a || !b) return b ? "start the floor plan" : "clear the floor plan";
   const roomName = (r: FloorPlan["rooms"][number]) => r.name || "a room";
-  const special = describeOpenWalls(a, b, roomName) ?? describeSplit(a, b, roomName) ?? describeTrim(a, b, roomName);
+  const special = describeBend(a, b, roomName) ?? describeOpenWalls(a, b, roomName) ?? describeSplit(a, b, roomName) ?? describeTrim(a, b, roomName);
   if (special) return special;
   const rooms = describeList(a.rooms, b.rooms, roomName, (was, now) =>
     was.name !== now.name ? `rename ${roomName(was)}` : moved(was, now) ? `move ${roomName(now)}` : `change ${roomName(now)}`,
@@ -156,6 +156,24 @@ function describeDesign(a: DesignChoices, b: DesignChoices, where: "inside" | "o
 }
 
 /** Combining rooms, and taking out or putting back a wall (with any doors and windows that went with it). */
+/** A wall bent or made straight: the room (or loose wall) is the same but its curves changed. */
+function describeBend(a: FloorPlan, b: FloorPlan, roomName: (r: FloorPlan["rooms"][number]) => string): string | null {
+  const curved = (n: number[] | undefined) => (n ?? []).filter((x) => x !== 0).length;
+  for (const now of b.rooms) {
+    const was = a.rooms.find((r) => r.id === now.id);
+    if (!was || json(was.polygon) !== json(now.polygon) || json(was.bulges ?? null) === json(now.bulges ?? null)) continue;
+    const before = curved(was.bulges);
+    const after = curved(now.bulges);
+    return after === 0 ? `straighten the ${roomName(now)} wall` : after < before ? `straighten a ${roomName(now)} wall` : before === 0 || after > before ? `curve the ${roomName(now)} wall` : `bend the ${roomName(now)} wall`;
+  }
+  for (const now of b.walls) {
+    const was = a.walls.find((w) => w.id === now.id);
+    if (!was || json(was.a) !== json(now.a) || json(was.b) !== json(now.b) || (was.bulge ?? 0) === (now.bulge ?? 0)) continue;
+    return !now.bulge ? "straighten a wall" : !was.bulge ? "curve a wall" : "bend a wall";
+  }
+  return null;
+}
+
 function describeOpenWalls(a: FloorPlan, b: FloorPlan, roomName: (r: FloorPlan["rooms"][number]) => string): string | null {
   const ids = new Set(b.rooms.map((r) => r.id));
   const gone = a.rooms.filter((r) => !ids.has(r.id));

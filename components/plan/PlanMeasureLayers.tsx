@@ -6,8 +6,10 @@ import { roomType } from "@/lib/brief/rooms";
 import { CATEGORY_COLOR } from "@/lib/bubbles/shapes";
 import { fixtureType } from "@/lib/plan/catalog";
 import { add, dist, edgesOf, leftNormal, polygonCenter, scale as scaleV, sub, unit } from "@/lib/plan/geometry";
-import { formatLength, labelOn, openingTagText, outsideDimensions, roomSizeText, tapeReading, type Guide } from "@/lib/plan/labels";
+import { edgeFrame, formatLength, labelOn, openingTagText, outsideDimensions, roomSizeText, tapeReading, type Guide } from "@/lib/plan/labels";
 import { roomSqft } from "@/lib/plan/measure";
+import { leftBulge, wallLength } from "@/lib/plan/arcs";
+import { roomOutline } from "@/lib/plan/flatten";
 import type { OpeningGeometry } from "@/lib/plan/walls";
 import { ACCENT, INK } from "./PlanShapes";
 import { uprightAngle } from "./canvasHelpers";
@@ -47,44 +49,44 @@ function LText({ x, y, rotation = 0, text, fontSize, fill, bold, bg, maxW, s }: 
 }
 
 /** Room names, sizes and wall lengths; the hovered wall's length; and the selected edge's, larger. */
-export function RoomLabels({ plan, labels, selectedEdge, selectedRoomId, hoverWall, s }: { plan: FloorPlan; labels: PlanLabels; selectedEdge: { roomId: string; edge: number } | null; selectedRoomId?: string; hoverWall: { a: Point; b: Point } | null; s: number }) {
+export function RoomLabels({ plan, labels, selectedEdge, selectedRoomId, hoverWall, s }: { plan: FloorPlan; labels: PlanLabels; selectedEdge: { roomId: string; edge: number } | null; selectedRoomId?: string; hoverWall: { a: Point; b: Point; bulge?: number } | null; s: number }) {
   const k = labels.textSize;
   const bg = labels.background === "white";
   const units = labels.units;
   const showEdges = labelOn(labels, "wallLengths");
-  const lengthAt = (a: Point, b: Point, offset: number) => {
-    const u = unit(sub(b, a));
-    return { at: add(scaleV(add(a, b), 0.5), scaleV(leftNormal(u), offset)), rot: uprightAngle(u) };
-  };
   const selected = (() => {
     const r = selectedEdge && plan.rooms.find((x) => x.id === selectedEdge.roomId);
     if (!selectedEdge || !r) return null;
     const a = r.polygon[selectedEdge.edge];
     const b = r.polygon[(selectedEdge.edge + 1) % r.polygon.length];
-    const { at, rot } = lengthAt(a, b, 10 + 12 / s);
-    return <LText x={at.x} y={at.y} rotation={rot} text={formatLength(dist(a, b), units)} fontSize={(13 * k) / s} fill={ACCENT} bold bg={bg} s={s} />;
+    const f = edgeFrame(a, b, leftBulge(r, selectedEdge.edge));
+    const at = add(f.mid, scaleV(leftNormal(f.u), 10 + 12 / s));
+    return <LText x={at.x} y={at.y} rotation={uprightAngle(f.u)} text={formatLength(f.length, units) + (f.radius ? ` · R ${formatLength(f.radius, units)}` : "")} fontSize={(13 * k) / s} fill={ACCENT} bold bg={bg} s={s} />;
   })();
-  const hovered = hoverWall && dist(hoverWall.a, hoverWall.b) > 1 ? lengthAt(hoverWall.a, hoverWall.b, 14 / s + 6) : null;
+  const hf = hoverWall ? edgeFrame(hoverWall.a, hoverWall.b, hoverWall.bulge) : null;
+  const hovered = hoverWall && hf && hf.length > 1 ? { at: add(hf.mid, scaleV(leftNormal(hf.u), 14 / s + 6)), rot: uprightAngle(hf.u) } : null;
   const selRoom = selectedRoomId ? plan.rooms.find((r) => r.id === selectedRoomId) : undefined;
   const edgeText = (r: FloorPlan["rooms"][number], strong: boolean) =>
     edgesOf(r.polygon).map((e) => {
-      const L = dist(e.a, e.b);
+      // A curved wall measures along the curve, with its label at the middle of it.
+      const f = edgeFrame(e.a, e.b, leftBulge(r, e.i));
+      const L = f.length;
       if (!strong && L * s < 64 * k) return null;
-      const u = unit(sub(e.b, e.a));
+      const u = f.u;
       // Inside the room: corners run clockwise, so inside is to the right of each edge.
-      const mid = add(scaleV(add(e.a, e.b), 0.5), scaleV(scaleV(leftNormal(u), -1), 6 + (9 * k) / s));
+      const mid = add(f.mid, scaleV(scaleV(leftNormal(u), -1), 6 + (9 * k) / s));
       const roomColor = darker(CATEGORY_COLOR[roomType(r.type ?? "").category] ?? "#d8d2c6");
-      return <LText key={`${r.id}-${e.i}`} x={mid.x} y={mid.y} rotation={uprightAngle(u)} text={formatLength(L, units)} fontSize={((strong ? 10.5 : 9.5) * k) / s} fill={strong ? ACCENT : toneColor(labels, "faint", roomColor)} bold={strong} bg={bg} s={s} />;
+      return <LText key={`${r.id}-${e.i}`} x={mid.x} y={mid.y} rotation={uprightAngle(u)} text={formatLength(L, units) + (strong && f.radius ? ` · R ${formatLength(f.radius, units)}` : "")} fontSize={((strong ? 10.5 : 9.5) * k) / s} fill={strong ? ACCENT : toneColor(labels, "faint", roomColor)} bold={strong} bg={bg} s={s} />;
     });
   return (
     <>
       <Group listening={false}>
         {plan.rooms.map((r) => {
-          const c = polygonCenter(r.polygon);
+          const c = polygonCenter(roomOutline(r));
           const roomColor = darker(r.type ? CATEGORY_COLOR[roomType(r.type).category] : "#d8d2c6");
           const lines: { text: string; size: number; fill: string; bold?: boolean }[] = [];
           if (labelOn(labels, "roomNames")) lines.push({ text: r.name, size: 12.5, fill: toneColor(labels, "main", roomColor), bold: labels.boldNames });
-          if (labelOn(labels, "roomSizes")) lines.push({ text: roomSizeText(r.polygon, units), size: 10, fill: toneColor(labels, "soft", roomColor) });
+          if (labelOn(labels, "roomSizes")) lines.push({ text: roomSizeText(r.polygon, units, r.bulges), size: 10, fill: toneColor(labels, "soft", roomColor) });
           if (labelOn(labels, "sqft")) lines.push({ text: `${roomSqft(r).toLocaleString("en-US")} sq ft`, size: 10.5, fill: toneColor(labels, "soft", roomColor) });
           const gap = 14 * k;
           return (
@@ -99,14 +101,15 @@ export function RoomLabels({ plan, labels, selectedEdge, selectedRoomId, hoverWa
         {!labels.hideAll && !showEdges && selRoom && edgeText(selRoom, true)}
         {showEdges &&
           plan.walls.map((w) => {
-            const L = dist(w.a, w.b);
+            const L = wallLength(w);
             if (L * s < 64 * k) return null;
-            const { at, rot } = lengthAt(w.a, w.b, 6 + (9 * k) / s);
-            return <LText key={`wl-${w.id}`} x={at.x} y={at.y} rotation={rot} text={formatLength(L, units)} fontSize={(9.5 * k) / s} fill={toneColor(labels, "faint")} bg={bg} s={s} />;
+            const f = edgeFrame(w.a, w.b, w.bulge);
+            const at = add(f.mid, scaleV(leftNormal(f.u), 6 + (9 * k) / s));
+            return <LText key={`wl-${w.id}`} x={at.x} y={at.y} rotation={uprightAngle(f.u)} text={formatLength(L, units)} fontSize={(9.5 * k) / s} fill={toneColor(labels, "faint")} bg={bg} s={s} />;
           })}
       </Group>
       {selected}
-      {hovered && hoverWall && <LText x={hovered.at.x} y={hovered.at.y} rotation={hovered.rot} text={formatLength(dist(hoverWall.a, hoverWall.b), units)} fontSize={(12 * k) / s} fill={ACCENT} bold bg s={s} />}
+      {hovered && hoverWall && <LText x={hovered.at.x} y={hovered.at.y} rotation={hovered.rot} text={formatLength(hf!.length, units) + (hf!.radius ? ` · R ${formatLength(hf!.radius, units)}` : "")} fontSize={(12 * k) / s} fill={ACCENT} bold bg s={s} />}
     </>
   );
 }
