@@ -158,6 +158,10 @@ function drawPlan(project: Project, level: Level, viewNumber: number, base: bool
       pline([at(-w / 2, 0), at(-w / 2 + w * 0.2, 0)], "medium");
       return;
     }
+    if (o.style === "door-bifold") {
+      pline([at(-w / 2, 0), at(-w / 4, (sv * w) / 8), at(0, 0), at(w / 4, (sv * w) / 8), at(w / 2, 0)], "medium");
+      return;
+    }
     if (o.style === "door-barn") {
       pline([at(-w / 2 - 4, sv * (th / 2 + 2)), at(w / 2 + 4, sv * (th / 2 + 2))], "heavy");
       return;

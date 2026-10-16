@@ -107,6 +107,18 @@ export function OpeningSymbol({ g, thickness, selected, scale, name, ghost }: { 
       ctx.stroke();
       return;
     }
+    if (o.style === "door-bifold") {
+      // Two pairs of panels folded part way open, as a zigzag on the side they fold to.
+      ctx.beginPath();
+      ctx.moveTo(-w / 2, 0);
+      ctx.lineTo(-w / 4, (sgn * w) / 8);
+      ctx.lineTo(0, 0);
+      ctx.lineTo(w / 4, (sgn * w) / 8);
+      ctx.lineTo(w / 2, 0);
+      ctx.lineWidth = 2 / scale;
+      ctx.stroke();
+      return;
+    }
     if (o.style === "door-barn") {
       const y = sgn * (t / 2 + 2);
       ctx.beginPath();

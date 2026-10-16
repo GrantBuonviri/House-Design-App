@@ -14,6 +14,9 @@ import { layerItems, moveInside } from "@/lib/furnish/layer";
 import { OPENING_TYPES } from "@/lib/plan/catalog";
 import { catalogEntry, type CatalogEntry } from "@/lib/furnish/catalog";
 import { furnishLayouts, deleteItem, patchItem, stageItems } from "@/lib/furnish/stage";
+import { CLOSET_SIZES, clampClosetSize, isClosetRod, type ClosetSize, type ClosetType } from "@/lib/furnish/closets";
+import { canAutoFurnish, furnishLevel, furnishRoom, furnishSummary } from "@/lib/furnish/autoFurnish";
+import { formatFeetInches } from "@/lib/model/units";
 import { Note } from "@/components/brief/bits";
 import LevelTabs from "@/components/bubbles/LevelTabs";
 import PlanSidePanel from "@/components/plan/PlanSidePanel";
@@ -28,6 +31,8 @@ const PlanCanvas = dynamic(() => import("@/components/plan/PlanCanvas"), {
 });
 
 const CANVAS_HEIGHT = 640;
+
+const CLOSET_DELETED = "Took out the closet's rod and shelf. Its walls and door stay: Things to check can remove them on the floor plan.";
 
 type FurnishTool = "select" | "place" | "wall" | "door" | "pan";
 
@@ -66,6 +71,9 @@ export default function FurnishStage({ onContinue, onGoToPlan, initialLevelId }:
   const [flash, setFlash] = useState<string>();
   const [drafting, setDrafting] = useState(false);
   const [focus, setFocus] = useState<{ at: Point; key: number } | null>(null);
+  const [closetSize, setClosetSize] = useState<ClosetSize>(CLOSET_SIZES["reach-in"]);
+  const [autoRoom, setAutoRoom] = useState("all");
+  const [autoNotes, setAutoNotes] = useState<string[]>([]);
 
   useEffect(() => {
     if (!flash) return;
@@ -111,6 +119,7 @@ export default function FurnishStage({ onContinue, onGoToPlan, initialLevelId }:
       setWallHeight(e.type as WallHeight);
       setTool("wall");
     } else {
+      if (e.kind === "closet") setClosetSize(CLOSET_SIZES[e.type as ClosetType]);
       setPick(e.id);
       setTool("place");
     }
@@ -142,6 +151,7 @@ export default function FurnishStage({ onContinue, onGoToPlan, initialLevelId }:
         if (item) {
           setLevelPlan(deleteItem(plan, item));
           setSelection([]);
+          if (isClosetRod(item.id)) setFlash(CLOSET_DELETED);
         } else if (single.kind === "opening") setFlash("Doors and windows can't be deleted from Furnish. Delete them on the floor plan.");
         return;
       }
@@ -178,7 +188,7 @@ export default function FurnishStage({ onContinue, onGoToPlan, initialLevelId }:
   }, [single, item, plan, tool, tape, drafting]);
 
   // Things to check: the ones about furnishings (the floor plan lists the rest). Picking one jumps to its floor.
-  const warnings = useMemo(() => (basics ? planWarnings(plans, { levels, brief: project.brief, basics }).filter((w) => w.furnish) : []), [plans, levels, project.brief, basics]);
+  const warnings = useMemo(() => (basics ? planWarnings(plans, { levels, brief: project.brief, basics }).filter((w) => w.furnish || w.closetWalls) : []), [plans, levels, project.brief, basics]);
   const split = useMemo(() => splitDismissed(warnings, project.plan.dismissed), [warnings, project.plan.dismissed]);
   const checkProps = {
     warnings: split.active,
@@ -196,7 +206,8 @@ export default function FurnishStage({ onContinue, onGoToPlan, initialLevelId }:
     setSelection(w.furnish ? [{ kind: "furnish", id: w.furnish.id }] : []);
     if (w.at) setFocus({ at: w.at, key: Date.now() });
   }
-  function fixWarning(w: PlanWarning, action?: "inside" | "delete") {
+  function fixWarning(w: PlanWarning, action?: "inside" | "delete" | "plan") {
+    if (action === "plan") return onGoToPlan();
     const p = planOf(plans, w.levelId);
     const it = w.furnish && layerItems(p).find((x) => x.id === w.furnish!.id);
     if (!it) return;
@@ -231,6 +242,18 @@ export default function FurnishStage({ onContinue, onGoToPlan, initialLevelId }:
   const hint = tape ? TOOLS.find((t) => t.id === "measure")!.hint : TOOLS.find((t) => toolActive(t.id))?.hint;
   const pickedEntry = pick ? catalogEntry(pick) : undefined;
   const roomName = item?.roomId ? plan.rooms.find((r) => r.id === item.roomId)?.name : undefined;
+  const closetType = tool === "place" && pickedEntry?.kind === "closet" ? (pickedEntry.type as ClosetType) : null;
+  const autoRooms = plan.rooms.filter(canAutoFurnish);
+  const autoPick = autoRooms.some((r) => r.id === autoRoom) ? autoRoom : "all";
+
+  /** Furnish for me: the picked room, or every room on this floor, in one step. */
+  function furnishForMe() {
+    const res = autoPick === "all" ? furnishLevel(plan, ceilingIn) : furnishRoom(plan, autoPick, ceilingIn);
+    if (res.placed) setLevelPlan(res.plan);
+    setSelection([]);
+    setAutoNotes(res.notes);
+    setFlash(furnishSummary(res));
+  }
 
   return (
     <div className="space-y-4 pb-10" data-testid="furnish-stage">
@@ -305,7 +328,7 @@ export default function FurnishStage({ onContinue, onGoToPlan, initialLevelId }:
             land={null}
             lotMode={false}
             mode="furnish"
-            furnish={{ layouts, pick, turn, wallHeight, ceilingIn }}
+            furnish={{ layouts, pick, turn, wallHeight, ceilingIn, closetSize }}
             focus={focus}
             onLotMove={() => {}}
             onSelect={setSelection}
@@ -321,8 +344,35 @@ export default function FurnishStage({ onContinue, onGoToPlan, initialLevelId }:
         </div>
 
         <div className="space-y-3">
-          {item ? (
-            <FurnishItemPanel plan={plan} item={item} ceilingIn={ceilingIn} roomName={roomName} onApply={apply} onDelete={(pl) => { setLevelPlan(pl); setSelection([]); }} onMessage={setFlash} />
+          {closetType && !item ? (
+            <div className="card space-y-2 p-4 text-sm" data-testid="closet-size-panel">
+              <h3 className="text-sm font-semibold">{pickedEntry!.label}</h3>
+              <p className="text-muted">
+                Click next to a wall of a room. It adds the walls on the open sides, {closetType === "walk-in" ? "a door, and the rod and shelf. A walk-in becomes its own closet room." : "a bifold door, and the rod and shelf."} In a corner it uses the walls already there.
+              </p>
+              <div className="grid grid-cols-2 gap-2">
+                {(["widthIn", "depthIn"] as const).map((k) => (
+                  <label key={k} className="text-xs text-muted">
+                    {k === "widthIn" ? "Width (in)" : "Depth (in)"}
+                    <input
+                      type="number"
+                      className="input mt-1 w-full"
+                      value={closetSize[k]}
+                      min={CLOSET_SIZES[closetType].min[k]}
+                      max={CLOSET_SIZES[closetType].max[k]}
+                      onChange={(e) => setClosetSize((s) => ({ ...s, [k]: Number(e.target.value) || s[k] }))}
+                      onBlur={() => setClosetSize((s) => clampClosetSize(closetType, s))}
+                      data-testid={`closet-${k}`}
+                    />
+                  </label>
+                ))}
+              </div>
+              <p className="text-xs text-muted">
+                {formatFeetInches(closetSize.widthIn)} wide, {formatFeetInches(closetSize.depthIn)} deep. Deleting the closet later takes out the rod and shelf only; the walls stay until you remove them on the floor plan.
+              </p>
+            </div>
+          ) : item ? (
+            <FurnishItemPanel plan={plan} item={item} ceilingIn={ceilingIn} roomName={roomName} onApply={apply} onDelete={(pl) => { setLevelPlan(pl); setSelection([]); if (isClosetRod(item.id)) setFlash(CLOSET_DELETED); }} onMessage={setFlash} />
           ) : single?.kind === "opening" ? (
             <PlanSidePanel
               plan={plan}
@@ -360,7 +410,29 @@ export default function FurnishStage({ onContinue, onGoToPlan, initialLevelId }:
               )}
             </div>
           )}
-          <PlanChecks {...checkProps} levels={levels} levelId={level.id} onPick={pickWarning} onFix={fixWarning} />
+          <div className="card space-y-2 p-4 text-sm" data-testid="furnish-for-me">
+            <h3 className="text-sm font-semibold">Furnish for me</h3>
+            <p className="text-xs text-muted">Fills in what each room needs: kitchen counters and appliances, bath fixtures, laundry, bedroom closets, the water heater and furnace, coat hooks. It skips anything already there.</p>
+            <select className="input w-full" value={autoPick} onChange={(e) => setAutoRoom(e.target.value)} aria-label="Room to furnish" data-testid="furnish-for-me-room">
+              <option value="all">Every room on {level.name.toLowerCase()}</option>
+              {autoRooms.map((r) => (
+                <option key={r.id} value={r.id}>
+                  {r.name}
+                </option>
+              ))}
+            </select>
+            <button className="btn-primary w-full" onClick={furnishForMe} disabled={!autoRooms.length} data-testid="furnish-for-me-go">
+              Furnish for me
+            </button>
+            {autoNotes.length > 0 && (
+              <ul className="list-disc space-y-1 pl-4 text-xs text-amber-900" data-testid="furnish-for-me-notes">
+                {autoNotes.map((n) => (
+                  <li key={n}>{n}</li>
+                ))}
+              </ul>
+            )}
+          </div>
+          <PlanChecks {...checkProps} levels={levels} levelId={level.id} onPick={pickWarning} onFix={fixWarning} inFurnish />
         </div>
       </div>
     </div>

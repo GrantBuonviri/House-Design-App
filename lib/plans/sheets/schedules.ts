@@ -149,7 +149,7 @@ export function doorWindowRows(project: Project): { doors: string[][]; windows: 
           energy = o.style === "door-slider" ? `U-${codeNum("energy.fenestrationU")} max` : `U-${codeNum("energy.fenestrationU")} max*`;
         }
         if (where === "garage") energy = "";
-        const swing = t.swings ? (t.double ? "Pair, hinged" : "Hinged") : o.style === "door-garage" ? "Overhead" : o.style === "door-pocket" ? "Pocket" : o.style === "door-barn" ? "Barn slider" : "Sliding";
+        const swing = t.swings ? (t.double ? "Pair, hinged" : "Hinged") : o.style === "door-garage" ? "Overhead" : o.style === "door-pocket" ? "Pocket" : o.style === "door-barn" ? "Barn slider" : o.style === "door-bifold" ? "Bifold" : "Sliding";
         doors.push({
           tag,
           row: [tag, level.name, rooms.join(" / "), t.label, size, swing, curved ? `${construction}. Set in a curved wall (${radiusLabel(curved)})` : construction, safety ? "Tempered" : "", [rating, energy].filter(Boolean).join("; "), productText(product)],

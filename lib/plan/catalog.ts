@@ -24,6 +24,7 @@ export const OPENING_TYPES: OpeningType[] = [
   { id: "door-entry", label: "Front door", kind: "door", widths: [36, 42], heightIn: 80, swings: true },
   { id: "door-double", label: "Double door", kind: "door", widths: [60, 48, 72], heightIn: 80, swings: true, double: true },
   { id: "door-pocket", label: "Pocket door", kind: "door", widths: [30, 24, 28, 32, 36], heightIn: 80 },
+  { id: "door-bifold", label: "Bifold closet door", kind: "door", widths: [48, 24, 30, 36, 60, 72], heightIn: 80 },
   { id: "door-barn", label: "Barn door", kind: "door", widths: [36, 32, 42, 48], heightIn: 84 },
   { id: "door-slider", label: "Sliding glass door", kind: "door", widths: [72, 60, 96, 120], heightIn: 80 },
   { id: "door-garage", label: "Garage door", kind: "door", widths: [96, 108, 192, 216], heightIn: 84 },
