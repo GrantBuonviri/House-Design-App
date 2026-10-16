@@ -52,7 +52,18 @@ const TOOLS: { id: FurnishTool | "window" | "measure"; label: string; key: strin
  * can be added and moved here but not deleted, and walls can be added but
  * not removed; those still live on the floor plan.
  */
-export default function FurnishStage({ onContinue, onGoToPlan, initialLevelId }: { onContinue: () => void; onGoToPlan: () => void; initialLevelId?: string }) {
+export default function FurnishStage({
+  onContinue,
+  onGoToPlan,
+  initialLevelId,
+  walk,
+}: {
+  onContinue: () => void;
+  onGoToPlan: () => void;
+  initialLevelId?: string;
+  /** Shown inside the walkthrough (key M): a "you are here" marker, and M or Esc goes back to walking. */
+  walk?: { here: { levelId: string; p: Point; dir: Point }; onBack: () => void };
+}) {
   const project = useProjectStore((s) => s.project)!;
   const update = useProjectStore((s) => s.update);
   const plans = project.floorPlans;
@@ -74,6 +85,14 @@ export default function FurnishStage({ onContinue, onGoToPlan, initialLevelId }:
   const [closetSize, setClosetSize] = useState<ClosetSize>(CLOSET_SIZES["reach-in"]);
   const [autoRoom, setAutoRoom] = useState("all");
   const [autoNotes, setAutoNotes] = useState<string[]>([]);
+
+  // From the walkthrough: center on where you were standing, once the canvas has its size.
+  useEffect(() => {
+    if (!walk) return;
+    const t = setTimeout(() => setFocus({ at: walk.here.p, key: Date.now() }), 300);
+    return () => clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   useEffect(() => {
     if (!flash) return;
@@ -139,7 +158,8 @@ export default function FurnishStage({ onContinue, onGoToPlan, initialLevelId }:
       const k = e.key.toLowerCase();
       if (e.key === "Escape") {
         if (drafting) return;
-        if (tape) setTape(false);
+        if (walk && !tape && tool === "select" && !sel.length) walk.onBack();
+        else if (tape) setTape(false);
         else {
           setTool("select");
           setSelection([]);
@@ -170,7 +190,8 @@ export default function FurnishStage({ onContinue, onGoToPlan, initialLevelId }:
       }
       if (k === "m") {
         e.preventDefault();
-        setTape((on) => !on);
+        if (walk) walk.onBack();
+        else setTape((on) => !on);
         return;
       }
       if (k === "n") {
@@ -185,7 +206,7 @@ export default function FurnishStage({ onContinue, onGoToPlan, initialLevelId }:
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [single, item, plan, tool, tape, drafting]);
+  }, [single, item, plan, tool, tape, drafting, sel.length, walk]);
 
   // Things to check: the ones about furnishings (the floor plan lists the rest). Picking one jumps to its floor.
   const warnings = useMemo(() => (basics ? planWarnings(plans, { levels, brief: project.brief, basics }).filter((w) => w.furnish || w.closetWalls) : []), [plans, levels, project.brief, basics]);
@@ -259,16 +280,28 @@ export default function FurnishStage({ onContinue, onGoToPlan, initialLevelId }:
     <div className="space-y-4 pb-10" data-testid="furnish-stage">
       <div className="flex items-start justify-between gap-6">
         <div className="min-w-0">
-          <h2 className="text-xl font-semibold tracking-tight">Furnish</h2>
-          <p className="mt-1 text-sm text-muted">Fixtures, appliances, cabinets, outlets, hookups, built-ins and furniture, on their own layer apart from the floor plan. Walls, doors and windows are still shaped on the floor plan.</p>
+          <h2 className="text-xl font-semibold tracking-tight">{walk ? "Top-down view" : "Furnish"}</h2>
+          <p className="mt-1 text-sm text-muted">
+            {walk
+              ? "The Furnish tools from above, with you marked where you were standing. Changes show up when you go back to walking."
+              : "Fixtures, appliances, cabinets, outlets, hookups, built-ins and furniture, on their own layer apart from the floor plan. Walls, doors and windows are still shaped on the floor plan."}
+          </p>
         </div>
         <div className="flex shrink-0 items-center gap-2">
-          <button className="btn" onClick={onGoToPlan}>
-            Back to the floor plan
-          </button>
-          <button className="btn-primary" onClick={onContinue} data-testid="furnish-continue">
-            Next: interior →
-          </button>
+          {walk ? (
+            <button className="btn-primary" onClick={walk.onBack} data-testid="top-down-back">
+              Back to walking (M)
+            </button>
+          ) : (
+            <>
+              <button className="btn" onClick={onGoToPlan}>
+                Back to the floor plan
+              </button>
+              <button className="btn-primary" onClick={onContinue} data-testid="furnish-continue">
+                Next: interior →
+              </button>
+            </>
+          )}
         </div>
       </div>
 
@@ -328,7 +361,7 @@ export default function FurnishStage({ onContinue, onGoToPlan, initialLevelId }:
             land={null}
             lotMode={false}
             mode="furnish"
-            furnish={{ layouts, pick, turn, wallHeight, ceilingIn, closetSize }}
+            furnish={{ layouts, pick, turn, wallHeight, ceilingIn, closetSize, here: walk && walk.here.levelId === level.id ? walk.here : undefined }}
             focus={focus}
             onLotMove={() => {}}
             onSelect={setSelection}

@@ -1,12 +1,11 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { WHOLE_HOUSE, type FurnitureItem, type Selection } from "@/lib/model/schema";
+import { WHOLE_HOUSE, type Selection } from "@/lib/model/schema";
 import { interiorCategory, type InteriorCategoryId } from "@/lib/catalog/categories";
 import { pickFor, productTitle, toProduct } from "@/lib/interior/picks";
 import { applyPick, currentPick, scopesFor, type FinishAim, type Scope } from "@/lib/interior/scope";
 import { ranked, type Answers } from "@/lib/interior/style";
-import { FURNITURE, FURNITURE_COLORS, furnitureType } from "@/lib/plan/furniture";
 import ProductCard from "@/components/interior/ProductCard";
 import { exteriorCategory, type ExteriorCategoryId } from "@/lib/catalog/exterior";
 import { exteriorPick, sidingPaintApplies } from "@/lib/exterior/picks";
@@ -195,95 +194,6 @@ export function OutsidePanel({
           Show all {products.length}
         </button>
       )}
-    </div>
-  );
-}
-
-/** The panel for a piece of furniture you clicked: move, turn, color or remove it. */
-export function FurniturePanel({
-  item,
-  warning,
-  onColor,
-  onMove,
-  onTurn,
-  onRemove,
-}: {
-  item: FurnitureItem;
-  warning?: string;
-  onColor: (color: string) => void;
-  onMove: () => void;
-  onTurn: (deg: number) => void;
-  onRemove: () => void;
-}) {
-  const t = furnitureType(item.kind);
-  return (
-    <div className="space-y-4" data-testid="furniture-panel">
-      <div>
-        <h3 className="text-lg font-semibold leading-tight">{t?.label ?? "Furniture"}</h3>
-        <p className="text-xs text-muted">
-          {Math.round(item.widthIn)}&quot; × {Math.round(item.depthIn)}&quot;. Furniture isn&apos;t part of the build cost.
-        </p>
-      </div>
-      {warning && <p className="rounded-md bg-amber-50 px-3 py-2 text-sm text-amber-900">{warning}</p>}
-      <div className="grid grid-cols-2 gap-2">
-        <button className="btn-primary justify-center" onClick={onMove}>
-          Move
-        </button>
-        <button className="btn justify-center" onClick={onRemove}>
-          Remove
-        </button>
-        <button className="btn justify-center" onClick={() => onTurn(-15)}>
-          ↺ Turn left
-        </button>
-        <button className="btn justify-center" onClick={() => onTurn(15)}>
-          Turn right ↻
-        </button>
-      </div>
-      <div>
-        <p className="mb-2 text-sm font-medium">Color</p>
-        <div className="flex flex-wrap gap-2">
-          {FURNITURE_COLORS.map((c) => (
-            <button
-              key={c.color}
-              title={c.label}
-              aria-label={c.label}
-              onClick={() => onColor(c.color)}
-              className={`size-8 rounded-full border border-black/15 ${item.color === c.color ? "ring-2 ring-accent ring-offset-2" : ""}`}
-              style={{ background: c.color }}
-            />
-          ))}
-          <label className="flex size-8 cursor-pointer items-center justify-center rounded-full border border-dashed border-line text-xs text-muted" title="Any color">
-            +
-            <input type="color" className="sr-only" value={item.color ?? "#cfcac0"} onChange={(e) => onColor(e.target.value)} />
-          </label>
-        </div>
-      </div>
-      <p className="text-xs text-muted">While walking with Design on: aim at a piece and press R to turn it, or Delete to remove it.</p>
-    </div>
-  );
-}
-
-/** The list of furniture to add. */
-export function AddFurniturePanel({ onPick }: { onPick: (kind: string) => void }) {
-  const groups = [...new Set(FURNITURE.map((f) => f.group))];
-  return (
-    <div className="space-y-4" data-testid="add-furniture">
-      <div>
-        <h3 className="text-lg font-semibold leading-tight">Add furniture</h3>
-        <p className="text-xs text-muted">Pick one, then aim at the floor where it goes and click. R turns it.</p>
-      </div>
-      {groups.map((g) => (
-        <div key={g}>
-          <p className="mb-1.5 text-xs font-medium uppercase tracking-wide text-muted">{g}</p>
-          <div className="grid grid-cols-2 gap-2">
-            {FURNITURE.filter((f) => f.group === g).map((f) => (
-              <button key={f.id} className="btn justify-start text-left text-sm" onClick={() => onPick(f.id)}>
-                {f.label}
-              </button>
-            ))}
-          </div>
-        </div>
-      ))}
     </div>
   );
 }

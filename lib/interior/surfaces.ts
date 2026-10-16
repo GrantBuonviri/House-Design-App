@@ -4,12 +4,14 @@ import { areaKind } from "@/lib/plan/measure";
 import { furnitureType } from "@/lib/plan/furniture";
 import { add, pointInPolygon, scale } from "@/lib/plan/geometry";
 import { edgeCompass, openingGeometries, roomEdgeAt, wallPieces } from "@/lib/plan/walls";
-import { fixtureType } from "@/lib/plan/catalog";
+import { fixtureType, openingType } from "@/lib/plan/catalog";
 import { hostPiece, type Layer, type Pick } from "@/lib/house3d/build";
 import { interiorCategory, TILE_ROOMS, type InteriorCategoryId } from "@/lib/catalog/categories";
 import type { ExteriorCategoryId } from "@/lib/catalog/exterior";
 import { wallKey } from "./picks";
 import { flatPlan, sourceEdge } from "@/lib/plan/flatten";
+import type { LayerItem, LayerKind } from "@/lib/furnish/layer";
+import { itemAt } from "@/lib/furnish/walk";
 
 /**
  * What you're aiming at in the walkthrough, as the room and the kinds of
@@ -38,7 +40,10 @@ export type Aim =
       /** The parts that fit here, the main one first. */
       categories: ExteriorCategoryId[];
     }
-  | { kind: "furniture"; levelId: string; id: string; label: string }
+  /** Something placed in Furnish (furniture, a fixture, cabinet, outlet, hookup or built-in): click to move, turn, size, swap or delete it. */
+  | { kind: "furnish"; levelId: string; id: string; label: string; item: LayerKind }
+  /** A door or window, in the Place tab: click to slide it along its wall or change it. */
+  | { kind: "opening"; levelId: string; id: string; label: string }
   | { kind: "none"; label?: string; hint?: string };
 
 /** The part of the house a triangle came from. */
@@ -106,7 +111,16 @@ function fixtureCategories(kind: string, heightIn: number, faceUp: boolean): { l
   }
 }
 
-/** What's being aimed at, from the part of the house that was hit and where. */
+/** Which tab of the Design panel is on, and everything placed on the floor that was hit (the app's own cabinets and outlets too). */
+export type FurnishAimOptions = { tab: "finishes" | "place"; items: LayerItem[] };
+
+/**
+ * What's being aimed at, from the part of the house that was hit and where.
+ * With `furnish`, placed items are found too: in the Place tab they come
+ * first (and doors and windows can be picked to slide or change); in the
+ * Finishes tab surfaces come first, and items that have no finishes
+ * (furniture, built-ins, upper cabinets, outlets) are picked instead.
+ */
 export function aimAt(
   plan: FloorPlan,
   part: AimPart,
@@ -114,17 +128,34 @@ export function aimAt(
   basics: Parameters<typeof exteriorWallIn>[0],
   /** The floor below, whose ceiling is the underside of this floor. */
   below?: { levelId: string; plan: FloorPlan },
+  furnish?: FurnishAimOptions,
 ): Aim {
+  const L = part.levelId;
+  if (part.layer === "furniture" && part.furnitureId) {
+    const item = plan.furniture.find((f) => f.id === part.furnitureId);
+    if (!item) return { kind: "none" };
+    return { kind: "furnish", levelId: L, id: item.id, label: furnitureType(item.kind)?.label ?? "Furniture", item: "furniture" };
+  }
+  if (!furnish) return surfaceAim(plan, part, hit, basics, below);
+  const found = part.layer === "yard" || part.layer === "roof" ? null : itemAt(furnish.items, hit);
+  const item: Aim | null = found ? { kind: "furnish", levelId: L, id: found.id, label: found.label, item: found.kind } : null;
+  if (furnish.tab === "place") {
+    if (item) return item;
+    if (part.layer === "openings" && part.pick?.kind === "opening") {
+      const o = plan.openings.find((x) => x.id === part.pick!.id);
+      if (o) return { kind: "opening", levelId: L, id: o.id, label: openingType(o.style).label };
+    }
+    return { kind: "none", hint: "Pick something in the Place list to put here." };
+  }
+  const surface = surfaceAim(plan, part, hit, basics, below);
+  return surface.kind === "none" && item ? item : surface;
+}
+
+function surfaceAim(plan: FloorPlan, part: AimPart, hit: AimHit, basics: Parameters<typeof exteriorWallIn>[0], below?: { levelId: string; plan: FloorPlan }): Aim {
   plan = flatPlan(plan);
   const L = part.levelId;
   const faceUp = hit.normal.up > 0.7;
   const faceDown = hit.normal.up < -0.7;
-
-  if (part.layer === "furniture" && part.furnitureId) {
-    const item = plan.furniture.find((f) => f.id === part.furnitureId);
-    if (!item) return { kind: "none" };
-    return { kind: "furniture", levelId: L, id: item.id, label: furnitureType(item.kind)?.label ?? "Furniture" };
-  }
 
   if (part.layer === "yard" && part.pick?.kind === "yard") {
     const y = YARD[part.pick.id];

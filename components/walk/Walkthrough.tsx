@@ -4,8 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Canvas } from "@react-three/fiber";
 import { PerspectiveCamera } from "@react-three/drei";
 import * as THREE from "three";
-import type { FloorPlan, FurnitureItem, Point, Project, Selection } from "@/lib/model/schema";
-import { newId } from "@/lib/model/project";
+import type { FloorPlan, Opening, Point, Project, Selection, WallHeight } from "@/lib/model/schema";
 import { useProjectStore } from "@/lib/store/projectStore";
 import type { Estimate } from "@/lib/cost/estimate";
 import { buildHouse, type HouseContext } from "@/lib/house3d/build";
@@ -17,14 +16,26 @@ import { eyeRay, heading, sightBlocked, walkStep, walkWorld, whereAmI, type Spot
 import { DOOR_MODES, aimDoor, newDoorStates, stepDoors, toggleDoor, type DoorInfo, type DoorMode, type DoorStates } from "@/lib/house3d/doors";
 import { DoorLeaves } from "@/components/house3d/DoorLeaves";
 import { planOf } from "@/lib/plan/edit";
-import { add, scale } from "@/lib/plan/geometry";
-import { checkPlacement, defaultFurnitureColor, furnitureType, newFurniture, type PlaceCheck } from "@/lib/plan/furniture";
+import { defaultFurnitureColor } from "@/lib/plan/furniture";
+import { ceilingFor } from "@/lib/plan/basics";
+import { openingType } from "@/lib/plan/catalog";
+import { catalogEntry, type CatalogEntry } from "@/lib/furnish/catalog";
+import { placeCheck, removeItem, roomAt, type LayerItem } from "@/lib/furnish/layer";
+import { deleteItem, furnishLayouts, patchItem, placeGhost, stageItems, type Ghost } from "@/lib/furnish/stage";
+import { addWall, liftable, openingOnWall, openingShape, slideOpening, walkGhost, walkMove, wallHeightIn, wallPoint, withOpening, type WalkSpot } from "@/lib/furnish/walk";
+import { canAutoFurnish, furnishRoom, furnishSummary } from "@/lib/furnish/autoFurnish";
+import { isClosetRod } from "@/lib/furnish/closets";
 import { effectiveAnswers } from "@/lib/interior/style";
 import { aimAt, type Aim } from "@/lib/interior/surfaces";
 import { Ground } from "@/components/house3d/House3DView";
 import { HouseMeshes, Sky, type AimTarget } from "@/components/house3d/Scene";
-import { AddFurniturePanel, FinishPanel, FurniturePanel, OutsidePanel } from "./DesignPanel";
-import { FurnitureGhost, Player, type Look } from "./Player";
+import { FinishPanel, OutsidePanel } from "./DesignPanel";
+import { Player, type Look } from "./Player";
+import { DesignTabs, FinishesHelp, PlaceTab, type DesignTab } from "./PlaceTab";
+import { DevicePlates, ItemGhost, ItemHighlight, OpeningGhost, WallGhost } from "./WalkGhosts";
+import TopDown from "./TopDown";
+import FurnishItemPanel from "@/components/furnish/FurnishItemPanel";
+import PlanSidePanel from "@/components/plan/PlanSidePanel";
 import { AimDot, WalkControls, WalkHelp, WalkTopBar } from "./WalkOverlays";
 import { FloorLabels } from "./FloorLabels";
 import LabelSettingsPanel from "./LabelSettingsPanel";
@@ -45,19 +56,61 @@ function DoorDriver({ world, walker, states, modeRef }: { world: ReturnType<type
   return null;
 }
 
-/** What the panel on the right shows: what you clicked, or the list of furniture to add. */
+/**
+ * What the panel on the right shows. All but the label settings are the
+ * Design panel, with its Finishes and Place tabs on top: what you clicked
+ * (a surface, the outside, a placed item, a door or window), or with nothing
+ * clicked, the Finishes help or the Place list.
+ */
 type Panel =
   | { kind: "finish"; aim: Extract<Aim, { kind: "finish" }> }
   | { kind: "outside"; aim: Extract<Aim, { kind: "outside" }> }
-  | { kind: "furniture"; levelId: string; id: string }
-  | { kind: "add" }
+  | { kind: "item"; levelId: string; id: string }
+  | { kind: "opening"; levelId: string; id: string }
+  | { kind: "design" }
   | { kind: "labels" };
 
-/** Furniture being carried: it follows where you look until you click to put it down. */
-type Carry = { item: FurnitureItem; levelId: string; isNew: boolean; check: PlaceCheck };
+/**
+ * What's being placed: a new catalog item or one picked up (both follow where
+ * you look until you click), a door or window on the aimed wall, a door or
+ * window slid along its wall, or a wall drawn from one floor spot to another.
+ */
+type Carry =
+  | { kind: "new"; entryId: string; levelId: string; turn: number; lift: number; ghost: Ghost | null }
+  | { kind: "move"; item: LayerItem; levelId: string; turn: number; lift: number; ghost: Ghost | null }
+  | { kind: "door"; style: string; levelId: string; opening: Opening | null }
+  | { kind: "slide"; id: string; levelId: string; opening: Opening | null }
+  | { kind: "wall"; height: WallHeight; levelId: string; first: Point | null; hover: Point | null };
 
-const withFurniture = (plan: FloorPlan, change: (f: FurnitureItem[]) => FurnitureItem[]): FloorPlan => ({ ...plan, furniture: change(plan.furniture) });
-const turnBy = (deg: number, by: number) => (((Math.round(deg + by) % 360) + 360) % 360);
+/** The name of what's being placed, and whether it can go where it is now. */
+function carryInfo(c: Carry, plan: FloorPlan): { label: string; ok: boolean; problem?: string; note?: string; keys: string } {
+  switch (c.kind) {
+    case "new":
+    case "move": {
+      const label = c.kind === "move" ? c.item.label : (catalogEntry(c.entryId)?.label ?? "It");
+      const mount = c.kind === "move" ? c.item.mount : catalogEntry(c.entryId)?.mount;
+      const lifts = c.kind === "move" ? liftable(c.item) : mount === "wall" && (c.entryId.startsWith("addon:") || c.entryId.startsWith("cabinet:"));
+      const g = c.ghost;
+      return {
+        label,
+        ok: Boolean(g?.check.ok),
+        problem: g ? g.check.problem : mount === "wall" ? "aim at a wall" : "aim at the floor",
+        note: g?.check.ok && g.check.blocksDoors.length ? "in front of a door" : undefined,
+        keys: `R to turn${lifts ? " · scroll to raise or lower" : ""} · Esc to cancel`,
+      };
+    }
+    case "door":
+      return { label: openingType(c.style).label, ok: Boolean(c.opening), problem: c.opening ? undefined : "aim at a wall", keys: "Esc to cancel" };
+    case "slide": {
+      const o = plan.openings.find((x) => x.id === c.id);
+      return { label: o ? openingType(o.style).label : "Door", ok: Boolean(c.opening), problem: c.opening ? undefined : "aim along its wall", keys: "Click to leave it there · Esc to cancel" };
+    }
+    case "wall":
+      return { label: c.height === "full" ? "Wall" : c.height === "half" ? "Half wall" : "Half wall with a cap", ok: Boolean(c.hover), problem: c.hover ? undefined : "aim at the floor", note: c.first ? "click where it ends" : "click where it starts", keys: "Esc to cancel" };
+  }
+}
+
+const isDesignPanel = (p: Panel | null) => Boolean(p && p.kind !== "labels");
 
 /**
  * Walk through the house in first person, like a video game. Click to start,
@@ -79,6 +132,10 @@ export default function Walkthrough({ project, cost, onClose }: { project: Proje
   const answers = useMemo(() => effectiveAnswers(project.interior.answers, project.discovery.answers.feel ?? ""), [project.interior.answers, project.discovery.answers.feel]);
 
   const [design, setDesign] = useState(false);
+  // The Design panel's tab (Finishes or Place), the top-down view (M), and what Furnish for me last said.
+  const [tab, setTab] = useState<DesignTab>("finishes");
+  const [topDown, setTopDown] = useState<{ levelId: string; p: Point; dir: Point } | null>(null);
+  const [autoNotes, setAutoNotes] = useState<string[]>([]);
   // Floor labels (L) and the tape measure (T). Measurements aren't saved.
   const [labelsOn, setLabelsOn] = useState(false);
   const [tapeOn, setTapeOn] = useState(false);
@@ -105,17 +162,25 @@ export default function Walkthrough({ project, cost, onClose }: { project: Proje
   }, []);
 
   // A piece being moved is left out of the house until it's put down (it's drawn on its own meanwhile).
+  const moving = carry?.kind === "move" ? carry : null;
+  const movingItem = moving?.item;
+  const movingLevel = moving?.levelId;
   const plans = useMemo(() => {
-    if (!carry || carry.isNew) return project.floorPlans;
-    const pl = planOf(project.floorPlans, carry.levelId);
-    return { ...project.floorPlans, [carry.levelId]: withFurniture(pl, (f) => f.filter((x) => x.id !== carry.item.id)) };
-  }, [project.floorPlans, carry]);
+    if (!movingItem || !movingLevel) return project.floorPlans;
+    return { ...project.floorPlans, [movingLevel]: removeItem(planOf(project.floorPlans, movingLevel), movingItem) };
+  }, [project.floorPlans, movingItem, movingLevel]);
 
   const [frame] = useState<Frame>(() => {
     const bb = planBounds(project.floorPlans);
     return bb ? { ox: (bb.x0 + bb.x1) / 2, oy: (bb.y0 + bb.y1) / 2 } : { ox: 0, oy: 0 };
   });
   const heights = useMemo(() => levelHeights(levels, basics), [levels, basics]);
+  const ceilingOf = useCallback((levelId: string) => ceilingFor(basics, levels.find((l) => l.id === levelId) ?? { id: levelId, kind: "main" }), [basics, levels]);
+  // Everything placed on each floor, the app's own cabinets and outlets too: what Design can aim at.
+  const itemsOn = useMemo<Record<string, LayerItem[]>>(
+    () => (design ? Object.fromEntries(levels.map((l) => [l.id, stageItems(planOf(project.floorPlans, l.id), furnishLayouts(project, l))])) : {}),
+    [design, project, levels],
+  );
   const site = useMemo(() => siteFor(project.plot, offset, plans), [project.plot, offset, plans]);
   const ctx: HouseContext = useMemo(
     () => ({ levels, basics, house3d: project.house3d, site, frame, interior: project.interior.selections, exterior: project.exterior, systems: project.plans.systems }),
@@ -144,8 +209,8 @@ export default function Walkthrough({ project, cost, onClose }: { project: Proje
 
   // The latest of everything, for the mouse and key handlers.
   const snapPoints = useMemo(() => tapeCandidates(project.floorPlans, heights, levels.map((l) => l.id)), [project.floorPlans, heights, levels]);
-  const latest = useRef({ aim, carry, panel, design, locked, plans: project.floorPlans, tapeOn, tape, snapPoints });
-  latest.current = { aim, carry, panel, design, locked, plans: project.floorPlans, tapeOn, tape, snapPoints };
+  const latest = useRef({ aim, carry, panel, design, tab, topDown, locked, plans: project.floorPlans, itemsOn, tapeOn, tape, snapPoints });
+  latest.current = { aim, carry, panel, design, tab, topDown, locked, plans: project.floorPlans, itemsOn, tapeOn, tape, snapPoints };
 
   /** The door under the dot, if you're close enough and no wall is in between. */
   const doorUnderDot = useCallback((): DoorInfo | null => {
@@ -204,56 +269,129 @@ export default function Walkthrough({ project, cost, onClose }: { project: Proje
   const setOutside = (selections: Selection[]) => update((p) => ({ ...p, exterior: { ...p.exterior, selections } }));
   const outsideAnswers = useMemo(() => effectiveExterior(project.exterior.answers, answers), [project.exterior.answers, answers]);
 
-  /** Pick up a piece (or a new one) and carry it, with the mouse captured so it follows where you look. */
-  const pickUp = (item: FurnitureItem, levelId: string, isNew: boolean) => {
-    const pl = planOf(project.floorPlans, levelId);
-    setCarry({ item, levelId, isNew, check: checkPlacement(withFurniture(pl, (f) => f.filter((x) => x.id !== item.id)), item) });
+  const setLevelPlan = useCallback(
+    (levelId: string, pl: FloorPlan, coalesce?: string) => update((p) => ({ ...p, floorPlans: { ...p.floorPlans, [levelId]: pl } }), coalesce ? { coalesce: `walk-furnish.${coalesce}` } : undefined),
+    [update],
+  );
+
+  /** Start placing something, with the mouse captured so it follows where you look. */
+  const carryThis = (c: Carry) => {
+    setCarry(c);
     setPanel(null);
     say(null);
     start();
   };
 
-  const addFurniture = (kind: string) => {
+  /** Pick something in the Place list. */
+  const pickEntry = (e: CatalogEntry) => {
     const levelId = levelHere();
     if (!levelId) return;
-    const w = walker.current;
-    // A few feet in front of you, facing you.
-    const at = add(w.p, scale(heading(w.yaw), 60 + (furnitureType(kind)?.depthIn ?? 30) / 2));
-    const item = newFurniture(kind, at, (w.yaw * 180) / Math.PI, defaultFurnitureColor(kind, answers), newId());
-    pickUp(item, levelId, true);
+    if (e.kind === "opening") carryThis({ kind: "door", style: e.type, levelId, opening: null });
+    else if (e.kind === "wall") carryThis({ kind: "wall", height: e.type as WallHeight, levelId, first: null, hover: null });
+    else carryThis({ kind: "new", entryId: e.id, levelId, turn: 0, lift: 0, ghost: null });
   };
 
-  /** Put down what you're carrying, if it fits there. */
+  const pickUp = (item: LayerItem, levelId: string) => carryThis({ kind: "move", item, levelId, turn: 0, lift: 0, ghost: null });
+
+  /** Click while placing: put it down if it fits there (a wall takes two clicks). */
   const putDown = () => {
     const c = latest.current.carry;
     if (!c) return;
-    if (!c.check.ok) {
-      say(c.check.problem ?? "It doesn't fit there.");
-      return;
+    const pl = planOf(latest.current.plans, c.levelId);
+    if (c.kind === "wall") {
+      if (!c.hover) return say("Aim at the floor where the wall goes.");
+      if (!c.first) return setCarry({ ...c, first: c.hover });
+      const out = addWall(pl, c.first, c.hover, c.height);
+      if (!out) return say("That's too short for a wall. Click farther apart.");
+      setLevelPlan(c.levelId, out.plan);
+      setCarry(null);
+      return say(out.split ? "Added the wall. It split the room in two; name the new room on the floor plan." : "Added the wall. It's on the floor plan too.");
     }
-    const item = { ...c.item, roomId: c.check.roomId };
-    setPlan(c.levelId, (pl) => withFurniture(pl, (f) => (c.isNew ? [...f, item] : f.map((x) => (x.id === item.id ? item : x)))));
+    if (c.kind === "door" || c.kind === "slide") {
+      if (!c.opening) return say(c.kind === "door" ? "Aim at a wall to put it there." : "Aim along its own wall to slide it.");
+      setLevelPlan(c.levelId, withOpening(pl, c.opening));
+      setCarry(null);
+      return say(c.kind === "door" ? `Added the ${openingType(c.opening.style).label.toLowerCase()}. Click it in Place to change its size or style.` : null);
+    }
+    const g = c.ghost;
+    if (!g) return say(`It can't go there: ${carryInfo(c, pl).problem ?? "it doesn't fit"}.`);
+    if (!g.check.ok) return say(g.check.problem ?? "It doesn't fit there.");
+    if (c.kind === "move") {
+      const out = patchItem(pl, c.item, { x: g.x, y: g.y, rotation: g.rotation, ...(liftable(c.item) ? { bottomIn: g.bottomIn } : {}) });
+      setLevelPlan(c.levelId, out.plan);
+    } else {
+      const out = placeGhost(pl, g, ceilingOf(c.levelId));
+      if (!out.id) return say("It doesn't fit there.");
+      // New furniture takes a color from the style answers.
+      const color = c.entryId.startsWith("furniture:") ? defaultFurnitureColor(c.entryId.slice(10), answers) : undefined;
+      setLevelPlan(c.levelId, color ? { ...out.plan, furniture: out.plan.furniture.map((f) => (f.id === out.id ? { ...f, color } : f)) } : out.plan);
+    }
     setCarry(null);
-    say(c.check.blocksDoors.length ? `${furnitureType(item.kind)?.label ?? "It"} is in front of a door. You can move it with Design on.` : null);
+    say(g.check.blocksDoors.length ? `${carryInfo(c, pl).label} is in front of a door. It's allowed, and shows in Things to check.` : null);
   };
 
-  const turnFurniture = (levelId: string, id: string, by: number) => {
-    const pl = planOf(project.floorPlans, levelId);
-    const item = pl.furniture.find((x) => x.id === id);
+  /** R on an item under the dot: turn it, if it fits turned. */
+  const turnAimed = (levelId: string, id: string, by: number) => {
+    const items = latest.current.itemsOn[levelId] ?? [];
+    const item = items.find((x) => x.id === id);
     if (!item) return;
-    const next = { ...item, rotation: turnBy(item.rotation, by) };
-    const check = checkPlacement(withFurniture(pl, (f) => f.filter((x) => x.id !== id)), next);
-    if (!check.ok) {
-      say(`It can't turn there: ${check.problem?.toLowerCase() ?? "it doesn't fit."}`);
-      return;
-    }
-    setPlan(levelId, (p) => withFurniture(p, (f) => f.map((x) => (x.id === id ? next : x))));
+    const pl = planOf(project.floorPlans, levelId);
+    const turned = { ...item, rotation: item.rotation + by };
+    const check = placeCheck(pl, turned, items.filter((x) => x.id !== id));
+    if (!check.ok) return say(`It can't turn there: ${check.problem?.toLowerCase() ?? "it doesn't fit."}`);
+    setLevelPlan(levelId, patchItem(pl, item, { rotation: turned.rotation }).plan);
     if (check.blocksDoors.length) say("Turned. It's in front of a door now.");
   };
-  const removeFurniture = (levelId: string, id: string) => {
-    setPlan(levelId, (p) => withFurniture(p, (f) => f.filter((x) => x.id !== id)));
+
+  const removeThis = (levelId: string, id: string) => {
+    const item = latest.current.itemsOn[levelId]?.find((x) => x.id === id);
+    if (!item) return;
+    setLevelPlan(levelId, deleteItem(planOf(project.floorPlans, levelId), item));
     setPanel(null);
-    say("Removed. Undo brings it back.");
+    say(isClosetRod(item.id) ? "Took out the closet's rod and shelf. Its walls and door stay." : "Deleted. Undo brings it back.");
+  };
+
+  /** The room you're standing in, for Furnish for me. */
+  const roomHere = () => {
+    const levelId = levelHere();
+    const room = levelId ? roomAt(planOf(project.floorPlans, levelId), walker.current.p) : undefined;
+    return levelId && room ? { levelId, room } : null;
+  };
+  const furnishHere = () => {
+    const here = roomHere();
+    if (!here) return;
+    const res = furnishRoom(planOf(project.floorPlans, here.levelId), here.room.id, ceilingOf(here.levelId));
+    if (res.placed) setLevelPlan(here.levelId, res.plan);
+    setAutoNotes(res.notes);
+    say(furnishSummary(res));
+  };
+
+  const setDesignOn = (on: boolean) => {
+    setDesign(on);
+    if (!on) {
+      setCarry(null);
+      if (isDesignPanel(latest.current.panel)) setPanel(null);
+    } else setTapeOn(false);
+  };
+
+  /** Open the Design panel on a tab, with nothing clicked. */
+  const openDesign = (t: DesignTab) => {
+    setDesign(true);
+    setTapeOn(false);
+    setTab(t);
+    setCarry(null);
+    setPanel({ kind: "design" });
+    stopWalking();
+  };
+
+  /** M: the top-down view of this floor, with you marked on it. */
+  const openTopDown = () => {
+    const levelId = levelHere();
+    if (!levelId) return say("There's no floor plan to show from above yet.");
+    setCarry(null);
+    setPanel(null);
+    stopWalking();
+    setTopDown({ levelId, p: { ...walker.current.p }, dir: heading(walker.current.yaw) });
   };
 
   /** What the dot is on, worked out from the 3D view a few times a second. */
@@ -262,20 +400,33 @@ export default function Walkthrough({ project, cost, onClose }: { project: Proje
       const toPlan = (v: THREE.Vector3): Point => ({ x: v.x * IN_PER_UNIT + frame.ox, y: v.z * IN_PER_UNIT + frame.oy });
       const c = latest.current.carry;
       if (c) {
-        // Carrying: the spot on the floor you're looking at.
+        // Placing: the spot on the floor you're looking at, and the wall the dot is on.
         const floorIn = heights[c.levelId]?.floorIn ?? 0;
         const y = floorIn / IN_PER_UNIT;
         const t = look.dir.y < -0.03 ? (y - look.origin.y) / look.dir.y : Infinity;
         // Looking level (or far off): a few feet ahead of you instead, short of the wall you're looking at.
         const flatDir = new THREE.Vector3(look.dir.x, 0, look.dir.z).normalize();
-        const reach = Math.max(c.item.widthIn, c.item.depthIn) / 2 / IN_PER_UNIT + 0.5;
+        const e = c.kind === "new" ? catalogEntry(c.entryId) : undefined;
+        const size = c.kind === "move" ? Math.max(c.item.widthIn, c.item.depthIn) : e ? Math.max(e.widthIn, e.depthIn) : 0;
+        const reach = size / 2 / IN_PER_UNIT + 0.5;
         const wallAt = look.hit ? Math.hypot(look.hit.point.x - look.origin.x, look.hit.point.z - look.origin.z) : Infinity;
         const ahead = Math.max(2, Math.min(6, wallAt - reach));
-        const spot = t > 0 && t < 25 ? toPlan(look.origin.clone().addScaledVector(look.dir, t)) : toPlan(look.origin.clone().addScaledVector(flatDir, ahead));
-        const item = { ...c.item, x: Math.round(spot.x), y: Math.round(spot.y) };
-        if (Math.abs(item.x - c.item.x) < 1 && Math.abs(item.y - c.item.y) < 1) return;
+        const floor = t > 0 && t < 25 ? toPlan(look.origin.clone().addScaledVector(look.dir, t)) : toPlan(look.origin.clone().addScaledVector(flatDir, ahead));
+        const h = look.hit;
+        const onWall = h && Math.abs(h.normal.y) < 0.3 && h.owner.levelId === c.levelId;
+        const spot: WalkSpot = { floor, ...(onWall ? { wall: { p: toPlan(h.point), n: { x: h.normal.x, y: h.normal.z } } } : {}) };
         const pl = planOf(latest.current.plans, c.levelId);
-        setCarry({ ...c, item, check: checkPlacement(withFurniture(pl, (f) => f.filter((x) => x.id !== item.id)), item) });
+        const items = latest.current.itemsOn[c.levelId] ?? [];
+        const ceilingIn = ceilingOf(c.levelId);
+        // A new door keeps one id while it's moved about, so it isn't redrawn for nothing.
+        const keepId = (o: Opening | null, was: Opening | null) => (o && was ? { ...o, id: was.id } : o);
+        let next: Carry;
+        if (c.kind === "new") next = { ...c, ghost: walkGhost(pl, c.entryId, spot, c.turn, items, ceilingIn, c.lift) };
+        else if (c.kind === "move") next = { ...c, ghost: walkMove(pl, c.item, spot, c.turn, items, ceilingIn, c.lift) };
+        else if (c.kind === "door") next = { ...c, opening: keepId(openingOnWall(pl, spot.wall?.p ?? floor, c.style, basics?.doorHeightIn), c.opening) };
+        else if (c.kind === "slide") next = { ...c, opening: slideOpening(pl, c.id, spot.wall?.p ?? floor) };
+        else next = { ...c, hover: wallPoint(pl, floor) };
+        setCarry((cur) => (!cur || cur.kind !== next.kind || cur.levelId !== next.levelId ? cur : JSON.stringify(cur) === JSON.stringify(next) ? cur : next));
         return;
       }
       if (latest.current.tapeOn) {
@@ -306,11 +457,12 @@ export default function Walkthrough({ project, cost, onClose }: { project: Proje
           { p: toPlan(h.point), heightIn: h.point.y * IN_PER_UNIT - floorIn, normal: { x: h.normal.x, y: h.normal.z, up: h.normal.y } },
           basics,
           below,
+          { tab: latest.current.tab, items: latest.current.itemsOn[owner.levelId] ?? [] },
         );
       }
       setAim((cur) => (JSON.stringify(cur) === JSON.stringify(next) ? cur : next));
     },
-    [frame, heights, levels, basics],
+    [frame, heights, levels, basics, ceilingOf],
   );
 
   // The mouse is captured while walking; Esc gives it back (the browser does that), and Esc again closes
@@ -324,14 +476,16 @@ export default function Walkthrough({ project, cost, onClose }: { project: Proje
         setAim(null);
         // Letting go of the mouse also cancels a measurement in progress.
         setTape((t) => (t.first || t.hover ? { ...t, first: null, hover: null } : t));
-        // Letting go of the mouse while carrying puts the piece back where it was.
+        // Letting go of the mouse while placing cancels it (a piece being moved goes back where it was).
         if (latest.current.carry) {
           setCarry(null);
-          say(latest.current.carry.isNew ? null : "Put back where it was.");
+          say(latest.current.carry.kind === "move" ? "Put back where it was." : null);
         }
       }
     };
     const onKey = (e: KeyboardEvent) => {
+      // The top-down view has its own keys (M or Esc come back).
+      if (latest.current.topDown) return;
       const t = e.target as HTMLElement | null;
       if (t?.closest("input, textarea, select")) return;
       if (e.key === "Shift") shiftDown.current = true;
@@ -343,9 +497,23 @@ export default function Walkthrough({ project, cost, onClose }: { project: Proje
       if (e.metaKey || e.ctrlKey || e.altKey) return;
       const { aim: a, carry: c, locked: on, design: d } = latest.current;
       if (e.code === "KeyE") {
-        setDesign(!d);
-        if (d) setCarry(null);
-        else setTapeOn(false);
+        setDesignOn(!d);
+        return;
+      }
+      if (e.code === "KeyF" && !c) {
+        openDesign("place");
+        return;
+      }
+      if (e.code === "Tab" && d) {
+        e.preventDefault();
+        const next = latest.current.tab === "finishes" ? "place" : "finishes";
+        setTab(next);
+        if (isDesignPanel(latest.current.panel)) setPanel({ kind: "design" });
+        else say(next === "place" ? "Place: aim at something placed to change it, or press F for the list." : "Finishes: aim at a surface and click to pick its finish.");
+        return;
+      }
+      if (e.code === "KeyM" && !c) {
+        openTopDown();
         return;
       }
       if (e.code === "KeyL") {
@@ -366,7 +534,7 @@ export default function Walkthrough({ project, cost, onClose }: { project: Proje
       if (e.code === "KeyT" && !c) {
         const next = !latest.current.tapeOn;
         setTapeOn(next);
-        if (next) setDesign(false);
+        if (next) setDesignOn(false);
         setTape((t) => ({ ...t, first: null, hover: null }));
         return;
       }
@@ -377,17 +545,17 @@ export default function Walkthrough({ project, cost, onClose }: { project: Proje
       if (!on || !d) return;
       if (e.code === "KeyR") {
         const by = e.shiftKey ? -15 : 15;
-        if (c) {
-          const item = { ...c.item, rotation: turnBy(c.item.rotation, by) };
-          const pl = planOf(latest.current.plans, c.levelId);
-          setCarry({ ...c, item, check: checkPlacement(withFurniture(pl, (f) => f.filter((x) => x.id !== item.id)), item) });
-        } else if (a?.kind === "furniture") turnFurniture(a.levelId, a.id, by);
-      } else if ((e.code === "Delete" || e.code === "Backspace") && a?.kind === "furniture" && !c) {
-        removeFurniture(a.levelId, a.id);
-      } else if (e.code === "KeyF" && !c) {
-        setPanel({ kind: "add" });
-        stopWalking();
+        if (c && (c.kind === "new" || c.kind === "move")) setCarry({ ...c, turn: c.turn + by, ghost: c.ghost && { ...c.ghost, rotation: (((c.ghost.rotation + by) % 360) + 360) % 360 } });
+        else if (!c && a?.kind === "furnish") turnAimed(a.levelId, a.id, by);
+      } else if ((e.code === "Delete" || e.code === "Backspace") && a?.kind === "furnish" && !c) {
+        removeThis(a.levelId, a.id);
       }
+    };
+    const onWheel = (e: WheelEvent) => {
+      // Scrolling raises or lowers a wall-hung shelf or cabinet being placed.
+      const c = latest.current.carry;
+      if (!latest.current.locked || !c || (c.kind !== "new" && c.kind !== "move")) return;
+      setCarry({ ...c, lift: c.lift + (e.deltaY < 0 ? 2 : -2) });
     };
     const onDown = (e: MouseEvent) => {
       const { aim: a, carry: c, locked: on, design: d } = latest.current;
@@ -411,8 +579,11 @@ export default function Walkthrough({ project, cost, onClose }: { project: Proje
       } else if (a.kind === "outside") {
         setPanel({ kind: "outside", aim: a });
         stopWalking();
-      } else if (a.kind === "furniture") {
-        setPanel({ kind: "furniture", levelId: a.levelId, id: a.id });
+      } else if (a.kind === "furnish") {
+        setPanel({ kind: "item", levelId: a.levelId, id: a.id });
+        stopWalking();
+      } else if (a.kind === "opening") {
+        setPanel({ kind: "opening", levelId: a.levelId, id: a.id });
         stopWalking();
       } else if (a.hint) say(a.hint);
     };
@@ -423,7 +594,9 @@ export default function Walkthrough({ project, cost, onClose }: { project: Proje
     window.addEventListener("keyup", onKeyUp);
     window.addEventListener("keydown", onKey);
     window.addEventListener("mousedown", onDown);
+    window.addEventListener("wheel", onWheel);
     return () => {
+      window.removeEventListener("wheel", onWheel);
       document.removeEventListener("pointerlockchange", onChange);
       window.removeEventListener("keydown", onKey);
       window.removeEventListener("keyup", onKeyUp);
@@ -453,15 +626,23 @@ export default function Walkthrough({ project, cost, onClose }: { project: Proje
     return b ? Math.max(b.max[0] - b.min[0], b.max[2] - b.min[2], 30) : 60;
   }, [model.bounds]);
 
-  const openFurniture = panel?.kind === "furniture" ? planOf(project.floorPlans, panel.levelId).furniture.find((x) => x.id === panel.id) : undefined;
-  const furnitureWarning = useMemo(() => {
-    if (!openFurniture || panel?.kind !== "furniture") return undefined;
-    const pl = planOf(project.floorPlans, panel.levelId);
-    const check = checkPlacement(withFurniture(pl, (f) => f.filter((x) => x.id !== openFurniture.id)), openFurniture);
-    return check.blocksDoors.length ? "It's in front of a door." : undefined;
-  }, [openFurniture, panel, project.floorPlans]);
-  const showPanel = panel && !locked && (panel.kind !== "furniture" || openFurniture);
+  const panelPlan = panel?.kind === "item" || panel?.kind === "opening" ? planOf(project.floorPlans, panel.levelId) : null;
+  const openItem = panel?.kind === "item" ? itemsOn[panel.levelId]?.find((x) => x.id === panel.id) : undefined;
+  const openOpening = panel?.kind === "opening" ? panelPlan?.openings.find((o) => o.id === panel.id) : undefined;
+  const showPanel = panel && !locked && !topDown && (panel.kind !== "item" || openItem) && (panel.kind !== "opening" || openOpening);
   const aimText = aim && aim.kind !== "none" ? aim.label : aim?.label;
+  const here = panel?.kind === "design" && tab === "place" ? roomHere() : null;
+  // The item or door under the dot, boxed in blue.
+  const aimedItem = design && locked && !carry && aim?.kind === "furnish" ? itemsOn[aim.levelId]?.find((x) => x.id === aim.id) : undefined;
+  const aimedOpening = useMemo(() => {
+    if (!design || !locked || carry || aim?.kind !== "opening") return null;
+    const pl = planOf(project.floorPlans, aim.levelId);
+    const o = pl.openings.find((x) => x.id === aim.id);
+    return o ? openingShape(pl, o) : null;
+  }, [design, locked, carry, aim, project.floorPlans]);
+  const carryOpening = useMemo(() => (carry && (carry.kind === "door" || carry.kind === "slide") && carry.opening ? openingShape(planOf(project.floorPlans, carry.levelId), carry.opening) : null), [carry, project.floorPlans]);
+  const carryLabel = carry ? carryInfo(carry, planOf(project.floorPlans, carry.levelId)) : null;
+  const levelOf = (id: string) => levels.find((l) => l.id === id);
 
   return (
     <div className="fixed inset-0 z-50 bg-black" data-testid="walkthrough">
@@ -480,7 +661,17 @@ export default function Walkthrough({ project, cost, onClose }: { project: Proje
         <DoorDriver world={world} walker={walker} states={doorStates} modeRef={doorModeRef} />
         {labelsOn && <FloorLabels project={project} settings={labelSettings} frame={frame} heights={heights} walker={walker} costTotal={cost?.total.likely} />}
         <TapeMeasure done={tape.done} first={tape.first} hover={tapeOn ? tape.hover : null} frame={frame} units={labelSettings.units} />
-        {carry && <FurnitureGhost item={carry.item} floorIn={heights[carry.levelId]?.floorIn ?? 0} frame={frame} ok={carry.check.ok} />}
+        {carry && (carry.kind === "new" || carry.kind === "move") && carry.ghost && (
+          <ItemGhost ghost={carry.ghost} color={carry.kind === "move" ? carry.item.color : undefined} floorIn={heights[carry.levelId]?.floorIn ?? 0} frame={frame} />
+        )}
+        {carry && carryOpening && <OpeningGhost g={carryOpening} floorIn={heights[carry.levelId]?.floorIn ?? 0} frame={frame} ok />}
+        {carry?.kind === "wall" && carry.hover && <WallGhost a={carry.first ?? carry.hover} b={carry.hover} heightIn={wallHeightIn(carry.height, ceilingOf(carry.levelId))} floorIn={heights[carry.levelId]?.floorIn ?? 0} frame={frame} />}
+        {aimedItem && aim?.kind === "furnish" && <ItemHighlight item={aimedItem} floorIn={heights[aim.levelId]?.floorIn ?? 0} ceilingIn={ceilingOf(aim.levelId)} frame={frame} />}
+        {aimedOpening && aim?.kind === "opening" && <OpeningGhost g={aimedOpening} floorIn={heights[aim.levelId]?.floorIn ?? 0} frame={frame} ok highlight />}
+        {design &&
+          levels.map((l) =>
+            itemsOn[l.id]?.length && heights[l.id] ? <DevicePlates key={l.id} items={itemsOn[l.id]} floorIn={heights[l.id].floorIn} ceilingIn={ceilingOf(l.id)} frame={frame} /> : null,
+          )}
         <Player
           walker={walker}
           locked={locked}
@@ -508,29 +699,27 @@ export default function Walkthrough({ project, cost, onClose }: { project: Proje
         where={where}
         cost={cost}
         design={design}
+        tab={tab}
         locked={locked}
-        onDesign={() => {
-          setDesign(!design);
-          if (design) setCarry(null);
-          else setTapeOn(false);
-        }}
+        onDesign={() => setDesignOn(!design)}
         labelsOn={labelsOn}
         tapeOn={tapeOn}
         onLabels={() => setLabelsOn(!labelsOn)}
         onLabelSettings={() => setPanel({ kind: "labels" })}
         onTape={() => {
           setTapeOn(!tapeOn);
-          if (!tapeOn) setDesign(false);
+          if (!tapeOn) setDesignOn(false);
           setTape((t) => ({ ...t, first: null, hover: null }));
         }}
         onClearTape={() => setTape({ done: [], first: null, hover: null })}
         hasTape={tape.done.length > 0}
-        onAddFurniture={() => setPanel({ kind: "add" })}
+        onPlace={() => openDesign("place")}
+        onTopDown={openTopDown}
         onClose={onClose}
       />
 
       {locked ? (
-        <AimDot design={design} aimText={aimText} aimable={aim?.kind !== "none"} carry={carry} />
+        <AimDot design={design} aimText={aimText} aimable={!!aim && aim.kind !== "none"} carry={carryLabel} />
       ) : showPanel ? (
         <button className="absolute inset-0 cursor-pointer" onClick={start} aria-label="Keep walking" />
       ) : (
@@ -567,19 +756,69 @@ export default function Walkthrough({ project, cost, onClose }: { project: Proje
             </button>
           </div>
           <div className="flex-1 overflow-y-auto p-4">
+            {isDesignPanel(panel) && (
+              <div className="mb-4">
+                <DesignTabs
+                  tab={panel.kind === "finish" || panel.kind === "outside" ? "finishes" : panel.kind === "design" ? tab : "place"}
+                  onTab={(t) => {
+                    setTab(t);
+                    setPanel({ kind: "design" });
+                  }}
+                />
+              </div>
+            )}
             {panel.kind === "finish" && <FinishPanel key={panel.aim.label} aim={panel.aim} selections={project.interior.selections} answers={answers} onChange={setSelections} />}
             {panel.kind === "outside" && <OutsidePanel key={panel.aim.label} aim={panel.aim} selections={project.exterior.selections} answers={outsideAnswers} onChange={setOutside} />}
-            {panel.kind === "furniture" && openFurniture && (
-              <FurniturePanel
-                item={openFurniture}
-                warning={furnitureWarning}
-                onColor={(color) => setPlan(panel.levelId, (p) => withFurniture(p, (f) => f.map((x) => (x.id === openFurniture.id ? { ...x, color } : x))))}
-                onMove={() => pickUp(openFurniture, panel.levelId, false)}
-                onTurn={(by) => turnFurniture(panel.levelId, openFurniture.id, by)}
-                onRemove={() => removeFurniture(panel.levelId, openFurniture.id)}
-              />
+            {panel.kind === "design" && tab === "finishes" && <FinishesHelp />}
+            {panel.kind === "design" && tab === "place" && (
+              <PlaceTab picked={null} onPick={pickEntry} roomName={here?.room.name ?? null} canFurnish={Boolean(here && canAutoFurnish(here.room))} onFurnishForMe={furnishHere} notes={autoNotes} />
             )}
-            {panel.kind === "add" && <AddFurniturePanel onPick={addFurniture} />}
+            {panel.kind === "item" && openItem && panelPlan && (
+              <div className="space-y-3" data-testid="walk-item-panel">
+                <button className="btn-primary w-full justify-center" onClick={() => pickUp(openItem, panel.levelId)} data-testid="walk-pick-up">
+                  Pick up and move
+                </button>
+                <FurnishItemPanel
+                  plan={panelPlan}
+                  item={openItem}
+                  ceilingIn={ceilingOf(panel.levelId)}
+                  roomName={openItem.roomId ? panelPlan.rooms.find((r) => r.id === openItem.roomId)?.name : undefined}
+                  onApply={(out, coalesce) => {
+                    setLevelPlan(panel.levelId, out.plan, coalesce);
+                    setPanel(out.id ? { kind: "item", levelId: panel.levelId, id: out.id } : { kind: "design" });
+                  }}
+                  onDelete={(pl) => {
+                    setLevelPlan(panel.levelId, pl);
+                    setPanel(null);
+                    say(isClosetRod(openItem.id) ? "Took out the closet's rod and shelf. Its walls and door stay." : "Deleted. Undo brings it back.");
+                  }}
+                  onMessage={say}
+                />
+                <p className="text-xs text-muted">While walking: aim at it and press R to turn it, or Delete to remove it.</p>
+              </div>
+            )}
+            {panel.kind === "opening" && openOpening && panelPlan && levelOf(panel.levelId) && (
+              <div className="space-y-3" data-testid="walk-opening-panel">
+                <button className="btn-primary w-full justify-center" onClick={() => carryThis({ kind: "slide", id: openOpening.id, levelId: panel.levelId, opening: null })} data-testid="walk-slide">
+                  Slide along the wall
+                </button>
+                <PlanSidePanel
+                  plan={panelPlan}
+                  overhangs={[]}
+                  level={levelOf(panel.levelId)!}
+                  levels={levels}
+                  brief={project.brief}
+                  basics={basics}
+                  selection={[{ kind: "opening", id: openOpening.id }]}
+                  tool="select"
+                  placeOpening={openOpening.style}
+                  onPlaceOpening={() => {}}
+                  onChange={(pl) => setLevelPlan(panel.levelId, pl)}
+                  onSelect={() => {}}
+                  noDelete
+                />
+              </div>
+            )}
             {panel.kind === "labels" && (
               <LabelSettingsPanel
                 settings={labelSettings}
@@ -593,8 +832,18 @@ export default function Walkthrough({ project, cost, onClose }: { project: Proje
         </aside>
       )}
 
+      {topDown && (
+        <TopDown
+          here={topDown}
+          onBack={() => {
+            setTopDown(null);
+            unlockedAt.current = performance.now();
+          }}
+        />
+      )}
+
       {/* Time of day, season, and jumping around. Hidden while walking so the mouse stays in the view. */}
-      {!locked && !showPanel && (
+      {!locked && !showPanel && !topDown && (
         <WalkControls
           hour={shownHour}
           sunrise={sunrise}
