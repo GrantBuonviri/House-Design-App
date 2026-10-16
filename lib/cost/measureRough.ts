@@ -1,6 +1,7 @@
 import { isHeated, roomType } from "@/lib/brief/rooms";
 import { FLOOR_STRUCTURE_IN } from "@/lib/plan/basics";
 import { type Quantities, OPEN_ROOMS, type Ctx, empty, siteFacts, roomFixtures } from "./quantityBasics";
+import { flatProject } from "@/lib/plan/flatten";
 
 /**
  * A rough measure from the Rooms page (or the Design Brief), before any
@@ -8,6 +9,7 @@ import { type Quantities, OPEN_ROOMS, type Ctx, empty, siteFacts, roomFixtures }
  * stacked as simple boxes, with typical windows and doors.
  */
 export function measureRough(p: Ctx): Quantities | null {
+  p = flatProject(p);
   const answers = p.discovery.answers;
   const rooms = p.brief
     ? p.brief.rooms.map((r) => ({ name: r.name, type: r.type, sqft: r.targetSqFt, levelId: r.levelId }))

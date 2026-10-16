@@ -3,9 +3,11 @@ import { roleOf } from "@/lib/plan/connect";
 import { codeEntry, codeNum } from "@/lib/codes/data";
 import { deviceLayout, isBath, type PlacedDevice } from "@/lib/plan/devices";
 import { stairsDrawing } from "@/lib/plan/stairs";
-import { dist, pointInPolygon, polygonArea } from "@/lib/plan/geometry";
+import { dist, pointInPolygon } from "@/lib/plan/geometry";
 import { houseFacts } from "./house";
 import { levelCabinets } from "./sheets/cabinets";
+import { flatProject, savedRoom } from "@/lib/plan/flatten";
+import { roomArea } from "@/lib/plan/arcs";
 
 /**
  * What the electrical, plumbing and mechanical sheets and the code checks
@@ -42,6 +44,7 @@ export function panelLevel(project: Project): Level | undefined {
 }
 
 export function levelDevices(project: Project, level: Pick<Level, "id" | "kind" | "elevationIn">): PlacedDevice[] {
+  project = flatProject(project);
   let byLevel = cache.get(project);
   if (!byLevel) cache.set(project, (byLevel = new Map()));
   const hit = byLevel.get(level.id);
@@ -92,7 +95,7 @@ export const outside = (rooms: PlanRoom[], d: Pick<PlacedDevice, "x" | "y">) => 
 /** Heated floor area, sq ft: every room but the garage and outdoor rooms. */
 export function conditionedSqft(project: Project): number {
   const h = houseFacts(project);
-  return Math.round(h.levels.reduce((s, l) => s + h.plan(l.id).rooms.filter((r) => roleOf(r) !== "garage" && roleOf(r) !== "outdoor").reduce((a, r) => a + polygonArea(r.polygon) / 144, 0), 0));
+  return Math.round(h.levels.reduce((s, l) => s + h.plan(l.id).rooms.filter((r) => roleOf(r) !== "garage" && roleOf(r) !== "outdoor").reduce((a, r) => a + roomArea(savedRoom(r)) / 144, 0), 0));
 }
 
 export function bedroomCount(project: Project): number {

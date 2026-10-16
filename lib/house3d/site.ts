@@ -6,6 +6,7 @@ import { createTerrain, type HeightFn } from "@/lib/land/terrain";
 import { planOf } from "@/lib/plan/edit";
 import { boundsOf, pointInPolygon } from "@/lib/plan/geometry";
 import { areaKind } from "@/lib/plan/measure";
+import { flatPlans } from "@/lib/plan/flatten";
 
 /**
  * Where the house sits on the land. Plan and plot coordinates are both
@@ -29,6 +30,7 @@ export function lotOffsetFor(p: Pick<Project, "plot" | "sketch" | "bubbles" | "f
 
 /** The box around the house's rooms (the main floor's when `mainFirst` and it has any). */
 export function planBounds(plans: Record<string, FloorPlan>, mainFirst = false) {
+  plans = flatPlans(plans);
   const main = planOf(plans, MAIN_LEVEL_ID).rooms.flatMap((r) => r.polygon);
   const all = Object.values(plans).flatMap((pl) => pl.rooms.flatMap((r) => r.polygon));
   return boundsOf(mainFirst && main.length ? main : all);
@@ -57,6 +59,7 @@ function samplesUnder(polys: Point[][]): Point[] {
 }
 
 export function siteFor(plot: Plot | null, offset: Point, plans: Record<string, FloorPlan>): Site {
+  plans = flatPlans(plans);
   const terrain = plot ? createTerrain(plot) : () => 0;
   const atPlan = (p: Point) => terrain(p.x + offset.x, p.y + offset.y);
   const indoor = (pl: FloorPlan | undefined) => (pl?.rooms ?? []).filter((r) => areaKind(r) !== "outdoor").map((r) => r.polygon);

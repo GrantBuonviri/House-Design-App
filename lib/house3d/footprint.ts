@@ -2,6 +2,7 @@ import polygonClipping, { type MultiPolygon, type Polygon } from "polygon-clippi
 import type { FloorPlan, Point } from "@/lib/model/schema";
 import { areaKind } from "@/lib/plan/measure";
 import { add, clockwise, dist, dot, leftNormal, polygonArea, scale, signedArea, sub, unit } from "@/lib/plan/geometry";
+import { flatPlan } from "@/lib/plan/flatten";
 
 /**
  * The outline of the house on each floor: all its rooms joined into one
@@ -88,6 +89,7 @@ export function joinRooms(polys: Point[][]): Region[] {
 
 /** The house's outline on one floor: rooms with walls (porches, decks and patios left out). */
 export function floorFootprint(plan: FloorPlan): Region[] {
+  plan = flatPlan(plan);
   return joinRooms(plan.rooms.filter((r) => areaKind(r) !== "outdoor").map((r) => r.polygon));
 }
 
@@ -96,6 +98,7 @@ export const COVERED = new Set(["porch", "patio"]);
 
 /** What the roof covers on one floor: the rooms with walls plus porches and covered patios. */
 export function roofFootprint(plan: FloorPlan): Region[] {
+  plan = flatPlan(plan);
   return joinRooms(plan.rooms.filter((r) => areaKind(r) !== "outdoor" || COVERED.has(r.type ?? "")).map((r) => r.polygon));
 }
 

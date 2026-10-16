@@ -6,6 +6,7 @@ import { planOf, makeRoom, reshapeRoom, type Plans } from "./edit";
 import { clockwise, dist, edgesOf, lerp, polygonArea, polygonCenter } from "./geometry";
 import { areaKind } from "./measure";
 import type { SnapTargets } from "./snap";
+import { flatPlans } from "./flatten";
 
 /**
  * What holds up a floor: the outline of the floor directly below it (rooms
@@ -24,6 +25,7 @@ const fromRing = (r: [number, number][]): Point[] => r.slice(0, -1).map(([x, y])
 
 /** The floor below a floor that sits on it, and what holds this floor up. Null when there's nothing to check (the main floor and basement sit on the ground, or the floor below is empty). */
 export function supportOf(plans: Plans, levels: Level[], level: Level): { below: Level; regions: Region[] } | null {
+  plans = flatPlans(plans);
   if (level.kind === "main" || level.kind === "basement") return null;
   const below = levelBelow(levels, level);
   if (!below) return null;
@@ -166,6 +168,7 @@ export function keepInside(plan: FloorPlan, regions: Region[]): { plan: FloorPla
 
 /** How much of a floor hangs past the floor below without being held up on purpose (sq in). */
 export function hangingArea(plans: Plans, levels: Level[], level: Level): number {
+  plans = flatPlans(plans);
   const s = supportOf(plans, levels, level);
   if (!s) return 0;
   return overhangsOf(planOf(plans, level.id).rooms, s.regions)

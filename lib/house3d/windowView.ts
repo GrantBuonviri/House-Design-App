@@ -10,6 +10,7 @@ import type { LevelHeights } from "./levels";
 import { toScene, type Vec3 } from "./mesh";
 import { openingSpan } from "./openings";
 import { EYE_IN } from "./walk";
+import { flatPlan, flatPlans } from "@/lib/plan/flatten";
 
 /**
  * Where to stand to preview a window: inside the room a few steps back,
@@ -58,6 +59,8 @@ function onOutsideWall(plan: FloorPlan, opening: Opening, exteriorIn: number) {
 
 /** Whether a door or window can be previewed: a window or sliding glass door in an outside wall. */
 export function canPreview(plan: FloorPlan, opening: Opening, basics: PlanBasics | null): boolean {
+  plan = flatPlan(plan);
+  opening = plan.openings.find((o) => o.id === opening.id) ?? opening;
   return onOutsideWall(plan, opening, exteriorWallIn(basics)) !== null;
 }
 
@@ -79,6 +82,7 @@ export function rayToSegments(o: Point, d: Point, segs: { a: Point; b: Point }[]
 }
 
 export function windowViews(plans: Plans, ctx: HouseContext & { heights: LevelHeights }, levelId: string, openingId: string): WindowViews | null {
+  plans = flatPlans(plans);
   const plan = planOf(plans, levelId);
   const opening = plan.openings.find((o) => o.id === openingId);
   const h = ctx.heights[levelId];

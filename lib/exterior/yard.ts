@@ -8,6 +8,7 @@ import { bearingVector } from "@/lib/land/generate";
 import { areaKind } from "@/lib/plan/measure";
 import { openingGeometries, wallPieces, type OpeningGeometry } from "@/lib/plan/walls";
 import { levelHeights } from "@/lib/house3d/levels";
+import { flatPlans } from "@/lib/plan/flatten";
 
 /**
  * The yard around the house, laid out by code from the floor plan and the
@@ -77,6 +78,7 @@ function lotOutline(plot: Plot | null, offset: Point, house: { x0: number; y0: n
 
 /** The yard, or null when there's no floor plan on the ground yet. */
 export function yardLayout(plans: Plans, levels: Level[], basics: PlanBasics | null, plot: Plot | null, offset: Point): Yard | null {
+  plans = flatPlans(plans);
   const heights = levelHeights(levels, basics);
   const ground = levels.filter((l) => l.kind !== "basement" && Math.abs(heights[l.id]?.floorIn ?? 99) <= 12 && (plans[l.id]?.rooms.length ?? 0) > 0);
   if (!ground.length) return null;

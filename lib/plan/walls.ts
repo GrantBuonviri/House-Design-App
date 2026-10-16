@@ -1,6 +1,7 @@
 import type { FloorPlan, OpenWall, Opening, OpeningHost, Point, WallHeight } from "@/lib/model/schema";
 import { INTERIOR_WALL_IN } from "./basics";
 import { areaKind } from "./measure";
+import { leftBulge, projectOnEdge, roomEdgeLength, wallLength } from "./arcs";
 import { add, collinearOverlap, dist, dot, edgesOf, leftNormal, lerp, polygonCenter, project, scale, sub, subtractIntervals, unit } from "./geometry";
 
 /**
@@ -12,7 +13,8 @@ import { add, collinearOverlap, dist, dot, edgesOf, leftNormal, lerp, polygonCen
  * stretch becomes an open piece with no wall, and the rooms open onto each other.
  */
 
-export type HostSegment = { a: Point; b: Point; host: OpeningHost; length: number };
+/** A wall a door or window can sit in. `length` is along the wall (around the curve, when `bulge` is set: how far it bows to the left of a→b). */
+export type HostSegment = { a: Point; b: Point; host: OpeningHost; length: number; bulge?: number };
 
 export type WallPiece = {
   a: Point;
@@ -71,18 +73,20 @@ export function hostSegment(plan: FloorPlan, host: OpeningHost): HostSegment | n
     if (!room || host.edge >= room.polygon.length) return null;
     const a = room.polygon[host.edge];
     const b = room.polygon[(host.edge + 1) % room.polygon.length];
-    return { a, b, host, length: dist(a, b) };
+    return withBulge({ a, b, host, length: dist(a, b) }, leftBulge(room, host.edge), roomEdgeLength(room, host.edge));
   }
   const wall = plan.walls.find((w) => w.id === host.wallId);
-  return wall ? { a: wall.a, b: wall.b, host, length: dist(wall.a, wall.b) } : null;
+  return wall ? withBulge({ a: wall.a, b: wall.b, host, length: dist(wall.a, wall.b) }, wall.bulge ?? 0, wallLength(wall)) : null;
 }
 
 export function hostSegments(plan: FloorPlan): HostSegment[] {
   const out: HostSegment[] = [];
-  for (const r of plan.rooms) for (const e of edgesOf(r.polygon)) out.push({ a: e.a, b: e.b, host: { roomId: r.id, edge: e.i }, length: dist(e.a, e.b) });
-  for (const w of plan.walls) out.push({ a: w.a, b: w.b, host: { wallId: w.id }, length: dist(w.a, w.b) });
+  for (const r of plan.rooms) for (const e of edgesOf(r.polygon)) out.push(withBulge({ a: e.a, b: e.b, host: { roomId: r.id, edge: e.i }, length: dist(e.a, e.b) }, leftBulge(r, e.i), roomEdgeLength(r, e.i)));
+  for (const w of plan.walls) out.push(withBulge({ a: w.a, b: w.b, host: { wallId: w.id }, length: dist(w.a, w.b) }, w.bulge ?? 0, wallLength(w)));
   return out.filter((s) => s.length > 0.5);
 }
+
+const withBulge = (seg: HostSegment, bulge: number, length: number): HostSegment => (bulge ? { ...seg, bulge, length } : seg);
 
 export const openWallsOf = (plan: FloorPlan): OpenWall[] => plan.openWalls ?? [];
 
@@ -222,7 +226,7 @@ export function solidWalls(pieces: WallPiece[], openings: OpeningGeometry[]): So
 export function nearestHost(plan: FloorPlan, p: Point, maxDist: number): { seg: HostSegment; t: number; d: number; side: 1 | -1 } | null {
   let best: { seg: HostSegment; t: number; d: number; side: 1 | -1 } | null = null;
   for (const seg of hostSegments(plan)) {
-    const pr = project(p, seg.a, seg.b);
+    const pr = projectOnEdge(p, seg.a, seg.b, seg.bulge);
     if (pr.d > maxDist || (best && pr.d >= best.d - 0.01)) continue;
     const n = leftNormal(unit(sub(seg.b, seg.a)));
     best = { seg, t: pr.t, d: pr.d, side: dot(sub(p, pr.point), n) >= 0 ? 1 : -1 };

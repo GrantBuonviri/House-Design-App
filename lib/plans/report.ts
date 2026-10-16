@@ -6,12 +6,14 @@ import { issueDate } from "./build";
 import { preparedNote } from "./frame";
 import { capHeight, line, table, textBlock, type Item, type Sheet } from "./draw";
 import { codeRows } from "./sheets/general";
+import { flatProject } from "@/lib/plan/flatten";
 
 /**
  * The code check on its own, as letter-size pages (8.5" x 11") that print
  * on any printer: the codes used, the counts, and every rule with its result.
  */
 export function codeReportPages(project: Project, date = new Date()): Sheet[] {
+  project = flatProject(project);
   const r = readiness(project);
   const rows = codeRows(r.report).map(([n, title, section, result, found, fix]) => [n, `${title}\n${section}`, result, fix ? `${found}\nFix: ${fix}` : found]);
   const W = 8.5;

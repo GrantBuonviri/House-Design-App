@@ -65,6 +65,8 @@ export function migrateProject(raw: unknown): Project {
   // Version 18 to 19 added how a room hanging past the floor below is held up
   // ("none" by default, so it's still a warning).
   if (version < 19) migrated = migrateV18(migrated);
+  // Version 19 to 20 added curved walls (room `bulges`, wall `bulge`). Left out
+  // means straight, so older projects need no change beyond the version.
   return Project.parse({ ...migrated, schemaVersion: SCHEMA_VERSION });
 }
 

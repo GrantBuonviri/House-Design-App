@@ -5,6 +5,7 @@ import { ACCENT_BAND_FT, accentPlaceFor } from "@/lib/exterior/picks";
 import { productTitle } from "@/lib/interior/picks";
 import { measureHouse, type Quantities } from "./quantities";
 import { rates as loadRates, type Range, type RateId, type RatesFile } from "./rates";
+import { flatProject } from "@/lib/plan/flatten";
 
 /**
  * The cost estimate: the measured house times the Boise rates, in the 16
@@ -97,6 +98,7 @@ export function estimate(
   p: Pick<Project, "levels" | "plot" | "sketch" | "bubbles" | "floorPlans" | "house3d" | "plan" | "discovery" | "brief" | "cost" | "interior" | "exterior">,
   file: RatesFile = loadRates(),
 ): Estimate | null {
+  p = flatProject(p);
   const q = measureHouse(p);
   if (!q) return null;
   const utilities = p.cost.utilities;

@@ -13,6 +13,7 @@ import { codeNum, codeRef } from "./data";
 import { escapeCheck, glassSqft, openableSqft } from "./openings";
 import { alarmChecks, bathFanCheck, electricalChecks, mechanicalChecks } from "./systemsChecks";
 import { bracingChecks, floorFramingChecks, footingChecks, headerChecks, headroomChecks } from "./structureChecks";
+import { flatProject } from "@/lib/plan/flatten";
 
 /**
  * The code check: a list of rules from the codes Boise uses, each with its
@@ -597,6 +598,7 @@ const RANK: Record<RuleStatus, number> = { pass: 0, manual: 1, fail: 2 };
 
 /** Every rule with its results. Rules with nothing to look at are left out. */
 export function codeReport(project: Project): RuleReport[] {
+  project = flatProject(project);
   const h = houseFacts(project);
   return RULES.map((rule) => {
     const results = rule.check(h);

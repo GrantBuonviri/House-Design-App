@@ -1,14 +1,17 @@
 import type { FloorPlan, PlanRoom } from "@/lib/model/schema";
 import { roomType } from "@/lib/brief/rooms";
-import { SQ_IN_PER_SQ_FT, polygonArea } from "./geometry";
+import { SQ_IN_PER_SQ_FT } from "./geometry";
+import { roomArea } from "./arcs";
+import { savedRoom } from "./flatten";
 
 /**
  * Room areas and floor totals. Areas are measured to the middle of the walls,
  * so they read a little larger than the floor you'd carpet.
  */
 
-export function roomSqft(room: Pick<PlanRoom, "polygon">): number {
-  return Math.round(polygonArea(room.polygon) / SQ_IN_PER_SQ_FT);
+/** Curved walls count exactly (the true area under the curve, also for a flattened copy of the room). */
+export function roomSqft(room: Pick<PlanRoom, "polygon" | "bulges">): number {
+  return Math.round(roomArea(savedRoom(room)) / SQ_IN_PER_SQ_FT);
 }
 
 export type AreaKind = "living" | "garage" | "outdoor";
@@ -24,7 +27,7 @@ export type Totals = Record<AreaKind, number>;
 
 export function planTotals(plan: FloorPlan): Totals {
   const t: Totals = { living: 0, garage: 0, outdoor: 0 };
-  for (const r of plan.rooms) t[areaKind(r)] += polygonArea(r.polygon) / SQ_IN_PER_SQ_FT;
+  for (const r of plan.rooms) t[areaKind(r)] += roomArea(savedRoom(r)) / SQ_IN_PER_SQ_FT;
   return { living: Math.round(t.living), garage: Math.round(t.garage), outdoor: Math.round(t.outdoor) };
 }
 

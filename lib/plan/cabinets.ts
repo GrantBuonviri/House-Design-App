@@ -2,6 +2,7 @@ import type { Cabinet, CabinetEdits, FloorPlan, Fixture, Point } from "@/lib/mod
 import { add, dist, dot, edgesOf, project, rotate, round1, scale, sub, subtractIntervals } from "./geometry";
 import { inSpans, openSpans, openingGeometries } from "./walls";
 import { newPlanId } from "./edit";
+import { flatPlan } from "./flatten";
 
 /**
  * Cabinets laid out from the counters, islands, vanities and appliances on
@@ -130,6 +131,7 @@ export function upperTop(ceilingIn: number): { topIn: number; heightIn: number }
 
 /** Lay out the runs and the cabinets the app would put in, before any changes by hand. */
 export function autoCabinets(plan: FloorPlan, ceilingIn: number, rangeClearanceIn = 30): CabinetLayout {
+  plan = flatPlan(plan);
   const runs = findRuns(plan);
   trimCorners(runs);
   const cabinets: PlacedCabinet[] = [];
@@ -242,6 +244,7 @@ export function autoCabinets(plan: FloorPlan, ceilingIn: number, rangeClearanceI
 
 /** The cabinets on a floor: the app's layout, less any taken away, plus any added or moved by hand. */
 export function cabinetLayout(plan: FloorPlan, ceilingIn: number, rangeClearanceIn = 30): CabinetLayout {
+  plan = flatPlan(plan);
   const auto = autoCabinets(plan, ceilingIn, rangeClearanceIn);
   const edits = plan.cabinets;
   if (!edits) return auto;

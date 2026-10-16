@@ -2,6 +2,7 @@ import type { FloorPlan, Point } from "@/lib/model/schema";
 import { add, dist, lerp, pointInPolygon, scale, sub } from "@/lib/plan/geometry";
 import { areaKind } from "@/lib/plan/measure";
 import { openingGeometries, wallPieces } from "@/lib/plan/walls";
+import { flatPlan } from "@/lib/plan/flatten";
 
 /**
  * Steps down to the ground: outside doors and the open edges of porches and
@@ -51,6 +52,7 @@ function stepsOut(at: Point, n: Point, width: number, floorIn: number, landing: 
 
 /** The steps for one floor (only floors near the ground have any). */
 export function entrySteps(plan: FloorPlan, floorIn: number, exteriorIn: number, groundAt: (p: Point) => number): EntryStep[] {
+  plan = flatPlan(plan);
   if (floorIn > 4 * 12 || !plan.rooms.length) return [];
   const indoor = plan.rooms.filter((r) => areaKind(r) !== "outdoor").map((r) => r.polygon);
   const all = plan.rooms.map((r) => r.polygon);

@@ -22,6 +22,7 @@ import { buildYard } from "./yard";
 import { cabinetLayout } from "@/lib/plan/cabinets";
 import { codeNum } from "@/lib/codes/data";
 import { overhangsOf, postsUnder, supportOf } from "@/lib/plan/support";
+import { ROOF_STEP_DEG, flatPlans, sourceEdge } from "@/lib/plan/flatten";
 
 /**
  * The whole 3D house from the project: walls with doors and windows cut in,
@@ -114,6 +115,7 @@ export function buildLevel(
   level: Level,
   ctx: HouseContext & { heights: LevelHeights },
 ): Part[] {
+  plans = flatPlans(plans);
   const plan = planOf(plans, level.id);
   const { frame: f, heights, site } = ctx;
   const ordered = stack(ctx.levels, heights);
@@ -160,7 +162,7 @@ export function buildLevel(
       const look = r && looks.get(r.id);
       if (!r || !look) return COLORS.drywall;
       const edge = look.accents.size ? roomEdgeAt(r.polygon, mid, p.thicknessIn / 2 + 2, { x: u.y, y: -u.x }) : null;
-      return (edge !== null && look.accents.get(wallKey(edge))) || look.wall;
+      return (edge !== null && look.accents.get(wallKey(sourceEdge(r, edge)))) || look.wall;
     };
     const color = p.exterior
       ? { left: ext.siding.color, leftPattern: ext.siding.pattern, right: side(-1), ends: ext.siding.color, top: COLORS.wallTop }
@@ -385,6 +387,7 @@ function skirt(mb: MeshBuilder, f: Frame, room: PlanRoom, z0: number, z1: number
 
 /** Roofs over every part of the house with nothing built on top. */
 export function buildRoofs(plans: Plans, ctx: HouseContext & { heights: LevelHeights }): { parts: Part[]; fellBack: boolean; topIn: number } {
+  plans = flatPlans(plans, ROOF_STEP_DEG);
   const { heights, frame: f } = ctx;
   const ordered = stack(ctx.levels, heights);
   const exteriorIn = exteriorWallIn(ctx.basics);
@@ -418,6 +421,7 @@ export function buildRoofs(plans: Plans, ctx: HouseContext & { heights: LevelHei
 
 /** Basements and other floors below the ground, grown to the outside of their walls: where the ground is dug out. */
 export function dugOut(plans: Plans, ctx: HouseContext & { heights: LevelHeights }): Point[][] {
+  plans = flatPlans(plans);
   const exteriorIn = exteriorWallIn(ctx.basics);
   return ctx.levels
     .filter((l) => ctx.heights[l.id].floorIn < -12)
@@ -443,6 +447,7 @@ export function buildHouse(plans: Plans, ctx: HouseContext): HouseModel {
 }
 
 export function houseBounds(plans: Plans, ctx: HouseContext & { heights: LevelHeights }, roofTopIn: number): HouseModel["bounds"] {
+  plans = flatPlans(plans);
   const pts = Object.values(plans).flatMap((p) => p.rooms.flatMap((r) => r.polygon));
   if (!pts.length) return null;
   const hs = Object.values(ctx.heights);

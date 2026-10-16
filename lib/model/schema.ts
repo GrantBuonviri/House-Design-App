@@ -9,7 +9,7 @@ import { z } from "zod";
  * Angles are degrees clockwise from north (0 = N, 90 = E).
  */
 
-export const SCHEMA_VERSION = 19;
+export const SCHEMA_VERSION = 20;
 
 export const Point = z.object({ x: z.number(), y: z.number() });
 export type Point = z.infer<typeof Point>;
@@ -326,8 +326,8 @@ export type SketchSettings = z.infer<typeof SketchSettings>;
 // ---------- 5. Floor plans ----------
 
 /**
- * A floor plan is drawn room by room. Each room is a straight-walled outline
- * (any angle), in the same coordinates as the flow sketch: inches, x east,
+ * A floor plan is drawn room by room. Each room is an outline of corners
+ * (any angle), whose edges can curve, in the same coordinates as the flow sketch: inches, x east,
  * y south. Walls are worked out from the room edges (an edge two rooms share
  * is one interior wall), plus any extra walls drawn on their own.
  */
@@ -340,6 +340,13 @@ export const PlanRoom = z.object({
   type: z.string().optional(),
   /** Corners in order, at least three. The edge from corner i to corner i + 1 is "edge i". */
   polygon: z.array(Point).min(3),
+  /**
+   * Curved walls: per edge (same order as the corners), how far the middle of
+   * the edge bows away from the straight line between its corners, inches.
+   * Positive bows out of the room, negative in; 0 or left out is straight.
+   * See lib/plan/arcs.ts.
+   */
+  bulges: z.array(z.number()).optional(),
   /**
    * How a room on an upper floor that reaches past the floor below is held
    * up: it doesn't (a warning), a short cantilever (up to 2'), posts and a
@@ -362,6 +369,8 @@ export const PlanWall = z.object({
   thicknessIn: z.number().positive(),
   /** Left out means full height. */
   height: WallHeight.optional(),
+  /** A curved wall: how far its middle bows to the left walking from `a` to `b`, inches. Left out is straight. */
+  bulge: z.number().optional(),
 });
 export type PlanWall = z.infer<typeof PlanWall>;
 

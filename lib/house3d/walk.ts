@@ -13,6 +13,7 @@ import { entrySteps } from "./entry";
 import { fixtureSpan } from "./fixtures";
 import { furnitureHeight, furnitureOutline, furnitureType } from "@/lib/plan/furniture";
 import { stairSteps } from "./stairs";
+import { flatPlans } from "@/lib/plan/flatten";
 
 /**
  * Walking through the house in first person. Pure data and math, so it can
@@ -74,6 +75,7 @@ export const yawToward = (from: Point, to: Point) => Math.atan2(to.x - from.x, -
 export const heading = (yaw: number): Point => ({ x: Math.sin(yaw), y: -Math.cos(yaw) });
 
 export function walkWorld(plans: Plans, ctx: HouseContext & { heights: LevelHeights }): WalkWorld {
+  plans = flatPlans(plans);
   const { heights, site } = ctx;
   const exteriorIn = exteriorWallIn(ctx.basics);
   const blockers: Blocker[] = [];
@@ -304,6 +306,7 @@ export function walkStep(world: WalkWorld, w: Walker, input: MoveInput, dt: numb
 
 /** The floor and room you're in, for the label on screen. */
 export function whereAmI(world: WalkWorld, plans: Plans, w: Walker): { levelName: string; roomName: string } {
+  plans = flatPlans(plans);
   const lv = [...world.levels].reverse().find((l) => l.floorIn <= w.feet + STEP_UP_IN) ?? world.levels[0];
   if (!lv) return { levelName: "", roomName: "Outside" };
   const plan = planOf(plans, lv.id);

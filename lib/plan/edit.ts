@@ -1,7 +1,8 @@
 import type { FloorPlan, Opening, PlanRoom, Point } from "@/lib/model/schema";
 import { newElementId } from "@/lib/bubbles/edit";
-import { add, clockwise, collinearOverlap, dist, dot, edgesOf, polygonCenter, project, rotate, round1, roundPoint, scale, sub, unit } from "./geometry";
+import { add, clockwise, collinearOverlap, dist, dot, edgesOf, polygonCenter, rotate, round1, roundPoint, scale, sub, unit } from "./geometry";
 import { clampOffset, hostSegment, nearestHost, sameHost } from "./walls";
+import { bulgeOf, leftBulge, pointOnEdge, projectOnEdge, reverseBulges, roomEdgeArc, roomEdgeLength, scaledBulge, withBulges } from "./arcs";
 import { carryOpenWalls, pruneOpenWalls } from "./openWalls";
 
 /**
@@ -123,8 +124,8 @@ function keepDoorsInPlace(before: FloorPlan, after: FloorPlan): FloorPlan {
     const from = hostSegment(before, o.host);
     const to = hostSegment(after, o.host);
     if (!from || !to) return o;
-    const at = add(from.a, scale(unit(sub(from.b, from.a)), o.offsetIn));
-    const offsetIn = round1(clampOffset(project(at, to.a, to.b).t, o.widthIn, to.length));
+    const at = pointOnEdge(from.a, from.b, from.bulge ?? 0, o.offsetIn);
+    const offsetIn = round1(clampOffset(projectOnEdge(at, to.a, to.b, to.bulge).t, o.widthIn, to.length));
     if (offsetIn === o.offsetIn) return o;
     changed = true;
     return { ...o, offsetIn };
@@ -171,7 +172,7 @@ export function insertGluedCorner(plan: FloorPlan, roomId: string, edge: number,
   for (const r of plan.rooms) {
     if (r.id === roomId) continue;
     const hit = edgesOf(r.polygon).find((e) => {
-      const pr = project(p, e.a, e.b);
+      const pr = projectOnEdge(p, e.a, e.b, leftBulge(r, e.i));
       return pr.d <= 1 && pr.t > 1 && pr.t < pr.length - 1;
     });
     if (hit) next = insertCorner(next, r.id, hit.i, p);
@@ -179,20 +180,28 @@ export function insertGluedCorner(plan: FloorPlan, roomId: string, edge: number,
   return { plan: next, index: edge + 1 };
 }
 
-/** Give a room a new outline, keeping each door and window as close as it can to where it was. */
-export function reshapeRoom(plan: FloorPlan, roomId: string, polygon: Point[]): FloorPlan {
+/**
+ * Give a room a new outline, keeping each door and window as close as it can
+ * to where it was. `bulges` go with the new corners; left out, a room with
+ * the same number of corners keeps its curves, and otherwise goes straight.
+ */
+export function reshapeRoom(plan: FloorPlan, roomId: string, polygon: Point[], bulges?: number[]): FloorPlan {
   const room = plan.rooms.find((r) => r.id === roomId);
   if (!room || polygon.length < 3) return plan;
-  const next = { ...plan, rooms: plan.rooms.map((r) => (r.id === roomId ? { ...r, polygon: clockwise(polygon.map(roundPoint)) } : r)) };
+  const rounded = polygon.map(roundPoint);
+  const cw = clockwise(rounded);
+  let curves = bulges ?? (polygon.length === room.polygon.length ? room.bulges : undefined);
+  if (curves && cw !== rounded) curves = reverseBulges(curves, polygon.length);
+  const next = { ...plan, rooms: plan.rooms.map((r) => (r.id === roomId ? withBulges({ ...r, polygon: cw }, curves) : r)) };
   const moved = next.rooms.find((r) => r.id === roomId)!;
   const openings = plan.openings.map((o) => {
     if (!("roomId" in o.host) || o.host.roomId !== roomId) return o;
     const seg = hostSegment(plan, o.host);
     if (!seg) return o;
-    const at = add(seg.a, scale(unit(sub(seg.b, seg.a)), o.offsetIn));
+    const at = pointOnEdge(seg.a, seg.b, seg.bulge ?? 0, o.offsetIn);
     let best = { edge: 0, t: 0, d: Infinity, length: 0 };
     for (const e of edgesOf(moved.polygon)) {
-      const pr = project(at, e.a, e.b);
+      const pr = projectOnEdge(at, e.a, e.b, leftBulge(moved, e.i));
       if (pr.d < best.d) best = { edge: e.i, t: pr.t, d: pr.d, length: pr.length };
     }
     return { ...o, host: { roomId, edge: best.edge }, offsetIn: round1(clampOffset(best.t, o.widthIn, best.length)) };
@@ -200,20 +209,46 @@ export function reshapeRoom(plan: FloorPlan, roomId: string, polygon: Point[]): 
   return { ...next, openings };
 }
 
-/** Add a corner in the middle of an edge, so the room can take a new shape. */
+/**
+ * Add a corner in the middle of an edge, so the room can take a new shape.
+ * On a curved edge the corner goes on the curve, and both halves keep
+ * following the same circle.
+ */
 export function insertCorner(plan: FloorPlan, roomId: string, edge: number, p: Point): FloorPlan {
   const room = plan.rooms.find((r) => r.id === roomId);
   if (!room) return plan;
   const poly = [...room.polygon];
-  poly.splice(edge + 1, 0, roundPoint(p));
-  return reshapeRoom(plan, roomId, poly);
+  const arc = roomEdgeArc(room, edge);
+  const at = arc ? projectOnEdge(p, arc.a, arc.b, arc.bulge).point : p;
+  poly.splice(edge + 1, 0, roundPoint(at));
+  let bulges: number[] | undefined;
+  if (room.bulges) {
+    bulges = [...room.bulges];
+    while (bulges.length < room.polygon.length) bulges.push(0);
+    const halves: [number, number] = [0, 0];
+    if (arc) {
+      const t = projectOnEdge(at, arc.a, arc.b, arc.bulge).t;
+      // A piece of the circle turning through angle φ bows R(1 - cos φ/2).
+      const bow = (len: number) => Math.sign(bulgeOf(room, edge)) * arc.radius * (1 - Math.cos(len / arc.radius / 2));
+      halves[0] = bow(t);
+      halves[1] = bow(arc.length - t);
+    }
+    bulges.splice(edge, 1, ...halves);
+  }
+  return reshapeRoom(plan, roomId, poly, bulges);
 }
 
-/** Take a corner away (rooms keep at least three). */
+/** Take a corner away (rooms keep at least three). The two walls it joined become one straight wall. */
 export function removeCorner(plan: FloorPlan, roomId: string, i: number): FloorPlan {
   const room = plan.rooms.find((r) => r.id === roomId);
   if (!room || room.polygon.length <= 3) return plan;
-  return reshapeRoom(plan, roomId, room.polygon.filter((_, k) => k !== i));
+  const n = room.polygon.length;
+  let bulges: number[] | undefined;
+  if (room.bulges) {
+    bulges = Array.from({ length: n }, (_, k) => bulgeOf(room, k)).filter((_, k) => k !== i);
+    bulges[(i - 1 + n - 1) % (n - 1)] = 0;
+  }
+  return reshapeRoom(plan, roomId, room.polygon.filter((_, k) => k !== i), bulges);
 }
 
 /**
@@ -228,7 +263,10 @@ export function setEdgeLength(plan: FloorPlan, roomId: string, edge: number, len
   const a = room.polygon[edge];
   const b = room.polygon[(edge + 1) % n];
   const u = unit(sub(b, a));
-  const delta = scale(u, lengthIn - dist(a, b));
+  // A curved edge keeps its shape: `lengthIn` is along the curve, and the bow grows with it.
+  const along = roomEdgeLength(room, edge);
+  const chord = roomEdgeArc(room, edge) ? (dist(a, b) * lengthIn) / along : lengthIn;
+  const delta = scale(u, chord - dist(a, b));
   const poly = [...room.polygon];
   const j = (edge + 1) % n;
   poly[j] = roundPoint(add(b, delta));
@@ -238,7 +276,8 @@ export function setEdgeLength(plan: FloorPlan, roomId: string, edge: number, len
     // Only when the next edge turns (isn't straight on), or the room would fold.
     if (Math.abs(dot(next, u)) < 0.98) poly[k] = roundPoint(add(room.polygon[k], delta));
   }
-  return keepOpeningsInPlace(plan, { ...plan, rooms: plan.rooms.map((r) => (r.id === roomId ? { ...r, polygon: poly } : r)) });
+  const bulges = room.bulges?.map((bg, k) => (k === edge ? scaledBulge(bg, dist(a, b), chord) : bg));
+  return keepOpeningsInPlace(plan, { ...plan, rooms: plan.rooms.map((r) => (r.id === roomId ? withBulges({ ...r, polygon: poly }, bulges ?? r.bulges) : r)) });
 }
 
 /**
@@ -299,5 +338,5 @@ export function moveOpeningTo(plan: FloorPlan, id: string, p: Point, reach: numb
   }
   const seg = hostSegment(plan, o.host);
   if (!seg) return plan;
-  return updateOpening(plan, id, { offsetIn: project(p, seg.a, seg.b).t });
+  return updateOpening(plan, id, { offsetIn: projectOnEdge(p, seg.a, seg.b, seg.bulge).t });
 }
