@@ -9,7 +9,7 @@ import { z } from "zod";
  * Angles are degrees clockwise from north (0 = N, 90 = E).
  */
 
-export const SCHEMA_VERSION = 14;
+export const SCHEMA_VERSION = 15;
 
 export const Point = z.object({ x: z.number(), y: z.number() });
 export type Point = z.infer<typeof Point>;
@@ -435,14 +435,38 @@ export const PlanBasics = z.object({
 });
 export type PlanBasics = z.infer<typeof PlanBasics>;
 
+/** Which labels the floor plan drawing shows, and how they look. */
+export const PlanLabels = z.object({
+  /** Hide every label at once (the L key). The other choices are kept. */
+  hideAll: z.boolean().default(false),
+  roomNames: z.boolean().default(true),
+  sqft: z.boolean().default(true),
+  /** The room's size under its name, like 12' 6" × 14'. */
+  roomSizes: z.boolean().default(true),
+  wallLengths: z.boolean().default(true),
+  /** Dimension strings around the outside of each floor. */
+  outsideDims: z.boolean().default(true),
+  /** Door and window sizes. */
+  openingTags: z.boolean().default(true),
+  /** Fixture and furniture names. */
+  fixtureNames: z.boolean().default(true),
+  /** Text size multiplier: 0.85 small, 1 medium, 1.25 large, or anything between 0.7 and 1.6. */
+  textSize: z.number().min(0.7).max(1.6).default(1),
+  textColor: z.enum(["dark", "gray", "room"]).default("dark"),
+  boldNames: z.boolean().default(true),
+  background: z.enum(["none", "white"]).default("none"),
+  units: z.enum(["feet", "inches"]).default("feet"),
+});
+export type PlanLabels = z.infer<typeof PlanLabels>;
+
 /** Floor plan settings saved with the project. */
 export const PlanSettings = z.object({
   /** Null until the plan basics page has been answered. */
   basics: PlanBasics.nullable().default(null),
   /** Show the flow sketch faintly under the plan, to trace over. */
   showSketch: z.boolean().default(false),
-  /** Show wall lengths. */
-  showDims: z.boolean().default(true),
+  /** Which labels show on the drawing, and how. */
+  labels: PlanLabels.default(() => PlanLabels.parse({})),
 });
 export type PlanSettings = z.infer<typeof PlanSettings>;
 

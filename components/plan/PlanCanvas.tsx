@@ -3,11 +3,12 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { Circle, Group, Layer, Line, Stage, Transformer } from "react-konva";
 import Konva from "konva";
-import type { BubbleDiagram, Fixture, FloorPlan, Level, Opening, PlanBasics, PlanStairs, Point } from "@/lib/model/schema";
+import type { BubbleDiagram, Fixture, FloorPlan, Level, Opening, PlanBasics, PlanLabels, PlanStairs, Point } from "@/lib/model/schema";
 import { exteriorWallIn, riseBetween } from "@/lib/plan/basics";
 import { fixtureType, openingType } from "@/lib/plan/catalog";
 import { addRoom, insertCorner, insertGluedCorner, makeRoom, moveEdge, moveMany, moveOpeningTo, newPlanId, removeCorner, setCornerGlued } from "@/lib/plan/edit";
 import { add, angleOf, boundsOf, dist, leftNormal, polygonArea, project, rectangle, round1, roundPoint, scale as scaleV, sub, unit } from "@/lib/plan/geometry";
+import { distanceGuides, openingGuides, wallSegments, type Guide } from "@/lib/plan/labels";
 import { snapFrom, snapMove, snapNode, snapPush, snapTargets, type Guides } from "@/lib/plan/snap";
 import { parseTypedLength } from "@/lib/model/units";
 import { DEFAULT_STAIRS_WIDTH_IN, stairsDrawing } from "@/lib/plan/stairs";
@@ -17,7 +18,9 @@ import type { LandView, Side } from "@/components/bubbles/types";
 import { Grid, ScaleBar, SideLabels, useSpacePan, type View } from "@/components/canvas/CanvasBits";
 import { ACCENT, FixtureSymbol, OpeningSymbol, StairsSymbol } from "./PlanShapes";
 import { dedupe, flat, ghostOpeningAt, pointIn, roomFill, type Box } from "./canvasHelpers";
-import { DraftPreview, FurnitureOutlines, GuidesAndBox, MidNodes, NodeReadout, PlanLabels, PlanWalls, ReferenceLayer, ZoomButtons } from "./PlanCanvasLayers";
+import { DraftPreview, FurnitureOutlines, GuidesAndBox, MidNodes, NodeReadout, PlanWalls, ReferenceLayer, ZoomButtons } from "./PlanCanvasLayers";
+import { DistanceGuides, OutsideDims, RoomLabels, TapeLine, ThingLabels } from "./PlanMeasureLayers";
+import { labelOn } from "@/lib/plan/labels";
 import { edgeId, isPicked, parseEdgeId, type PlanItem, type PlanSelection, type PlanTool } from "./types";
 
 /**
@@ -56,7 +59,9 @@ type Props = {
   placeFixture: string;
   selection: PlanSelection;
   snap: boolean;
-  showDims: boolean;
+  labels: PlanLabels;
+  /** The measuring tape is on: clicks measure instead of select. */
+  tape: boolean;
   sides: Record<Side, string[]>;
   height: number;
   land: LandView | null;
@@ -75,7 +80,7 @@ type Props = {
 };
 
 export default function PlanCanvas(props: Props) {
-  const { plan, level, levels, basics, below, sketch, tool, placeOpening, placeFixture, selection, snap, showDims, sides, height, land, lotMode, onLotMove } = props;
+  const { plan, level, levels, basics, below, sketch, tool, placeOpening, placeFixture, selection, snap, labels, tape, sides, height, land, lotMode, onLotMove } = props;
   const { onSelect, onChange, onToolDone, onDrafting, onMessage } = props;
   const wrapRef = useRef<HTMLDivElement>(null);
   const layerRef = useRef<Konva.Layer>(null);
@@ -93,6 +98,10 @@ export default function PlanCanvas(props: Props) {
   const [rectEnd, setRectEnd] = useState<Point | null>(null);
   const [typed, setTyped] = useState("");
   const [selCorner, setSelCorner] = useState<{ roomId: string; i: number } | null>(null);
+  const [hoverWall, setHoverWall] = useState<{ a: Point; b: Point } | null>(null);
+  const [dragGuides, setDragGuides] = useState<Guide[]>([]);
+  const [tapePts, setTapePts] = useState<Point[]>([]);
+  const [tapeEnd, setTapeEnd] = useState<Point | null>(null);
   const [dragCorner, setDragCorner] = useState<{ roomId: string; i: number } | null>(null);
   const { spaceDown, hovering } = useSpacePan();
   const shown = preview ?? plan;
@@ -124,6 +133,26 @@ export default function PlanCanvas(props: Props) {
     setSelCorner(null);
     setDragCorner(null);
   }, [tool, level.id]);
+
+  // Leaving the measuring tape clears its line; Escape clears it while staying in tape mode.
+  useEffect(() => {
+    if (!tape) {
+      setTapePts([]);
+      setTapeEnd(null);
+    }
+  }, [tape]);
+  useEffect(() => {
+    if (!tape || !tapePts.length) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== "Escape") return;
+      e.preventDefault();
+      e.stopPropagation();
+      setTapePts([]);
+      setTapeEnd(null);
+    };
+    window.addEventListener("keydown", onKey, true);
+    return () => window.removeEventListener("keydown", onKey, true);
+  }, [tape, tapePts.length]);
 
   const drafting = draft.length > 0;
   useEffect(() => onDrafting(drafting), [drafting, onDrafting]);
@@ -386,6 +415,18 @@ export default function PlanCanvas(props: Props) {
     return () => window.removeEventListener("keydown", onKey, true);
   });
 
+  /** Distances from what is being moved (rooms, fixtures, walls) to the nearest walls on each side. */
+  function movedGuides(moved: FloorPlan, ids: string[]): Guide[] {
+    const pts: Point[] = [
+      ...moved.rooms.filter((r) => ids.includes(r.id)).flatMap((r) => r.polygon),
+      ...moved.fixtures.filter((f) => ids.includes(f.id)).flatMap((f) => rectangle(f.x, f.y, f.widthIn, f.depthIn, f.rotation)),
+      ...moved.walls.filter((w) => ids.includes(w.id)).flatMap((w) => [w.a, w.b]),
+    ];
+    const box = boundsOf(pts);
+    if (!box) return [];
+    return distanceGuides(box, wallSegments(moved, ids, ids));
+  }
+
   // ---- Mouse ----
   function onMouseDown(e: Konva.KonvaEventObject<MouseEvent>) {
     if (e.evt.button !== 0 || spaceDown || tool === "pan") return;
@@ -396,6 +437,17 @@ export default function PlanCanvas(props: Props) {
 
     if (lotMode) {
       gesture.current = { type: "lot", start: p };
+      return;
+    }
+    if (tape) {
+      const sp = snapFrom(tapePts.length === 1 ? tapePts[0] : null, p, pickTargets([]), tol, snap, shift).p;
+      if (tapePts.length === 1) {
+        setTapePts([tapePts[0], sp]);
+        setTapeEnd(null);
+      } else {
+        setTapePts([sp]);
+        setTapeEnd(sp);
+      }
       return;
     }
     if (tool === "door") return placeOpeningAt(p);
@@ -468,7 +520,22 @@ export default function PlanCanvas(props: Props) {
     const shift = e.evt.shiftKey;
     if (tool === "door" || tool === "fixture" || tool === "stairs" || drafting) setCursor(p);
     const g = gesture.current;
+    if (tape) {
+      if (tapePts.length === 1) setTapeEnd(snapFrom(tapePts[0], p, pickTargets([]), tol, snap, shift).p);
+      return;
+    }
     if (!g) {
+      // Hovering a wall shows its length, even when wall lengths are hidden.
+      if (tool === "select" && !drafting) {
+        let best: { a: Point; b: Point; d: number } | null = null;
+        for (const pc of pieces) {
+          if (pc.open) continue;
+          const d = project(p, pc.a, pc.b).d;
+          if (d <= Math.max(pc.thicknessIn / 2 + 2, 7 / s) && (!best || d < best.d)) best = { a: pc.a, b: pc.b, d };
+        }
+        const hit = best;
+        setHoverWall((h) => (hit ? (h && h.a === hit.a && h.b === hit.b ? h : { a: hit.a, b: hit.b }) : null));
+      }
       if (drafting) setCursor(snapFrom(draft[draft.length - 1], p, pickTargets([]), tol, snap, shift, tool === "room" && draft.length >= 2 ? [draft[0]] : []).p);
       return;
     }
@@ -488,7 +555,9 @@ export default function PlanCanvas(props: Props) {
       const still = pickTargets(g.ids).points;
       const m = snapMove(moving.length ? moving : [g.start], still, dx, dy, tol, snap);
       setGuides(m.guides);
-      setPreview(moveMany(base, g.ids, m.dx, m.dy));
+      const moved = moveMany(base, g.ids, m.dx, m.dy);
+      setPreview(moved);
+      setDragGuides(movedGuides(moved, g.ids));
     } else if (g.type === "corner") {
       const from = g.base ?? base;
       const room = from.rooms.find((r) => r.id === g.roomId);
@@ -516,7 +585,10 @@ export default function PlanCanvas(props: Props) {
       setPreview(moveEdge(base, g.roomId, g.edge, scaleV(n, d), !e.evt.altKey));
     } else if (g.type === "opening") {
       g.moved = true;
-      setPreview(moveOpeningTo(base, g.id, p, Math.max(18, 14 / s)));
+      const next = moveOpeningTo(base, g.id, p, Math.max(18, 14 / s));
+      setPreview(next);
+      const og = openingGeometries(next).find((x) => x.opening.id === g.id);
+      setDragGuides(og ? openingGuides(og) : []);
     } else if (g.type === "box") {
       setBox({ x0: g.start.x, y0: g.start.y, x1: p.x, y1: p.y });
     } else if (g.type === "lot") {
@@ -528,6 +600,7 @@ export default function PlanCanvas(props: Props) {
     const g = gesture.current;
     gesture.current = null;
     setGuides({});
+    setDragGuides([]);
     setDragCorner(null);
     if (!g) return;
     const { preview: pv } = latest.current;
@@ -665,7 +738,7 @@ export default function PlanCanvas(props: Props) {
 
   // ---- Drawing ----
   const panning = tool === "pan" || spaceDown;
-  const cursorStyle = panning ? "grab" : lotMode ? "move" : tool === "select" ? "default" : "crosshair";
+  const cursorStyle = panning ? "grab" : lotMode ? "move" : tape || tool !== "select" ? "crosshair" : "default";
   const selectedEdge = single?.kind === "edge" ? parseEdgeId(single.id) : null;
   const ghostOpening = tool === "door" && cursor ? ghostOpeningAt(plan, cursor, placeOpening, s) : null;
   const ghostFixture = tool === "fixture" && cursor ? fixtureAt(cursor) : null;
@@ -681,6 +754,7 @@ export default function PlanCanvas(props: Props) {
       onMouseLeave={() => {
         hovering.current = false;
         setCursor(null);
+        setHoverWall(null);
       }}
     >
       {width > 0 && (
@@ -734,7 +808,7 @@ export default function PlanCanvas(props: Props) {
               <FixtureSymbol key={f.id} f={f} selected={isPicked(selection, f.id)} scale={s} onTransformEnd={onTransformEnd} />
             ))}
 
-            <FurnitureOutlines furniture={shown.furniture ?? []} s={s} />
+            <FurnitureOutlines furniture={shown.furniture ?? []} s={s} names={labelOn(labels, "fixtureNames")} />
 
             <PlanWalls solids={solids} selection={selection} s={s} />
 
@@ -742,7 +816,11 @@ export default function PlanCanvas(props: Props) {
               <OpeningSymbol key={g.opening.id} g={g} thickness={thicknessAt(g)} selected={isPicked(selection, g.opening.id)} scale={s} name="opening" />
             ))}
 
-            <PlanLabels plan={shown} showDims={showDims} selectedEdge={selectedEdge} s={s} />
+            <OutsideDims plan={shown} labels={labels} s={s} />
+            <ThingLabels plan={shown} geos={geos} labels={labels} s={s} />
+            <RoomLabels plan={shown} labels={labels} selectedEdge={selectedEdge} selectedRoomId={selRoom?.id} hoverWall={hoverWall} s={s} />
+            {dragGuides.length > 0 && <DistanceGuides guides={dragGuides} labels={labels} s={s} />}
+            {tape && tapePts.length > 0 && <TapeLine a={tapePts[0]} b={tapePts[1] ?? tapeEnd} labels={labels} s={s} />}
 
             {/* "+" nodes in the middle of each edge, and corner dots, on the selected room. */}
             {selRoom && !dragCorner && <MidNodes room={selRoom} s={s} />}

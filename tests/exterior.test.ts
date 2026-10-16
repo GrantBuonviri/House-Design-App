@@ -1,3 +1,4 @@
+import { DEFAULT_LABELS } from "@/lib/plan/labels";
 import { describe, expect, it } from "vitest";
 import { DiscoveryAnswers, House3D, Project, SCHEMA_VERSION, WHOLE_HOUSE, type ChosenRoom, type Plot, type Selection } from "@/lib/model/schema";
 import { createProject, migrateProject } from "@/lib/model/project";
@@ -35,7 +36,7 @@ function suggestedHouse(plot: Plot = flat, types = TYPICAL): Project {
   const bubbles = suggestDiagrams({ brief, plot, levels });
   const basics = defaultBasics();
   const plans = suggestPlans(bubbles, { brief, plot, levels, basics }).plans;
-  return { ...createProject("Test"), plot, brief, levels, bubbles, floorPlans: plans, discovery: { ...createProject("x").discovery, answers }, plan: { basics, showSketch: false, showDims: true } };
+  return { ...createProject("Test"), plot, brief, levels, bubbles, floorPlans: plans, discovery: { ...createProject("x").discovery, answers }, plan: { basics, showSketch: false, labels: DEFAULT_LABELS } };
 }
 
 const house = suggestedHouse();

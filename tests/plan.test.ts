@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { DEFAULT_LABELS, distanceGuides, formatLength, labelOn, openingGuides, outsideDimensions, roomSizeText, tapeReading, wallSegments } from "@/lib/plan/labels";
 import { DiscoveryAnswers, Project, SCHEMA_VERSION, type ChosenRoom, type FloorPlan, type PlanRoom, type Point } from "@/lib/model/schema";
 import { createProject, migrateProject } from "@/lib/model/project";
 import { FLAT_PLOT_SEED, generatePlot } from "@/lib/land/generate";
@@ -30,7 +31,7 @@ import { houseTotals, planTotals, roomSqft } from "@/lib/plan/measure";
 import { snapAngles, snapMove, snapNode, snapPoint, snapPush, snapTargets } from "@/lib/plan/snap";
 import { parseTypedLength } from "@/lib/model/units";
 import { stairsDrawing, stepsFor } from "@/lib/plan/stairs";
-import { nearestHost, openingGeometry, solidWalls, wallPieces } from "@/lib/plan/walls";
+import { nearestHost, openingGeometries, openingGeometry, solidWalls, wallPieces } from "@/lib/plan/walls";
 
 const FT = 12;
 
@@ -404,11 +405,11 @@ describe("saved projects", () => {
     const migrated = migrateProject(older);
     expect(migrated.schemaVersion).toBe(SCHEMA_VERSION);
     expect(migrated.floorPlans).toEqual({});
-    expect(migrated.plan).toEqual({ basics: null, showSketch: false, showDims: true });
+    expect(migrated.plan).toEqual({ basics: null, showSketch: false, labels: DEFAULT_LABELS });
   });
 
   it("round-trip a floor plan", () => {
-    const p = { ...createProject("Plan"), floorPlans: { "floor-1": pair() }, plan: { basics: defaultBasics(), showSketch: true, showDims: false } };
+    const p = { ...createProject("Plan"), floorPlans: { "floor-1": pair() }, plan: { basics: defaultBasics(), showSketch: true, labels: { ...DEFAULT_LABELS, wallLengths: false } } };
     expect(Project.safeParse(p).success).toBe(true);
     expect(migrateProject(JSON.parse(JSON.stringify(p)))).toEqual(p);
   });
@@ -455,5 +456,65 @@ describe("reshaping with nodes", () => {
     expect(parseTypedLength("150")).toBe(150);
     expect(parseTypedLength("12'")).toBe(144);
     expect(parseTypedLength("abc")).toBeNull();
+  });
+});
+
+describe("labels and measurements", () => {
+  it("writes a rectangle's size, and the longest width and depth for other shapes", () => {
+    expect(roomSizeText(room("a", 0, 0, 12.5, 14).polygon)).toBe("12' 6\" × 14'");
+    expect(roomSizeText(room("a", 0, 0, 12.5, 14).polygon, "inches")).toBe('150" × 168"');
+    const l = [{ x: 0, y: 0 }, { x: 240, y: 0 }, { x: 240, y: 120 }, { x: 120, y: 120 }, { x: 120, y: 240 }, { x: 0, y: 240 }];
+    expect(roomSizeText(l)).toBe("20' × 20'");
+    expect(formatLength(150, "inches")).toBe('150"');
+  });
+
+  it("strings dimensions around the outside, each room's stretch and the overall length", () => {
+    const dims = outsideDimensions(pair());
+    const top = dims.filter((d) => d.side === "top");
+    expect(top.filter((d) => d.row === 1).map((d) => d.text)).toEqual(["10'", "10'"]);
+    expect(top.find((d) => d.row === 2)?.text).toBe("20'");
+    const left = dims.filter((d) => d.side === "left");
+    expect(left).toHaveLength(1);
+    expect(left[0].text).toBe("10'");
+    expect(top[0].a.y).toBeLessThan(0);
+  });
+
+  it("measures from a moved box to the nearest wall on each side", () => {
+    const p = plan([room("a", 0, 0, 20, 20), room("b", 4, 4, 4, 4)]);
+    const guides = distanceGuides({ x0: 48, y0: 48, x1: 96, y1: 96 }, wallSegments(p, ["b"]));
+    expect(guides.map((g) => Math.round(g.inches)).sort((x, y) => x - y)).toEqual([48, 48, 144, 144]);
+  });
+
+  it("shows how far a door sits from the corners of its wall", () => {
+    const p = { ...pair(), openings: [{ id: "o1", host: { roomId: "a", edge: 0 }, offsetIn: 36, kind: "door" as const, style: "door-hinged", widthIn: 32, heightIn: 80, side: 1 as const, hinge: "start" as const }] };
+    const g = openingGeometries(p)[0];
+    const gaps = openingGuides(g).map((x) => Math.round(x.inches));
+    expect(gaps).toEqual([20, 68]);
+  });
+
+  it("reads a tape's distance and angle", () => {
+    const r = tapeReading({ x: 0, y: 0 }, { x: 120, y: 0 });
+    expect(r).toEqual({ inches: 120, angle: 0 });
+    expect(tapeReading({ x: 0, y: 0 }, { x: 0, y: -60 }).angle).toBe(90);
+  });
+});
+
+describe("label settings in saved data", () => {
+  it("carry the old Show wall lengths choice over", () => {
+    const p = createProject("Old");
+    const off = { ...p, schemaVersion: 14, plan: { basics: null, showSketch: false, showDims: false } } as Record<string, unknown>;
+    expect(migrateProject(off).plan.labels).toEqual({ ...DEFAULT_LABELS, wallLengths: false });
+    const on = { ...p, schemaVersion: 14, plan: { basics: null, showSketch: true, showDims: true } } as Record<string, unknown>;
+    const m = migrateProject(on);
+    expect(m.plan.labels).toEqual(DEFAULT_LABELS);
+    expect(m.plan.showSketch).toBe(true);
+    expect("showDims" in m.plan).toBe(false);
+    expect(m.schemaVersion).toBe(SCHEMA_VERSION);
+  });
+
+  it("start with every label showing", () => {
+    expect(createProject("New").plan.labels).toEqual(DEFAULT_LABELS);
+    expect(labelOn({ ...DEFAULT_LABELS, hideAll: true }, "roomNames")).toBe(false);
+    expect(labelOn(DEFAULT_LABELS, "roomNames")).toBe(true);
   });
 });

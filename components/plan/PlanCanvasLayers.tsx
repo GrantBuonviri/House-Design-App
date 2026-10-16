@@ -3,7 +3,7 @@
 import { Circle, Group, Layer, Line, Rect, Text } from "react-konva";
 import type { BubbleDiagram, FloorPlan, FurnitureItem, Level, PlanRoom, Point } from "@/lib/model/schema";
 import { formatFeetInches } from "@/lib/model/units";
-import { add, dist, edgesOf, leftNormal, polygonCenter, scale as scaleV, sub, unit } from "@/lib/plan/geometry";
+import { add, dist, edgesOf, leftNormal, scale as scaleV, sub, unit } from "@/lib/plan/geometry";
 import { roomSqft } from "@/lib/plan/measure";
 import { furnitureOutline, furnitureType } from "@/lib/plan/furniture";
 import type { SolidWall } from "@/lib/plan/walls";
@@ -33,7 +33,7 @@ export function ReferenceLayer({ sketch, below, s }: { sketch: BubbleDiagram | n
 }
 
 /** Furniture placed in the walkthrough: outlines only (it's moved there, with Design on). */
-export function FurnitureOutlines({ furniture, s }: { furniture: FurnitureItem[]; s: number }) {
+export function FurnitureOutlines({ furniture, s, names = true }: { furniture: FurnitureItem[]; s: number; names?: boolean }) {
   return (
     <Group listening={false}>
       {furniture.map((f) => {
@@ -41,7 +41,7 @@ export function FurnitureOutlines({ furniture, s }: { furniture: FurnitureItem[]
         return (
           <Group key={f.id}>
             <Line points={flat(furnitureOutline(f))} closed fill={f.color ?? "#cfcac0"} opacity={t?.flat ? 0.25 : 0.45} stroke="#6f6658" strokeWidth={1} strokeScaleEnabled={false} dash={[4, 3]} />
-            {!t?.flat && Math.min(f.widthIn, f.depthIn) * s > 28 && (
+            {names && !t?.flat && Math.min(f.widthIn, f.depthIn) * s > 28 && (
               <Text x={f.x} y={f.y} width={f.widthIn} offsetX={f.widthIn / 2} offsetY={5 / s} align="center" text={t?.label ?? ""} fontSize={9.5 / s} fill="#4a463f" wrap="none" ellipsis />
             )}
           </Group>
@@ -81,73 +81,6 @@ export function PlanWalls({ solids, selection, s }: { solids: SolidWall[]; selec
           />
         );
       })}
-    </>
-  );
-}
-
-/** Room names, sizes and wall lengths, plus the selected wall's length, larger. */
-export function PlanLabels({ plan, showDims, selectedEdge, s }: { plan: FloorPlan; showDims: boolean; selectedEdge: { roomId: string; edge: number } | null; s: number }) {
-  const selected = (() => {
-    const r = selectedEdge && plan.rooms.find((x) => x.id === selectedEdge.roomId);
-    if (!selectedEdge || !r) return null;
-    const a = r.polygon[selectedEdge.edge];
-    const b = r.polygon[(selectedEdge.edge + 1) % r.polygon.length];
-    const u = unit(sub(b, a));
-    const mid = add(scaleV(add(a, b), 0.5), scaleV(leftNormal(u), 10 + 12 / s));
-    const w = 100 / s;
-    return <Text x={mid.x} y={mid.y} offsetX={w / 2} offsetY={7 / s} width={w} align="center" rotation={uprightAngle(u)} text={formatFeetInches(dist(a, b))} fontSize={13 / s} fontStyle="600" fill={ACCENT} listening={false} />;
-  })();
-  return (
-    <>
-      <Group listening={false}>
-        {plan.rooms.map((r) => {
-          const c = polygonCenter(r.polygon);
-          const wBox = 140 / s;
-          return (
-            <Group key={`label-${r.id}`}>
-              <Text x={c.x} y={c.y - 10 / s} width={wBox} offsetX={wBox / 2} align="center" text={r.name} fontSize={12.5 / s} fontStyle="600" fill={INK} wrap="none" ellipsis />
-              <Text x={c.x} y={c.y + 5 / s} width={wBox} offsetX={wBox / 2} align="center" text={`${roomSqft(r).toLocaleString("en-US")} sq ft`} fontSize={10.5 / s} fill="#6b716c" />
-            </Group>
-          );
-        })}
-        {showDims &&
-          plan.rooms.flatMap((r) =>
-            edgesOf(r.polygon).map((e) => {
-              const L = dist(e.a, e.b);
-              if (L * s < 64) return null;
-              const u = unit(sub(e.b, e.a));
-              // Inside the room: corners run clockwise, so inside is to the right of each edge.
-              const inward = scaleV(leftNormal(u), -1);
-              const mid = add(scaleV(add(e.a, e.b), 0.5), scaleV(inward, 6 + 9 / s));
-              const w = 80 / s;
-              return (
-                <Text
-                  key={`${r.id}-${e.i}`}
-                  x={mid.x}
-                  y={mid.y}
-                  offsetX={w / 2}
-                  offsetY={5 / s}
-                  width={w}
-                  align="center"
-                  rotation={uprightAngle(u)}
-                  text={formatFeetInches(L)}
-                  fontSize={9.5 / s}
-                  fill="#7a6f5e"
-                />
-              );
-            }),
-          )}
-        {showDims &&
-          plan.walls.map((w) => {
-            const L = dist(w.a, w.b);
-            if (L * s < 64) return null;
-            const u = unit(sub(w.b, w.a));
-            const mid = add(scaleV(add(w.a, w.b), 0.5), scaleV(leftNormal(u), 6 + 9 / s));
-            const bw = 80 / s;
-            return <Text key={`wl-${w.id}`} x={mid.x} y={mid.y} offsetX={bw / 2} offsetY={5 / s} width={bw} align="center" rotation={uprightAngle(u)} text={formatFeetInches(L)} fontSize={9.5 / s} fill="#7a6f5e" />;
-          })}
-      </Group>
-      {selected}
     </>
   );
 }

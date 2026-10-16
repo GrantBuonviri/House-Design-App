@@ -1,8 +1,9 @@
-import type { FloorPlan, Point } from "@/lib/model/schema";
+import type { FloorPlan, PlanLabels, Point } from "@/lib/model/schema";
 import { CATEGORY_COLOR } from "@/lib/bubbles/shapes";
 import { roomType } from "@/lib/brief/rooms";
 import type { Bounds } from "@/lib/plan/geometry";
 import { polygonCenter } from "@/lib/plan/geometry";
+import { labelOn } from "@/lib/plan/labels";
 import { openingGeometries, solidWalls, wallPieces } from "@/lib/plan/walls";
 
 /**
@@ -17,6 +18,7 @@ export default function MiniPlan({
   exteriorIn,
   stairs = [],
   changed = [],
+  labels,
 }: {
   plan: FloorPlan;
   frame: Bounds;
@@ -25,6 +27,8 @@ export default function MiniPlan({
   /** Footprints of the stairs on this floor. */
   stairs?: Point[][];
   changed?: string[];
+  /** The label settings: room names follow them. */
+  labels?: PlanLabels;
 }) {
   const pad = 14 * Math.max((frame.x1 - frame.x0) / size, (frame.y1 - frame.y0) / size);
   const vb = `${frame.x0 - pad} ${frame.y0 - pad} ${frame.x1 - frame.x0 + 2 * pad} ${frame.y1 - frame.y0 + 2 * pad}`;
@@ -55,10 +59,11 @@ export default function MiniPlan({
       {stairs.map((pts, i) => (
         <polygon key={i} points={pts.map((p) => `${p.x},${p.y}`).join(" ")} fill="#d6c7b4" fillOpacity={0.7} stroke="#8a7a66" strokeWidth={0.8 * k} />
       ))}
-      {plan.rooms.map((r) => {
+      {(!labels || labelOn(labels, "roomNames")) &&
+        plan.rooms.map((r) => {
         const c = polygonCenter(r.polygon);
         return (
-          <text key={r.id} x={c.x} y={c.y} fontSize={10 * k} textAnchor="middle" dominantBaseline="middle" fill="#3b3b3b" style={{ fontFamily: "inherit" }}>
+          <text key={r.id} x={c.x} y={c.y} fontSize={10 * k * (labels?.textSize ?? 1)} textAnchor="middle" dominantBaseline="middle" fill="#3b3b3b" style={{ fontFamily: "inherit" }}>
             {r.name.length > 16 ? `${r.name.slice(0, 15)}…` : r.name}
           </text>
         );
