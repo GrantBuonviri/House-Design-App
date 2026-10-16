@@ -3,7 +3,7 @@ import { openingGeometries } from "@/lib/plan/walls";
 import { openingRooms } from "@/lib/plan/connect";
 import { openingType, fixtureType } from "@/lib/plan/catalog";
 import { areaKind } from "@/lib/plan/measure";
-import { polygonArea, SQ_IN_PER_SQ_FT } from "@/lib/plan/geometry";
+import { pointInPolygon, polygonArea, SQ_IN_PER_SQ_FT } from "@/lib/plan/geometry";
 import { ceilingFor } from "@/lib/plan/basics";
 import { roomType } from "@/lib/brief/rooms";
 import { categoriesFor, effectivePick, productTitle, roomFinishes } from "@/lib/interior/picks";
@@ -15,6 +15,8 @@ import { inchText, isSleeping } from "@/lib/codes/rules";
 import { DRAW_AREA } from "../frame";
 import { archFeet, capHeight, heading, HEADING_H, table, textBlock, type Item } from "../draw";
 import { houseFacts, type HouseFacts } from "../house";
+import { addOnType } from "@/lib/furnish/catalog";
+import { ADDON_TAG } from "./symbols";
 import { curveBehind, doorWindowOnCurve, radiusLabel } from "../curves";
 
 /**
@@ -405,8 +407,31 @@ export function fixtureTags(project: Project): Map<string, string> {
   return new Map([...plumbing, ...appliances].flatMap((g) => g.ids.map((id) => [id, g.tag] as [string, string])));
 }
 
+export type BuiltInLine = { tag: string; kind: string; label: string; rooms: string[]; count: number; size: string; mount: string };
+
+/** Built-ins and extras placed in Furnish, grouped by kind and size, for the schedule. */
+export function builtInLines(project: Project): BuiltInLine[] {
+  const h = houseFacts(project);
+  const groups = new Map<string, BuiltInLine>();
+  for (const l of h.levels) {
+    const plan = h.plan(l.id);
+    for (const a of plan.addOns ?? []) {
+      const type = addOnType(a.kind);
+      const size = `${archFeet(a.widthIn)} x ${archFeet(a.heightIn)} x ${archFeet(a.depthIn)}`;
+      const key = `${a.kind}|${size}`;
+      const room = plan.rooms.find((r) => pointInPolygon({ x: a.x, y: a.y }, r.polygon))?.name ?? l.name;
+      const g = groups.get(key) ?? { tag: "", kind: a.kind, label: type?.label ?? a.kind, rooms: [], count: 0, size, mount: type?.mount === "ceiling" ? "Ceiling" : type?.mount === "wall" ? `Wall, ${archFeet(a.bottomIn)} up` : "Floor" };
+      g.count += 1;
+      if (!g.rooms.includes(room)) g.rooms.push(room);
+      groups.set(key, g);
+    }
+  }
+  return [...groups.values()].sort((a, b) => a.label.localeCompare(b.label)).map((g, i) => ({ ...g, tag: `BI${i + 1}` }));
+}
+
 export function fixtureSheets(project: Project): Item[][] {
   const { plumbing, appliances } = fixtureLines(project);
+  const builtIns = builtInLines(project);
   const row = (g: FixtureLine) => [g.tag, g.label, `${g.count}`, g.rooms.join(", "), g.size, g.product, g.notes];
   const cols = [
     { title: "Tag", width: 0.5 },
@@ -427,6 +452,23 @@ export function fixtureSheets(project: Project): Item[][] {
     [
       { title: "Plumbing fixtures", cols, rows: plumbing.map(row) },
       { title: "Appliances", cols, rows: appliances.map(row) },
+      ...(builtIns.length
+        ? [
+            {
+              title: "Built-ins and extras",
+              cols: [
+                { title: "Tag", width: 0.5 },
+                { title: "Item", width: 1.6 },
+                { title: "Qty", width: 0.5 },
+                { title: "Rooms", width: 2.6 },
+                { title: "Size (w x h x d)", width: 2.6 },
+                { title: "Mount", width: 2.2 },
+                { title: "Tag on plan", width: 5.4 },
+              ],
+              rows: builtIns.map((g) => [g.tag, g.label, `${g.count}`, g.rooms.join(", "), g.size, g.mount, ADDON_TAG[g.kind] ?? ""]),
+            },
+          ]
+        : []),
     ],
     notes,
   );

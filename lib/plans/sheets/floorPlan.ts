@@ -13,6 +13,8 @@ import { atticAccessSpot, inchText, isSleeping } from "@/lib/codes/rules";
 import { houseFacts } from "../house";
 import { levelCabinets } from "./cabinets";
 import { cabinetCorners } from "@/lib/plan/cabinets";
+import { addOnType } from "@/lib/furnish/catalog";
+import { ADDON_TAG } from "./symbols";
 import { DRAW_AREA } from "../frame";
 import { viewTitle } from "../view";
 import { curvedWalls, radiusLabel, arcLengthLabel, CURVED_FRAMING_NOTE } from "../curves";
@@ -230,6 +232,22 @@ function drawPlan(project: Project, level: Level, viewNumber: number, base: bool
   for (const f of plan.fixtures) drawFixture(f);
   // Upper and tall cabinets, dashed (details on the cabinet sheet).
   for (const c of levelCabinets(project, level).cabinets) if (c.kind === "tall" || c.bottomIn > 24) ppoly(cabinetCorners(c), "hair", undefined, DASH.hidden);
+
+  // Built-ins and extras placed in Furnish: floor ones solid, wall-hung and ceiling ones dashed, each tagged.
+  for (const a of plan.addOns ?? []) {
+    const L = (x: number, y: number) => add(rotate({ x, y }, a.rotation), { x: a.x, y: a.y });
+    const w = a.widthIn;
+    const d = Math.max(a.depthIn, 3);
+    const type = addOnType(a.kind);
+    if (a.kind === "ceiling-fan") {
+      items.push({ t: "circle", c: T({ x: a.x, y: a.y }), r: (w / 2) * s, stroke: "hair" });
+      items.push({ t: "text", at: T({ x: a.x, y: a.y }), text: "CF", size: 5, bold: true, align: "center", valign: "middle" });
+      continue;
+    }
+    const overhead = type ? type.mount !== "floor" : a.bottomIn > 24;
+    ppoly([L(-w / 2, -d / 2), L(w / 2, -d / 2), L(w / 2, d / 2), L(-w / 2, d / 2)], overhead ? "hair" : "fine", undefined, overhead ? DASH.hidden : undefined);
+    if (w >= 24) items.push({ t: "text", at: T(L(0, 0)), text: ADDON_TAG[a.kind] ?? "", size: 4.5, align: "center", valign: "middle", rotate: readable(rotate({ x: 1, y: 0 }, a.rotation)) });
+  }
 
   function drawFixture(f: Fixture) {
     const L = (x: number, y: number) => add(rotate({ x, y }, f.rotation), { x: f.x, y: f.y });

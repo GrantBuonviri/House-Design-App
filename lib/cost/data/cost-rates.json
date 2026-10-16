@@ -1459,6 +1459,240 @@
       "url": null,
       "checked": "2026-10-15",
       "note": "One light by each outside door and one each side of a garage door. The wiring is in the electrical line."
+    },
+    "built-in-cabinetry": {
+      "label": "Built-ins (bookcase, desk, bench, window seat, lockers)",
+      "unit": "linft",
+      "material": [
+        110,
+        210,
+        330
+      ],
+      "labor": [
+        90,
+        170,
+        270
+      ],
+      "source": "Angi built-in cabinets cost ($200-$600/lf installed; split 55/45 material/labor by judgment)",
+      "url": "https://angi.com/articles/built-in-cabinets-cost.htm",
+      "checked": "2026-10-16",
+      "note": "Per linear foot along the wall of each built-in placed in Furnish."
+    },
+    "wall-shelving": {
+      "label": "Wall shelves",
+      "unit": "linft",
+      "material": [
+        10,
+        25,
+        60
+      ],
+      "labor": [
+        12,
+        25,
+        50
+      ],
+      "source": "Estimate: no Boise price found, based on typical Mountain West installed prices (Boise runs about national average)",
+      "url": null,
+      "checked": "2026-10-16",
+      "note": "Per linear foot of shelf placed in Furnish."
+    },
+    "ceiling-fan": {
+      "label": "Ceiling fan",
+      "unit": "each",
+      "material": [
+        100,
+        250,
+        600
+      ],
+      "labor": [
+        150,
+        250,
+        400
+      ],
+      "source": "Estimate: no Boise price found, based on typical Mountain West installed prices (Boise runs about national average)",
+      "url": null,
+      "checked": "2026-10-16",
+      "note": "Fan, fan-rated box and wiring."
+    },
+    "bath-accessory": {
+      "label": "Mirror and bath accessories",
+      "unit": "each",
+      "material": [
+        15,
+        40,
+        100
+      ],
+      "labor": [
+        15,
+        30,
+        60
+      ],
+      "source": "Estimate: no Boise price found, based on typical Mountain West installed prices (Boise runs about national average)",
+      "url": null,
+      "checked": "2026-10-16",
+      "note": "One blended price for a mirror, towel bar, grab bar, medicine cabinet or set of coat hooks."
+    },
+    "fireplace": {
+      "label": "Gas fireplace",
+      "unit": "each",
+      "material": [
+        2000,
+        3200,
+        5500
+      ],
+      "labor": [
+        1000,
+        1800,
+        3000
+      ],
+      "source": "Fixr gas fireplace cost (gas hookup $391-$711, new-construction framing and venting adds over $1,500); material/labor split by judgment",
+      "url": "https://www.fixr.com/costs/gas-fireplace",
+      "checked": "2026-10-16",
+      "note": "Direct-vent gas fireplace with its gas line. Mantle and surround not included."
+    },
+    "extra-water-run": {
+      "label": "Extra water supply run",
+      "unit": "each",
+      "material": [
+        25,
+        50,
+        100
+      ],
+      "labor": [
+        100,
+        180,
+        300
+      ],
+      "source": "Estimate: no Boise price found, based on typical Mountain West installed prices (Boise runs about national average)",
+      "url": null,
+      "checked": "2026-10-16",
+      "note": "A hot and cold stub-out placed by hand beyond what fixtures bring."
+    },
+    "extra-drain-run": {
+      "label": "Extra drain run",
+      "unit": "each",
+      "material": [
+        30,
+        60,
+        120
+      ],
+      "labor": [
+        120,
+        220,
+        400
+      ],
+      "source": "Estimate: no Boise price found, based on typical Mountain West installed prices (Boise runs about national average)",
+      "url": null,
+      "checked": "2026-10-16",
+      "note": "A drain and vent stub-out placed by hand beyond what fixtures bring."
+    },
+    "gas-line-run": {
+      "label": "Extra gas line run",
+      "unit": "each",
+      "material": [
+        60,
+        150,
+        250
+      ],
+      "labor": [
+        240,
+        450,
+        650
+      ],
+      "source": "HomeAdvisor gas pipe cost ($20/ft, 20-30 ft typical), discounted for new-construction rough-in; about 25% material by judgment",
+      "url": "https://www.homeadvisor.com/cost/plumbing/install-or-repair-gas-pipes",
+      "checked": "2026-10-16",
+      "note": "A gas stub-out placed by hand beyond what fixtures bring."
+    },
+    "circuit-240": {
+      "label": "240V circuit",
+      "unit": "each",
+      "material": [
+        75,
+        110,
+        200
+      ],
+      "labor": [
+        150,
+        300,
+        500
+      ],
+      "source": "ContractorPlus dryer circuit materials ($75-$150, material only); labor is an estimate",
+      "url": "https://contractorplus.app/resources/construction-costs/install-electric-dryer-hookup/boise-city-id",
+      "checked": "2026-10-16",
+      "note": "A 240V outlet placed by hand beyond the range and dryer ones the code rules add."
+    },
+    "dryer-vent-run": {
+      "label": "Extra dryer vent run",
+      "unit": "each",
+      "material": [
+        30,
+        50,
+        90
+      ],
+      "labor": [
+        60,
+        120,
+        200
+      ],
+      "source": "Estimate: no Boise price found, based on typical Mountain West installed prices (Boise runs about national average)",
+      "url": null,
+      "checked": "2026-10-16",
+      "note": "Vent duct and wall cap placed by hand beyond the dryer's own."
+    },
+    "extra-device": {
+      "label": "Extra outlet, switch or light box",
+      "unit": "each",
+      "material": [
+        4,
+        10,
+        25
+      ],
+      "labor": [
+        35,
+        65,
+        110
+      ],
+      "source": "Estimate: no Boise price found, based on typical Mountain West installed prices (Boise runs about national average)",
+      "url": null,
+      "checked": "2026-10-16",
+      "note": "Electrical devices added by hand beyond the code-rule ones."
+    },
+    "tall-cabinet": {
+      "label": "Tall (pantry) cabinets",
+      "unit": "each",
+      "material": [
+        350,
+        650,
+        1200
+      ],
+      "labor": [
+        75,
+        150,
+        250
+      ],
+      "source": "Estimate: no Boise price found, based on typical Mountain West installed prices (Boise runs about national average)",
+      "url": null,
+      "checked": "2026-10-16",
+      "note": "Each 84 in tall or pantry cabinet, on top of the run's base and upper cabinets."
+    },
+    "cabinet-specialty": {
+      "label": "Specialty cabinets (lazy susan, wine rack, appliance garage, open shelves)",
+      "unit": "each",
+      "material": [
+        150,
+        350,
+        700
+      ],
+      "labor": [
+        20,
+        50,
+        100
+      ],
+      "source": "Estimate: no Boise price found, based on typical Mountain West installed prices (Boise runs about national average)",
+      "url": null,
+      "checked": "2026-10-16",
+      "note": "Extra cost over a standard box, per specialty box in the layout."
     }
   },
   "percents": {

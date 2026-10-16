@@ -269,6 +269,10 @@ function elevationView(project: Project, level: Level, room: PlanRoom | undefine
         const kick = base && c.kind !== "filler" ? 4 : 0;
         if (kick) items.push(line({ x: X(a), y: Z(kick) }, { x: X(b), y: Z(kick) }, "hair"));
         if (c.kind === "drawer") for (const k of [1, 2]) items.push(line({ x: X(a), y: Z(kick + ((z1 - kick) * k) / 3) }, { x: X(b), y: Z(kick + ((z1 - kick) * k) / 3) }, "hair"));
+        else if (c.kind === "open-shelf") for (const k of [1, 2]) items.push(line({ x: X(a), y: Z(z0 + ((z1 - z0) * k) / 3) }, { x: X(b), y: Z(z0 + ((z1 - z0) * k) / 3) }, "hair"));
+        else if (c.kind === "wine") {
+          items.push(line({ x: X(a), y: Z(z0 + kick) }, { x: X(b), y: Z(z1) }, "hair"), line({ x: X(a), y: Z(z1) }, { x: X(b), y: Z(z0 + kick) }, "hair"));
+        } else if (c.kind === "appliance-garage") items.push(line({ x: X(a), y: Z(z0 + (z1 - z0) * 0.3) }, { x: X(b), y: Z(z0 + (z1 - z0) * 0.3) }, "hair"));
         else if (c.kind !== "filler") {
           if (base) items.push(line({ x: X(a), y: Z(z1 - 6) }, { x: X(b), y: Z(z1 - 6) }, "hair"));
           if (c.widthIn >= 24) items.push(line({ x: X(mid), y: Z(base ? z1 - 6 : z1) }, { x: X(mid), y: Z(kick || z0) }, "hair"));

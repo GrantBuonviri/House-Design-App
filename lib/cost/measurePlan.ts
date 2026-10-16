@@ -12,6 +12,7 @@ import { rockCuyd, rocksUnder } from "@/lib/land/onLot";
 import { yardAmounts, yardLayout } from "@/lib/exterior/yard";
 import { type Quantities, sqft, ft, FROST_DEPTH_IN, JOIST_DEPTH_IN, OVERDIG_IN, SHALLOW_DIG_IN, ringLength, samplesAround, type Ctx, empty, siteFacts, toRoad, type MeasuredRoom, roomFixtures, centerOf, applyRoof } from "./quantityBasics";
 import { measureRoof } from "./measureRoof";
+import { cabinetsByRoom, furnishExtras } from "./furnishQuantities";
 import { overhangsOf, postsUnder, supportOf } from "@/lib/plan/support";
 import { flatProject, savedPlans, savedRoom } from "@/lib/plan/flatten";
 import { roomArea, roomEdgeArc, wallArc } from "@/lib/plan/arcs";
@@ -135,6 +136,9 @@ export function measurePlan(p: Ctx): Quantities | null {
     const { floorIn, ceilingIn } = heights[l.id];
     const story = ceilingIn + FLOOR_STRUCTURE_IN;
     const isBelow = below(l.id);
+    const cabinets = cabinetsByRoom(plan, ceilingIn);
+    const extras = furnishExtras(plan);
+    for (const k of Object.keys(extras) as (keyof typeof extras)[]) q.furnish[k] += extras[k];
     for (const r of plan.rooms) {
       const a = sqft(roomArea(savedRoom(r)));
       const kind = areaKind(r);
@@ -145,7 +149,7 @@ export function measurePlan(p: Ctx): Quantities | null {
       if (r.type === "patio") q.patioSqft += a;
       // Wall length on each side of the room, less any stretch where the wall was taken out.
       const edgesIn = edgesOf(r.polygon).map((e) => dist(e.a, e.b) - openSpans(plan, e.a, e.b).reduce((t, [t0, t1]) => t + t1 - t0, 0));
-      allRooms.push({ id: r.id, name: r.name, type: r.type ?? "other", sqft: a, fixtures: plan.fixtures.filter((f) => f.roomId === r.id), edgesIn });
+      allRooms.push({ id: r.id, name: r.name, type: r.type ?? "other", sqft: a, fixtures: plan.fixtures.filter((f) => f.roomId === r.id), edgesIn, cabinets: cabinets.get(r.id) });
     }
     // Rooms held up "On posts" past the floor below: posts with footings, and a beam.
     const sup = supportOf(plans, p.levels, l);
