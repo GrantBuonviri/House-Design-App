@@ -19,6 +19,7 @@ import { suggestPlans } from "@/lib/plan/suggest";
 import { boundsOf, dist } from "@/lib/plan/geometry";
 import { houseTotals, totalsText } from "@/lib/plan/measure";
 import { lotOffsetFor } from "@/lib/house3d/site";
+import { lotAsPlot, realLotOk, siteLayout } from "@/lib/plans/lot";
 import { canPreview } from "@/lib/house3d/windowView";
 import { Note } from "@/components/brief/bits";
 import LevelTabs from "@/components/bubbles/LevelTabs";
@@ -165,7 +166,13 @@ export default function PlanStage({ onContinue, onGoToSketch }: { onContinue: ()
   }, [plot]);
 
   // ---- The land under the plan (the same placement as the flow sketch) ----
-  const drawing = useMemo(() => (plot ? landDrawing(plot) : null), [plot]);
+  // "My real lot" from the Plans page replaces the made-up land, drawn the way the PDF site sheet draws it.
+  const realLot = useMemo(() => {
+    if (!realLotOk(project.plans.lot)) return null;
+    const site = siteLayout(project);
+    return site ? lotAsPlot(site, plot) : null;
+  }, [project, plot]);
+  const drawing = useMemo(() => (realLot ? landDrawing({ ...realLot.plot, isFlat: true }) : plot ? landDrawing(plot) : null), [plot, realLot]);
   const mainBubbles = diagramOf(sketches, MAIN_LEVEL_ID).bubbles;
   const mainPts = planOf(plans, MAIN_LEVEL_ID).rooms.flatMap((r) => r.polygon);
   const allPts = Object.values(plans).flatMap((p) => p.rooms.flatMap((r) => r.polygon));
@@ -179,15 +186,15 @@ export default function PlanStage({ onContinue, onGoToSketch }: { onContinue: ()
   };
   const reach = allPts.reduce((m, p) => Math.max(m, dist(p, center)), 0);
   const land: LandView | null =
-    drawing && plot && (overlays.property || overlays.land || overlays.sun)
+    drawing && (realLot || plot) && (overlays.property || overlays.land || overlays.sun)
       ? {
           drawing,
-          offset: lotOffset ?? fallbackOffset()!,
+          offset: realLot ? realLot.offset : (lotOffset ?? fallbackOffset()!),
           show: overlays,
           sun: { center, radius: Math.max((reach + 8 * FT) / WINTER_RING, 25 * FT) },
         }
       : null;
-  const canMoveLot = Boolean(land && (overlays.property || overlays.land));
+  const canMoveLot = Boolean(land && !realLot && (overlays.property || overlays.land));
   const lotOn = lotMode && canMoveLot;
 
   function setOverlay(key: Overlay, on: boolean) {

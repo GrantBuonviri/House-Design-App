@@ -2,6 +2,7 @@ import type { Plot, Point } from "@/lib/model/schema";
 import { bearingVector } from "@/lib/land/generate";
 import { plotRoadEdges } from "@/lib/land/custom";
 import { pointInPolygon } from "@/lib/land/geometry";
+import { polygonArea } from "@/lib/plan/geometry";
 import { createTerrain } from "@/lib/land/terrain";
 import { dayArc, SUMMER_SOLSTICE, WINTER_SOLSTICE } from "@/lib/land/sun";
 import { centerOf } from "./arrange";
@@ -19,9 +20,16 @@ export type WaterLine = { kind: Plot["waterFeatures"][number]["kind"]; points: P
 /** A road along a lot edge, and where its label goes. */
 export type RoadMark = { a: Point; b: Point; label: Point; main: boolean; text: string };
 
+/** One lot edge's length, and the outward direction its label sits in. */
+export type EdgeMark = { mid: Point; out: Point; feet: number; text: string; /** A road runs along this edge, so its length reads better inside the lot. */ road: boolean };
+
 export type LandDrawing = {
   /** The lot line, in plot coordinates. */
   outline: Point[];
+  /** Each lot edge's length (edges under 15 ft are skipped). */
+  edges: EdgeMark[];
+  /** The lot's size, like "117' × 99' · 0.27 acre". */
+  sizeNote: string;
   /** The lot edge along the main road, and where its label goes. */
   road: RoadMark | null;
   /** Every road along the lot, the main one first. */
@@ -64,8 +72,14 @@ export function landDrawing(plot: Plot): LandDrawing {
   const { segments, intervalFt } = contours(plot);
   const roads = roadMarks(plot);
   const size = (f: Plot["features"][number]) => ({ at: f.at, size: f.sizeFt * FT });
+  const edges = edgeLengths(plot.outline).map((e) => ({
+    ...e,
+    road: roads.some((r) => Math.hypot((r.a.x + r.b.x) / 2 - e.mid.x, (r.a.y + r.b.y) / 2 - e.mid.y) < 2),
+  }));
   return {
     outline: plot.outline,
+    edges,
+    sizeNote: sizeNote(plot.outline),
     road: roads.find((r) => r.main) ?? null,
     roads,
     water: plot.waterFeatures.map((w) => ({ kind: w.kind, points: w.points, closed: w.kind === "pond" || w.kind === "lake" })),
@@ -76,6 +90,38 @@ export function landDrawing(plot: Plot): LandDrawing {
     contourFt: intervalFt,
     downhill: downhillArrow(plot),
   };
+}
+
+const MIN_EDGE_FT = 15;
+
+/** Feet to one decimal at most: 117, 117.5. */
+const feetText = (ft: number) => `${Math.round(ft * 10) / 10}'`;
+
+/** Each lot edge of MIN_EDGE_FT or more: its length, middle and outward direction. */
+export function edgeLengths(outline: Point[]): EdgeMark[] {
+  const out: EdgeMark[] = [];
+  for (let i = 0; i < outline.length; i++) {
+    const a = outline[i];
+    const b = outline[(i + 1) % outline.length];
+    const len = Math.hypot(b.x - a.x, b.y - a.y);
+    if (len < MIN_EDGE_FT * FT) continue;
+    const mid = { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 };
+    let n = { x: (b.y - a.y) / len, y: -(b.x - a.x) / len };
+    if (pointInPolygon({ x: mid.x + n.x * 6, y: mid.y + n.y * 6 }, outline)) n = { x: -n.x, y: -n.y };
+    out.push({ mid, out: n, feet: len / FT, text: feetText(len / FT), road: false });
+  }
+  return out;
+}
+
+/** "117' × 99' · 0.27 acre": the lot's overall width and depth and its area. Empty when there's no lot line. */
+export function sizeNote(outline: Point[]): string {
+  if (outline.length < 3) return "";
+  const xs = outline.map((p) => p.x);
+  const ys = outline.map((p) => p.y);
+  const w = (Math.max(...xs) - Math.min(...xs)) / FT;
+  const d = (Math.max(...ys) - Math.min(...ys)) / FT;
+  const acres = polygonArea(outline) / 144 / 43560;
+  return `${feetText(w)} × ${feetText(d)} · ${acres.toFixed(2)} ${acres.toFixed(2) === "1.00" ? "acre" : acres < 1 ? "acre" : "acres"}`;
 }
 
 /**
