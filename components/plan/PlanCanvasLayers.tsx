@@ -4,10 +4,10 @@ import { Circle, Group, Layer, Line, Rect, Text } from "react-konva";
 import type { BubbleDiagram, FloorPlan, FurnitureItem, Level, PlanRoom, Point } from "@/lib/model/schema";
 import { formatFeetInches } from "@/lib/model/units";
 import { add, dist, edgesOf, leftNormal, scale as scaleV, sub, unit } from "@/lib/plan/geometry";
-import { bendInfo, type BendTarget } from "@/lib/plan/bend";
-import { leftBulge, pointOnEdge, roomEdgeLength } from "@/lib/plan/arcs";
+import { bendInfo, type BendSnap, type BendTarget } from "@/lib/plan/bend";
+import { arcBetween, leftBulge, pointOnEdge, roomEdgeLength } from "@/lib/plan/arcs";
 import { edgeFrame } from "@/lib/plan/labels";
-import { roomOutline } from "@/lib/plan/flatten";
+import { roomOutline, wallOutline } from "@/lib/plan/flatten";
 import { roomSqft } from "@/lib/plan/measure";
 import { furnitureOutline, furnitureType } from "@/lib/plan/furniture";
 import type { OpeningHost } from "@/lib/model/schema";
@@ -171,7 +171,8 @@ export function PlanWalls({ solids, selection, s, toSaved }: { solids: SolidWall
 }
 
 /** A room or walls being drawn: the dragged rectangle, or the corners clicked so far. */
-export function DraftPreview({ rectStart, rectEnd, draft, cursor, tool, typed, s }: { rectStart: Point | null; rectEnd: Point | null; draft: Point[]; cursor: Point | null; tool: PlanTool; typed: string; s: number }) {
+export function DraftPreview({ rectStart, rectEnd, draft, cursor, tool, typed, bow, s }: { rectStart: Point | null; rectEnd: Point | null; draft: Point[]; cursor: Point | null; tool: PlanTool; typed: string; bow?: { left: number; snap: BendSnap } | null; s: number }) {
+  if (tool === "curve" && draft.length === 2) return <CurvePreview a={draft[0]} b={draft[1]} left={bow?.left ?? 0} snap={bow?.snap ?? null} cursor={cursor} typed={typed} s={s} />;
   return (
     <>
       {rectStart && rectEnd && (
@@ -210,10 +211,10 @@ export function DraftPreview({ rectStart, rectEnd, draft, cursor, tool, typed, s
             closed={tool === "room"}
             fill={tool === "room" ? "rgba(47,107,79,0.1)" : undefined}
             stroke={ACCENT}
-            strokeWidth={tool === "wall" ? 4.5 : 2}
-            strokeScaleEnabled={tool !== "wall"}
+            strokeWidth={tool === "room" ? 2 : 4.5}
+            strokeScaleEnabled={tool === "room"}
             dash={tool === "room" ? [6 / s, 4 / s] : undefined}
-            opacity={tool === "wall" ? 0.7 : 1}
+            opacity={tool === "room" ? 1 : 0.7}
           />
           {draft.map((p, i) => (
             <Circle key={i} x={p.x} y={p.y} radius={(i === 0 && tool === "room" ? 6 : 3.5) / s} fill={i === 0 ? ACCENT : "#fff"} stroke={ACCENT} strokeWidth={1.5} strokeScaleEnabled={false} />
@@ -224,6 +225,24 @@ export function DraftPreview({ rectStart, rectEnd, draft, cursor, tool, typed, s
         </Group>
       )}
     </>
+  );
+}
+
+/** The Curve tool's curve while its bow is being set, with its radius and length. */
+function CurvePreview({ a, b, left, snap, cursor, typed, s }: { a: Point; b: Point; left: number; snap: BendSnap; cursor: Point | null; typed: string; s: number }) {
+  const arc = arcBetween(a, b, left);
+  const note = snap === "half" ? "Half circle · " : snap === "radius" ? "Same radius · " : "";
+  const text = typed ? `Radius ${typed}▏ (Enter)` : arc ? `${note}R ${formatFeetInches(arc.radius)} · arc ${formatFeetInches(arc.length)}` : `Straight · ${formatFeetInches(dist(a, b))} (move to bow it)`;
+  const at = cursor ?? a;
+  return (
+    <Group listening={false}>
+      <Line points={flat(wallOutline(a, b, left))} stroke={ACCENT} strokeWidth={4.5} opacity={0.7} lineCap="round" />
+      {!arc && <Line points={flat([a, b])} stroke={ACCENT} strokeWidth={1} strokeScaleEnabled={false} dash={[4 / s, 4 / s]} />}
+      {[a, b].map((p, i) => (
+        <Circle key={i} x={p.x} y={p.y} radius={3.5 / s} fill="#fff" stroke={ACCENT} strokeWidth={1.5} strokeScaleEnabled={false} />
+      ))}
+      <Text x={at.x + 10 / s} y={at.y + 10 / s} text={text} fontSize={11.5 / s} fontStyle="600" fill={ACCENT} />
+    </Group>
   );
 }
 

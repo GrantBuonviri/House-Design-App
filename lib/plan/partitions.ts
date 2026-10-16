@@ -19,9 +19,11 @@ import {
   signedArea,
   sub,
   subtractIntervals,
-  unit,
 } from "./geometry";
-import { hostSegment, openingGeometry } from "./walls";
+import { hostSegment } from "./walls";
+import { type Arc, arcBetween, isCurved, pointOnEdge, projectOnEdge, wallArc } from "./arcs";
+import { FLAT_STEP_DEG, wallOutline } from "./flatten";
+import { curvesOf, cutOutline, edgeDirection, refitRoom } from "./refit";
 
 /**
  * Drawing walls inside rooms: a wall drawn from one wall of a room to
@@ -71,6 +73,8 @@ export function splitOutlines(poly: Point[], path: Point[]): [Point[], Point[]] 
   for (let k = 0; k < line.length - 1; k++) {
     for (let s = 1; s < 8; s++) {
       const q = lerp(line[k], line[k + 1], s / 8);
+      // Right by the ends it's meant to touch the walls (a curve can meet them at a slant).
+      if (dist(q, first.at) < TOUCH_IN || dist(q, last.at) < TOUCH_IN) continue;
       if (!pointInPolygon(q, poly) || distToOutline(poly, q) < 0.5) return null;
     }
   }
@@ -107,25 +111,42 @@ export function splitOutlines(poly: Point[], path: Point[]): [Point[], Point[]] 
   return [clockwise(one), clockwise(two)];
 }
 
-/** The room a line of walls cuts across, if any (the first one it splits cleanly). */
-export function roomSplitBy(plan: FloorPlan, path: Point[]): PlanRoom | null {
-  return plan.rooms.find((r) => splitOutlines(r.polygon, path)) ?? null;
+/** A curve for the cut: from the path's first point to its last, bowing this far to the left. The path is then the curve, flattened. */
+export type Cut = Point[] | { a: Point; b: Point; bulge: number };
+
+function cutPath(cut: Cut): { path: Point[]; arcs: Arc[] } {
+  if (Array.isArray(cut)) return { path: cut, arcs: [] };
+  const arc = arcBetween(cut.a, cut.b, cut.bulge);
+  const pts = wallOutline(cut.a, cut.b, cut.bulge, FLAT_STEP_DEG).map(roundPoint);
+  // Points right by the ends would sit on the walls the curve runs between.
+  const path = pts.filter((p, i) => i === 0 || i === pts.length - 1 || (dist(p, cut.a) > 3 * TOUCH_IN && dist(p, cut.b) > 3 * TOUCH_IN));
+  return { path, arcs: arc ? [arc] : [] };
+}
+
+/** The room a line of walls (or a curve) cuts across, if any (the first one it splits cleanly). */
+export function roomSplitBy(plan: FloorPlan, cut: Cut): PlanRoom | null {
+  const { path } = cutPath(cut);
+  return plan.rooms.find((r) => splitOutlines(cutOutline(r), path)) ?? null;
 }
 
 /**
- * Split a room along a line of walls drawn across it. The bigger piece keeps
- * the room (its id, name, type and finishes); the other is a new room named
- * "Room 2" (or the next free number). Doors and windows stay where they are,
- * on whichever piece now holds that wall; fixtures and furniture go with the
- * piece they stand in. Null when the line doesn't cut across a room.
+ * Split a room along a line of walls drawn across it, or along a curve. The
+ * bigger piece keeps the room (its id, name, type and finishes); the other is
+ * a new room named "Room 2" (or the next free number). Curves in the room and
+ * the curved cut stay curved edges on both pieces. Doors and windows stay
+ * where they are, on whichever piece now holds that wall; fixtures and
+ * furniture go with the piece they stand in. Null when the line doesn't cut
+ * across a room.
  */
-export function splitRoom(plan: FloorPlan, path: Point[]): { plan: FloorPlan; roomId: string; newRoomId: string } | null {
-  const room = roomSplitBy(plan, path);
+export function splitRoom(plan: FloorPlan, cut: Cut): { plan: FloorPlan; roomId: string; newRoomId: string } | null {
+  const room = roomSplitBy(plan, cut);
   if (!room) return null;
-  const [one, two] = splitOutlines(room.polygon, path)!;
+  const { path, arcs } = cutPath(cut);
+  const [one, two] = splitOutlines(cutOutline(room), path)!;
   const [big, small] = polygonArea(one) >= polygonArea(two) ? [one, two] : [two, one];
-  const kept: PlanRoom = { ...room, polygon: big };
-  const made = makeRoom(small, nextRoomName(plan));
+  const curves = [...curvesOf([room]), ...arcs];
+  const kept: PlanRoom = refitRoom({ ...room, polygon: big }, big, curves);
+  const made = refitRoom(makeRoom(small, nextRoomName(plan)), small, curves);
   const rooms = plan.rooms.flatMap((r) => (r.id === room.id ? [kept, made] : [r]));
   const into = (x: { x: number; y: number }) => (pointInPolygon(x, small) ? made.id : room.id);
   const regroup = <T extends { x: number; y: number; roomId?: string }>(x: T): T => (x.roomId === room.id ? { ...x, roomId: into(x) } : x);
@@ -139,7 +160,9 @@ type Seg = { a: Point; b: Point };
 
 /** The walls of a floor, as plain lines: every room edge and every wall drawn on its own. */
 function planLines(plan: FloorPlan): Seg[] {
-  return [...plan.rooms.flatMap((r) => edgesOf(r.polygon).map((e) => ({ a: e.a, b: e.b }))), ...plan.walls.map((w) => ({ a: w.a, b: w.b }))].filter((s) => dist(s.a, s.b) > 0.5);
+  // Curves as their short straight pieces, so a curved wall closes a space in like any other.
+  const chain = (pts: Point[], closed: boolean) => pts.slice(0, closed ? undefined : -1).map((a, i) => ({ a, b: pts[(i + 1) % pts.length] }));
+  return [...plan.rooms.flatMap((r) => chain(cutOutline(r), true)), ...plan.walls.flatMap((w) => chain(wallOutline(w.a, w.b, w.bulge, FLAT_STEP_DEG), false))].filter((s) => dist(s.a, s.b) > 0.5);
 }
 
 /** Where two lines cross or touch (an end on the other line, a T), as inches along the first. */
@@ -233,7 +256,7 @@ function closedSpaces(lines: Seg[]): Point[][] {
 
 /** Why the space at a point can't be filled with a room, or null when it can. */
 export function whyNotFill(plan: FloorPlan, p: Point): string | null {
-  const inRoom = plan.rooms.find((r) => pointInPolygon(p, r.polygon));
+  const inRoom = plan.rooms.find((r) => pointInPolygon(p, cutOutline(r)));
   if (inRoom) return `That spot is already part of ${inRoom.name || "a room"}. Draw a wall across it with the Wall tool to split it.`;
   return fillOutline(plan, p) ? null : "There's no closed space there. Draw walls all the way around it first, then click inside.";
 }
@@ -249,7 +272,7 @@ export function fillOutline(plan: FloorPlan, p: Point): Point[] | null {
   const ring = cleanRing(best.map(roundPoint));
   if (ring.length < 3 || polygonArea(ring) < 10 * 144) return null;
   // A space that holds another room inside it isn't one room.
-  if (plan.rooms.some((r) => polygonsOverlap(ring, r.polygon))) return null;
+  if (plan.rooms.some((r) => polygonsOverlap(ring, cutOutline(r)))) return null;
   return clockwise(ring);
 }
 
@@ -262,12 +285,21 @@ export function fillOutline(plan: FloorPlan, p: Point): Point[] | null {
 export function fillRoomAt(plan: FloorPlan, p: Point): { plan: FloorPlan; roomId: string } | null {
   if (whyNotFill(plan, p)) return null;
   const outline = fillOutline(plan, p)!;
-  const room = makeRoom(outline);
+  const room = refitRoom(makeRoom(outline), outline, curvesOf(plan.rooms, plan.walls));
   const absorbed = new Set<string>();
   const walls: PlanWall[] = [];
   for (const w of plan.walls) {
+    if (isCurved(w.bulge)) {
+      // A curved wall that now runs along the room's edge becomes that edge.
+      const arc = wallArc(w)!;
+      const along = [w.a, w.b, pointOnEdge(w.a, w.b, w.bulge, arc.length / 2)].every((q) => nearRoomEdge(room, q));
+      if (along) absorbed.add(w.id);
+      else walls.push(w);
+      continue;
+    }
     const L = dist(w.a, w.b);
     const covered = edgesOf(room.polygon)
+      .filter((e) => !isCurved(room.bulges?.[e.i]))
       .map((e) => collinearOverlap(w.a, w.b, e.a, e.b, 1))
       .filter((o): o is [number, number] => o !== null);
     if (!covered.length) {
@@ -299,16 +331,20 @@ function rehost(before: FloorPlan, after: FloorPlan, changed: Set<string>): Floo
       openings.push(o);
       continue;
     }
-    const g = openingGeometry(before, o);
-    if (!g) continue;
+    const was = hostSegment(before, o.host);
+    if (!was) continue;
+    const center = pointOnEdge(was.a, was.b, was.bulge ?? 0, o.offsetIn);
+    const u = edgeDirection(was.a, was.b, was.bulge ?? 0, center);
     const spot = candidateHosts(after)
       .map((h) => ({ h, seg: hostSegment(after, h)! }))
-      .filter((x) => x.seg && Math.abs(dot(unit(sub(x.seg.b, x.seg.a)), g.u)) > 0.99)
-      .map((x) => ({ ...x, pr: project(g.center, x.seg.a, x.seg.b) }))
+      .filter((x) => x.seg)
+      .map((x) => ({ ...x, pr: projectOnEdge(center, x.seg.a, x.seg.b, x.seg.bulge ?? 0) }))
+      .map((x) => ({ ...x, u: edgeDirection(x.seg.a, x.seg.b, x.seg.bulge ?? 0, x.pr.point) }))
+      .filter((x) => Math.abs(dot(x.u, u)) > 0.99)
       .find((x) => x.pr.d < 1 && x.pr.t >= o.widthIn / 2 - 1 && x.pr.t <= x.seg.length - o.widthIn / 2 + 1);
     // Its wall is gone altogether: the door or window goes too.
     if (!spot) continue;
-    const flipped = dot(unit(sub(spot.seg.b, spot.seg.a)), g.u) < 0;
+    const flipped = dot(spot.u, u) < 0;
     openings.push({
       ...o,
       host: spot.h,
@@ -317,6 +353,12 @@ function rehost(before: FloorPlan, after: FloorPlan, changed: Set<string>): Floo
     });
   }
   return { ...after, openings };
+}
+
+/** Whether a point sits on one of a room's edges (along the curve on a curved one). */
+function nearRoomEdge(room: PlanRoom, p: Point): boolean {
+  const out = signedArea(room.polygon) >= 0 ? 1 : -1;
+  return room.polygon.some((a, i) => projectOnEdge(p, a, room.polygon[(i + 1) % room.polygon.length], (room.bulges?.[i] ?? 0) * out).d < 1);
 }
 
 /** The walls a moved door or window could land on: every room edge, then walls drawn on their own. */

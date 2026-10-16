@@ -20,6 +20,7 @@ import { parseTypedLength } from "@/lib/model/units";
 import { DEFAULT_STAIRS_WIDTH_IN, stairsDrawing } from "@/lib/plan/stairs";
 import { clampOffset, hostSegment, nearestHost, sameHost, openingGeometries, solidWalls, wallPieces, type OpeningGeometry } from "@/lib/plan/walls";
 import { fillRoomAt, splitRoom, whyNotFill } from "@/lib/plan/partitions";
+import { bowForTyped, curveBow, drawCurve } from "@/lib/plan/curveTool";
 import LandLayer from "@/components/bubbles/LandLayer";
 import type { LandView, Side } from "@/components/bubbles/types";
 import { Grid, ScaleBar, SideLabels, useSpacePan, type View } from "@/components/canvas/CanvasBits";
@@ -133,6 +134,8 @@ export default function PlanCanvas(props: Props) {
   const [cursor, setCursor] = useState<Point | null>(null);
   const [rectEnd, setRectEnd] = useState<Point | null>(null);
   const [typed, setTyped] = useState("");
+  // The Curve tool, once its two ends are in: how far it bows (left of start→end).
+  const [bow, setBow] = useState<{ left: number; snap: BendSnap } | null>(null);
   const [selCorner, setSelCorner] = useState<{ roomId: string; i: number } | null>(null);
   const [hoverWall, setHoverWall] = useState<OpeningHost | null>(null);
   const [bendTip, setBendTip] = useState<{ at: Point; text: string } | null>(null);
@@ -167,6 +170,7 @@ export default function PlanCanvas(props: Props) {
   useEffect(() => {
     setDraft([]);
     setTyped("");
+    setBow(null);
     setRectEnd(null);
     gesture.current = null;
     setPreview(null);
@@ -415,6 +419,22 @@ export default function PlanCanvas(props: Props) {
     onToolDone();
   }
 
+  function finishCurve(a: Point, b: Point, left: number, divider = altDown.current) {
+    setDraft([]);
+    setBow(null);
+    setTyped("");
+    const out = drawCurve(plan, a, b, left, divider);
+    if (!out) return onMessage("That's too short for a wall. Click farther apart.");
+    onChange(out.plan);
+    if (out.split) {
+      const was = plan.rooms.find((r) => r.id === out.split!.roomId);
+      const made = out.plan.rooms.find((r) => r.id === out.split!.newRoomId);
+      onSelect([{ kind: "room", id: out.split.newRoomId }]);
+      onMessage(`Split ${was?.name || "the room"} in two along the curve. Name the new ${made?.name ?? "room"} on the right. (Hold Option while clicking for a curved wall that doesn't split.)`);
+    } else if (out.wallId) onSelect([{ kind: "wall", id: out.wallId }]);
+    onToolDone();
+  }
+
   /** The next point for a line from `last`: `length` inches toward the cursor (east when the cursor is on top of it). */
   function pointAtLength(last: Point, length: number): Point {
     const toward = cursor && dist(cursor, last) > 0.5 ? unit(sub(cursor, last)) : { x: 1, y: 0 };
@@ -441,6 +461,17 @@ export default function PlanCanvas(props: Props) {
         setTyped(typed.slice(0, -1));
       } else if (e.key === "Enter") {
         stop();
+        if (tool === "curve" && draft.length === 2) {
+          // With both ends in, a typed number is the radius; Enter alone keeps the bow as it is.
+          if (!typed) return finishCurve(draft[0], draft[1], bow?.left ?? 0, e.altKey || altDown.current);
+          const r = parseTypedLength(typed);
+          const left = r === null ? null : bowForTyped(draft[0], draft[1], r, bow?.left ?? 1);
+          setTyped("");
+          if (r === null) onMessage(`I couldn't read "${typed}" as a radius. Try 8' or 96 (inches).`);
+          else if (left === null) onMessage(`That radius is too small to reach. It needs to be at least ${formatLength(dist(draft[0], draft[1]) / 2)}.`);
+          else finishCurve(draft[0], draft[1], left, e.altKey || altDown.current);
+          return;
+        }
         if (typed) {
           const len = parseTypedLength(typed);
           if (len === null) {
@@ -454,7 +485,10 @@ export default function PlanCanvas(props: Props) {
       } else if (e.key === "Escape") {
         stop();
         if (typed) setTyped("");
-        else setDraft([]);
+        else {
+          setDraft([]);
+          setBow(null);
+        }
       }
     };
     window.addEventListener("keydown", onKey, true);
@@ -530,6 +564,14 @@ export default function PlanCanvas(props: Props) {
       onChange(out.plan);
       onSelect([{ kind: "room", id: out.roomId }]);
       onToolDone();
+      return;
+    }
+    if (tool === "curve") {
+      if (draft.length === 2) return finishCurve(draft[0], draft[1], bow?.left ?? 0, e.evt.altKey);
+      const sp = snapFrom(draft[0] ?? null, p, pickTargets([]), tol, snap, shift).p;
+      if (draft.length === 1 && dist(sp, draft[0]) <= tol / 2) return;
+      setDraft([...draft, sp]);
+      if (draft.length === 1) setBow({ left: 0, snap: "flat" });
       return;
     }
     if (tool === "room" || tool === "wall") {
@@ -617,7 +659,10 @@ export default function PlanCanvas(props: Props) {
         const hit = best;
         setHoverWall((h) => (hit ? (h && sameHost(h, hit.host) ? h : hit.host) : null));
       }
-      if (drafting) setCursor(snapFrom(draft[draft.length - 1], p, pickTargets([]), tol, snap, shift, tool === "room" && draft.length >= 2 ? [draft[0]] : []).p);
+      if (tool === "curve" && draft.length === 2) {
+        setCursor(p);
+        setBow(curveBow(plan, draft[0], draft[1], p, s, shift));
+      } else if (drafting) setCursor(snapFrom(draft[draft.length - 1], p, pickTargets([]), tol, snap, shift, tool === "room" && draft.length >= 2 ? [draft[0]] : []).p);
       return;
     }
     const base = latest.current.plan;
@@ -968,7 +1013,7 @@ export default function PlanCanvas(props: Props) {
               ))}
             {dragCorner && preview && <NodeReadout plan={preview} roomId={dragCorner.roomId} i={dragCorner.i} s={s} />}
 
-            <DraftPreview rectStart={rectPreview} rectEnd={rectEnd} draft={draft} cursor={cursor} tool={tool} typed={typed} s={s} />
+            <DraftPreview rectStart={rectPreview} rectEnd={rectEnd} draft={draft} cursor={cursor} tool={tool} typed={typed} bow={bow} s={s} />
 
             {ghostOpening && <OpeningSymbol g={ghostOpening.g} thickness={ghostOpening.thickness} selected scale={s} ghost />}
             {ghostFixture && <FixtureSymbol f={ghostFixture} selected={false} scale={s} ghost />}

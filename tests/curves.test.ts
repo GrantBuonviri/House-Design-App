@@ -18,6 +18,15 @@ import { siteFor } from "@/lib/house3d/site";
 import { measurePlan } from "@/lib/cost/quantities";
 import { buildSet } from "@/lib/plans/build";
 import { codeReport } from "@/lib/codes/rules";
+import { curvesOf, cutOutline, refitArcs } from "@/lib/plan/refit";
+import { combineRooms, removeWall } from "@/lib/plan/openWalls";
+import { fillRoomAt, splitRoom } from "@/lib/plan/partitions";
+import { trimOverlap } from "@/lib/plan/overlaps";
+import { snapPoint, snapTargets } from "@/lib/plan/snap";
+import { addClosets, addWindows } from "@/lib/plan/suggest";
+import { edgeFacing, pushWall } from "@/lib/plan/changes";
+import { tooWideForCurve, widestUnit } from "@/lib/plan/bend";
+import { fillBelow, pullBack, supportOf } from "@/lib/plan/support";
 
 const FT = 12;
 const flat = generatePlot(FLAT_PLOT_SEED, { flat: true });
@@ -278,5 +287,184 @@ describe("saved data", () => {
     const m = migrateProject(JSON.parse(JSON.stringify(p)));
     expect(m.floorPlans[MAIN_LEVEL_ID].rooms[0].bulges).toEqual(p.floorPlans[MAIN_LEVEL_ID].rooms[0].bulges);
     expect(m.floorPlans[MAIN_LEVEL_ID].walls[0].bulge).toBe(10);
+  });
+});
+
+// ---------- Part 3: cutting edits keep curves ----------
+
+const curvedEdges = (r: PlanRoom) => (r.bulges ?? []).filter((b) => Math.abs(b) >= 0.05).length;
+
+describe("refitting curves after cutting", () => {
+  it("turns a flattened round room back into four quarter circles", () => {
+    const r = roundRoom("r", { x: 0, y: 0 }, 96);
+    const fit = refitArcs(cutOutline(r), curvesOf([r]));
+    expect(fit.polygon.length).toBe(4);
+    expect(roomArea({ polygon: fit.polygon, bulges: fit.bulges })).toBeCloseTo(roomArea(r), -2);
+  });
+
+  it("leaves straight outlines alone", () => {
+    const poly = rectangle(60, 60, 120, 120);
+    expect(refitArcs(poly, curvesOf([roundRoom("r", { x: 0, y: 0 }, 96)]))).toEqual({ polygon: poly });
+  });
+
+  it("combining rooms keeps an outside curve as one curved edge", () => {
+    const a0 = room("a", 0, 0, 120, 120);
+    const ea = edgeAtX(a0, 0);
+    const a = { ...a0, bulges: a0.polygon.map((_, i) => (i === ea ? 30 : 0)) };
+    const out = combineRooms(plan([a, room("b", 120, 0, 120, 120)]), ["a", "b"])!;
+    const joined = out.plan.rooms[0];
+    expect(out.plan.rooms).toHaveLength(1);
+    expect(joined.polygon).toHaveLength(4);
+    expect(curvedEdges(joined)).toBe(1);
+    expect(Math.max(...joined.bulges!)).toBeCloseTo(30, 0);
+    expect(roomArea(joined)).toBeCloseTo(roomArea(a) + 14400, -2);
+  });
+
+  it("combining two rooms that share a curved wall gives a straight-walled room", () => {
+    const { plan: p } = sharedCurve();
+    const out = combineRooms(p, ["a", "b"])!;
+    expect(out.plan.rooms[0].polygon).toHaveLength(4);
+    expect(out.plan.rooms[0].bulges).toBeUndefined();
+  });
+});
+
+describe("splitting along a curve", () => {
+  it("cuts a room with a curve into two rooms that share one curved wall", () => {
+    const r = room("r", 0, 0, 240, 120);
+    const out = splitRoom(plan([r]), { a: { x: 120, y: 0 }, b: { x: 120, y: 120 }, bulge: 30 })!;
+    expect(out).not.toBeNull();
+    const [kept, made] = [out.plan.rooms.find((x) => x.id === out.roomId)!, out.plan.rooms.find((x) => x.id === out.newRoomId)!];
+    expect(curvedEdges(kept)).toBe(1);
+    expect(curvedEdges(made)).toBe(1);
+    expect(roomArea(kept) + roomArea(made)).toBeCloseTo(240 * 120, -1);
+    expect(kept.polygon).toHaveLength(4);
+    expect(made.polygon).toHaveLength(4);
+    // One shared wall between them, not two.
+    const inside = wallPieces(flatPlan(out.plan), 6).filter((w) => !w.exterior);
+    const shared = inside.reduce((t, w) => t + dist(w.a, w.b), 0);
+    expect(shared).toBeGreaterThan(120);
+    expect(shared).toBeLessThan(150);
+  });
+
+  it("a straight cut across a round room leaves two half rounds", () => {
+    const r = roundRoom("r", { x: 0, y: 0 }, 96);
+    const out = splitRoom(plan([r]), [{ x: -96, y: 0 }, { x: 96, y: 0 }])!;
+    expect(out).not.toBeNull();
+    for (const x of out.plan.rooms) {
+      expect(x.polygon.length).toBeLessThanOrEqual(4);
+      expect(curvedEdges(x)).toBeGreaterThanOrEqual(1);
+      expect(roomArea(x)).toBeCloseTo(roomArea(r) / 2, -2);
+    }
+  });
+
+  it("a curve that doesn't reach from wall to wall is no split", () => {
+    expect(splitRoom(plan([room("r", 0, 0, 240, 120)]), { a: { x: 60, y: 20 }, b: { x: 120, y: 60 }, bulge: 10 })).toBeNull();
+  });
+});
+
+describe("Fill room, trimming and the floor below follow curves", () => {
+  it("fills a space closed in by a curved wall", () => {
+    const walls = [
+      { id: "w1", a: { x: 0, y: 0 }, b: { x: 120, y: 0 }, thicknessIn: 4.5 },
+      { id: "w2", a: { x: 120, y: 0 }, b: { x: 120, y: 120 }, thicknessIn: 4.5, bulge: 30 },
+      { id: "w3", a: { x: 120, y: 120 }, b: { x: 0, y: 120 }, thicknessIn: 4.5 },
+      { id: "w4", a: { x: 0, y: 120 }, b: { x: 0, y: 0 }, thicknessIn: 4.5 },
+    ];
+    const out = fillRoomAt(plan([], { walls }), { x: 60, y: 60 })!;
+    expect(out).not.toBeNull();
+    const r = out.plan.rooms[0];
+    expect(r.polygon).toHaveLength(4);
+    expect(curvedEdges(r)).toBe(1);
+    expect(out.plan.walls).toHaveLength(0);
+    // w2 bows to its left walking south, which is east: out of the space.
+    expect(roomArea(r)).toBeGreaterThan(14400);
+  });
+
+  it("trims a room under a dropped round room along the curve", () => {
+    const r = room("r", 0, 0, 240, 240);
+    const round = roundRoom("o", { x: 240, y: 120 }, 72);
+    const out = trimOverlap(plan([r, round]), ["o"]);
+    expect(out.trims).toHaveLength(1);
+    const cut = out.plan.rooms.find((x) => x.id === "r")!;
+    expect(curvedEdges(cut)).toBeGreaterThanOrEqual(1);
+    expect(cut.polygon.length).toBeLessThan(10);
+    expect(roomArea(cut)).toBeCloseTo(240 * 240 - roomArea(round) / 2, -2);
+  });
+
+  it("Pull back follows a round room on the floor below", () => {
+    const levels = [levelFor(MAIN_LEVEL_ID), { id: "up", name: "Second floor", kind: "upper" as const, elevationIn: 110 }];
+    const below = plan([roundRoom("o", { x: 0, y: 0 }, 96)]);
+    const up = plan([room("u", -120, -120, 240, 240)]);
+    const sup = supportOf({ [MAIN_LEVEL_ID]: below, up }, levels, levels[1])!;
+    const out = pullBack(up, "u", sup.regions, sup.arcs).rooms[0];
+    expect(out.polygon.length).toBeLessThanOrEqual(6);
+    expect(curvedEdges(out)).toBeGreaterThanOrEqual(3);
+    expect(roomArea(out)).toBeCloseTo(roomArea(below.rooms[0]), -2);
+    const filled = fillBelow(plan([]), sup.regions, sup.arcs).rooms[0];
+    expect(curvedEdges(filled)).toBeGreaterThanOrEqual(3);
+  });
+});
+
+describe("doors, windows and removed walls on curves through cutting edits", () => {
+  it("a window on a curved wall stays put when the room is split", () => {
+    const r = roundRoom("r", { x: 0, y: 0 }, 96);
+    const win: Opening = { id: "win", kind: "window", host: { roomId: "r", edge: 0 }, offsetIn: roomEdgeLength(r, 0) / 2, widthIn: 30 } as Opening;
+    const out = splitRoom(plan([r], { openings: [win] }), [{ x: -96, y: 0 }, { x: 96, y: 0 }])!;
+    const moved = out.plan.openings.find((o) => o.id === "win")!;
+    expect(moved).toBeDefined();
+    const host = out.plan.rooms.find((x) => "roomId" in moved.host && x.id === moved.host.roomId)!;
+    const arc = roomEdgeArc(host, (moved.host as { edge: number }).edge)!;
+    expect(arc).not.toBeNull();
+    const before = pointOnArc(roomEdgeArc(r, 0)!, win.offsetIn);
+    expect(dist(pointOnArc(arc, moved.offsetIn), before)).toBeLessThan(1);
+  });
+
+  it("taking out a shared curved wall works like a straight one", () => {
+    const { plan: p, ea } = sharedCurve();
+    const out = removeWall(p, "a", ea);
+    expect(out).not.toBeNull();
+    expect(out!.plan.openWalls?.length).toBeGreaterThan(0);
+  });
+});
+
+describe("snapping and the automatic plans around curves", () => {
+  it("snaps onto a curved wall along the curve", () => {
+    const { plan: p, a, ea } = sharedCurve();
+    const arc = roomEdgeArc(a, ea)!;
+    const mid = pointOnArc(arc, arc.length / 2);
+    const s = snapPoint({ x: mid.x + 3, y: mid.y + 40 }, snapTargets(p), 1, false);
+    expect(s.on).not.toBe("wall");
+    const near = snapPoint({ x: mid.x + 2, y: mid.y }, snapTargets(p), 4, false);
+    expect(near.on).toBe("wall");
+    expect(projectOnArc(near.p, arc).d).toBeLessThan(0.01);
+  });
+
+  it("windows on a curved outside wall are spaced along it and fit the curve", () => {
+    const r0 = room("liv", 0, 0, 240, 180);
+    const south = r0.polygon.findIndex((p, i) => p.y === 180 && r0.polygon[(i + 1) % 4].y === 180);
+    const r = { ...r0, type: "living" as const, bulges: r0.polygon.map((_, i) => (i === south ? 48 : 0)) };
+    const out = addWindows(plan([r]), levelFor(MAIN_LEVEL_ID)).plan;
+    const onCurve = out.openings.filter((o) => "roomId" in o.host && o.host.edge === south);
+    expect(onCurve.length).toBeGreaterThan(0);
+    const L = roomEdgeLength(r, south);
+    const radius = roomEdgeArc(r, south)!.radius;
+    for (const o of onCurve) {
+      expect(o.offsetIn - o.widthIn / 2).toBeGreaterThanOrEqual(0);
+      expect(o.offsetIn + o.widthIn / 2).toBeLessThanOrEqual(L);
+      expect(o.widthIn).toBeLessThanOrEqual(widestUnit(radius));
+    }
+    expect(tooWideForCurve(out)).toHaveLength(0);
+  });
+
+  it("closets and pushed walls stay off curved walls", () => {
+    const b0 = room("bed", 0, 0, 168, 144);
+    const east = edgeAtX(b0, 168);
+    const bed = { ...b0, type: "bedroom" as const, bulges: b0.polygon.map((_, i) => (i === east ? 24 : 0)) };
+    const out = addClosets(plan([bed]), 6).plan;
+    const after = out.rooms.find((x) => x.id === "bed")!;
+    expect(curvedEdges(after)).toBe(1);
+    expect(roomArea(after) + out.rooms.filter((x) => x.type === "closet").reduce((t, c) => t + polygonArea(c.polygon), 0)).toBeCloseTo(roomArea(bed), -1);
+    expect(edgeFacing(bed, "E")).toBeNull();
+    expect(pushWall(plan([bed]), "bed", east, { x: 24, y: 0 })).toBeNull();
   });
 });

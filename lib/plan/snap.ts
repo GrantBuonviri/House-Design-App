@@ -1,5 +1,6 @@
 import type { FloorPlan, Point } from "@/lib/model/schema";
 import { add, dot, edgesOf, leftNormal, project, scale, sub, unit } from "./geometry";
+import { type Arc, projectOnArc, roomEdgeArc, wallArc } from "./arcs";
 
 /**
  * Snapping while drawing and moving: to corners, to lining up with corners,
@@ -12,7 +13,8 @@ export const GRID_IN = 6;
 export type Guides = { x?: number; y?: number };
 export type Snapped = { p: Point; guides: Guides; on?: "corner" | "wall" | "grid" };
 
-export type SnapTargets = { points: Point[]; segments: [Point, Point][] };
+/** `arcs` are curved walls, snapped onto along the curve. */
+export type SnapTargets = { points: Point[]; segments: [Point, Point][]; arcs?: Arc[] };
 
 const roundTo = (n: number, step: number) => Math.round(n / step) * step;
 
@@ -20,17 +22,24 @@ const roundTo = (n: number, step: number) => Math.round(n / step) * step;
 export function snapTargets(plan: FloorPlan, skip: string[] = []): SnapTargets {
   const points: Point[] = [];
   const segments: [Point, Point][] = [];
+  const arcs: Arc[] = [];
   for (const r of plan.rooms) {
     if (skip.includes(r.id)) continue;
     points.push(...r.polygon);
-    for (const e of edgesOf(r.polygon)) segments.push([e.a, e.b]);
+    for (const e of edgesOf(r.polygon)) {
+      const arc = roomEdgeArc(r, e.i);
+      if (arc) arcs.push(arc);
+      else segments.push([e.a, e.b]);
+    }
   }
   for (const w of plan.walls) {
     if (skip.includes(w.id)) continue;
     points.push(w.a, w.b);
-    segments.push([w.a, w.b]);
+    const arc = wallArc(w);
+    if (arc) arcs.push(arc);
+    else segments.push([w.a, w.b]);
   }
-  return { points, segments };
+  return { points, segments, arcs };
 }
 
 /**
@@ -66,6 +75,10 @@ export function snapPoint(p: Point, targets: SnapTargets, tolerance: number, gri
   if (x === undefined && y === undefined) {
     for (const [a, b] of targets.segments) {
       const pr = project(p, a, b);
+      if (pr.d <= tolerance) return { p: pr.point, guides: {}, on: "wall" };
+    }
+    for (const arc of targets.arcs ?? []) {
+      const pr = projectOnArc(p, arc);
       if (pr.d <= tolerance) return { p: pr.point, guides: {}, on: "wall" };
     }
   }

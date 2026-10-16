@@ -1,6 +1,7 @@
 import type { FloorPlan, PlanRoom, Point } from "@/lib/model/schema";
 import { isCirculation, neighbors, openingRooms, roleOf, sharedWall } from "./connect";
 import { keepOpeningsInPlace, makeRoom, moveMany } from "./edit";
+import { roomHasCurves } from "./arcs";
 import { add, boundsOf, collinearOverlap, edgesOf, isRectangle, polygonsOverlap, round1, roundPoint, type Bounds } from "./geometry";
 
 /** Suggest a plan: hallways where private rooms would only open off other rooms, and stair halls. */
@@ -57,7 +58,8 @@ function tryCut(plan: FloorPlan, cut: Cut, needy: Set<string>, obstacles: Bounds
   if (obstacles.some((b) => sideOf(boxCorners(b)) !== "P")) return null;
   if (plan.walls.some((w) => sideOf([w.a, w.b]) === "S")) return null;
   const straddle = plan.rooms.filter((r) => side.get(r.id) === "S");
-  if (straddle.some((r) => !isAxisRect(r.polygon))) return null;
+  // Hallway cuts stay off curved walls.
+  if (straddle.some((r) => !isAxisRect(r.polygon) || roomHasCurves(r))) return null;
 
   // Where rooms (and the stairs, which never move) meet the cut line from each side.
   const touch: { id: string; side: "P" | "Q"; v0: number; v1: number; open: boolean }[] = [];

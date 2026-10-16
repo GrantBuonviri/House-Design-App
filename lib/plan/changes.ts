@@ -9,6 +9,7 @@ import { add, boundsOf, collinearOverlap, dist, dot, edgesOf, leftNormal, pointI
 import { areaKind, roomSqft } from "./measure";
 import { outsideStretches, roomJustOutside, stairsBoxes, wayInRooms } from "./suggest";
 import { openingGeometry } from "./walls";
+import { isCurved } from "./arcs";
 
 /**
  * Small changes to a floor plan, as the built-in alternatives describe
@@ -54,6 +55,8 @@ export function levelOfRoom(plans: Plans, roomId: string): string | null {
 export function edgeFacing(room: PlanRoom, side: Exclude<ChangeSide, "none">): number | null {
   let best: { i: number; length: number } | null = null;
   for (const e of edgesOf(room.polygon)) {
+    // Curved walls aren't pushed around by the automatic ideas.
+    if (isCurved(room.bulges?.[e.i])) continue;
     const n = leftNormal(unit(sub(e.b, e.a)));
     const length = dist(e.a, e.b);
     if (dot(n, DIR[side]) > 0.7 && length >= 12 && (!best || length > best.length)) best = { i: e.i, length };
@@ -71,7 +74,7 @@ export function edgeFacing(room: PlanRoom, side: Exclude<ChangeSide, "none">): n
  */
 export function pushWall(plan: FloorPlan, roomId: string, edge: number, d: Point): FloorPlan | null {
   const room = plan.rooms.find((r) => r.id === roomId);
-  if (!room) return null;
+  if (!room || isCurved(room.bulges?.[edge])) return null;
   const a = room.polygon[edge];
   const b = room.polygon[(edge + 1) % room.polygon.length];
   const u = unit(sub(b, a));

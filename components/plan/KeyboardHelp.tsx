@@ -7,7 +7,7 @@ const OTHER: [string, string][] = [
   ["⌘D", "Duplicate what's picked"],
   ["Arrow keys", "Nudge what's picked (Shift for a foot)"],
   ["Shift", "Hold while drawing or dragging for any angle, no snapping"],
-  ["Option", "Hold while dragging a corner or wall to pull it away from neighbors; hold while finishing a wall to keep it a divider; hold while bending a wall to curve only one room's side"],
+  ["Option", "Hold while dragging a corner or wall to pull it away from neighbors; hold while finishing a wall or curve to keep it a divider; hold while bending a wall to curve only one room's side"],
   ["L", "Show or hide all labels"],
   ["M", "Measuring tape"],
   ["Space + drag", "Move around the drawing"],

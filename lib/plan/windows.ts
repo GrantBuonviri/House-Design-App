@@ -3,6 +3,8 @@ import { freeSpot, newOpening } from "./connect";
 import { add, collinearOverlap, dist, dot, edgesOf, leftNormal, lerp, pointInPolygon, scale, sub, subtractIntervals, unit } from "./geometry";
 import { areaKind } from "./measure";
 import { BEDROOMS } from "./closets";
+import { isCurved, roomEdgeArc, roomEdgeLength } from "./arcs";
+import { sharedEdges, widestUnit } from "./bend";
 
 /** Suggest a plan: windows on outside walls, more and bigger on the sunny south side. */
 
@@ -18,7 +20,8 @@ const END_IN = 18;
 
 type Placement = { style: string; widthIn: number };
 
-export type Stretch = { a: Point; b: Point; t0: number; t1: number; host: { roomId: string; edge: number } };
+/** `t0`, `t1` are inches along the wall (along the curve on a curved one, which also has its `radius`). */
+export type Stretch = { a: Point; b: Point; t0: number; t1: number; host: { roomId: string; edge: number }; radius?: number };
 
 /** Stretches of a room's walls with nothing indoors on the other side: open air, or a porch, patio or deck. */
 export function outsideStretches(plan: FloorPlan, room: PlanRoom): Stretch[] {
@@ -27,6 +30,12 @@ export function outsideStretches(plan: FloorPlan, room: PlanRoom): Stretch[] {
   for (const e of edgesOf(room.polygon)) {
     const L = dist(e.a, e.b);
     if (L < 1) continue;
+    if (isCurved(room.bulges?.[e.i])) {
+      // A curved wall: the whole curve, inches along it, unless an indoor room shares it.
+      const shared = indoor.some((o) => o.polygon.some((p) => dist(p, e.a) < 1) && o.polygon.some((p) => dist(p, e.b) < 1) && sharedEdges(plan, room.id, e.i).some((x) => x.roomId === o.id));
+      if (!shared) out.push({ a: e.a, b: e.b, t0: 0, t1: roomEdgeLength(room, e.i), host: { roomId: room.id, edge: e.i }, radius: roomEdgeArc(room, e.i)!.radius });
+      continue;
+    }
     const cuts: [number, number][] = [];
     for (const other of indoor) {
       for (const f of edgesOf(other.polygon)) {
@@ -41,6 +50,7 @@ export function outsideStretches(plan: FloorPlan, room: PlanRoom): Stretch[] {
 
 /** Is an indoor room just outside this stretch of wall (a few inches away, so a window would look into it)? */
 export function roomJustOutside(plan: FloorPlan, s: Stretch): boolean {
+  if (s.radius) return false; // A shared curve was already left out; nothing sits a few inches off a curve.
   const n = leftNormal(unit(sub(s.b, s.a)));
   const L = dist(s.a, s.b);
   return [0.25, 0.5, 0.75].some((k) => {
@@ -108,7 +118,9 @@ export function addWindows(plan: FloorPlan, level: Pick<Level, "kind">): { plan:
       for (let k = 0; k < count; k++) {
         const t0 = w.t0 + k * slot + (k === 0 ? END_IN : 6);
         const t1 = w.t0 + (k + 1) * slot - (k === count - 1 ? END_IN : 6);
-        const widthIn = Math.min(place.widthIn, Math.floor((t1 - t0 - 4) / 6) * 6);
+        // On a curve, windows are spaced along it and kept narrow enough to sit in it flat.
+        const fitsCurve = w.radius ? Math.floor(widestUnit(w.radius) / 6) * 6 : Infinity;
+        const widthIn = Math.min(place.widthIn, fitsCurve, Math.floor((t1 - t0 - 4) / 6) * 6);
         if (widthIn < 24) continue;
         const at = freeSpot(p, w.host, t0, t1, widthIn, 12);
         if (at === null) continue;

@@ -67,7 +67,7 @@ export function suggestPlans(diagrams: Record<string, BubbleDiagram>, ctx: PlanC
       halls += h.added;
       plan = h.plan;
       const support = supportOf(plans, ctx.levels, level);
-      if (support) plan = keepInside(plan, support.regions).plan;
+      if (support) plan = keepInside(plan, support.regions, support.arcs).plan;
       plan = connectAll(plan, obstacles, ctx.brief?.openKitchen ?? false);
       const c = addClosets(plan, exteriorIn, ctx.brief);
       closets += c.added;
