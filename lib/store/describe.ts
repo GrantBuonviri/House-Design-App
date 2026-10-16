@@ -1,6 +1,7 @@
 import type { BubbleDiagram, DesignChoices, FloorPlan, Project } from "@/lib/model/schema";
 import { openingType, fixtureType } from "@/lib/plan/catalog";
 import { furnitureType } from "@/lib/plan/furniture";
+import { layerItems } from "@/lib/furnish/layer";
 
 /**
  * A short, plain description of what changed between two versions of a
@@ -115,7 +116,7 @@ function moved(a: object, b: object): boolean {
 function describePlan(a: FloorPlan | undefined, b: FloorPlan | undefined): string | null {
   if (!a || !b) return b ? "start the floor plan" : "clear the floor plan";
   const roomName = (r: FloorPlan["rooms"][number]) => r.name || "a room";
-  const special = describeBend(a, b, roomName) ?? describeOpenWalls(a, b, roomName) ?? describeSplit(a, b, roomName) ?? describeTrim(a, b, roomName);
+  const special = describeBend(a, b, roomName) ?? describeOpenWalls(a, b, roomName) ?? describeSplit(a, b, roomName) ?? describeTrim(a, b, roomName) ?? describeFurnish(a, b, roomName);
   if (special) return special;
   const rooms = describeList(a.rooms, b.rooms, roomName, (was, now) =>
     was.name !== now.name ? `rename ${roomName(was)}` : moved(was, now) ? `move ${roomName(now)}` : `change ${roomName(now)}`,
@@ -223,6 +224,32 @@ function describeOpenWalls(a: FloorPlan, b: FloorPlan, roomName: (r: FloorPlan["
 }
 
 /** "a window", "an island"; with `the`, "the window". */
+/** One thing placed, moved, changed or deleted on the furnish layer ("place a toilet in Bath 1"). */
+function describeFurnish(a: FloorPlan, b: FloorPlan, roomName: (r: FloorPlan["rooms"][number]) => string): string | null {
+  if ([json(a.rooms) !== json(b.rooms), json(a.walls) !== json(b.walls), json(a.openings) !== json(b.openings), json(a.stairs) !== json(b.stairs)].some(Boolean)) return null;
+  const before = new Map(layerItems(a).map((i) => [i.id, i]));
+  const after = layerItems(b);
+  const now = new Set(after.map((i) => i.id));
+  const added = after.filter((i) => !before.has(i.id));
+  const removed = [...before.values()].filter((i) => !now.has(i.id));
+  const edited = after.filter((i) => before.has(i.id) && json(before.get(i.id)) !== json(i));
+  const hidden = (p: FloorPlan) => new Set([...(p.cabinets?.hidden ?? []), ...(p.devices?.hidden ?? [])]);
+  const hiddenNow = [...hidden(b)].filter((id) => !hidden(a).has(id)).length;
+  const where = (i: { roomId?: string }) => {
+    const r = i.roomId ? b.rooms.find((x) => x.id === i.roomId) ?? a.rooms.find((x) => x.id === i.roomId) : undefined;
+    return r ? ` in ${roomName(r)}` : "";
+  };
+  if (added.length === 1 && !removed.length && !edited.length) return hiddenNow === 1 ? `move or change the ${added[0].label.toLowerCase()}` : `place ${article(added[0].label)}${where(added[0])}`;
+  if (removed.length === 1 && !added.length && !edited.length && !hiddenNow) return `delete the ${removed[0].label.toLowerCase()}${where(removed[0])}`;
+  if (!added.length && !removed.length && !edited.length && hiddenNow) return hiddenNow === 1 ? "delete an item the app placed" : `delete ${hiddenNow} items the app placed`;
+  if (edited.length === 1 && !added.length && !removed.length) {
+    const was = before.get(edited[0].id)!;
+    const label = edited[0].label.toLowerCase();
+    return was.x !== edited[0].x || was.y !== edited[0].y ? `move the ${label}` : was.color !== edited[0].color ? `recolor the ${label}` : was.rotation !== edited[0].rotation ? `turn the ${label}` : `resize the ${label}`;
+  }
+  return null;
+}
+
 function article(label: string, the = false): string {
   const l = label.toLowerCase();
   if (the) return `the ${l}`;

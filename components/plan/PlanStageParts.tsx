@@ -169,7 +169,7 @@ function ToolIcon({ tool }: { tool: PlanTool }) {
           <path d="M4 20h4v-4h4v-4h4V8h4V4" />
         </svg>
       );
-    case "fixture":
+    case "place":
       return (
         <svg {...common}>
           <rect x="7" y="3" width="10" height="5" rx="1" />

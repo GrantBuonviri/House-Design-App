@@ -39,6 +39,7 @@ export default function ProjectWorkspace({ id }: { id: string }) {
   const [walking, setWalking] = useState(false);
   const [costOpen, setCostOpen] = useState(false);
   const [plansOpen, setPlansOpen] = useState(false);
+  const [furnishLevel, setFurnishLevel] = useState<string>();
   // Worked out a moment behind edits, so dragging in the plan stays smooth.
   const deferred = useDeferredValue(project);
   const { cost, costError } = useMemo(() => {
@@ -189,9 +190,9 @@ export default function ProjectWorkspace({ id }: { id: string }) {
       ) : project.stage === "bubbles" ? (
         <BubbleStage onContinue={() => setStage("plan")} onGoToRooms={() => setStage("brief")} />
       ) : project.stage === "plan" ? (
-        <PlanStage onContinue={() => setStage("furnish")} onGoToSketch={() => setStage("bubbles")} />
+        <PlanStage onContinue={() => setStage("furnish")} onGoToSketch={() => setStage("bubbles")} onGoToFurnish={() => setStage("furnish")} />
       ) : project.stage === "furnish" ? (
-        <FurnishStage onContinue={() => setStage("interior")} onGoToPlan={() => setStage("plan")} />
+        <FurnishStage key={furnishLevel} initialLevelId={furnishLevel} onContinue={() => setStage("interior")} onGoToPlan={() => setStage("plan")} />
       ) : project.stage === "interior" ? (
         <InteriorStage onContinue={() => setStage("exterior")} onGoToPlan={() => setStage("plan")} />
       ) : project.stage === "exterior" ? (
@@ -205,6 +206,11 @@ export default function ProjectWorkspace({ id }: { id: string }) {
           onGo={(stage) => {
             setPlansOpen(false);
             setStage(stage);
+          }}
+          onEditInFurnish={(levelId) => {
+            setPlansOpen(false);
+            setFurnishLevel(levelId);
+            setStage("furnish");
           }}
         />
       )}

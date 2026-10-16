@@ -134,10 +134,10 @@ export function OpeningSymbol({ g, thickness, selected, scale, name, ghost }: { 
 }
 
 /** A fixture, drawn around its middle with its back toward -y (north at rotation 0). */
-export function FixtureSymbol({ f, selected, scale, onTransformEnd, ghost }: { f: Fixture; selected: boolean; scale: number; onTransformEnd?: (e: Konva.KonvaEventObject<Event>) => void; ghost?: boolean }) {
+export function FixtureSymbol({ f, selected, scale, onTransformEnd, ghost, name, bad }: { f: Fixture; selected: boolean; scale: number; onTransformEnd?: (e: Konva.KonvaEventObject<Event>) => void; ghost?: boolean; name?: string; bad?: boolean }) {
   const w = f.widthIn;
   const d = f.depthIn;
-  const color = selected ? ACCENT : INK;
+  const color = bad ? "#b3261e" : selected ? ACCENT : INK;
   const draw = (ctx: Ctx) => {
     const thin = 1 / scale;
     ctx.lineWidth = thin;
@@ -235,7 +235,7 @@ export function FixtureSymbol({ f, selected, scale, onTransformEnd, ghost }: { f
   return (
     <Group
       id={ghost ? undefined : f.id}
-      name={ghost ? undefined : "fixture"}
+      name={ghost ? undefined : (name ?? "fixture")}
       x={f.x}
       y={f.y}
       rotation={f.rotation}

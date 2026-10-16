@@ -9,7 +9,7 @@ import { defaultOperation, operationOf, OPERATION_HINT, OPERATION_LABEL } from "
 import type { DesignBrief, FloorPlan, Level, PlanBasics, PlanStairs, WallHeight } from "@/lib/model/schema";
 import { formatFeetInches, parseFeetInches } from "@/lib/model/units";
 import { ceilingFor, riseBetween, STAIRS_LABEL } from "@/lib/plan/basics";
-import { FIXTURE_GROUPS, FIXTURE_TYPES, OPENING_TYPES, fixtureType, openingType } from "@/lib/plan/catalog";
+import { OPENING_TYPES, fixtureType, openingType } from "@/lib/plan/catalog";
 import { centerOfMany, insertCorner, removeMany, rotateMany, setEdgeLength, setWallLength, updateOpening, updateRoom } from "@/lib/plan/edit";
 import { roomHasCurves, wallLength } from "@/lib/plan/arcs";
 import { dist, isRectangle, lerp, polygonCenter } from "@/lib/plan/geometry";
@@ -46,9 +46,9 @@ type Props = {
   roundDiameter?: number;
   onRoundDiameter?: (v: number) => void;
   placeOpening: string;
-  placeFixture: string;
   onPlaceOpening: (id: string) => void;
-  onPlaceFixture: (id: string) => void;
+  /** The Furnish page edits doors and windows here but never deletes them. */
+  noDelete?: boolean;
   onChange: (p: FloorPlan, coalesce?: string) => void;
   onSelect: (s: PlanSelection) => void;
   /** Open the Preview window popup for a window or sliding glass door on an outside wall. */
@@ -57,7 +57,7 @@ type Props = {
 
 /** Details of whatever is selected on the plan, the catalog for the placing tools, or a summary of the floor. */
 export default function PlanSidePanel(props: Props) {
-  const { plan, level, levels, brief, basics, selection, tool, placeOpening, placeFixture, onPlaceOpening, onPlaceFixture, onChange, onSelect } = props;
+  const { plan, level, levels, brief, basics, selection, tool, placeOpening, onPlaceOpening, onChange, onSelect } = props;
   const nameRef = useRef<HTMLInputElement>(null);
   const only = selection.length === 1 ? selection[0] : null;
   const room = only?.kind === "room" ? plan.rooms.find((r) => r.id === only.id) : undefined;
@@ -138,24 +138,6 @@ export default function PlanSidePanel(props: Props) {
       </Panel>
     );
   }
-  if (tool === "fixture") {
-    return (
-      <Panel title="Fixtures">
-        <p className="mb-2 text-xs text-muted">Pick one, then click inside a room. Close to a wall, it backs up against it.</p>
-        {FIXTURE_GROUPS.map((g) => (
-          <div key={g} className="mb-2">
-            <p className="field-label">{g}</p>
-            <Choices
-              items={FIXTURE_TYPES.filter((t) => t.group === g).map((t) => ({ id: t.id, label: t.label, note: `${formatFeetInches(t.widthIn)} × ${formatFeetInches(t.depthIn)}` }))}
-              value={placeFixture}
-              onPick={onPlaceFixture}
-            />
-          </div>
-        ))}
-      </Panel>
-    );
-  }
-
   // ---- Several things ----
   if (selection.length > 1) {
     const turnable = selection.filter((s) => s.kind !== "edge" && s.kind !== "opening").map((s) => s.id);
@@ -435,9 +417,11 @@ export default function PlanSidePanel(props: Props) {
           </label>
         )}
         <p className="field-hint">Drag it along the wall, or onto another wall.</p>
-        <button className="mt-4 text-sm text-red-700 hover:underline" onClick={() => remove([o.id])}>
-          Delete this {o.kind === "window" ? "window" : o.kind === "door" ? "door" : "opening"}
-        </button>
+        {!props.noDelete && (
+          <button className="mt-4 text-sm text-red-700 hover:underline" onClick={() => remove([o.id])}>
+            Delete this {o.kind === "window" ? "window" : o.kind === "door" ? "door" : "opening"}
+          </button>
+        )}
       </Panel>
     );
   }
@@ -561,7 +545,7 @@ function eighths(inches: number): string {
   return num ? `${whole} ${num}/${den}"` : `${whole}"`;
 }
 
-function Panel({ title, children }: { title: string; children: React.ReactNode }) {
+export function Panel({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <div className="card p-4">
       <h3 className="mb-3 text-sm font-semibold">{title}</h3>
@@ -590,7 +574,7 @@ function Choices({ items, value, onPick }: { items: { id: string; label: string;
   );
 }
 
-function TurnButtons({ onTurn }: { onTurn: (deg: number) => void }) {
+export function TurnButtons({ onTurn }: { onTurn: (deg: number) => void }) {
   return (
     <div className="mt-4">
       <p className="field-label">Turn</p>

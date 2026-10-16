@@ -1,7 +1,7 @@
 "use client";
 
 import { Circle, Group, Layer, Line, Rect, Text } from "react-konva";
-import type { BubbleDiagram, FloorPlan, FurnitureItem, Level, PlanRoom, Point } from "@/lib/model/schema";
+import type { BubbleDiagram, FloorPlan, Level, PlanRoom, Point } from "@/lib/model/schema";
 import { formatFeetInches } from "@/lib/model/units";
 import { add, dist, edgesOf, leftNormal, scale as scaleV, sub, unit } from "@/lib/plan/geometry";
 import { bendInfo, type BendSnap, type BendTarget } from "@/lib/plan/bend";
@@ -9,7 +9,6 @@ import { arcBetween, leftBulge, pointOnEdge, roomEdgeLength } from "@/lib/plan/a
 import { edgeFrame } from "@/lib/plan/labels";
 import { roomOutline, wallOutline } from "@/lib/plan/flatten";
 import { roomSqft } from "@/lib/plan/measure";
-import { furnitureOutline, furnitureType } from "@/lib/plan/furniture";
 import type { OpeningHost } from "@/lib/model/schema";
 import { drawThickness, type SolidWall } from "@/lib/plan/walls";
 import type { Overhang } from "@/lib/plan/support";
@@ -88,25 +87,6 @@ export function OverhangLayer({ overhangs, s, past = "the wall below" }: { overh
         />
       ))}
     </Layer>
-  );
-}
-
-/** Furniture placed in the walkthrough: outlines only (it's moved there, with Design on). */
-export function FurnitureOutlines({ furniture, s, names = true }: { furniture: FurnitureItem[]; s: number; names?: boolean }) {
-  return (
-    <Group listening={false}>
-      {furniture.map((f) => {
-        const t = furnitureType(f.kind);
-        return (
-          <Group key={f.id}>
-            <Line points={flat(furnitureOutline(f))} closed fill={f.color ?? "#cfcac0"} opacity={t?.flat ? 0.25 : 0.45} stroke="#6f6658" strokeWidth={1} strokeScaleEnabled={false} dash={[4, 3]} />
-            {names && !t?.flat && Math.min(f.widthIn, f.depthIn) * s > 28 && (
-              <Text x={f.x} y={f.y} width={f.widthIn} offsetX={f.widthIn / 2} offsetY={5 / s} align="center" text={t?.label ?? ""} fontSize={9.5 / s} fill="#4a463f" wrap="none" ellipsis />
-            )}
-          </Group>
-        );
-      })}
-    </Group>
   );
 }
 
