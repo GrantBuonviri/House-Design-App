@@ -6,7 +6,7 @@ export type PlanTool = "select" | "room" | "wall" | "curve" | "door" | "stairs" 
  * Something selected on the plan. An "edge" is one side of a room, with the
  * id written as `roomId#edge`; a "wall" is a wall drawn on its own.
  */
-export type PlanItem = { kind: "room" | "edge" | "wall" | "opening" | "stairs" | "fixture" | "furnish"; id: string };
+export type PlanItem = { kind: "room" | "edge" | "wall" | "opening" | "stairs" | "fixture" | "furnish" | "railing"; id: string };
 export type PlanSelection = PlanItem[];
 
 export const PLAN_TOOLS: { id: PlanTool; label: string; key: string; hint: string }[] = [

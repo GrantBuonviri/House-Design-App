@@ -14,7 +14,7 @@ import { drawThickness, type SolidWall } from "@/lib/plan/walls";
 import type { Overhang } from "@/lib/plan/support";
 import type { Region } from "@/lib/house3d/footprint";
 import type { Guides } from "@/lib/plan/snap";
-import type { Railing } from "@/lib/plan/railings";
+import type { Railing, RailingSlot } from "@/lib/plan/railings";
 import BubbleShape from "@/components/bubbles/BubbleShape";
 import { ACCENT, INK } from "./PlanShapes";
 import { edgeId, isPicked, type PlanSelection, type PlanTool } from "./types";
@@ -362,27 +362,38 @@ export function ZoomButtons({ percent, onZoom, onFit, onFitLot }: { percent: num
 }
 
 /**
- * Stair railings, faded and not clickable (they're changed in Furnish): a
- * thin double line for a guard, a single line for a handrail, a thicker one
- * for a half wall or wall.
+ * Stair railings: a thin double line for a guard, a single line for a handrail,
+ * a thicker one for a half wall or wall. On the floor plan they're faded and
+ * can't be clicked (they're changed in Furnish). On the Furnish page
+ * (`pickable`) they answer to the mouse (the Konva name "railing", id = the
+ * railing's key), and sides with no railing show as a faint dotted line to
+ * click and add one.
  */
-export function RailingLines({ railings, s }: { railings: Railing[]; s: number }) {
+export function RailingLines({ railings, bare = [], selectedKey, pickable = false, s }: { railings: Railing[]; bare?: RailingSlot[]; selectedKey?: string; pickable?: boolean; s: number }) {
+  const pts = (a: Point, b: Point, off: number) => {
+    const n = scaleV(leftNormal(unit(sub(b, a))), off);
+    return [a.x + n.x, a.y + n.y, b.x + n.x, b.y + n.y];
+  };
   return (
-    <Group listening={false} opacity={0.7} name="railings">
+    <Group listening={pickable} opacity={pickable ? 1 : 0.7} name="railings">
+      {pickable &&
+        bare.map((x) => (
+          <Line key={x.key} id={x.key} name="railing" points={pts(x.a, x.b, 0)} stroke={x.key === selectedKey ? ACCENT : "#9a9486"} strokeWidth={x.key === selectedKey ? 2.5 : 1} strokeScaleEnabled={false} dash={[3, 4]} hitStrokeWidth={12} />
+        ))}
       {railings.map((r) => {
-        const pts = (off: number) => {
-          const n = scaleV(leftNormal(unit(sub(r.b, r.a))), off);
-          return [r.a.x + n.x, r.a.y + n.y, r.b.x + n.x, r.b.y + n.y];
-        };
+        const on = r.key === selectedKey;
+        const stroke = on ? ACCENT : INK;
+        const hit = pickable ? { id: r.key, name: "railing" } : {};
+        const hitW = pickable ? 12 : 0;
         if (r.kind === "guard")
           return (
-            <Group key={r.key}>
-              <Line points={pts(1.5)} stroke={INK} strokeWidth={0.8 / s} />
-              <Line points={pts(-1.5)} stroke={INK} strokeWidth={0.8 / s} />
+            <Group key={r.key} {...hit}>
+              <Line points={pts(r.a, r.b, 1.5)} stroke={stroke} strokeWidth={on ? 1.6 / s : 0.8 / s} hitStrokeWidth={hitW} />
+              <Line points={pts(r.a, r.b, -1.5)} stroke={stroke} strokeWidth={on ? 1.6 / s : 0.8 / s} hitStrokeWidth={hitW} />
             </Group>
           );
-        if (r.kind === "handrail") return <Line key={r.key} points={pts(0)} stroke={INK} strokeWidth={1 / s} dash={[6 / s, 3 / s]} />;
-        return <Line key={r.key} points={pts(0)} stroke={INK} strokeWidth={Math.max(2 / s, 4.5)} opacity={0.6} />;
+        if (r.kind === "handrail") return <Line key={r.key} {...hit} points={pts(r.a, r.b, 0)} stroke={stroke} strokeWidth={(on ? 2 : 1) / s} dash={[6 / s, 3 / s]} hitStrokeWidth={hitW} />;
+        return <Line key={r.key} {...hit} points={pts(r.a, r.b, 0)} stroke={on ? ACCENT : INK} strokeWidth={Math.max(2 / s, 4.5)} opacity={on ? 0.9 : 0.6} hitStrokeWidth={hitW} />;
       })}
     </Group>
   );

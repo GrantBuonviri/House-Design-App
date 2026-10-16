@@ -160,6 +160,10 @@ export function estimate(
   line("framing", "curved-wall-framing", q.curvedWallLf, "Curved walls: extra framing");
   line("framing", "roof-framing", q.roofSqft);
   line("framing", "stairs", q.stairs);
+  line("framing", "stair-guard-wood", q.stairGuardWoodLf, "Stair railings: wood with white balusters");
+  line("framing", "stair-guard-metal", q.stairGuardMetalLf, "Stair railings: black metal");
+  line("framing", "stair-guard-glass", q.stairGuardGlassLf, "Stair railings: glass");
+  line("framing", "stair-half-wall", q.stairHalfWallLf, "Stair half and full walls");
   line("framing", "deck", q.deckSqft);
   line("framing", "overhang-post", q.overhangPosts);
   line("framing", "overhang-beam", q.overhangBeamLf);

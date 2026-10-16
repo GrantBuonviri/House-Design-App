@@ -99,6 +99,28 @@ export function ItemHighlight({ item, floorIn, frame, ceilingIn }: { item: Layer
   return <mesh geometry={geometry} material={material} renderOrder={3} />;
 }
 
+/** A see-through blue strip along a stair railing (or the side where one would go), following the slope of the stairs. */
+export function RailingHighlight({ a, b, za, zb, heightIn, floorIn, frame }: { a: Point; b: Point; za: number; zb: number; heightIn: number; floorIn: number; frame: Frame }) {
+  const geometry = useMemo(() => {
+    const mb = new MeshBuilder();
+    const len = Math.hypot(b.x - a.x, b.y - a.y);
+    const pieces = Math.max(1, Math.ceil(len / 12));
+    const angle = angleOf(sub(b, a));
+    for (let i = 0; i < pieces; i++) {
+      const [t0, t1] = [i / pieces, (i + 1) / pieces];
+      const at = (t: number) => ({ x: a.x + (b.x - a.x) * t, y: a.y + (b.y - a.y) * t });
+      const mid = at((t0 + t1) / 2);
+      const lo = floorIn + za + (zb - za) * Math.min(t0, t1);
+      mb.block(frame, mid, angle, (len / pieces) * 1.02, 5, lo - 1, lo + (zb - za) * (t1 - t0) + heightIn + 1, hex("#2f7fd1"));
+    }
+    return toGeometry(mb.build());
+  }, [a, b, za, zb, heightIn, floorIn, frame]);
+  useEffect(() => () => geometry.dispose(), [geometry]);
+  const material = useMemo(() => new THREE.MeshBasicMaterial({ vertexColors: true, transparent: true, opacity: 0.35, depthWrite: false }), []);
+  useEffect(() => () => material.dispose(), [material]);
+  return <mesh geometry={geometry} material={material} renderOrder={3} />;
+}
+
 /** Cover plates for outlets and switches on the walls, and discs for ceiling lights, fans and alarms. Hookups are drawn by the house. */
 export function DevicePlates({ items, floorIn, ceilingIn, frame }: { items: LayerItem[]; floorIn: number; ceilingIn: number; frame: Frame }) {
   const data = useMemo(() => {

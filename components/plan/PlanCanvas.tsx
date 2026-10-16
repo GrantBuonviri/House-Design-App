@@ -16,7 +16,7 @@ import { DRAW_STEP_DEG, flatPlan, roomOutline, savedHost } from "@/lib/plan/flat
 import { leftBulge, pointOnEdge, projectOnEdge, roomEdgeLength } from "@/lib/plan/arcs";
 import { makeRoundRoom } from "@/lib/plan/shapes";
 import { addRoom, emptyPlan, insertCorner, insertGluedCorner, makeRoom, moveEdge, moveMany, moveOpeningTo, newPlanId, removeCorner, setCornerGlued, type Plans } from "@/lib/plan/edit";
-import { railingsOn } from "@/lib/plan/railings";
+import { railingsOn, type Railing, type RailingSlot } from "@/lib/plan/railings";
 import { add, boundsOf, dist, polygonArea, polygonsOverlap, project, rectangle, round1, roundPoint, scale as scaleV, sub, unit } from "@/lib/plan/geometry";
 import { curvedOpeningGuides, distanceGuides, formatLength, labelOn, openingGuides, wallSegments, type Guide } from "@/lib/plan/labels";
 import { snapFrom, snapMove, snapNode, snapPush, snapTargets, type Guides } from "@/lib/plan/snap";
@@ -95,7 +95,7 @@ type Props = {
   /** The floor plan shows furnish items faded (the Show furnishings switch). */
   showFurnishings?: boolean;
   /** The Furnish page: the app's own cabinets and devices, the catalog entry being placed, how far it is turned, the wall the Wall tool draws, and the ceiling. */
-  furnish?: { layouts?: Layouts; pick: string | null; turn: number; wallHeight: WallHeight; ceilingIn: number; closetSize?: ClosetSize; here?: { p: Point; dir: Point } };
+  furnish?: { railings?: Railing[]; bareRailings?: RailingSlot[]; layouts?: Layouts; pick: string | null; turn: number; wallHeight: WallHeight; ceilingIn: number; closetSize?: ClosetSize; here?: { p: Point; dir: Point } };
   selection: PlanSelection;
   snap: boolean;
   labels: PlanLabels;
@@ -347,6 +347,8 @@ export default function PlanCanvas(props: Props) {
     }
     const furn = node.findAncestor(".furnish", true);
     if (furn) return { kind: "furnish", id: furn.id() };
+    const rail = furnishing ? node.findAncestor(".railing", true) : null;
+    if (rail) return { kind: "railing", id: rail.id() };
     // On the Furnish page the rooms and walls are locked: only furnishings, doors and windows answer to the mouse.
     if (furnishing) {
       const op = node.findAncestor(".opening", true);
@@ -658,6 +660,10 @@ export default function PlanCanvas(props: Props) {
       gesture.current = { type: "corner", roomId: el.id, i: el.corner, moved: false };
       setSelCorner({ roomId: el.id, i: el.corner });
       setDragCorner({ roomId: el.id, i: el.corner });
+      return;
+    }
+    if (el.kind === "railing") {
+      onSelect([el]);
       return;
     }
     if (el.kind === "furnish") {
@@ -1038,7 +1044,13 @@ export default function PlanCanvas(props: Props) {
               return <StairsSymbol key={st.id} id={st.id} d={d} cut={stairsCut(st, riseFor(st, level))} hideAbove={under} selected={isPicked(selection, st.id)} scale={s} />;
             })}
 
-            <RailingLines railings={railings} s={s} />
+            <RailingLines
+              railings={furnishing && furnish?.railings ? furnish.railings : railings}
+              bare={furnishing ? furnish?.bareRailings : undefined}
+              selectedKey={single?.kind === "railing" ? single.id : undefined}
+              pickable={furnishing && tool === "select"}
+              s={s}
+            />
 
             {(furnishing || showFurnishings) && <FurnishItems items={shownItems} selectedId={single?.kind === "furnish" ? single.id : undefined} badId={badId ?? undefined} s={s} faded={!furnishing} names={labelOn(labels, "fixtureNames")} />}
 

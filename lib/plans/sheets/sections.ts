@@ -3,6 +3,7 @@ import { floorFootprint } from "@/lib/house3d/footprint";
 import { ROOF_THICK_IN } from "@/lib/house3d/roof";
 import { FLOOR_STRUCTURE_IN, INTERIOR_WALL_IN } from "@/lib/plan/basics";
 import { flightSplit, stepsFor, TREAD_IN } from "@/lib/plan/stairs";
+import { railingShortName, type Railing } from "@/lib/plan/railings";
 import { wallPieces } from "@/lib/plan/walls";
 import { pointInPolygon } from "@/lib/plan/geometry";
 import { areaKind } from "@/lib/plan/measure";
@@ -321,7 +322,7 @@ export function stairSectionSheet(project: Project): SectionSheet {
   let x = SHEET_PART.x0 + 0.3;
   let rowH = 0;
   flights.slice(0, 4).forEach((f, i) => {
-    const d = stairProfile(f.s, f.rise);
+    const d = stairProfile(f.s, f.rise, h.railings(f.level.id).filter((r) => r.stairsId === f.s.id && r.stairsLevelId === f.level.id));
     const w = d.w * k;
     const hh = d.h * k;
     if (x + w > SHEET_PART.x1) {
@@ -351,7 +352,7 @@ export function stairSectionSheet(project: Project): SectionSheet {
 const archInch = (n: number) => `${Math.round(n * 1000) / 1000}"`.replace(/\.375"/, ' 3/8"').replace(/\.75"/, ' 3/4"').replace(/\.25"/, ' 1/4"').replace(/\.5"/, ' 1/2"');
 
 /** The stair seen from the side, unfolded at the landing for L and U stairs. */
-function stairProfile(s: PlanStairs, rise: number) {
+function stairProfile(s: PlanStairs, rise: number, rails: Railing[] = []) {
   const { risers, riserIn, treads } = stepsFor(rise);
   const T = TREAD_IN;
   const landing = s.shape === "straight" ? null : flightSplit(treads);
@@ -392,6 +393,19 @@ function stairProfile(s: PlanStairs, rise: number) {
     const rail = (codeNum("stairs.handrailMinHeight") + codeNum("stairs.handrailMaxHeight")) / 2;
     items.push({ t: "line", pts: [P({ x: 0, y: nose(0) + rail }), P({ x: run, y: nose(run) + rail })], w: "medium" });
     items.push({ t: "text", at: P({ x: (run * 2) / 3, y: nose((run * 2) / 3) + rail + 3 }), text: `HANDRAIL ${codeNum("stairs.handrailMinHeight")}"-${codeNum("stairs.handrailMaxHeight")}"`, size: 6, rotate: (Math.atan2((rise - riserIn) * k, run * k) * 180) / Math.PI });
+    // The railing on the open side: a guard or half wall along the flight (or a wall, where the side is closed in).
+    const side = rails.find((r) => r.role === "flight" && r.kind !== "handrail") ?? rails.find((r) => r.role === "middle" && r.kind !== "handrail");
+    if (side) {
+      const gh = side.heightIn;
+      const top = (a: number) => nose(a) + gh;
+      items.push({ t: "line", pts: [P({ x: 0, y: top(0) }), P({ x: run, y: top(run) })], w: side.kind === "guard" ? "medium" : "heavy" });
+      if (side.kind === "guard") {
+        for (const a of [0, run]) items.push({ t: "line", pts: [P({ x: a, y: nose(a) }), P({ x: a, y: top(a) })], w: "fine" });
+      } else {
+        items.push({ t: "poly", pts: [P({ x: 0, y: nose(0) }), P({ x: 0, y: top(0) }), P({ x: run, y: top(run) }), P({ x: run, y: nose(run) })], fill: side.kind === "wall" ? "#d0d0d0" : "#e4e4e4", stroke: "fine" });
+      }
+      items.push({ t: "text", at: P({ x: run / 3, y: top(run / 3) + 3 }), text: `${railingShortName(side)} (OPEN SIDE)`, size: 6, rotate: (Math.atan2((rise - riserIn) * k, run * k) * 180) / Math.PI });
+    }
     // Guard at the top.
     const g = codeNum("guards.minHeight");
     items.push({ t: "line", pts: [P({ x: run, y: rise }), P({ x: run, y: rise + g }), P({ x: run + 48, y: rise + g })], w: "fine" });

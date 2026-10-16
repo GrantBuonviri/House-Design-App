@@ -32,7 +32,10 @@ import { HouseMeshes, Sky, type AimTarget } from "@/components/house3d/Scene";
 import { FinishPanel, OutsidePanel } from "./DesignPanel";
 import { Player, type Look } from "./Player";
 import { DesignTabs, FinishesHelp, PlaceTab, type DesignTab } from "./PlaceTab";
-import { DevicePlates, ItemGhost, ItemHighlight, OpeningGhost, WallGhost } from "./WalkGhosts";
+import { DevicePlates, ItemGhost, ItemHighlight, OpeningGhost, RailingHighlight, WallGhost } from "./WalkGhosts";
+import RailingPanel from "@/components/furnish/RailingPanel";
+import { addRailingIn, changeRailingIn, railingTarget, stageRailings, type RailingChange, type RailingTarget } from "@/lib/furnish/railings";
+import { project as projectOnto } from "@/lib/plan/geometry";
 import TopDown from "./TopDown";
 import FurnishItemPanel from "@/components/furnish/FurnishItemPanel";
 import PlanSidePanel from "@/components/plan/PlanSidePanel";
@@ -67,6 +70,7 @@ type Panel =
   | { kind: "outside"; aim: Extract<Aim, { kind: "outside" }> }
   | { kind: "item"; levelId: string; id: string }
   | { kind: "opening"; levelId: string; id: string }
+  | { kind: "railing"; levelId: string; key: string }
   | { kind: "design" }
   | { kind: "labels" };
 
@@ -80,7 +84,8 @@ type Carry =
   | { kind: "move"; item: LayerItem; levelId: string; turn: number; lift: number; ghost: Ghost | null }
   | { kind: "door"; style: string; levelId: string; opening: Opening | null }
   | { kind: "slide"; id: string; levelId: string; opening: Opening | null }
-  | { kind: "wall"; height: WallHeight; levelId: string; first: Point | null; hover: Point | null };
+  | { kind: "wall"; height: WallHeight; levelId: string; first: Point | null; hover: Point | null }
+  | { kind: "railing"; levelId: string; target: RailingTarget | null };
 
 /** The name of what's being placed, and whether it can go where it is now. */
 function carryInfo(c: Carry, plan: FloorPlan): { label: string; ok: boolean; problem?: string; note?: string; keys: string } {
@@ -105,6 +110,8 @@ function carryInfo(c: Carry, plan: FloorPlan): { label: string; ok: boolean; pro
       const o = plan.openings.find((x) => x.id === c.id);
       return { label: o ? openingType(o.style).label : "Door", ok: Boolean(c.opening), problem: c.opening ? undefined : "aim along its wall", keys: "Click to leave it there · Esc to cancel" };
     }
+    case "railing":
+      return { label: "Railing", ok: Boolean(c.target), problem: c.target ? undefined : "aim at a side of the stairs or stairwell with no railing", note: c.target ? "click to add one here" : undefined, keys: "Esc to cancel" };
     case "wall":
       return { label: c.height === "full" ? "Wall" : c.height === "half" ? "Half wall" : "Half wall with a cap", ok: Boolean(c.hover), problem: c.hover ? undefined : "aim at the floor", note: c.first ? "click where it ends" : "click where it starts", keys: "Esc to cancel" };
   }
@@ -291,6 +298,12 @@ export default function Walkthrough({ project, cost, onClose }: { project: Proje
     else carryThis({ kind: "new", entryId: e.id, levelId, turn: 0, lift: 0, ghost: null });
   };
 
+  /** The Place tab's "Add a railing": aim at a bare side of the stairs or stairwell and click. */
+  const addRailingMode = () => {
+    const levelId = levelHere();
+    if (levelId) carryThis({ kind: "railing", levelId, target: null });
+  };
+
   const pickUp = (item: LayerItem, levelId: string) => carryThis({ kind: "move", item, levelId, turn: 0, lift: 0, ghost: null });
 
   /** Click while placing: put it down if it fits there (a wall takes two clicks). */
@@ -298,6 +311,14 @@ export default function Walkthrough({ project, cost, onClose }: { project: Proje
     const c = latest.current.carry;
     if (!c) return;
     const pl = planOf(latest.current.plans, c.levelId);
+    if (c.kind === "railing") {
+      if (!c.target) return say("Aim at a side of the stairs or stairwell that has no railing (it's drawn blue).");
+      const out = addRailingIn(latest.current.plans, c.target);
+      if (!out) return say("Those stairs are gone.");
+      setLevelPlan(c.target.stairsLevelId, out);
+      setCarry(null);
+      return say("Added a railing. Click it to change its kind or look; Undo takes it away.");
+    }
     if (c.kind === "wall") {
       if (!c.hover) return say("Aim at the floor where the wall goes.");
       if (!c.first) return setCarry({ ...c, first: c.hover });
@@ -366,6 +387,19 @@ export default function Walkthrough({ project, cost, onClose }: { project: Proje
     say(furnishSummary(res));
   };
 
+  /** Change, remove or reset the railing with this key (built on `levelId`); the change is saved on its stairs. */
+  const changeRailingAimed = (levelId: string, key: string, change: RailingChange) => {
+    const t = railingTarget(stageRailings(latest.current.plans, levels, basics, levelId), key);
+    if (!t) return;
+    const pl = changeRailingIn(latest.current.plans, t, change);
+    if (!pl) return;
+    setLevelPlan(t.stairsLevelId, pl);
+    if (change === "remove") {
+      setPanel(null);
+      say("Removed the railing. Undo brings it back.");
+    }
+  };
+
   const setDesignOn = (on: boolean) => {
     setDesign(on);
     if (!on) {
@@ -421,7 +455,18 @@ export default function Walkthrough({ project, cost, onClose }: { project: Proje
         // A new door keeps one id while it's moved about, so it isn't redrawn for nothing.
         const keepId = (o: Opening | null, was: Opening | null) => (o && was ? { ...o, id: was.id } : o);
         let next: Carry;
-        if (c.kind === "new") next = { ...c, ghost: walkGhost(pl, c.entryId, spot, c.turn, items, ceilingIn, c.lift) };
+        if (c.kind === "railing") {
+          // The bare side of the stairs or stairwell nearest where you're looking (within a few feet).
+          const at = h ? toPlan(h.point) : floor;
+          let best: { d: number; t: RailingTarget } | null = null;
+          for (const l of levels) {
+            for (const x of stageRailings(latest.current.plans, levels, basics, l.id).bare) {
+              const d = projectOnto(at, x.a, x.b).d;
+              if (d < 36 && (!best || d < best.d)) best = { d, t: { key: x.key, stairsId: x.stairsId, stairsLevelId: x.stairsLevelId, levelId: x.levelId, edge: x.edge, slot: x } };
+            }
+          }
+          next = { ...c, target: best?.t ?? null };
+        } else if (c.kind === "new") next = { ...c, ghost: walkGhost(pl, c.entryId, spot, c.turn, items, ceilingIn, c.lift) };
         else if (c.kind === "move") next = { ...c, ghost: walkMove(pl, c.item, spot, c.turn, items, ceilingIn, c.lift) };
         else if (c.kind === "door") next = { ...c, opening: keepId(openingOnWall(pl, spot.wall?.p ?? floor, c.style, basics?.doorHeightIn), c.opening) };
         else if (c.kind === "slide") next = { ...c, opening: slideOpening(pl, c.id, spot.wall?.p ?? floor) };
@@ -549,6 +594,8 @@ export default function Walkthrough({ project, cost, onClose }: { project: Proje
         else if (!c && a?.kind === "furnish") turnAimed(a.levelId, a.id, by);
       } else if ((e.code === "Delete" || e.code === "Backspace") && a?.kind === "furnish" && !c) {
         removeThis(a.levelId, a.id);
+      } else if ((e.code === "Delete" || e.code === "Backspace") && a?.kind === "railing" && !c) {
+        changeRailingAimed(a.levelId, a.id, "remove");
       }
     };
     const onWheel = (e: WheelEvent) => {
@@ -584,6 +631,9 @@ export default function Walkthrough({ project, cost, onClose }: { project: Proje
         stopWalking();
       } else if (a.kind === "opening") {
         setPanel({ kind: "opening", levelId: a.levelId, id: a.id });
+        stopWalking();
+      } else if (a.kind === "railing") {
+        setPanel({ kind: "railing", levelId: a.levelId, key: a.id });
         stopWalking();
       } else if (a.hint) say(a.hint);
     };
@@ -634,6 +684,14 @@ export default function Walkthrough({ project, cost, onClose }: { project: Proje
   const here = panel?.kind === "design" && tab === "place" ? roomHere() : null;
   // The item or door under the dot, boxed in blue.
   const aimedItem = design && locked && !carry && aim?.kind === "furnish" ? itemsOn[aim.levelId]?.find((x) => x.id === aim.id) : undefined;
+  // The railing under the dot, or the bare side that a click would give one.
+  const railHint = useMemo(() => {
+    if (!design || !locked) return null;
+    if (carry?.kind === "railing") return carry.target?.slot ? { ...carry.target.slot, heightIn: 36 } : null;
+    if (carry || aim?.kind !== "railing") return null;
+    const r = stageRailings(project.floorPlans, levels, basics, aim.levelId).railings.find((x) => x.key === aim.id);
+    return r ? { a: r.a, b: r.b, za: r.za, zb: r.zb, heightIn: r.heightIn, levelId: r.levelId } : null;
+  }, [design, locked, carry, aim, project.floorPlans, levels, basics]);
   const aimedOpening = useMemo(() => {
     if (!design || !locked || carry || aim?.kind !== "opening") return null;
     const pl = planOf(project.floorPlans, aim.levelId);
@@ -667,6 +725,7 @@ export default function Walkthrough({ project, cost, onClose }: { project: Proje
         {carry && carryOpening && <OpeningGhost g={carryOpening} floorIn={heights[carry.levelId]?.floorIn ?? 0} frame={frame} ok />}
         {carry?.kind === "wall" && carry.hover && <WallGhost a={carry.first ?? carry.hover} b={carry.hover} heightIn={wallHeightIn(carry.height, ceilingOf(carry.levelId))} floorIn={heights[carry.levelId]?.floorIn ?? 0} frame={frame} />}
         {aimedItem && aim?.kind === "furnish" && <ItemHighlight item={aimedItem} floorIn={heights[aim.levelId]?.floorIn ?? 0} ceilingIn={ceilingOf(aim.levelId)} frame={frame} />}
+        {railHint && <RailingHighlight a={railHint.a} b={railHint.b} za={railHint.za} zb={railHint.zb} heightIn={railHint.heightIn} floorIn={heights[railHint.levelId]?.floorIn ?? 0} frame={frame} />}
         {aimedOpening && aim?.kind === "opening" && <OpeningGhost g={aimedOpening} floorIn={heights[aim.levelId]?.floorIn ?? 0} frame={frame} ok highlight />}
         {design &&
           levels.map((l) =>
@@ -771,7 +830,7 @@ export default function Walkthrough({ project, cost, onClose }: { project: Proje
             {panel.kind === "outside" && <OutsidePanel key={panel.aim.label} aim={panel.aim} selections={project.exterior.selections} answers={outsideAnswers} onChange={setOutside} />}
             {panel.kind === "design" && tab === "finishes" && <FinishesHelp />}
             {panel.kind === "design" && tab === "place" && (
-              <PlaceTab picked={null} onPick={pickEntry} roomName={here?.room.name ?? null} canFurnish={Boolean(here && canAutoFurnish(here.room))} onFurnishForMe={furnishHere} notes={autoNotes} />
+              <PlaceTab picked={null} onPick={pickEntry} roomName={here?.room.name ?? null} canFurnish={Boolean(here && canAutoFurnish(here.room))} onFurnishForMe={furnishHere} notes={autoNotes} onAddRailing={addRailingMode} />
             )}
             {panel.kind === "item" && openItem && panelPlan && (
               <div className="space-y-3" data-testid="walk-item-panel">
@@ -819,6 +878,17 @@ export default function Walkthrough({ project, cost, onClose }: { project: Proje
                 />
               </div>
             )}
+            {panel.kind === "railing" && (() => {
+              const t = railingTarget(stageRailings(project.floorPlans, levels, basics, panel.levelId), panel.key);
+              if (!t) return <p className="text-sm text-muted">That railing is gone.</p>;
+              const edited = !!project.floorPlans[t.stairsLevelId]?.stairs.find((x) => x.id === t.stairsId)?.railings?.some((e) => e.edge === t.edge);
+              return (
+                <div className="space-y-3" data-testid="walk-railing-panel">
+                  <RailingPanel target={t} edited={edited} onChange={(c) => changeRailingAimed(panel.levelId, panel.key, c)} />
+                  <p className="text-xs text-muted">While walking: aim at it and press Delete to remove it.</p>
+                </div>
+              );
+            })()}
             {panel.kind === "labels" && (
               <LabelSettingsPanel
                 settings={labelSettings}

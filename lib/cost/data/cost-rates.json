@@ -378,7 +378,7 @@
       "source": "Judgment based on stair-builder pricing for site-framed stringers with oak/maple treads, painted risers, simple rail",
       "url": null,
       "checked": "2026-10-14",
-      "note": "One 13-14 riser straight run with handrail; open-side balustrade or switchbacks add more."
+      "note": "One 13-14 riser straight run with a wall-mounted handrail (included here); open-side guards and half walls along the stairs are priced separately as Stair railings."
     },
     "deck": {
       "label": "Deck (pressure-treated frame, composite boards)",
@@ -1693,6 +1693,78 @@
       "url": null,
       "checked": "2026-10-16",
       "note": "Extra cost over a standard box, per specialty box in the layout."
+    },
+    "stair-guard-wood": {
+      "label": "Stair railings: wood with white balusters",
+      "unit": "linft",
+      "material": [
+        35,
+        60,
+        95
+      ],
+      "labor": [
+        25,
+        35,
+        55
+      ],
+      "source": "Estimate: HomeAdvisor national stair-railing ranges (wood $10-40/LF, metal $25-120/LF, glass $100-500/LF material) with installation labor, nudged up for stair complexity; Boise-specific data was thin (ContractorPlus modeled Boise railing average $30-59/LF). Installed about $60 / $95 / $150 per foot.",
+      "url": "https://www.homeadvisor.com/cost/stairs-and-railings/install-stair-railings-balusters/",
+      "checked": "2026-10-16",
+      "note": "Per foot along the guard: wood cap rail, wood posts and painted square balusters, 34\" to 36\" high. Ballpark: confirm with local bids."
+    },
+    "stair-guard-metal": {
+      "label": "Stair railings: black metal balusters",
+      "unit": "linft",
+      "material": [
+        45,
+        70,
+        115
+      ],
+      "labor": [
+        25,
+        40,
+        65
+      ],
+      "source": "Estimate: HomeAdvisor national stair-railing ranges (wood $10-40/LF, metal $25-120/LF, glass $100-500/LF material) with installation labor, nudged up for stair complexity; Boise-specific data was thin (ContractorPlus modeled Boise railing average $30-59/LF). Installed about $70 / $110 / $180 per foot.",
+      "url": "https://www.homeadvisor.com/cost/stairs-and-railings/install-stair-railings-balusters/",
+      "checked": "2026-10-16",
+      "note": "Per foot along the guard: powder-coated metal balusters with a wood or metal cap rail. Ballpark: confirm with local bids."
+    },
+    "stair-guard-glass": {
+      "label": "Stair railings: glass panels",
+      "unit": "linft",
+      "material": [
+        100,
+        180,
+        330
+      ],
+      "labor": [
+        50,
+        95,
+        170
+      ],
+      "source": "Estimate: HomeAdvisor national stair-railing ranges (wood $10-40/LF, metal $25-120/LF, glass $100-500/LF material) with installation labor, nudged up for stair complexity; Boise-specific data was thin (ContractorPlus modeled Boise railing average $30-59/LF). Installed about $150 / $275 / $500 per foot.",
+      "url": "https://www.homeadvisor.com/cost/stairs-and-railings/install-stair-railings-balusters/",
+      "checked": "2026-10-16",
+      "note": "Per foot along the guard: glass panels with a wood cap. Ballpark: confirm with local bids."
+    },
+    "stair-half-wall": {
+      "label": "Stair half walls (framed, drywalled, capped)",
+      "unit": "linft",
+      "material": [
+        15,
+        24,
+        40
+      ],
+      "labor": [
+        20,
+        36,
+        60
+      ],
+      "source": "Estimate from HomeAdvisor framed-and-drywalled wall baselines ($20-30/LF) raised for a sloped stair half wall with a wood cap and paint; Boise-specific data was thin. Installed about $35 / $60 / $100 per foot.",
+      "url": "https://www.homeadvisor.com/cost/walls-and-ceilings/install-a-wall/",
+      "checked": "2026-10-16",
+      "note": "Per foot along the stair. A full wall beside stairs is priced as two half walls per foot. Ballpark: confirm with local bids."
     }
   },
   "percents": {

@@ -91,6 +91,24 @@ export type Railing = {
   auto: boolean;
 };
 
+/** One side of the stairs or stairwell where a railing can stand, whether or not it has one now. `a`/`b` are the edge itself. */
+export type RailingSlot = {
+  key: string;
+  stairsId: string;
+  /** The floor the stairs are on. */
+  stairsLevelId: string;
+  /** The floor a railing here would stand on. */
+  levelId: string;
+  edge: string;
+  role: EdgeRole;
+  a: Point;
+  b: Point;
+  /** The walking surface along the edge, inches above `levelId`'s floor, at each end. */
+  za: number;
+  zb: number;
+  toward: Point;
+};
+
 type Shaped = Pick<PlanStairs, "x" | "y" | "rotation" | "widthIn" | "shape" | "flip">;
 
 /** Every edge of the stairs, in their own frame, with the heights of what you walk on along it. */
@@ -305,7 +323,7 @@ function applyEdit(raws: Raw[], whole: Omit<Raw, "kind" | "t0" | "t1" | "heightI
  * guards around the holes of stairs coming up into it from below. Plans
  * should already be flat (see `flatPlans`), so curved walls count.
  */
-export function railingsOn(plans: Plans, levelId: string, riseOf: RiseOf, opts: { auto?: boolean } = {}): Railing[] {
+export function railingsOn(plans: Plans, levelId: string, riseOf: RiseOf, opts: { auto?: boolean; slots?: RailingSlot[] } = {}): Railing[] {
   const plan = plans[levelId];
   if (!plan) return [];
   const out: Railing[] = [];
@@ -330,6 +348,7 @@ export function railingsOn(plans: Plans, levelId: string, riseOf: RiseOf, opts: 
       const out6 = add(mid, scale(toward, -6));
       const under = above && insideRoom(above, out6) && !pointInPolygon(out6, footprint);
       const whole = { stairsId: s.id, stairsLevelId: levelId, edge: e.name, role: e.role, levelId, style: "wood" as RailingStyle, za: e.za, zb: e.zb, ...(e.low ? { low: e.low } : {}), toward, ea, eb, L, ...(under ? { maxTop: rise } : {}) };
+      opts.slots?.push({ key: `${s.id}:${e.name}`, stairsId: s.id, stairsLevelId: levelId, levelId, edge: e.name, role: e.role, a: ea, b: eb, za: e.za, zb: e.zb, toward });
       const auto = autoForEdge(whole, plan, fr.risers, () => true);
       const { raws, edited } = applyEdit(auto, whole, edits.get(e.name));
       raws.forEach((r, i) => out.push({ ...finish(r, i), auto: !edited }));
@@ -356,7 +375,8 @@ export function railingsOn(plans: Plans, levelId: string, riseOf: RiseOf, opts: 
         const L = dist(e.a, e.b);
         if (L < MIN_STRETCH_IN) continue;
         const toward = scale(e.inward, -1);
-        const whole = { stairsId: s.id, stairsLevelId: levelId, edge: e.name, role: e.role, levelId, style: "wood" as RailingStyle, za: 0, zb: 0, toward, ea: e.a, eb: e.b, L };
+        const whole = { stairsId: s.id, stairsLevelId: fromId, edge: e.name, role: e.role, levelId, style: "wood" as RailingStyle, za: 0, zb: 0, toward, ea: e.a, eb: e.b, L };
+        opts.slots?.push({ key: `${s.id}:${e.name}`, stairsId: s.id, stairsLevelId: fromId, levelId, edge: e.name, role: e.role, a: e.a, b: e.b, za: 0, zb: 0, toward });
         const open = (p: Point) => insideRoom(plan, add(p, scale(toward, 6))) && !lowSteps.some((o) => pointInPolygon(add(p, scale(toward, -6)), o));
         const auto = autoForEdge(whole, plan, 0, open);
         const { raws, edited } = applyEdit(auto, whole, edits.get(e.name));
@@ -398,4 +418,81 @@ function withoutEdits(s: PlanStairs): PlanStairs {
   const clean = { ...s };
   delete clean.railings;
   return clean;
+}
+
+/** Every side where a railing could stand on this floor but none does now (removed, or never needed): "Add railing here". */
+export function bareSlots(plans: Plans, levelId: string, riseOf: RiseOf): { railings: Railing[]; bare: RailingSlot[] } {
+  const slots: RailingSlot[] = [];
+  const railings = railingsOn(plans, levelId, riseOf, { slots });
+  const has = new Set(railings.map((r) => `${r.stairsId}:${r.edge}`));
+  return { railings, bare: slots.filter((x) => !has.has(x.key)) };
+}
+
+export const RAILING_KINDS: { kind: RailingKind; label: string; note: string }[] = [
+  { kind: "guard", label: "Railing with balusters", note: "Open at the side, 34\" along stairs and 36\" at landings." },
+  { kind: "handrail", label: "Handrail on wall", note: "Mounted on the wall beside the stairs. Doesn't block you." },
+  { kind: "half-wall", label: "Half wall", note: "A low stud wall with a wood cap." },
+  { kind: "wall", label: "Full wall", note: "Floor to ceiling. Closes this side in." },
+];
+
+export const RAILING_STYLES: { style: RailingStyle; label: string }[] = [
+  { style: "wood", label: "Wood with white balusters" },
+  { style: "metal", label: "Black metal" },
+  { style: "glass", label: "Glass" },
+];
+
+export const railingKindLabel = (kind: RailingKind) => RAILING_KINDS.find((k) => k.kind === kind)?.label ?? kind;
+
+/** Short names for the PDF and the walkthrough. */
+export const railingShortName = (r: Pick<Railing, "kind" | "heightIn">) =>
+  r.kind === "guard" ? `GUARD ${Math.round(r.heightIn)}"` : r.kind === "handrail" ? "HANDRAIL" : r.kind === "half-wall" ? "HALF WALL" : "WALL";
+
+/** One change to an edge's railing, merged into what was already saved for it (adding one clears a removal). */
+export function changeRailing(s: PlanStairs, edge: string, change: { kind?: RailingKind; style?: RailingStyle }): PlanStairs {
+  const was = (s.railings ?? []).find((e) => e.edge === edge);
+  const { removed: _removed, ...rest } = was ?? { edge };
+  void _removed;
+  return editRailing(s, edge, { ...rest, ...change });
+}
+
+/** Take the railing off an edge (and keep it off when the stairs move). */
+export function removeRailing(s: PlanStairs, edge: string): PlanStairs {
+  return editRailing(s, edge, { removed: true });
+}
+
+/** Back to what the app would do on its own for this edge. */
+export function autoRailing(s: PlanStairs, edge: string): PlanStairs {
+  return editRailing(s, edge, null);
+}
+
+const KIND_PHRASE: Record<RailingKind, string> = { guard: "a railing with balusters", handrail: "a handrail on the wall", "half-wall": "a half wall", wall: "a full wall" };
+const STYLE_PHRASE: Record<RailingStyle, string> = { wood: "wood", metal: "black metal", glass: "glass" };
+
+/** How the railing on an edge was changed between two versions of the stairs, for the undo label (null when it isn't a single edge). */
+export function describeRailingEdit(was: PlanStairs, now: PlanStairs): string | null {
+  const a = new Map((was.railings ?? []).map((e) => [e.edge, e]));
+  const b = new Map((now.railings ?? []).map((e) => [e.edge, e]));
+  const changed = [...new Set([...a.keys(), ...b.keys()])].filter((k) => JSON.stringify(a.get(k)) !== JSON.stringify(b.get(k)));
+  if (changed.length !== 1) return null;
+  const [x, y] = [a.get(changed[0]), b.get(changed[0])];
+  if (!y) return "put a railing back to automatic";
+  if (y.removed) return "remove a railing";
+  // Adding a railing where there is none saves its kind and look together; changing an existing one starts with just the kind or the look.
+  if (x?.removed || (!x && y.kind && y.style)) return "add a railing";
+  if (y.kind && y.kind !== x?.kind) return `change a railing to ${KIND_PHRASE[y.kind]}`;
+  if (y.style && y.style !== x?.style) return `change a railing to ${STYLE_PHRASE[y.style]}`;
+  return null;
+}
+
+/** Feet of each kind of railing, for the cost: guards by look, half walls, full walls, and wall-mounted handrails. */
+export function railingLengths(rs: Railing[]): { guard: Record<RailingStyle, number>; halfWall: number; wall: number; handrail: number } {
+  const out = { guard: { wood: 0, metal: 0, glass: 0 }, halfWall: 0, wall: 0, handrail: 0 };
+  for (const r of rs) {
+    const ft = dist(r.a, r.b) / 12;
+    if (r.kind === "guard") out.guard[r.style] += ft;
+    else if (r.kind === "half-wall") out.halfWall += ft;
+    else if (r.kind === "wall") out.wall += ft;
+    else out.handrail += ft;
+  }
+  return out;
 }
