@@ -7,6 +7,7 @@ import { removeMany, insertCorner, removeCorner } from "@/lib/plan/edit";
 import { project } from "@/lib/plan/geometry";
 import { removeWall, restoreWall, combineRooms, whyNotCombine, whyWallStays, edgeWalls, roomsAlong } from "@/lib/plan/openWalls";
 import { updateOpening } from "@/lib/plan/edit";
+import { addBay, roundCorner, roundableRadius, whyNoBay, DEFAULT_CORNER_RADIUS_IN } from "@/lib/plan/shapes";
 import { duplicateAndSelect } from "./ArrangeButtons";
 import { parseEdgeId, type PlanItem, type PlanSelection } from "./types";
 import type { Point } from "@/lib/model/schema";
@@ -38,6 +39,11 @@ export function contextItems(
   if (el.corner !== undefined) {
     const room = plan.rooms.find((r) => r.id === el.id);
     return [
+      {
+        label: "Round corner",
+        disabled: room && roundableRadius(room, el.corner, DEFAULT_CORNER_RADIUS_IN) === null ? "This corner can't be rounded: a curved wall or a nearly straight line meets it." : false,
+        run: () => { const out = roundCorner(plan, el.id, el.corner!); if (out) act.change(out); },
+      },
       { label: "Remove corner", disabled: room && room.polygon.length <= 3 ? "Rooms keep at least three corners." : false, run: () => act.change(removeCorner(plan, el.id, el.corner!)) },
     ];
   }
@@ -52,6 +58,8 @@ export function contextItems(
     if (walls.inside.length > 0 || !walls.removed.length) {
       items.push({ label: "Remove wall", disabled: why ?? false, run: () => { const out = removeWall(plan, roomId, edge); if (out) act.change(out.plan); } });
     } else items.push({ label: "Put wall back", run: () => act.change(restoreWall(plan, roomId, edge)) });
+    const noBay = whyNoBay(plan, roomId, edge);
+    items.push({ label: "Add half-round bay", disabled: noBay ?? false, run: () => { const out = addBay(plan, roomId, edge, undefined, undefined, c.at); if (out) act.change(out); } });
     if (along.length > 1) {
       const whyNot = whyNotCombine(plan, along);
       items.push({ label: "Combine these rooms", disabled: whyNot ?? false, run: () => { const out = combineRooms(plan, along); if (out) { act.change(out.plan); act.select([{ kind: "room", id: out.keptId }]); } } });

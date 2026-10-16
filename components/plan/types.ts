@@ -20,7 +20,7 @@ export const PLAN_TOOLS: { id: PlanTool; label: string; key: string; hint: strin
     id: "room",
     label: "Room",
     key: "R",
-    hint: "Drag to draw a rectangle. Or click corner by corner for any shape, then click the first corner (or press Enter) to close it. Type a length like 12'6 and press Enter to set a line's exact size. Pick Fill a space on the right to click inside walls you drew and make them a room.",
+    hint: "Drag to draw a rectangle. Or click corner by corner for any shape, then click the first corner (or press Enter) to close it. Type a length like 12'6 and press Enter to set a line's exact size. Pick Fill a space on the right to click inside walls you drew and make them a room, or Round room to click a middle and drag out a circle.",
   },
   {
     id: "wall",

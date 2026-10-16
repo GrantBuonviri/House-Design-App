@@ -13,15 +13,37 @@ import { yardAmounts, yardLayout } from "@/lib/exterior/yard";
 import { type Quantities, sqft, ft, FROST_DEPTH_IN, JOIST_DEPTH_IN, OVERDIG_IN, SHALLOW_DIG_IN, ringLength, samplesAround, type Ctx, empty, siteFacts, toRoad, type MeasuredRoom, roomFixtures, centerOf, applyRoof } from "./quantityBasics";
 import { measureRoof } from "./measureRoof";
 import { overhangsOf, postsUnder, supportOf } from "@/lib/plan/support";
-import { flatProject, savedRoom } from "@/lib/plan/flatten";
-import { roomArea } from "@/lib/plan/arcs";
+import { flatProject, savedPlans, savedRoom } from "@/lib/plan/flatten";
+import { roomArea, roomEdgeArc, wallArc } from "@/lib/plan/arcs";
+import type { FloorPlan } from "@/lib/model/schema";
+
+/** Inches of curved wall along the curve, over every floor. A wall two rooms share counts once. */
+export function curvedWallLength(plans: Record<string, FloorPlan>): number {
+  let total = 0;
+  for (const plan of Object.values(plans)) {
+    const seen = new Set<string>();
+    const count = (arc: { a: { x: number; y: number }; b: { x: number; y: number }; bulge: number; length: number } | null) => {
+      if (!arc) return;
+      const [p, q] = [arc.a, arc.b].map((pt) => `${Math.round(pt.x)},${Math.round(pt.y)}`).sort();
+      const key = `${p}|${q}|${Math.round(Math.abs(arc.bulge))}`;
+      if (seen.has(key)) return;
+      seen.add(key);
+      total += arc.length;
+    };
+    for (const r of plan.rooms) r.polygon.forEach((_, i) => count(roomEdgeArc(r, i)));
+    for (const w of plan.walls) count(wallArc(w));
+  }
+  return total;
+}
 
 /** Measures the house from its floor plan. Null when there is no floor plan with rooms. */
 export function measurePlan(p: Ctx): Quantities | null {
+  const curvedLf = ft(curvedWallLength(savedPlans(p.floorPlans)));
   p = flatProject(p);
   const plans = p.floorPlans;
   if (!Object.values(plans).some((pl) => pl.rooms.length > 0)) return null;
   const q = empty("plan");
+  q.curvedWallLf = curvedLf;
   siteFacts(p, q);
   const basics = p.plan.basics;
   const exteriorIn = exteriorWallIn(basics);

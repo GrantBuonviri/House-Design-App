@@ -13,6 +13,7 @@ import { houseFacts } from "../house";
 import { houseScene } from "../scene";
 import { viewTitle } from "../view";
 import { NotesColumn } from "./symbols";
+import { anyCurvedWalls, CURVED_FRAMING_NOTE } from "../curves";
 import { flowTables } from "./schedules";
 
 /**
@@ -452,6 +453,7 @@ export function structuralNotesSheets(project: Project): Item[][] {
     `Studs: ${wall} at ${studs[wall]?.oneFloorRoofCeiling ?? 16}" on center where a floor is above, ${studs[wall]?.roofCeilingOnly ?? 24}" under the roof only, no taller than ${codeNum("struct.studMaxHeight")} ft (${codeRef("struct.studSpacing")}).`,
     `Headers: from the schedule. Nonbearing walls need no structural header (${codeRef("struct.headerNonBearing")}).`,
     "Nailing and fasteners per IRC Table R602.3(1); sheathing nailing per the bracing method.",
+    ...(anyCurvedWalls(project) ? [`${CURVED_FRAMING_NOTE} Each curved wall is built as short straight pieces on a curved plate; the radius is on the floor plans. Bracing does not count a curved wall as a braced wall line unless an engineer says so.`] : []),
     "Trusses: by the truss supplier, see S-301. Floor joists: see the floor framing plans. Foundation: see S-101. Wall bracing: see S-401.",
     "Decks and porch framing (ledgers, joists, posts, guards) are built per IRC R507 and checked by the inspector; they aren't drawn here.",
     "Verify all dimensions and code requirements with the City of Boise before construction.",

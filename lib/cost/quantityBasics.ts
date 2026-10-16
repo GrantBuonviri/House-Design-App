@@ -36,6 +36,8 @@ export type Quantities = {
   /** Posts (with footings) and beam under upper-floor rooms held up "On posts". */
   overhangPosts: number;
   overhangBeamLf: number;
+  /** Length along the curve of all curved walls, in feet (shared walls counted once). */
+  curvedWallLf: number;
   stemWallSqft: number;
   basementWallSqft: number;
   waterproofSqft: number;
@@ -184,6 +186,7 @@ export function empty(source: Quantities["source"]): Quantities {
     footingLf: 0,
     overhangPosts: 0,
     overhangBeamLf: 0,
+    curvedWallLf: 0,
     stemWallSqft: 0,
     basementWallSqft: 0,
     waterproofSqft: 0,
