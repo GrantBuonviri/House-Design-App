@@ -13,7 +13,7 @@ import { exteriorLook, type ExteriorLook } from "./exterior";
 import { COVERED, cutHoles, floorFootprint, offsetRing, roofFootprint, subtractRegions, type Region } from "./footprint";
 import { levelHeights, type LevelHeights } from "./levels";
 import { MeshBuilder, toScene, type Frame, type MeshData, type Vec3 } from "./mesh";
-import { drawOpening, openingSpan } from "./openings";
+import { drawOpening, openingSpan, type DoorMotion } from "./openings";
 import { drawRoof, roofShape, roofTop, ROOF_THICK_IN } from "./roof";
 import type { Site } from "./site";
 import { entrySteps } from "./entry";
@@ -53,6 +53,12 @@ export type Part = {
    * along with everything in them.
    */
   wall?: WallGroup;
+  /**
+   * A door's moving part (leaf, sliding pane, garage door), drawn closed. The 3D view and the
+   * walkthrough draw these on their own so they can swing, slide or roll up; everything else
+   * (and the PDF sheets) just see them closed.
+   */
+  door?: { id: string; motion: DoorMotion };
   /** Furniture is picked in the walkthrough only, so it carries its id here rather than a `pick`. */
   furnitureId?: string;
 };
@@ -231,12 +237,17 @@ export function buildLevel(
     const glass = new MeshBuilder();
     const host = hostPiece(pieces, og);
     const doorLook = host && !host.exterior ? (lookAt(add(og.center, scale(og.n, 10))) ?? lookAt(add(og.center, scale(og.n, -10)))) : undefined;
-    drawOpening(solid, glass, f, og, hostThickness(host), floorIn, ceilingIn, doorLook, host?.exterior ? ext : undefined);
+    const leaves = drawOpening(solid, glass, f, og, hostThickness(host), floorIn, ceilingIn, doorLook, host?.exterior ? ext : undefined);
     const pick: Pick = { kind: "opening", id: og.opening.id, levelId: L };
     // Doors and windows hide with the wall they're in (an opening in no wall counts as inside).
     const wall: WallGroup = host?.exterior ? "outside" : "inside";
     if (!solid.empty) parts.push({ key: `${L}:o:${og.opening.id}`, levelId: L, layer: "openings", pick, wall, mesh: solid.build() });
     if (!glass.empty) parts.push({ key: `${L}:og:${og.opening.id}`, levelId: L, layer: "openings", pick, wall, mesh: glass.build(), glass: true });
+    leaves.forEach((leaf, i) => {
+      const door = { id: og.opening.id, motion: leaf.motion };
+      if (!leaf.solid.empty) parts.push({ key: `${L}:ol:${og.opening.id}:${i}`, levelId: L, layer: "openings", pick, wall, mesh: leaf.solid.build(), door });
+      if (!leaf.glass.empty) parts.push({ key: `${L}:olg:${og.opening.id}:${i}`, levelId: L, layer: "openings", pick, wall, mesh: leaf.glass.build(), glass: true, door });
+    });
   }
 
   // ---- Floors ----

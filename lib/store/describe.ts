@@ -98,7 +98,7 @@ function describePlan(a: FloorPlan | undefined, b: FloorPlan | undefined): strin
       (was.height ?? "full") !== (now.height ?? "full") ? (now.height === "half" ? "make a wall a half wall" : now.height === "half-cap" ? "give a half wall a counter cap" : "make a wall full height") : moved(was, now) ? "move a wall" : "change a wall",
     ),
     describeList(a.openings, b.openings, (o) => article(openingType(o.style).label), (was, now) =>
-      was.host === now.host || json(was.host) === json(now.host) ? (was.offsetIn !== now.offsetIn && was.widthIn === now.widthIn ? `move ${article(openingType(now.style).label, true)}` : `change ${article(openingType(now.style).label, true)}`) : `move ${article(openingType(now.style).label, true)}`,
+      !!was.locked !== !!now.locked ? (now.locked ? "lock a door" : "unlock a door") : was.host === now.host || json(was.host) === json(now.host) ? (was.offsetIn !== now.offsetIn && was.widthIn === now.widthIn ? `move ${article(openingType(now.style).label, true)}` : `change ${article(openingType(now.style).label, true)}`) : `move ${article(openingType(now.style).label, true)}`,
     ),
     describeList(a.stairs, b.stairs, () => "the stairs", (was, now) => (moved(was, now) ? "move the stairs" : "change the stairs")),
     describeList(a.fixtures, b.fixtures, (f) => article(fixtureType(f.kind).label), (was, now) =>

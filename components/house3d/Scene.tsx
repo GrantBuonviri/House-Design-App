@@ -20,9 +20,10 @@ export type AimTarget = { mesh: THREE.Mesh; owners: Part[] };
  * The whole house (or a floor of it), ceilings included, as one solid mesh and one glass mesh. Walls are always up, so no footprint strips.
  * `aimRef`, when given, gets the solid mesh for aiming at things.
  */
-export function HouseMeshes({ parts, aimRef }: { parts: Part[]; aimRef?: React.MutableRefObject<AimTarget | null> }) {
-  const solid = useMemo(() => mergeParts(parts.filter((p) => !p.glass && p.layer !== "footprints")), [parts]);
-  const glass = useMemo(() => mergeParts(parts.filter((p) => p.glass)), [parts]);
+export function HouseMeshes({ parts, aimRef, doorsApart }: { parts: Part[]; aimRef?: React.MutableRefObject<AimTarget | null>; doorsApart?: boolean }) {
+  // With `doorsApart`, door leaves are left out: the caller draws them on their own (see DoorLeaves).
+  const solid = useMemo(() => mergeParts(parts.filter((p) => !p.glass && p.layer !== "footprints" && !(doorsApart && p.door))), [parts, doorsApart]);
+  const glass = useMemo(() => mergeParts(parts.filter((p) => p.glass && !(doorsApart && p.door))), [parts, doorsApart]);
   useEffect(() => () => solid?.geometry.dispose(), [solid]);
   useEffect(() => () => glass?.geometry.dispose(), [glass]);
   return (

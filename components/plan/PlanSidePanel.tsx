@@ -424,6 +424,15 @@ export default function PlanSidePanel(props: Props) {
             Slide on the other side
           </button>
         )}
+        {o.kind === "door" && (
+          <label className="mt-4 flex cursor-pointer items-start gap-2 text-sm">
+            <input type="checkbox" className="mt-0.5 size-4 accent-[var(--color-accent)]" checked={!!o.locked} onChange={(e) => set({ locked: e.target.checked ? true : undefined })} />
+            <span>
+              Locked: only opens when clicked
+              <span className="block text-xs text-muted">In the walkthrough, a locked door doesn&apos;t open as you walk into it.</span>
+            </span>
+          </label>
+        )}
         <p className="field-hint">Drag it along the wall, or onto another wall.</p>
         <button className="mt-4 text-sm text-red-700 hover:underline" onClick={() => remove([o.id])}>
           Delete this {o.kind === "window" ? "window" : o.kind === "door" ? "door" : "opening"}

@@ -7,6 +7,8 @@ import { SEASONS, clockTime, type SeasonId } from "@/lib/house3d/sun";
 import type { Spot, walkWorld } from "@/lib/house3d/walk";
 import type { PlaceCheck } from "@/lib/plan/furniture";
 import { furnitureType } from "@/lib/plan/furniture";
+import type { DoorMode } from "@/lib/house3d/doors";
+import DoorsPicker from "@/components/house3d/DoorsPicker";
 import UndoButtons from "@/components/project/UndoButtons";
 import GraphicsToggle from "@/components/project/GraphicsToggle";
 
@@ -144,6 +146,7 @@ export function WalkHelp({ onStart }: { onStart: () => void }) {
           <li>Hold Shift to walk faster</li>
           <li>E turns Design on: aim at a floor, wall, counter, furniture, or outside at the siding, roof, doors and yard, and click to change it</li>
           <li>With Design on, F adds furniture</li>
+          <li>Walk into a door to open it, or click it to open and close it by hand. K locks the door you aim at (a locked door only opens when clicked). O changes the Doors setting</li>
           <li>L shows room labels on the floor (the ⚙ button sets what they say)</li>
           <li>T is the tape measure: click two points. Shift keeps it level or upright, C clears</li>
           <li>Esc to stop, and Esc again to close</li>
@@ -161,11 +164,13 @@ export function WalkControls(props: {
   daylightSaving: boolean;
   season: SeasonId;
   world: ReturnType<typeof walkWorld>;
+  doorMode: DoorMode;
+  onDoorMode: (m: DoorMode) => void;
   onHour: (h: number) => void;
   onSeason: (s: SeasonId) => void;
   onJump: (spot: Spot, keepYaw?: boolean) => void;
 }) {
-  const { hour, sunrise, sunset, daylightSaving, season, world, onHour, onSeason, onJump } = props;
+  const { hour, sunrise, sunset, daylightSaving, season, world, doorMode, onDoorMode, onHour, onSeason, onJump } = props;
   return (
     <div className="absolute right-0 bottom-0 left-0 flex flex-wrap items-end gap-x-6 gap-y-3 bg-black/60 px-4 py-3 text-white">
       <label className="min-w-[240px] flex-1 text-sm">
@@ -188,6 +193,10 @@ export function WalkControls(props: {
             </button>
           ))}
         </div>
+      </div>
+      <div className="text-sm">
+        <span className="block text-xs text-white/75">Doors</span>
+        <DoorsPicker dark value={doorMode} onChange={onDoorMode} />
       </div>
       <label className="text-sm">
         <span className="block text-xs text-white/75">Go to</span>

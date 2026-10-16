@@ -7,7 +7,8 @@ import { stairsDrawing } from "@/lib/plan/stairs";
 import type { HouseContext } from "@/lib/house3d/build";
 import { levelHeights } from "@/lib/house3d/levels";
 import { siteFor } from "@/lib/house3d/site";
-import { BODY_RADIUS_IN, standOn, walkStep, walkWorld, whereAmI, yawToward, type Walker, type WalkWorld } from "@/lib/house3d/walk";
+import { BODY_RADIUS_IN, openAllDoors, standOn, walkStep, walkWorld, whereAmI, yawToward, type Walker, type WalkWorld } from "@/lib/house3d/walk";
+import { newDoorStates, stepDoors, toggleDoor, type DoorMode, type DoorStates } from "@/lib/house3d/doors";
 
 const FT = 12;
 
@@ -21,11 +22,14 @@ function door(id: string, roomId: string, edge: number, offsetIn: number, style 
   return { id, host: { roomId, edge }, offsetIn, kind, style, widthIn: 36, heightIn: kind === "window" ? 48 : 80, side: 1, hinge: "start" };
 }
 
-function world(plans: Record<string, FloorPlan>, levels = [levelFor(MAIN_LEVEL_ID)], ground?: (p: Point) => number): WalkWorld {
+/** Doors start open here, so a doorway is just a gap; the door tests below use `closed`. */
+function world(plans: Record<string, FloorPlan>, levels = [levelFor(MAIN_LEVEL_ID)], ground?: (p: Point) => number, closed = false): WalkWorld {
   const flat = siteFor(null, { x: 0, y: 0 }, plans);
   const site = ground ? { ...flat, groundAt: ground } : flat;
   const ctx: HouseContext = { levels, basics: defaultBasics(), house3d: House3D.parse({}), site, frame: { ox: 0, oy: 0 } };
-  return walkWorld(plans, { ...ctx, heights: levelHeights(levels, ctx.basics) });
+  const w = walkWorld(plans, { ...ctx, heights: levelHeights(levels, ctx.basics) });
+  if (!closed) openAllDoors(w);
+  return w;
 }
 
 /** Walk straight ahead for some seconds. */
@@ -65,9 +69,9 @@ describe("walking through the house", () => {
     expect(whereAmI(w, { [MAIN_LEVEL_ID]: twoRooms() }, me).roomName).toBe("b");
   });
 
-  it("doesn't go through a window or a closed garage door", () => {
-    for (const o of [door("w", "a", 1, 6 * FT, "window", "window"), door("g", "a", 1, 6 * FT, "door-garage")]) {
-      const w = world({ [MAIN_LEVEL_ID]: twoRooms([o]) });
+  it("doesn't go through a window or a closed door of any kind", () => {
+    for (const o of [door("w", "a", 1, 6 * FT, "window", "window"), door("g", "a", 1, 6 * FT, "door-garage"), door("d", "a", 1, 6 * FT), door("s", "a", 1, 6 * FT, "door-slider")]) {
+      const w = world({ [MAIN_LEVEL_ID]: twoRooms([o]) }, undefined, undefined, true);
       expect(walk(w, at(7 * FT, 6 * FT, EAST), 5).p.x).toBeLessThan(15 * FT);
     }
   });
@@ -152,5 +156,75 @@ describe("walking through the house", () => {
     const stop = w.rooms.find((r) => r.id === "l")!;
     expect(pointInPolygon(stop.spot.p, L.polygon)).toBe(true);
     expect(standOn(w, stop.spot.p, 24)).toBe(0);
+  });
+});
+
+/** Walk straight ahead with the doors alive: they open as you walk into them, and shut after you've gone. */
+function walkLive(w: WalkWorld, from: Walker, seconds: number, mode: DoorMode = "normal", states: DoorStates = newDoorStates(w.doors), forward = 1) {
+  let me = from;
+  let st = states;
+  for (let t = 0; t < seconds; t += 1 / 60) {
+    st = stepDoors(st, w.doors, { p: me.p, feet: me.feet }, 1 / 60, mode);
+    for (const d of w.doors) w.doorAmount[d.id] = st[d.id].amount;
+    me = walkStep(w, me, { forward, right: 0, fast: false }, 1 / 60);
+  }
+  return { me, states: st };
+}
+
+describe("doors in the walkthrough", () => {
+  const closedWorld = (o: Opening) => world({ [MAIN_LEVEL_ID]: twoRooms([o]) }, undefined, undefined, true);
+
+  it("opens by itself when you walk into it, and you go through", () => {
+    const w = closedWorld(door("d", "a", 1, 6 * FT));
+    const { me, states } = walkLive(w, at(7 * FT, 6 * FT, EAST), 5);
+    expect(me.p.x).toBeGreaterThan(20 * FT);
+    expect(states.d.open).toBe(true);
+  });
+
+  it("shuts again a few seconds after you've gone", () => {
+    const w = closedWorld(door("d", "a", 1, 6 * FT));
+    let r = walkLive(w, at(7 * FT, 6 * FT, EAST), 5);
+    expect(r.states.d.open).toBe(true);
+    // Stand still well clear of it: it waits about four seconds, then swings shut.
+    r = walkLive(w, r.me, 5, "normal", r.states, 0);
+    expect(w.doorAmount.d).toBe(0);
+    expect(r.states.d.open).toBe(false);
+  });
+
+  it("stays shut for a locked door until you click it, then stays open", () => {
+    const w = closedWorld({ ...door("d", "a", 1, 6 * FT), locked: true });
+    const stuck = walkLive(w, at(7 * FT, 6 * FT, EAST), 5);
+    expect(stuck.me.p.x).toBeLessThan(15 * FT);
+    expect(stuck.states.d.open).toBe(false);
+    const click = toggleDoor(stuck.states, w.doors[0], { p: stuck.me.p, feet: stuck.me.feet }, "normal");
+    const through = walkLive(w, stuck.me, 5, "normal", click.states);
+    expect(through.me.p.x).toBeGreaterThan(20 * FT);
+    // A door opened by hand stays open however long you're away.
+    const away = walkLive(w, through.me, 8, "normal", through.states, 0);
+    expect(away.states.d.open).toBe(true);
+  });
+
+  it("lets you through every doorway with No doors, and none with All closed", () => {
+    const o = door("d", "a", 1, 6 * FT);
+    expect(walkLive(closedWorld(o), at(7 * FT, 6 * FT, EAST), 5, "none").me.p.x).toBeGreaterThan(20 * FT);
+    expect(walkLive(closedWorld(o), at(7 * FT, 6 * FT, EAST), 5, "closed").me.p.x).toBeLessThan(15 * FT);
+    expect(walkLive(closedWorld(o), at(7 * FT, 6 * FT, EAST), 5, "open").me.p.x).toBeGreaterThan(20 * FT);
+  });
+
+  it("lists the doors with their room names and locks", () => {
+    const w = closedWorld({ ...door("d", "a", 1, 6 * FT), locked: true });
+    expect(w.doors).toHaveLength(1);
+    expect(w.doors[0]).toMatchObject({ id: "d", locked: true, motion: "swing", label: expect.stringContaining("door") });
+    expect(closedWorld(door("g", "a", 1, 6 * FT, "door-garage")).doors[0].motion).toBe("roll");
+  });
+
+  it("doesn't let you close a door on yourself", () => {
+    const w = closedWorld(door("d", "a", 1, 6 * FT));
+    const opened = toggleDoor(newDoorStates(w.doors), w.doors[0], null, "normal").states;
+    const inDoorway = { p: { x: 15 * FT, y: 6 * FT }, feet: 0 };
+    const r = toggleDoor(opened, w.doors[0], inDoorway, "normal");
+    expect(r.said).toBeTruthy();
+    expect(r.states.d.open).toBe(true);
+    expect(toggleDoor(opened, w.doors[0], { p: { x: 7 * FT, y: 6 * FT }, feet: 0 }, "normal").states.d.open).toBe(false);
   });
 });
