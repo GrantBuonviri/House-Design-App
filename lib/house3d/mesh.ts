@@ -170,6 +170,43 @@ export class MeshBuilder {
     if (colors.bottom) this.quad(...(top.map((p) => toScene(f, p, z0)) as [Vec3, Vec3, Vec3, Vec3]), colors.bottom, [0, -1, 0]);
   }
 
+  /**
+   * An upright solid from a footprint shape (with holes), from z0 up to z1.
+   * `sideColor` paints each edge's face (and can give it a pattern), or
+   * leaves it off (null) or starts it higher up (`from`); `top` is the top's
+   * color, or null for no top.
+   */
+  prism(
+    f: Frame,
+    r: { outline: Point[]; holes: Point[][] },
+    z0: number,
+    z1: number,
+    sideColor: (p: Point, q: Point) => { color: RGB; pattern?: number; from?: number } | null,
+    top: RGB | null,
+  ) {
+    if (z1 - z0 < 1e-6) return;
+    const area = (ring: Point[]) => ring.reduce((s, p, i) => s + (p.x * ring[(i + 1) % ring.length].y - ring[(i + 1) % ring.length].x * p.y), 0);
+    // Faces point out of the solid: away from the outline's inside, into each hole.
+    for (const [ring, isHole] of [[r.outline, false], ...r.holes.map((h) => [h, true] as const)] as [Point[], boolean][]) {
+      const s = area(ring) > 0 !== isHole ? 1 : -1;
+      ring.forEach((p, i) => {
+        const q = ring[(i + 1) % ring.length];
+        const L = Math.hypot(q.x - p.x, q.y - p.y);
+        if (L < 1e-6) return;
+        const out = { x: (s * (q.y - p.y)) / L, y: (-s * (q.x - p.x)) / L };
+        const c = sideColor(p, q);
+        // Left off (or cut down) where it's against something else.
+        const lo = Math.max(z0, c?.from ?? -Infinity);
+        if (!c || lo >= z1 - 1e-6) return;
+        const was = this.pattern;
+        if (c.pattern !== undefined) this.pattern = c.pattern;
+        this.upright(f, p, q, lo, z1, lo, z1, out, c.color);
+        this.pattern = was;
+      });
+    }
+    if (top) this.flat(f, r.outline, r.holes, z1, top, true);
+  }
+
   /** A box around its middle point, turned `rotationDeg` clockwise (plan), `w` wide along x and `d` deep along y. */
   block(f: Frame, c: Point, rotationDeg: number, w: number, d: number, z0: number, z1: number, color: RGB, top?: RGB) {
     const t = (rotationDeg * Math.PI) / 180;

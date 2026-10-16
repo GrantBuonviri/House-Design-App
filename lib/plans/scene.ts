@@ -235,13 +235,14 @@ export function houseScene(project: Project): HouseScene {
   let topIn = Math.max(0, ...ordered.map((l) => heights[l.id].floorIn + heights[l.id].ceilingIn));
   ordered.forEach((level, i) => {
     const regions = roofFootprint(h.plan(level.id));
-    const next = ordered[i + 1];
-    const exposed = subtractRegions(regions, next ? floorFootprint(h.plan(next.id)) : []);
+    const next = ordered.slice(i + 1).find((l) => h.plan(l.id).rooms.length > 0);
+    const above = next ? floorFootprint(h.plan(next.id)) : [];
+    const exposed = subtractRegions(regions, above);
     const { floorIn, ceilingIn } = heights[level.id];
     const flat = level.kind === "basement" || floorIn < 0;
     for (const found of exposed) {
       const r: Region = { ...found, holes: found.holes.filter((hole) => polygonArea(hole) > 150 * 144) };
-      const shape = roofShape(r, floorIn + ceilingIn, t, project.house3d.roof, flat);
+      const shape = roofShape(r, floorIn + ceilingIn, t, project.house3d.roof, flat, next && { regions: above, topIn: heights[next.id].floorIn + heights[next.id].ceilingIn });
       const eave = offsetRing(offsetRing(r.outline, t / 2), project.house3d.roof.style === "flat" || flat || shape.fellBack ? Math.min(project.house3d.roof.overhangIn, 6) : project.house3d.roof.overhangIn);
       roofs.push({ levelId: level.id, shape, flat: flat || shape.fellBack || project.house3d.roof.style === "flat", eave });
       for (const tri of shape.tris) topIn = Math.max(topIn, ...tri.h);
@@ -372,6 +373,9 @@ function roofFaces(shape: RoofShape, look: ExteriorLook, levelId: string, face: 
       const a = { x: e.a.x, y: e.a.y };
       const b = { x: e.b.x, y: e.b.y };
       if (dist(a, b) < 1) continue;
+      // No fascia where the roof meets a wall above (that's flashing).
+      const m = { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 };
+      if (shape.flashing?.some((fl) => projectOn(m, fl.a, fl.b).d < 0.2)) continue;
       const c = centerOf(g.tris.flat().map((p) => ({ x: p.x, y: p.y })));
       let out = leftNormal(unit(sub(b, a)));
       if (dot(sub(c, a), out) > 0) out = scale(out, -1);

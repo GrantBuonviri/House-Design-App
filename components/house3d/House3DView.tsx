@@ -235,6 +235,9 @@ export default function House3DView(props: Props) {
       {roofs.fellBack && props.roof && (
         <p className="absolute bottom-2 left-2 rounded bg-white/90 px-2 py-1 text-xs text-muted">This outline was too tricky for a sloped roof, so part of it has a flat one.</p>
       )}
+      {!roofs.fellBack && roofs.leansOnWall && props.roof && (
+        <p className="absolute bottom-2 left-2 rounded bg-white/90 px-2 py-1 text-xs text-muted">Part of a lower roof would have run up past the floor above, so it leans on that wall as a shed roof instead.</p>
+      )}
     </div>
   );
 }

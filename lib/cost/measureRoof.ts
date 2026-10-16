@@ -89,7 +89,7 @@ export function measureRoof(plans: Plans, levels: Level[], basics: PlanBasics | 
     const flat = level.kind === "basement" || floorIn < 0;
     for (const found of exposed) {
       const r: Region = { ...found, holes: found.holes.filter((h) => polygonArea(h) > 150 * 144) };
-      const shape = roofShape(r, floorIn + ceilingIn, exteriorIn, roof, flat);
+      const shape = roofShape(r, floorIn + ceilingIn, exteriorIn, roof, flat, next && { regions: above, topIn: heights[next.id].floorIn + heights[next.id].ceilingIn });
       const area = sqft(shape.tris.reduce((s, t) => s + triArea3D(t), 0));
       const isFlat = flat || shape.fellBack || roof.style === "flat";
       if (isFlat) out.flatSqft += area;

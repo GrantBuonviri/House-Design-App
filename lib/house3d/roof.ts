@@ -1,8 +1,9 @@
 import { ShapeUtils, Vector2 } from "three";
+import polygonClipping, { type MultiPolygon, type Polygon } from "polygon-clipping";
 import { SkeletonBuilder } from "straight-skeleton";
 import type { Point, Roof } from "@/lib/model/schema";
-import { dist, dot, leftNormal, project, scale, sub, unit } from "@/lib/plan/geometry";
-import { offsetRing, type Region } from "./footprint";
+import { add, dist, dot, leftNormal, pointInPolygon, polygonArea, project, scale, sub, unit } from "@/lib/plan/geometry";
+import { cleanRing, offsetRing, type Region } from "./footprint";
 import { COLORS } from "./colors";
 import { MeshBuilder, toScene, type Frame, type Vec3 } from "./mesh";
 import type { ExteriorLook } from "./exterior";
@@ -25,6 +26,10 @@ export type RoofShape = {
   walls: { p: Point[]; h: number[]; out: Point }[];
   /** Whether the hip or gable roof had to fall back to flat (an outline the roof maker couldn't handle). */
   fellBack: boolean;
+  /** Where the roof meets a wall of the floor above: the edge, its heights, and which way is away from the wall. */
+  flashing?: { a: Point; b: Point; ha: number; hb: number; out: Point }[];
+  /** The roof's own shape would have run into the floor above, so it's a shed leaning on that floor's wall instead. */
+  leansOnWall?: boolean;
 };
 
 /** Roof thickness (rafters and sheathing), shown at the eaves. */
@@ -35,37 +40,72 @@ export const FLAT_ROOF_IN = 10;
 const SHED_DIR: Record<Roof["shedDown"], Point> = { N: { x: 0, y: -1 }, S: { x: 0, y: 1 }, E: { x: 1, y: 0 }, W: { x: -1, y: 0 } };
 
 /**
- * The roof over one region of the house. `topIn` is the height of the top of
- * the walls it sits on, `wallIn` the outside wall thickness.
+ * The floor above, where it stands on the floor being roofed: its outline (to
+ * the middle of its walls) and the top of its walls. A roof that meets it
+ * stops at its outside wall face, like the wall of the house next door.
  */
-export function roofShape(region: Region, topIn: number, wallIn: number, roof: Pick<Roof, "style" | "pitch" | "overhangIn" | "shedDown">, forceFlat = false): RoofShape {
+export type UpperFloor = { regions: Region[]; topIn: number };
+
+/**
+ * The roof over one region of the house. `topIn` is the height of the top of
+ * the walls it sits on, `wallIn` the outside wall thickness. With `upper`,
+ * the roof leans on that floor's walls where it meets them (see `againstUpper`).
+ */
+export function roofShape(
+  region: Region,
+  topIn: number,
+  wallIn: number,
+  roof: Pick<Roof, "style" | "pitch" | "overhangIn" | "shedDown">,
+  forceFlat = false,
+  upper?: UpperFloor,
+): RoofShape {
+  if (upper?.regions.length) {
+    const s = againstUpper(region, topIn, wallIn, roof, forceFlat, upper);
+    if (s) return s;
+  }
   const style = forceFlat ? "flat" : roof.style;
   const slope = roof.pitch / 12;
   const over = style === "flat" ? Math.min(roof.overhangIn, 6) : roof.overhangIn;
-  const wallOuter = { outline: offsetRing(region.outline, wallIn / 2), holes: region.holes.map((h) => offsetRing(h, wallIn / 2)) };
-  const eave = { outline: offsetRing(wallOuter.outline, over), holes: wallOuter.holes.map((h) => offsetRing(h, over)) };
+  const wallOuter = grow(region, wallIn / 2);
+  const eave = grow(wallOuter, over);
 
   if (style === "flat") return { tris: triangulate(eave, () => topIn + FLAT_ROOF_IN), walls: [], fellBack: false };
 
   if (style === "shed") {
-    const d = SHED_DIR[roof.shedDown];
-    const m = Math.max(...[wallOuter.outline, ...wallOuter.holes].flat().map((q) => dot(q, d)));
-    const h = (p: Point) => topIn + slope * (m - dot(p, d));
-    const walls: RoofShape["walls"] = [];
-    for (const ring of [wallOuter.outline, ...wallOuter.holes]) {
-      ring.forEach((a, i) => {
-        const b = ring[(i + 1) % ring.length];
-        if (h(a) - topIn < 0.5 && h(b) - topIn < 0.5) return;
-        walls.push({ p: [a, b, b, a], h: [topIn, topIn, h(b), h(a)], out: leftNormal(unit(sub(b, a))) });
-      });
-    }
+    const { h, walls } = shedPlane(wallOuter, topIn, slope, SHED_DIR[roof.shedDown]);
     return { tris: triangulate(eave, h), walls, fellBack: false };
   }
 
-  // Hip and gable: the straight skeleton of the eave outline.
+  const sloped = slopedFaces(wallOuter, eave, topIn, over, slope, style);
+  if (!sloped) return { ...roofShape(region, topIn, wallIn, roof, true), fellBack: true };
+  return { tris: sloped.faces.flatMap((f) => fanFace(f.pts, f.h)), walls: sloped.walls, fellBack: false };
+}
+
+const grow = (r: Region, d: number): Region => ({ outline: offsetRing(r.outline, d), holes: r.holes.map((h) => offsetRing(h, d)) });
+
+/** A shed roof's plane, sloping down toward `d`, and the siding under its high sides. */
+function shedPlane(wallOuter: Region, topIn: number, slope: number, d: Point) {
+  const m = Math.max(...[wallOuter.outline, ...wallOuter.holes].flat().map((q) => dot(q, d)));
+  const h = (p: Point) => topIn + slope * (m - dot(p, d));
+  const walls: RoofShape["walls"] = [];
+  for (const ring of [wallOuter.outline, ...wallOuter.holes]) {
+    ring.forEach((a, i) => {
+      const b = ring[(i + 1) % ring.length];
+      if (h(a) - topIn < 0.5 && h(b) - topIn < 0.5) return;
+      walls.push({ p: [a, b, b, a], h: [topIn, topIn, h(b), h(a)], out: leftNormal(unit(sub(b, a))) });
+    });
+  }
+  return { h, walls };
+}
+
+/** A flat roof face: corners and their heights. */
+type Poly = { pts: Point[]; h: number[] };
+
+/** Hip and gable faces from the straight skeleton of the eave outline, or null when it can't be made. */
+function slopedFaces(wallOuter: Region, eave: Region, topIn: number, over: number, slope: number, style: "hip" | "gable"): { faces: Poly[]; walls: RoofShape["walls"] } | null {
   const eaveIn = topIn - over * slope;
   const sk = skeletonFaces(eave);
-  if (!sk) return { ...roofShape(region, topIn, wallIn, roof, true), fellBack: true };
+  if (!sk) return null;
   const faces = sk.faces;
   const walls: RoofShape["walls"] = [];
 
@@ -102,18 +142,219 @@ export function roofShape(region: Region, topIn: number, wallIn: number, roof: P
       const apexH = eaveIn + f.dist[apexAt] * slope;
       walls.push({ p: [wa, wb, top], h: [topIn, topIn, apexH], out: leftNormal(unit(sub(wb, wa))) });
     });
-    const tris: RoofTri[] = [];
+    const out: Poly[] = [];
     faces.forEach((f, fi) => {
       if (gableFaces.has(fi)) return;
-      const pts = f.pts.map((p) => moved.get(key(p)) ?? p);
-      tris.push(...fanFace(pts, f.dist.map((d) => eaveIn + d * slope)));
+      out.push({ pts: f.pts.map((p) => moved.get(key(p)) ?? p), h: f.dist.map((d) => eaveIn + d * slope) });
     });
-    return { tris, walls, fellBack: false };
+    return { faces: out, walls };
   }
 
-  const tris = faces.flatMap((f) => fanFace(f.pts, f.dist.map((d) => eaveIn + d * slope)));
-  return { tris, walls, fellBack: false };
+  return { faces: faces.map((f) => ({ pts: f.pts, h: f.dist.map((d) => eaveIn + d * slope) })), walls };
 }
+
+// ---- Roofs against the floor above ----
+
+const ring = (pts: Point[]): [number, number][] => [...pts.map((p) => [p.x, p.y] as [number, number]), [pts[0].x, pts[0].y]];
+const asPolygon = (r: Region): Polygon => [ring(r.outline), ...r.holes.map(ring)];
+const unring = (r: [number, number][]): Point[] => r.slice(0, -1).map(([x, y]) => ({ x, y }));
+const mpArea = (mp: MultiPolygon) => mp.reduce((s, poly) => s + polygonArea(unring(poly[0])) - poly.slice(1).reduce((t, h) => t + polygonArea(unring(h)), 0), 0);
+
+/** How far a point is from the nearest of some rings' edges. */
+function distToRings(p: Point, rings: Point[][]): number {
+  let best = Infinity;
+  for (const r of rings) for (let i = 0; i < r.length; i++) best = Math.min(best, project(p, r[i], r[(i + 1) % r.length]).d);
+  return best;
+}
+
+/** Heights across a flat face, from three of its corners. */
+function planeOf(pts: Point[], h: number[]): (p: Point) => number {
+  let best = { i: 0, j: 1, k: 2, a: 0 };
+  const n = pts.length;
+  for (let j = 1; j < n - 1; j++)
+    for (let k = j + 1; k < n; k++) {
+      const a = Math.abs((pts[j].x - pts[0].x) * (pts[k].y - pts[0].y) - (pts[k].x - pts[0].x) * (pts[j].y - pts[0].y));
+      if (a > best.a) best = { i: 0, j, k, a };
+    }
+  const [A, B, C] = [pts[best.i], pts[best.j], pts[best.k]];
+  const [ha, hb, hc] = [h[best.i], h[best.j], h[best.k]];
+  const det = (B.x - A.x) * (C.y - A.y) - (C.x - A.x) * (B.y - A.y);
+  if (Math.abs(det) < 1e-9) return () => ha;
+  return (p) => {
+    const u = ((p.x - A.x) * (C.y - A.y) - (C.x - A.x) * (p.y - A.y)) / det;
+    const v = ((B.x - A.x) * (p.y - A.y) - (p.x - A.x) * (B.y - A.y)) / det;
+    return ha + u * (hb - ha) + v * (hc - ha);
+  };
+}
+
+/** Triangles for the parts of `mp` (a clipped piece of roof), with heights from `h`. */
+function trianglesOf(mp: MultiPolygon, h: (p: Point) => number): RoofTri[] {
+  return mp.flatMap((poly) => triangulate({ outline: unring(poly[0]), holes: poly.slice(1).map(unring) }, h));
+}
+
+/** The parts of an upright roof wall whose foot is out of every `away` ring (inside none of them). */
+function clipWall(w: RoofShape["walls"][number], away: Region[]): RoofShape["walls"] {
+  const a = w.p[0];
+  const L = dist(a, w.p[1]);
+  if (L < 0.5) return [];
+  const u = unit(sub(w.p[1], a));
+  const ts = [0, L];
+  for (const r of away)
+    for (const rg of [r.outline, ...r.holes])
+      for (let i = 0; i < rg.length; i++) {
+        const t = crossAt(a, u, L, rg[i], rg[(i + 1) % rg.length]);
+        if (t !== null) ts.push(t);
+      }
+  ts.sort((x, y) => x - y);
+  const out: RoofShape["walls"] = [];
+  const sz = w.p.map((p, i) => ({ s: dot(sub(p, a), u), z: w.h[i] }));
+  for (let i = 0; i < ts.length - 1; i++) {
+    const [s0, s1] = [ts[i], ts[i + 1]];
+    if (s1 - s0 < 0.5) continue;
+    const mid = add(a, scale(u, (s0 + s1) / 2));
+    if (away.some((r) => inRegion(mid, r))) continue;
+    const kept = clipS(clipS(sz, s0, 1), s1, -1);
+    if (kept.length < 3) continue;
+    out.push({ p: kept.map((q) => add(a, scale(u, q.s))), h: kept.map((q) => q.z), out: w.out });
+  }
+  return out;
+}
+
+/** Where a segment (from `a` along `u`, `L` long) crosses the segment p-q, as a distance along it. */
+function crossAt(a: Point, u: Point, L: number, p: Point, q: Point): number | null {
+  const e = sub(q, p);
+  const den = u.x * e.y - u.y * e.x;
+  if (Math.abs(den) < 1e-9) return null;
+  const w = sub(p, a);
+  const t = (w.x * e.y - w.y * e.x) / den;
+  const s = (w.x * u.y - w.y * u.x) / den;
+  return t > 0 && t < L && s >= 0 && s <= 1 ? t : null;
+}
+
+/** Keep the side of an (s, z) polygon where s is past `at` (sign 1) or before it (sign -1). */
+function clipS(poly: { s: number; z: number }[], at: number, sign: 1 | -1) {
+  const out: { s: number; z: number }[] = [];
+  const inside = (q: { s: number }) => (q.s - at) * sign >= -1e-9;
+  poly.forEach((p, i) => {
+    const q = poly[(i + 1) % poly.length];
+    if (inside(p)) out.push(p);
+    if (inside(p) !== inside(q)) {
+      const t = (at - p.s) / (q.s - p.s);
+      out.push({ s: at, z: p.z + t * (q.z - p.z) });
+    }
+  });
+  return out;
+}
+
+function inRegion(p: Point, r: Region): boolean {
+  return pointInPolygon(p, r.outline) && !r.holes.some((h) => pointInPolygon(p, h));
+}
+
+/**
+ * A lower floor's roof where it meets the floor above. Edges along the upper
+ * floor's walls don't slope up: the roof is worked out as if the house went
+ * on under the upper floor, then cut off at the upper floor's outside wall
+ * face, so the slopes and ridge die into the wall and nothing goes inside
+ * it. If that roof would still rise past the top of the upper floor's walls
+ * (or can't be made), it falls back to a shed leaning on the wall, sloping
+ * away from it. A flashing strip goes where roof meets wall. Null when the
+ * region doesn't meet the floor above.
+ */
+function againstUpper(
+  region: Region,
+  topIn: number,
+  wallIn: number,
+  roof: Pick<Roof, "style" | "pitch" | "overhangIn" | "shedDown">,
+  forceFlat: boolean,
+  upper: UpperFloor,
+): RoofShape | null {
+  const style = forceFlat ? "flat" : roof.style;
+  const slope = roof.pitch / 12;
+  const over = style === "flat" ? Math.min(roof.overhangIn, 6) : roof.overhangIn;
+  const wallOuter = grow(region, wallIn / 2);
+  const eave = grow(wallOuter, over);
+  // The upper floor out to its outside wall faces.
+  let walls: Region[] = upper.regions.map((r) => grow(r, wallIn / 2));
+  let kept: MultiPolygon;
+  try {
+    const e = asPolygon(eave);
+    walls = walls.filter((w) => mpArea(polygonClipping.intersection(e, asPolygon(w))) > 144);
+    if (!walls.length) return null;
+    kept = polygonClipping.difference(e, ...walls.map(asPolygon));
+  } catch {
+    return null;
+  }
+  if (!kept.length) return { tris: [], walls: [], fellBack: false, flashing: [] };
+  const wallRings = walls.flatMap((w) => [w.outline, ...w.holes]);
+  const clipFaces = (faces: Poly[]) =>
+    faces.flatMap((f) => {
+      try {
+        return trianglesOf(polygonClipping.intersection([ring(f.pts)], kept), planeOf(f.pts, f.h));
+      } catch {
+        return [];
+      }
+    });
+  const finish = (tris: RoofTri[], ws: RoofShape["walls"], extra: Partial<RoofShape> = {}): RoofShape => ({
+    tris,
+    walls: ws.flatMap((w) => clipWall(w, walls)),
+    fellBack: false,
+    flashing: flashingOf(tris, wallRings),
+    ...extra,
+  });
+  const fits = (tris: RoofTri[]) => tris.every((t) => t.h.every((h) => h <= upper.topIn + 0.5));
+
+  if (style === "flat") return finish(trianglesOf(kept, () => topIn + FLAT_ROOF_IN), []);
+
+  if (style === "shed") {
+    const { h, walls: ws } = shedPlane(wallOuter, topIn, slope, SHED_DIR[roof.shedDown]);
+    const tris = trianglesOf(kept, h);
+    if (fits(tris)) return finish(tris, ws);
+  } else {
+    // The roof as if this floor went on under the floor above.
+    let whole: Region | null = null;
+    try {
+      const u = polygonClipping.union(asPolygon(wallOuter), ...walls.map(asPolygon));
+      const biggest = u.reduce((a, b) => (mpArea([b]) > mpArea([a]) ? b : a));
+      whole = { outline: cleanRing(unring(biggest[0])), holes: biggest.slice(1).map((h) => cleanRing(unring(h))).filter((h) => h.length >= 3 && polygonArea(h) > 150 * 144) };
+    } catch {
+      whole = null;
+    }
+    const sloped = whole && whole.outline.length >= 3 ? slopedFaces(whole, grow(whole, over), topIn, over, slope, style) : null;
+    if (sloped) {
+      const tris = clipFaces(sloped.faces);
+      if (tris.length && fits(tris)) return finish(tris, sloped.walls);
+    }
+  }
+
+  // Fall back to a shed leaning on the wall, sloping away from it, never above the upper floor's walls.
+  const flash = flashingOf(trianglesOf(kept, () => topIn), wallRings);
+  let d = { x: 0, y: 0 };
+  for (const f of flash) d = add(d, scale(f.out, dist(f.a, f.b)));
+  if (Math.hypot(d.x, d.y) < 1) return finish(trianglesOf(kept, () => topIn + FLAT_ROOF_IN), [], { fellBack: true });
+  d = unit(d);
+  const m = Math.max(...[wallOuter.outline, ...wallOuter.holes].flat().map((q) => dot(q, d)));
+  const low = Math.min(...kept.flat(2).map(([x, y]) => dot({ x, y }, d)));
+  const s = Math.max(0, Math.min(slope, (upper.topIn - 6 - topIn) / Math.max(12, m - low)));
+  const { h, walls: ws } = shedPlane(wallOuter, topIn, s, d);
+  return finish(trianglesOf(kept, h), ws, { leansOnWall: true });
+}
+
+/** The edges of a roof that run along a wall above it, for the flashing strip, each facing away from the wall. */
+function flashingOf(tris: RoofTri[], wallRings: Point[][]): NonNullable<RoofShape["flashing"]> {
+  const out: NonNullable<RoofShape["flashing"]> = [];
+  const on = (p: Point) => distToRings(p, wallRings) < 0.1;
+  for (const t of tris)
+    for (let i = 0; i < 3; i++) {
+      const [a, b, c] = [t.p[i], t.p[(i + 1) % 3], t.p[(i + 2) % 3]];
+      if (dist(a, b) < 0.5 || !on(a) || !on(b) || !on(lerp2(a, b))) continue;
+      let n = leftNormal(unit(sub(b, a)));
+      if (dot(sub(c, a), n) < 0) n = scale(n, -1);
+      out.push({ a, b, ha: t.h[i], hb: t.h[(i + 1) % 3], out: n });
+    }
+  return out;
+}
+
+const lerp2 = (a: Point, b: Point): Point => ({ x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 });
 
 type Face = { pts: Point[]; dist: number[]; edge: [Point, Point] };
 
@@ -233,21 +474,28 @@ export function drawRoof(mb: { roof: MeshBuilder; trim: MeshBuilder; siding: Mes
     mb.trim.upright(f, e.a, e.b, e.ha - thick, e.ha, e.hb - thick, e.hb, out, fascia);
   }
   for (const w of shape.walls) {
-    if (w.p.length === 3) {
-      const [A, B, C] = w.p.map((p, i) => toScene(f, p, w.h[i])) as [Vec3, Vec3, Vec3];
+    // A flat upright piece (a triangle, or four or more corners in order around it).
+    const P = w.p.map((p, i) => toScene(f, p, w.h[i]));
+    for (let i = 1; i < P.length - 1; i++) {
       mb.siding.pattern = gable.pattern;
-      mb.siding.tri(A, B, C, gable.color, [w.out.x, 0, w.out.y]);
+      mb.siding.tri(P[0], P[i], P[i + 1], gable.color, [w.out.x, 0, w.out.y]);
       mb.siding.pattern = 0;
       // The attic side, so the gable isn't see-through from inside.
-      mb.siding.tri(A, B, C, COLORS.drywall, [-w.out.x, 0, -w.out.y]);
-    } else {
-      mb.siding.pattern = gable.pattern;
-      mb.siding.upright(f, w.p[0], w.p[1], w.h[0], w.h[3], w.h[1], w.h[2], w.out, gable.color);
-      mb.siding.pattern = 0;
-      mb.siding.upright(f, w.p[0], w.p[1], w.h[0], w.h[3], w.h[1], w.h[2], scale(w.out, -1), COLORS.drywall);
+      mb.siding.tri(P[0], P[i], P[i + 1], COLORS.drywall, [-w.out.x, 0, -w.out.y]);
     }
   }
+  // Flashing where the roof meets a wall above: a strip of trim up the wall face, just off it.
+  for (const e of shape.flashing ?? []) {
+    const back = scale(e.out, FLASHING_OFF_IN);
+    const a = add(e.a, back);
+    const b = add(e.b, back);
+    mb.trim.upright(f, a, b, e.ha - 1, e.ha + FLASHING_IN, e.hb - 1, e.hb + FLASHING_IN, e.out, fascia);
+  }
 }
+
+/** How tall the flashing strip shows above the roof, and how far off the wall face it sits. */
+export const FLASHING_IN = 4;
+const FLASHING_OFF_IN = 0.4;
 
 /** The highest point of a roof, for framing the camera. */
 export function roofTop(shape: RoofShape): number {
