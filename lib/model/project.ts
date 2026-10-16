@@ -55,6 +55,8 @@ export function migrateProject(raw: unknown): Project {
   // Version 14 to 15 replaced the floor plan's "show wall lengths" switch with
   // label settings. The old choice carries over.
   if (version < 15) migrated = migrateV14(migrated);
+  // Version 15 to 16 added removed walls on each floor plan (none by default).
+  if (version < 16) migrated = migrateV15(migrated);
   return Project.parse({ ...migrated, schemaVersion: SCHEMA_VERSION });
 }
 
@@ -113,4 +115,14 @@ function migrateV14(data: Raw): Raw {
   const { showDims, ...rest } = plan as Raw;
   const labels = (rest.labels && typeof rest.labels === "object" ? rest.labels : {}) as Raw;
   return { ...data, plan: { ...rest, labels: typeof showDims === "boolean" ? { wallLengths: showDims, ...labels } : labels } };
+}
+
+/** Version 15 to 16: each floor plan gets an empty list of removed walls. */
+function migrateV15(data: Raw): Raw {
+  const plans = data.floorPlans;
+  if (!plans || typeof plans !== "object") return data;
+  return {
+    ...data,
+    floorPlans: Object.fromEntries(Object.entries(plans as Raw).map(([k, v]) => [k, v && typeof v === "object" ? { openWalls: [], ...(v as Raw) } : v])),
+  };
 }

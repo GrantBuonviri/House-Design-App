@@ -10,6 +10,7 @@ import { siteOf } from "@/lib/bubbles/site";
 import { MAIN_LEVEL_ID } from "@/lib/brief/levels";
 import { nearestSide } from "@/lib/land/generate";
 import { blankPlans, moveMany, planHasContent, planOf, removeMany } from "@/lib/plan/edit";
+import { removeWall } from "@/lib/plan/openWalls";
 import { plansFromSketch } from "@/lib/plan/fromSketch";
 import { suggestPlanAlternatives, type PlanAlternative } from "@/lib/plan/alternatives";
 import { planWarnings, type PlanWarning } from "@/lib/plan/checks";
@@ -29,7 +30,7 @@ import PlanChecks from "./PlanChecks";
 import PlanSidePanel from "./PlanSidePanel";
 import House3DPanel from "@/components/house3d/House3DPanel";
 import type { WallsShown } from "@/components/house3d/House3DView";
-import { PLAN_TOOLS, type PlanSelection, type PlanTool } from "./types";
+import { PLAN_TOOLS, parseEdgeId, type PlanSelection, type PlanTool } from "./types";
 import { DisplayTabs, LotModeBanner, PlanStartChoices, PlanToolbar, type Display } from "./PlanStageParts";
 
 const PlanCanvas = dynamic(() => import("./PlanCanvas"), {
@@ -220,6 +221,16 @@ export default function PlanStage({ onContinue, onGoToSketch }: { onContinue: ()
         setLevelPlan(removeMany(plan, removable.map((s) => s.id)));
         setSelection([]);
         return;
+      }
+      // One wall of a room picked: Delete takes the wall out (outside walls stay).
+      if ((e.key === "Delete" || e.key === "Backspace") && !locked && sel.length === 1 && sel[0].kind === "edge") {
+        const { roomId, edge } = parseEdgeId(sel[0].id);
+        const out = removeWall(plan, roomId, edge);
+        if (out) {
+          e.preventDefault();
+          setLevelPlan(out.plan);
+          return;
+        }
       }
       const nudge = { ArrowLeft: [-1, 0], ArrowRight: [1, 0], ArrowUp: [0, -1], ArrowDown: [0, 1] }[e.key];
       const movable = locked ? [] : sel.filter((s) => s.kind === "room" || s.kind === "wall" || s.kind === "stairs" || s.kind === "fixture");

@@ -12,6 +12,7 @@ import { dist, isRectangle, lerp, polygonCenter } from "@/lib/plan/geometry";
 import { planTotals, roomSqft, totalsText } from "@/lib/plan/measure";
 import { MIN_STAIRS_WIDTH_IN, stairsDrawing } from "@/lib/plan/stairs";
 import { clampOffset, hostSegment } from "@/lib/plan/walls";
+import { combineRooms, edgeWalls, removeWall, restoreWall, roomsAlong, whyNotCombine, whyWallStays } from "@/lib/plan/openWalls";
 import { newOpening } from "@/lib/plan/connect";
 import { canPreview } from "@/lib/house3d/windowView";
 import { ROOM_TYPES, roomType } from "@/lib/brief/rooms";
@@ -44,13 +45,28 @@ export default function PlanSidePanel(props: Props) {
   const nameRef = useRef<HTMLInputElement>(null);
   const only = selection.length === 1 ? selection[0] : null;
   const room = only?.kind === "room" ? plan.rooms.find((r) => r.id === only.id) : undefined;
+  // Rooms just combined into this one: ask for a name for the bigger room.
+  const [combined, setCombined] = useState<string | null>(null);
 
-  // A new room arrives as "New room": put the cursor in its name.
+  // A new room arrives as "New room", and a combined room wants a new name: put the cursor in its name.
+  const askName = !!room && (room.name === "New room" || combined === room.id);
   useEffect(() => {
-    if (room?.name !== "New room") return;
+    if (!askName) return;
     const t = setTimeout(() => nameRef.current?.select(), 0);
     return () => clearTimeout(t);
-  }, [room?.id, room?.name]);
+  }, [room?.id, askName]);
+
+  useEffect(() => {
+    if (combined && only?.id !== combined) setCombined(null);
+  }, [only?.id, combined]);
+
+  const combine = (ids: string[]) => {
+    const out = combineRooms(plan, ids);
+    if (!out) return;
+    onChange(out.plan);
+    onSelect([{ kind: "room", id: out.keptId }]);
+    setCombined(out.keptId);
+  };
 
   const remove = (ids: string[]) => {
     onChange(removeMany(plan, ids));
@@ -90,6 +106,7 @@ export default function PlanSidePanel(props: Props) {
     return (
       <Panel title={`${selection.length} selected`}>
         <p className="text-xs text-muted">Drag any of them to move them together. Shift-click to add or remove one.</p>
+        {selection.every((s) => s.kind === "room") && <CombineButton plan={plan} ids={selection.map((s) => s.id)} label="Combine into one room" onCombine={combine} />}
         {turnable.length > 0 && <TurnButtons onTurn={(deg) => onChange(rotateMany(plan, turnable, deg, centerOfMany(plan, turnable)))} />}
         <button className="btn mt-4 w-full text-red-700" onClick={() => remove(selection.filter((s) => s.kind !== "edge").map((s) => s.id))}>
           Delete {selection.filter((s) => s.kind !== "edge").length} things
@@ -105,6 +122,7 @@ export default function PlanSidePanel(props: Props) {
     const set = (patch: Parameters<typeof updateRoom>[2], key: string) => onChange(updateRoom(plan, room.id, patch), `${key}.${room.id}`);
     return (
       <Panel title="Room">
+        {combined === room.id && <p className="mb-3 rounded bg-accent/10 p-2 text-xs">Rooms combined. Give the new room a name.</p>}
         <label className="field-label" htmlFor="room-name">
           Name
         </label>
@@ -204,6 +222,7 @@ export default function PlanSidePanel(props: Props) {
         >
           Add a corner in the middle
         </button>
+        <WallRemoval plan={plan} roomId={roomId} edge={edge} onChange={onChange} onCombine={combine} />
       </Panel>
     );
   }
@@ -540,5 +559,59 @@ export function LengthField({ label, value, onCommit }: { label: string; value: 
         title={`Feet and inches, like 12' 6"`}
       />
     </div>
+  );
+}
+
+/** Take out (or put back) the wall along a room edge, and combine the rooms on either side. */
+function WallRemoval({ plan, roomId, edge, onChange, onCombine }: { plan: FloorPlan; roomId: string; edge: number; onChange: Props["onChange"]; onCombine: (ids: string[]) => void }) {
+  const walls = edgeWalls(plan, roomId, edge);
+  const why = whyWallStays(plan, roomId, edge);
+  const along = roomsAlong(plan, roomId, edge);
+  return (
+    <div className="mt-4 border-t border-line pt-4">
+      <div className="grid grid-cols-2 gap-2">
+        {walls.inside.length > 0 || !walls.removed.length ? (
+          <button className="btn text-sm" disabled={!!why} title={why ?? undefined} onClick={() => {
+            const out = removeWall(plan, roomId, edge);
+            if (out) onChange(out.plan);
+          }}>
+            Remove wall
+          </button>
+        ) : (
+          <button className="btn text-sm" onClick={() => onChange(restoreWall(plan, roomId, edge))}>
+            Put wall back
+          </button>
+        )}
+        {along.length > 1 && <CombineButton plan={plan} ids={along} label="Combine these rooms" onCombine={onCombine} bare />}
+      </div>
+      {walls.inside.length > 0 && walls.removed.length > 0 && (
+        <button className="mt-2 text-sm text-accent hover:underline" onClick={() => onChange(restoreWall(plan, roomId, edge))}>
+          Put the removed part back
+        </button>
+      )}
+      <p className="field-hint">
+        {why && !walls.removed.length
+          ? why
+          : walls.removed.length
+            ? "The wall is out: the rooms are open to each other but keep their own names and floors."
+            : "Removing the wall keeps both rooms (names, floors, finishes) with an open space between them. Combining makes them one room."}
+      </p>
+    </div>
+  );
+}
+
+function CombineButton({ plan, ids, label, onCombine, bare }: { plan: FloorPlan; ids: string[]; label: string; onCombine: (ids: string[]) => void; bare?: boolean }) {
+  const why = whyNotCombine(plan, ids);
+  const button = (
+    <button className={`btn text-sm ${bare ? "" : "mt-4 w-full"}`} disabled={!!why} title={why ?? undefined} onClick={() => onCombine(ids)}>
+      {label}
+    </button>
+  );
+  if (bare) return button;
+  return (
+    <>
+      {button}
+      {why && <p className="field-hint">{why}</p>}
+    </>
   );
 }

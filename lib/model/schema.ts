@@ -9,7 +9,7 @@ import { z } from "zod";
  * Angles are degrees clockwise from north (0 = N, 90 = E).
  */
 
-export const SCHEMA_VERSION = 15;
+export const SCHEMA_VERSION = 16;
 
 export const Point = z.object({ x: z.number(), y: z.number() });
 export type Point = z.infer<typeof Point>;
@@ -402,6 +402,10 @@ export const Device = z.object({
 export type Device = z.infer<typeof Device>;
 
 /** Changes to the devices the app places: ones taken away, and ones added (moved ones are both). */
+/** A stretch of a room edge (or the edge two rooms share) with no wall: the rooms open onto each other. */
+export const OpenWall = z.object({ a: Point, b: Point });
+export type OpenWall = z.infer<typeof OpenWall>;
+
 export const DeviceEdits = z.object({
   hidden: z.array(z.string()).default([]),
   added: z.array(Device).default([]),
@@ -411,6 +415,8 @@ export type DeviceEdits = z.infer<typeof DeviceEdits>;
 export const FloorPlan = z.object({
   rooms: z.array(PlanRoom).default([]),
   walls: z.array(PlanWall).default([]),
+  /** Wall stretches that were removed, stored as positions so they survive reshaping. Left out means none. */
+  openWalls: z.array(OpenWall).optional(),
   openings: z.array(Opening).default([]),
   stairs: z.array(PlanStairs).default([]),
   fixtures: z.array(Fixture).default([]),

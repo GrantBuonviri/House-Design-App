@@ -1,9 +1,9 @@
 import { exteriorWallIn, FLOOR_STRUCTURE_IN } from "@/lib/plan/basics";
 import { openingType } from "@/lib/plan/catalog";
 import { planOf } from "@/lib/plan/edit";
-import { boundsOf, dist, pointInPolygon, polygonArea } from "@/lib/plan/geometry";
+import { boundsOf, dist, edgesOf, pointInPolygon, polygonArea } from "@/lib/plan/geometry";
 import { areaKind } from "@/lib/plan/measure";
-import { openingGeometries, wallPieces, type WallPiece } from "@/lib/plan/walls";
+import { openSpans, openingGeometries, wallPieces, type WallPiece } from "@/lib/plan/walls";
 import { hostPiece } from "@/lib/house3d/build";
 import { floorFootprint, joinRooms, offsetRing, regionArea, subtractRegions, type Region } from "@/lib/house3d/footprint";
 import { levelHeights } from "@/lib/house3d/levels";
@@ -111,7 +111,8 @@ export function measurePlan(p: Ctx): Quantities | null {
       else if (r.type === "deck") q.deckSqft += a;
       else q.porchSqft += a;
       if (r.type === "patio") q.patioSqft += a;
-      const edgesIn = r.polygon.map((p, i) => dist(p, r.polygon[(i + 1) % r.polygon.length]));
+      // Wall length on each side of the room, less any stretch where the wall was taken out.
+      const edgesIn = edgesOf(r.polygon).map((e) => dist(e.a, e.b) - openSpans(plan, e.a, e.b).reduce((t, [t0, t1]) => t + t1 - t0, 0));
       allRooms.push({ id: r.id, name: r.name, type: r.type ?? "other", sqft: a, fixtures: plan.fixtures.filter((f) => f.roomId === r.id), edgesIn });
     }
     // Floors framed over something: upper floors, and lower basements' upper floors.

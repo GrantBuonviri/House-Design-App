@@ -85,6 +85,8 @@ function moved(a: object, b: object): boolean {
 function describePlan(a: FloorPlan | undefined, b: FloorPlan | undefined): string | null {
   if (!a || !b) return b ? "start the floor plan" : "clear the floor plan";
   const roomName = (r: FloorPlan["rooms"][number]) => r.name || "a room";
+  const special = describeOpenWalls(a, b, roomName);
+  if (special) return special;
   const rooms = describeList(a.rooms, b.rooms, roomName, (was, now) =>
     was.name !== now.name ? `rename ${roomName(was)}` : moved(was, now) ? `move ${roomName(now)}` : `change ${roomName(now)}`,
   );
@@ -148,6 +150,26 @@ function describeDesign(a: DesignChoices, b: DesignChoices, where: "inside" | "o
   if (added.length === 1) return `pick ${added[0].product.name}`;
   if (added.length === 0 && removed.length === 1) return `remove ${removed[0].product.name}`;
   return `change the ${where} picks`;
+}
+
+/** Combining rooms, and taking out or putting back a wall (with any doors and windows that went with it). */
+function describeOpenWalls(a: FloorPlan, b: FloorPlan, roomName: (r: FloorPlan["rooms"][number]) => string): string | null {
+  const ids = new Set(b.rooms.map((r) => r.id));
+  const gone = a.rooms.filter((r) => !ids.has(r.id));
+  const was = new Map(a.rooms.map((r) => [r.id, r]));
+  const grown = b.rooms.filter((r) => was.has(r.id) && json(was.get(r.id)!.polygon) !== json(r.polygon));
+  if (gone.length && grown.length === 1 && b.rooms.every((r) => was.has(r.id))) {
+    const names = [was.get(grown[0].id)!, ...gone].map(roomName);
+    return `combine ${names.slice(0, -1).join(", ")} and ${names[names.length - 1]}`;
+  }
+  const before = a.openWalls ?? [];
+  const after = b.openWalls ?? [];
+  if (json(before) === json(after) || json(a.rooms) !== json(b.rooms)) return null;
+  const now = new Set(b.openings.map((o) => o.id));
+  const lost = a.openings.filter((o) => !now.has(o.id)).map((o) => article(openingType(o.style).label));
+  const total = (list: typeof before) => list.reduce((t, w) => t + Math.hypot(w.b.x - w.a.x, w.b.y - w.a.y), 0);
+  const wall = total(after) > total(before) ? "remove a wall" : "put a wall back";
+  return lost.length ? `${wall} and ${lost.length === 1 ? lost[0] : `${lost.length} doors and windows`}` : wall;
 }
 
 /** "a window", "an island"; with `the`, "the window". */

@@ -167,6 +167,7 @@ export function mirrorPlans(plans: Plans, axis: "x" | "y"): Plans {
       // A mirror image runs the other way round, so corners are reversed to stay clockwise.
       rooms: plan.rooms.map((r) => ({ ...r, polygon: [...r.polygon].reverse().map(flip) })),
       walls: plan.walls.map((w) => ({ ...w, a: flip(w.a), b: flip(w.b) })),
+      ...(plan.openWalls ? { openWalls: plan.openWalls.map((w) => ({ a: flip(w.a), b: flip(w.b) })) } : {}),
       openings: plan.openings.map((o): Opening => {
         const host = o.host;
         if (!("roomId" in host)) return { ...o, side: o.side === 1 ? -1 : 1 };
