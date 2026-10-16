@@ -398,7 +398,7 @@ export default function PlanStage({ onContinue, onGoToSketch }: { onContinue: ()
       const lv = levels.find((l) => l.id === w.levelId);
       const sup = lv && supportOf(plans, levels, lv);
       if (!sup) return;
-      setPlans((ps) => ({ ...ps, [w.levelId]: pullBack(p, w.pullBack!.roomId, sup.regions) }));
+      setPlans((ps) => ({ ...ps, [w.levelId]: pullBack(p, w.pullBack!.roomId, sup.regions, sup.arcs) }));
       setFlash("Pulled the room back over the floor below. Undo puts it back.");
       return;
     }
@@ -643,7 +643,7 @@ export default function PlanStage({ onContinue, onGoToSketch }: { onContinue: ()
                 className="btn absolute top-2 right-3 px-2 py-1 text-xs"
                 title={`Make a room over everything the ${sup.below.name.toLowerCase()} covers. Cut it up with the Split tool.`}
                 onClick={() => {
-                  setLevelPlan(fillBelow(plan, sup.regions));
+                  setLevelPlan(fillBelow(plan, sup.regions, sup.arcs));
                   setFlash(`Filled the space over the ${sup.below.name.toLowerCase()}. Use Split to cut it into rooms. Undo puts it back.`);
                 }}
               >

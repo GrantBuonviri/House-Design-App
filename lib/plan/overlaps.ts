@@ -2,7 +2,8 @@ import polygonClipping, { type Polygon } from "polygon-clipping";
 import type { FloorPlan, PlanRoom, Point } from "@/lib/model/schema";
 import { cleanRing } from "@/lib/house3d/footprint";
 import { reshapeRoom, moveMany } from "./edit";
-import { add, dist, dot, edgesOf, leftNormal, len, polygonArea, polygonsOverlap, scale, sub, unit } from "./geometry";
+import { add, clockwise, dist, dot, edgesOf, leftNormal, len, polygonArea, polygonsOverlap, scale, sub, unit } from "./geometry";
+import { curvesOf, cutOutline, refitArcs } from "./refit";
 
 /**
  * Fixing rooms that were dropped on top of each other (`trimOverlap`) or left
@@ -39,25 +40,25 @@ export type Trim = { roomId: string; byId: string };
  */
 export function trimOverlap(plan: FloorPlan, movedIds: string[]): { plan: FloorPlan; trims: Trim[] } {
   const moved = plan.rooms.filter((r) => movedIds.includes(r.id));
+  const movedOutlines = moved.map(cutOutline);
   let next = plan;
   const trims: Trim[] = [];
   for (const room of plan.rooms) {
     if (movedIds.includes(room.id)) continue;
-    let poly = room.polygon;
+    const whole = cutOutline(room);
+    let poly: Point[] | null = whole;
     let by: PlanRoom | null = null;
-    for (const m of moved) {
-      if (!polygonsOverlap(poly, m.polygon)) continue;
-      const cut = cutAway(poly, m.polygon);
-      if (!cut) {
-        by = null;
-        poly = room.polygon;
-        break;
-      }
+    for (let k = 0; k < moved.length && poly; k++) {
+      if (!polygonsOverlap(poly, movedOutlines[k])) continue;
+      const cut: Point[] | null = cutAway(poly, movedOutlines[k]);
+      if (!cut) by = null;
+      else by = by ?? moved[k];
       poly = cut;
-      by = by ?? m;
     }
-    if (by && poly !== room.polygon) {
-      next = reshapeRoom(next, room.id, poly);
+    if (by && poly && poly !== whole) {
+      // Curves on either room stay curved edges on what's left.
+      const fit = refitArcs(clockwise(poly), curvesOf([room, ...moved]));
+      next = reshapeRoom(next, room.id, fit.polygon, fit.bulges ?? []);
       trims.push({ roomId: room.id, byId: by.id });
     }
   }

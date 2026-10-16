@@ -2,7 +2,7 @@ import type { FloorPlan, Opening, OpeningHost, PlanRoom, Point } from "@/lib/mod
 import { roomType } from "@/lib/brief/rooms";
 import { openingType } from "./catalog";
 import { add, collinearOverlap, edgesOf, pointInPolygon, polygonArea, round1, scale, sub, unit } from "./geometry";
-import { hostSegment, openSpans, openingGeometry, wallPieces, type OpeningGeometry } from "./walls";
+import { hostSegment, openSpans, openingGeometry, sameHost, wallPieces, type OpeningGeometry } from "./walls";
 
 /**
  * How rooms connect: which rooms a door or opening joins, which rooms are
@@ -136,6 +136,7 @@ function spans(plan: FloorPlan): OpeningGeometry[] {
 export function freeSpot(plan: FloorPlan, host: OpeningHost, t0: number, t1: number, width: number, gap = 6): number | null {
   const seg = hostSegment(plan, host);
   if (!seg || t1 - t0 < width + 2) return null;
+  if (seg.bulge) return freeSpotOnCurve(plan, host, seg.length, t0, t1, width, gap);
   const others = spans(plan);
   const gone = openSpans(plan, seg.a, seg.b);
   const u = unit(sub(seg.b, seg.a));
@@ -152,6 +153,16 @@ export function freeSpot(plan: FloorPlan, host: OpeningHost, t0: number, t1: num
   const mid = (t0 + t1) / 2;
   const tries = [mid, lo + 4, hi - 4, (lo + mid) / 2, (mid + hi) / 2].map((t) => Math.min(hi, Math.max(lo, t)));
   return tries.find(fits) ?? null;
+}
+
+/** freeSpot on a curved wall: offsets there are inches along the curve, so the openings on it are compared by offset. */
+function freeSpotOnCurve(plan: FloorPlan, host: OpeningHost, length: number, t0: number, t1: number, width: number, gap: number): number | null {
+  const mine = plan.openings.filter((o) => sameHost(o.host, host));
+  const fits = (t: number) => t - width / 2 >= 0 && t + width / 2 <= length && mine.every((o) => Math.abs(o.offsetIn - t) >= (o.widthIn + width) / 2 + gap);
+  const lo = t0 + width / 2 + 2;
+  const hi = t1 - width / 2 - 2;
+  const mid = (t0 + t1) / 2;
+  return [mid, lo + 4, hi - 4, (lo + mid) / 2, (mid + hi) / 2].map((t) => Math.min(hi, Math.max(lo, t))).find(fits) ?? null;
 }
 
 export type DoorOptions = {

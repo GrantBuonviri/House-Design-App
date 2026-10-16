@@ -3,10 +3,12 @@ import type { FloorPlan, Level, OverhangKind, PlanRoom, Point } from "@/lib/mode
 import { cleanRing, COVERED, roofFootprint, subtractRegions, type Region } from "@/lib/house3d/footprint";
 import { levelBelow } from "./basics";
 import { planOf, makeRoom, reshapeRoom, type Plans } from "./edit";
-import { clockwise, dist, edgesOf, lerp, polygonArea, polygonCenter } from "./geometry";
+import { clockwise, dist, edgesOf, lerp, polygonArea, polygonCenter, roundPoint } from "./geometry";
 import { areaKind } from "./measure";
 import type { SnapTargets } from "./snap";
 import { flatPlans } from "./flatten";
+import type { Arc } from "./arcs";
+import { curvesOf, cutOutline, refitArcs, refitRoom } from "./refit";
 
 /**
  * What holds up a floor: the outline of the floor directly below it (rooms
@@ -24,13 +26,13 @@ const asPolygons = (regions: Region[]): Polygon[] => regions.map((r) => [ring(r.
 const fromRing = (r: [number, number][]): Point[] => r.slice(0, -1).map(([x, y]) => ({ x, y }));
 
 /** The floor below a floor that sits on it, and what holds this floor up. Null when there's nothing to check (the main floor and basement sit on the ground, or the floor below is empty). */
-export function supportOf(plans: Plans, levels: Level[], level: Level): { below: Level; regions: Region[] } | null {
-  plans = flatPlans(plans);
+/** `arcs` are the curved walls of the floor below, so rooms cut to fit on it can follow its curves. */
+export function supportOf(plans: Plans, levels: Level[], level: Level): { below: Level; regions: Region[]; arcs: Arc[] } | null {
   if (level.kind === "main" || level.kind === "basement") return null;
   const below = levelBelow(levels, level);
   if (!below) return null;
-  const regions = roofFootprint(planOf(plans, below.id));
-  return regions.length ? { below, regions } : null;
+  const regions = roofFootprint(planOf(flatPlans(plans), below.id));
+  return regions.length ? { below, regions, arcs: curvesOf(planOf(plans, below.id).rooms) } : null;
 }
 
 export type Overhang = {
@@ -115,7 +117,7 @@ export function overhangsOf(rooms: PlanRoom[], regions: Region[]): Overhang[] {
 export function pulledBack(room: PlanRoom, regions: Region[]): Point[] | null {
   let out: ReturnType<typeof polygonClipping.intersection>;
   try {
-    out = polygonClipping.intersection([ring(room.polygon)], ...asPolygons(regions));
+    out = polygonClipping.intersection([ring(cutOutline(room))], ...asPolygons(regions));
   } catch {
     return null;
   }
@@ -125,16 +127,18 @@ export function pulledBack(room: PlanRoom, regions: Region[]): Point[] | null {
   return pts;
 }
 
-/** Trim a room to the support area. The plan comes back unchanged when that can't be done cleanly. */
-export function pullBack(plan: FloorPlan, roomId: string, regions: Region[]): FloorPlan {
+/** Trim a room to the support area, keeping its curves and following curves of the floor below (`arcs`). The plan comes back unchanged when that can't be done cleanly. */
+export function pullBack(plan: FloorPlan, roomId: string, regions: Region[], arcs: Arc[] = []): FloorPlan {
   const room = plan.rooms.find((r) => r.id === roomId);
   const pts = room && pulledBack(room, regions);
-  return pts ? reshapeRoom(plan, roomId, pts) : plan;
+  if (!room || !pts) return plan;
+  const fit = refitArcs(pts, [...curvesOf([room]), ...arcs]);
+  return reshapeRoom(plan, roomId, fit.polygon, fit.bulges ?? []);
 }
 
 /** The part of the support area with no room on it yet, as outlines to fill. */
 export function fillShapes(plan: FloorPlan, regions: Region[]): Point[][] {
-  const used: Region[] = plan.rooms.filter((r) => r.polygon.length >= 3).map((r) => ({ outline: clockwise(r.polygon), holes: [] }));
+  const used: Region[] = plan.rooms.filter((r) => r.polygon.length >= 3).map((r) => ({ outline: clockwise(cutOutline(r)), holes: [] }));
   const left = used.length ? subtractRegions(regions, used) : regions;
   return left.map((r) => clockwise(r.outline)).filter((p) => polygonArea(p) >= MIN_ROOM_SQIN);
 }
@@ -152,15 +156,16 @@ export function largestInside(poly: Point[], regions: Region[]): Point[] | null 
 }
 
 /** Every room that hangs past the support area without being held up on purpose, cut back to its biggest part inside it. For the automatic plans. */
-export function keepInside(plan: FloorPlan, regions: Region[]): { plan: FloorPlan; trimmed: number } {
+export function keepInside(plan: FloorPlan, regions: Region[], arcs: Arc[] = []): { plan: FloorPlan; trimmed: number } {
   let out = plan;
   let trimmed = 0;
   for (const o of overhangsOf(plan.rooms, regions)) {
     if (o.ok) continue;
     const room = out.rooms.find((r) => r.id === o.roomId)!;
-    const pts = largestInside(room.polygon, regions);
+    const pts = largestInside(cutOutline(room), regions);
     if (!pts) continue;
-    out = reshapeRoom(out, room.id, pts);
+    const fit = refitArcs(pts, [...curvesOf([room]), ...arcs]);
+    out = reshapeRoom(out, room.id, fit.polygon, fit.bulges ?? []);
     trimmed++;
   }
   return { plan: out, trimmed };
@@ -183,9 +188,10 @@ export function tooBigNote(level: Pick<Level, "name">, below: Pick<Level, "name"
 }
 
 /** "Fill the floor below": one room on each part of the support area that's still empty. */
-export function fillBelow(plan: FloorPlan, regions: Region[]): FloorPlan {
+export function fillBelow(plan: FloorPlan, regions: Region[], arcs: Arc[] = []): FloorPlan {
   const shapes = fillShapes(plan, regions);
-  return { ...plan, rooms: [...plan.rooms, ...shapes.map((poly, i) => makeRoom(poly, shapes.length > 1 ? `Room ${i + 1}` : "Room"))] };
+  const curves = [...curvesOf(plan.rooms), ...arcs];
+  return { ...plan, rooms: [...plan.rooms, ...shapes.map((poly, i) => refitRoom(makeRoom(poly, shapes.length > 1 ? `Room ${i + 1}` : "Room"), clockwise(poly.map(roundPoint)), curves))] };
 }
 
 /** The support outline's corners and walls, to snap to while drawing. */
@@ -201,7 +207,8 @@ export function supportTargets(regions: Region[]): SnapTargets {
   return { points, segments };
 }
 
-export const mergeTargets = (a: SnapTargets, b: SnapTargets | null): SnapTargets => (b ? { points: [...a.points, ...b.points], segments: [...a.segments, ...b.segments] } : a);
+export const mergeTargets = (a: SnapTargets, b: SnapTargets | null): SnapTargets =>
+  b ? { points: [...a.points, ...b.points], segments: [...a.segments, ...b.segments], arcs: [...(a.arcs ?? []), ...(b.arcs ?? [])] } : a;
 
 /** Posts this far apart at most (inches) under the beam of a room "On posts". */
 export const POST_SPACING_IN = 96;

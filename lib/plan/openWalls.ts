@@ -5,6 +5,8 @@ import { areaKind } from "./measure";
 import { sharedWall } from "./connect";
 import { clockwise, collinearOverlap, dist, edgesOf, lerp, pointInPolygon, polygonArea, project, roundPoint, subtractIntervals, add, scale } from "./geometry";
 import { hostSegment, openingGeometry, openWallsOf, wallPieces } from "./walls";
+import { pointOnEdge } from "./arcs";
+import { curvesOf, cutOutline, edgeDirection, nearestEdge, refitArcs } from "./refit";
 
 /**
  * Taking out the wall between two rooms (they stay two rooms, open to each
@@ -175,12 +177,13 @@ export function whyNotCombine(plan: FloorPlan, ids: string[]): string | null {
   return null;
 }
 
-function unionOf(rooms: PlanRoom[]): Point[] | null {
-  const [first, ...rest] = rooms.map((r): Polygon => [toRing(r.polygon)]);
+/** The joined outline of touching rooms, with their curves kept as curved edges. */
+function unionOf(rooms: PlanRoom[]): { polygon: Point[]; bulges?: number[] } | null {
+  const [first, ...rest] = rooms.map((r): Polygon => [toRing(cutOutline(r))]);
   const mp = polygonClipping.union(first, ...rest);
   if (mp.length !== 1 || mp[0].length !== 1) return null;
   const ring = cleanRing(mp[0][0].slice(0, -1).map(([x, y]) => roundPoint({ x, y })));
-  return ring.length >= 3 ? clockwise(ring) : null;
+  return ring.length >= 3 ? refitArcs(clockwise(ring), curvesOf(rooms)) : null;
 }
 
 /**
@@ -192,7 +195,8 @@ function unionOf(rooms: PlanRoom[]): Point[] | null {
 export function combineRooms(plan: FloorPlan, ids: string[]): { plan: FloorPlan; keptId: string; removedOpenings: Opening[] } | null {
   if (whyNotCombine(plan, ids)) return null;
   const rooms = plan.rooms.filter((r) => ids.includes(r.id));
-  const polygon = unionOf(rooms)!;
+  const joined = unionOf(rooms)!;
+  const flatJoined = cutOutline(joined);
   const keep = rooms.reduce((a, b) => (polygonArea(b.polygon) > polygonArea(a.polygon) ? b : a));
   const members = new Set(rooms.map((r) => r.id));
   const gone: Opening[] = [];
@@ -202,26 +206,36 @@ export function combineRooms(plan: FloorPlan, ids: string[]): { plan: FloorPlan;
       openings.push(o);
       continue;
     }
-    const g = openingGeometry(plan, o);
+    const seg = hostSegment(plan, o.host);
+    const center = seg && pointOnEdge(seg.a, seg.b, seg.bulge ?? 0, o.offsetIn);
+    const n = seg && center && leftNormalOf(edgeDirection(seg.a, seg.b, seg.bulge ?? 0, center));
     // Inside the joined room on both sides: it was in a wall between them.
-    const inside = !g || (pointInPolygon(add(g.center, scale(g.n, 6)), polygon) && pointInPolygon(add(g.center, scale(g.n, -6)), polygon));
-    const at = g && !inside ? edgesOf(polygon).map((e) => ({ e, pr: project(g.center, e.a, e.b) })).find((x) => x.pr.d < 1.5) : undefined;
-    if (!at) {
+    const inside = !center || !n || (pointInPolygon(add(center, scale(n, 6)), flatJoined) && pointInPolygon(add(center, scale(n, -6)), flatJoined));
+    const at = center && !inside ? nearestEdge(joined, center) : null;
+    if (!at || at.d >= 1.5) {
       gone.push(o);
       continue;
     }
     // Outlines all run clockwise, so the new edge points the same way as the old one and the swing side holds.
-    openings.push({ ...o, host: { roomId: keep.id, edge: at.e.i }, offsetIn: Math.round(at.pr.t * 10) / 10 });
+    openings.push({ ...o, host: { roomId: keep.id, edge: at.edge }, offsetIn: Math.round(at.t * 10) / 10 });
   }
   const re = <T extends { roomId?: string }>(x: T): T => (x.roomId && members.has(x.roomId) ? { ...x, roomId: keep.id } : x);
   const next: FloorPlan = {
     ...plan,
-    rooms: plan.rooms.filter((r) => r.id === keep.id || !members.has(r.id)).map((r) => (r.id === keep.id ? { ...r, polygon } : r)),
+    rooms: plan.rooms.filter((r) => r.id === keep.id || !members.has(r.id)).map((r) => (r.id === keep.id ? withShape(r, joined) : r)),
     openings,
     fixtures: plan.fixtures.map(re),
     furniture: plan.furniture.map(re),
   };
   return { plan: pruneOpenWalls(next), keptId: keep.id, removedOpenings: gone };
+}
+
+const leftNormalOf = (u: Point): Point => ({ x: u.y, y: -u.x });
+
+function withShape(r: PlanRoom, shape: { polygon: Point[]; bulges?: number[] }): PlanRoom {
+  const { bulges: _b, ...rest } = r;
+  void _b;
+  return shape.bulges ? { ...rest, polygon: shape.polygon, bulges: shape.bulges } : { ...rest, polygon: shape.polygon };
 }
 
 /** Rooms on either side of a shared wall along one edge of a room (the room itself first). */

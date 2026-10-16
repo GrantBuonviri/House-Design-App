@@ -149,6 +149,12 @@ function ToolIcon({ tool }: { tool: PlanTool }) {
           <path d="M4 19V8h11" strokeWidth={3.2} strokeLinecap="square" />
         </svg>
       );
+    case "curve":
+      return (
+        <svg {...common}>
+          <path d="M4 19C4 11 9 6 19 5" strokeWidth={3.2} />
+        </svg>
+      );
     case "door":
       return (
         <svg {...common}>

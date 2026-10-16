@@ -1,6 +1,6 @@
 /** Shared by the floor plan editor and its canvas (which loads separately, in the browser only). */
 
-export type PlanTool = "select" | "room" | "wall" | "door" | "stairs" | "fixture" | "pan";
+export type PlanTool = "select" | "room" | "wall" | "curve" | "door" | "stairs" | "fixture" | "pan";
 
 /**
  * Something selected on the plan. An "edge" is one side of a room, with the
@@ -27,6 +27,12 @@ export const PLAN_TOOLS: { id: PlanTool; label: string; key: string; hint: strin
     label: "Wall",
     key: "W",
     hint: "Click to start a wall, click again at each turn, and double-click or press Enter to finish. Type a length like 12'6 and press Enter for an exact size. A wall from one side of a room to the other splits it in two; a shorter one (or one finished with Option held) is a divider. Pick a wall to make it a half wall.",
+  },
+  {
+    id: "curve",
+    label: "Curved wall",
+    key: "C",
+    hint: "Click where the curve starts and where it ends, then move the mouse to bow it and click again. Or type a radius like 8' and press Enter. A curve from one side of a room to another splits it in two; otherwise (or with Option held) it's a curved divider wall. Pick it afterwards to make it a half wall.",
   },
   { id: "door", label: "Doors and windows", key: "D", hint: "Pick a door or window on the right, then click a wall to put it there." },
   { id: "stairs", label: "Stairs", key: "S", hint: "Click to place stairs. They climb to the floor above and show there too." },

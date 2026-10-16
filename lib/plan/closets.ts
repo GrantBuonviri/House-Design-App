@@ -3,6 +3,7 @@ import { addDoor, neighbors, roleOf, roomLinks, sharedWall } from "./connect";
 import { makeRoom, newPlanId, reshapeRoom } from "./edit";
 import { add, angleOf, dist, edgesOf, isRectangle, leftNormal, pointInPolygon, polygonArea, round1, scale, sub, unit } from "./geometry";
 import { openingGeometry, wallPieces } from "./walls";
+import { isCurved } from "./arcs";
 
 /** Suggest a plan: a closet in each bedroom (a walk-in for a big primary bedroom). */
 
@@ -31,8 +32,10 @@ export function addClosets(plan: FloorPlan, exteriorIn: number, brief: DesignBri
     const pieces = wallPieces(p, exteriorIn).filter((w) => "roomId" in w.host && w.host.roomId === now.id);
     const geos = p.openings.map((o) => ({ o, ...openingEnds(p, o) })).filter((g) => g.a);
 
-    let best: { score: number; poly: Point[]; closet: Point[]; back: [Point, Point]; n: Point; L: number } | null = null;
+    let best: { score: number; poly: Point[]; bulges?: number[]; closet: Point[]; back: [Point, Point]; n: Point; L: number } | null = null;
     for (const e of edgesOf(now.polygon)) {
+      // A closet never goes against a curved wall.
+      if (isCurved(now.bulges?.[e.i])) continue;
       const len = dist(e.a, e.b);
       const L = walkIn ? Math.min(len - 36, 84) : Math.min(len - 30, 96);
       const perp = sides[(e.i + 1) % 4];
@@ -43,6 +46,8 @@ export function addClosets(plan: FloorPlan, exteriorIn: number, brief: DesignBri
       const next = neighbors(p, now, 24).filter((x) => sharedOnEdge(now, e.i, x.room));
       const quiet = next.some((x) => BEDROOMS.has(x.room.type ?? "") || roleOf(x.room) === "suite" || x.room.type === "bathroom" || x.room.type === "closet");
       for (const atStart of [true, false]) {
+        // Its side runs along the wall meeting this one at the corner: that one has to be straight too.
+        if (isCurved(now.bulges?.[atStart ? (e.i + 3) % 4 : (e.i + 1) % 4])) continue;
         const C = atStart ? e.a : e.b;
         const w = atStart ? u : scale(u, -1);
         const grown = [add(C, add(scale(w, -4), scale(n, -4))), add(C, add(scale(w, L + 4), scale(n, -4))), add(C, add(scale(w, L + 4), scale(n, depth + 4))), add(C, add(scale(w, -4), scale(n, depth + 4)))];
@@ -52,12 +57,15 @@ export function addClosets(plan: FloorPlan, exteriorIn: number, brief: DesignBri
         const i = atStart ? e.i : (e.i + 1) % 4;
         // Going clockwise, the corner is reached along the wall the closet's depth runs on.
         poly.splice(i, 1, ...(atStart ? inner : [...inner].reverse()));
+        // The corner became three, along straight walls: other curves keep their place.
+        const bulges = now.bulges ? [...now.bulges] : undefined;
+        bulges?.splice(i, 0, 0, 0);
         const score = 10 - (outside / len) * 8 + (quiet ? 3 : 0) + (atStart ? 0.1 : 0);
-        if (!best || score > best.score) best = { score, poly, closet: [C, add(C, scale(w, L)), add(C, add(scale(w, L), scale(n, depth))), add(C, scale(n, depth))], back: [C, add(C, scale(w, L))], n, L };
+        if (!best || score > best.score) best = { score, poly, bulges, closet: [C, add(C, scale(w, L)), add(C, add(scale(w, L), scale(n, depth))), add(C, scale(n, depth))], back: [C, add(C, scale(w, L))], n, L };
       }
     }
     if (!best) continue;
-    p = reshapeRoom(p, now.id, best.poly);
+    p = reshapeRoom(p, now.id, best.poly, best.bulges ?? []);
     const closet = makeRoom(best.closet, walkIn ? "Walk-in closet" : "Closet", { type: "closet" });
     p = { ...p, rooms: [...p.rooms, closet] };
     const bedNow = p.rooms.find((r) => r.id === now.id)!;
