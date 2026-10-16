@@ -9,7 +9,7 @@ import { z } from "zod";
  * Angles are degrees clockwise from north (0 = N, 90 = E).
  */
 
-export const SCHEMA_VERSION = 13;
+export const SCHEMA_VERSION = 14;
 
 export const Point = z.object({ x: z.number(), y: z.number() });
 export type Point = z.infer<typeof Point>;
@@ -542,6 +542,17 @@ export const HouseSystems = z.object({
 });
 export type HouseSystems = z.infer<typeof HouseSystems>;
 
+/** What the structural sheets assume about the site and the lumber. */
+export const HouseStructure = z.object({
+  /** Soil load-bearing value, psf. 1500 is the lowest presumptive value, used until a soils report says more. */
+  soilPsf: z.union([z.literal(1500), z.literal(2000), z.literal(3000)]).default(1500),
+  /** Wind exposure: B for town and suburbs, C for open land. */
+  windExposure: z.enum(["B", "C"]).default("B"),
+  /** Framing lumber, for the joist span table. */
+  lumber: z.enum(["df-l", "hem-fir"]).default("df-l"),
+});
+export type HouseStructure = z.infer<typeof HouseStructure>;
+
 /** The "Plan details" form and export choices. The sheets themselves are drawn from the project every time. */
 export const PlansSettings = z.object({
   /** The real site address and county parcel number. Left empty, the sheets print "TBD". */
@@ -555,6 +566,7 @@ export const PlansSettings = z.object({
   /** "My real lot". Null until it's filled in. */
   lot: RealLot.nullable().default(null),
   systems: HouseSystems.prefault({}),
+  structure: HouseStructure.prefault({}),
 });
 export type PlansSettings = z.infer<typeof PlansSettings>;
 

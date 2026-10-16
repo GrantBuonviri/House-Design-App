@@ -8,6 +8,7 @@ import { hasCabinetRuns } from "./sheets/cabinets";
 import { fixtureLines } from "./sheets/schedules";
 import { gasFixtures } from "./sheets/plumbing";
 import { levelDevices } from "./systems";
+import { structureOf } from "@/lib/structure";
 
 /**
  * Every plan sheet a Boise house permit asks for (checklist #402), grouped
@@ -15,7 +16,7 @@ import { levelDevices } from "./systems";
  * project. Sheets that come in later updates show as "coming".
  */
 
-export type SheetStatus = "ready" | "notes" | "needs" | "not-needed" | "outside" | "soon";
+export type SheetStatus = "ready" | "notes" | "needs" | "not-needed" | "outside";
 
 export const STATUS_LABEL: Record<SheetStatus, string> = {
   ready: "Ready",
@@ -23,7 +24,6 @@ export const STATUS_LABEL: Record<SheetStatus, string> = {
   needs: "Needs more",
   "not-needed": "Not needed",
   outside: "From outside the app",
-  soon: "Coming in a later update",
 };
 
 export type SheetGroup = "General" | "Site" | "Architectural" | "Interiors" | "Systems" | "Structural" | "From outside the app";
@@ -45,18 +45,6 @@ export type SheetEntry = {
 
 /** Can the sheet be drawn and exported? */
 export const canDraw = (s: SheetEntry) => s.status === "ready" || s.status === "notes";
-
-type Later = { id: string; number: string; title: string; group: SheetGroup; optional?: boolean; part: number };
-
-/** Sheets that come with later parts of this feature. */
-const LATER: Later[] = [
-  { id: "sections", number: "A-301", title: "Building sections", group: "Architectural", part: 5 },
-  { id: "stair-section", number: "A-501", title: "Stair section and details", group: "Architectural", part: 5 },
-  { id: "foundation", number: "S-101", title: "Foundation plan", group: "Structural", part: 5 },
-  { id: "floor-framing", number: "S-201", title: "Floor framing plans", group: "Structural", part: 5 },
-  { id: "roof-framing", number: "S-301", title: "Roof framing plan (truss layout)", group: "Structural", part: 5 },
-  { id: "bracing", number: "S-401", title: "Wall bracing plan", group: "Structural", part: 5 },
-];
 
 /** Documents a permit needs that the app can't make, who makes them, and what the app gives them. */
 export const OUTSIDE_DOCS: { id: string; title: string; who: string; gives: string }[] = [
@@ -234,17 +222,66 @@ export function readiness(project: Project): Readiness {
     );
   }
 
-  for (const s of LATER) sheets.push({ id: s.id, number: s.number, title: s.title, group: s.group, optional: s.optional, status: "soon", reasons: [{ text: `Added in part ${s.part} of the plans export` }] });
+  structuralSheets(project, needPlan, fails).forEach((e) => sheets.push(e));
   for (const d of OUTSIDE_DOCS) sheets.push({ id: `outside:${d.id}`, number: "", title: d.title, group: "From outside the app", status: "outside", reasons: [{ text: `Made by: ${d.who}.` }, { text: `The app gives them: ${d.gives}` }] });
 
   const order = (g: SheetGroup) => SHEET_GROUPS.indexOf(g);
   sheets.sort((a, b) => order(a.group) - order(b.group) || a.number.localeCompare(b.number));
 
   const labelReasons: string[] = [];
-  const missing = sheets.filter((s) => !s.optional && (s.status === "needs" || s.status === "soon"));
+  const missing = sheets.filter((s) => !s.optional && s.status === "needs");
   if (missing.length) labelReasons.push(`${missing.length} sheet${missing.length === 1 ? " isn't" : "s aren't"} ready yet`);
   if (fails.length) labelReasons.push(`${fails.length} code check${fails.length === 1 ? "" : "s"} fail`);
   const out: Readiness = { sheets, report, label: labelReasons.length ? LABEL_PRELIMINARY : LABEL_REVIEW, labelReasons };
   cache.set(project, out);
+  return out;
+}
+
+/** Sections, the stair section and the structural sheets (part 5). */
+function structuralSheets(project: Project, needPlan: Reason[], fails: RuleReport[]): SheetEntry[] {
+  const out: SheetEntry[] = [];
+  if (needPlan.length) {
+    for (const [id, number, title, group] of [
+      ["sections", "A-301", "Building sections", "Architectural"],
+      ["stair-section", "A-501", "Stair section and details", "Architectural"],
+      ["struct-notes", "S-001", "Structural notes and header schedule", "Structural"],
+      ["foundation", "S-101", "Foundation plan", "Structural"],
+      ["floor-framing", "S-201", "Floor framing plans", "Structural"],
+      ["roof-framing", "S-301", "Roof framing plan (truss layout)", "Structural"],
+      ["bracing", "S-401", "Wall bracing plans", "Structural"],
+    ] as const)
+      out.push({ id, number, title, group, status: "needs", reasons: needPlan });
+    return out;
+  }
+  const h = houseFacts(project);
+  const s = structureOf(project);
+  const eng = (list: { text: string }[]): Reason[] => list.map((e) => ({ text: `Engineer required: ${e.text}` }));
+  const stairs = h.levels.some((l) => h.plan(l.id).stairs.length > 0);
+  out.push({ id: "sections", number: "A-301", title: "Building sections", group: "Architectural", status: "ready", reasons: [] });
+  const stairFails = fails.filter((r) => r.rule.group === "Stairs").flatMap((r) => r.results.filter((x) => x.status === "fail").map((x) => ({ text: `${x.text} (${r.section})`, stage: x.stage })));
+  out.push(
+    stairs
+      ? { id: "stair-section", number: "A-501", title: "Stair section and details", group: "Architectural", status: stairFails.length ? "notes" : "ready", reasons: stairFails }
+      : { id: "stair-section", number: "A-501", title: "Stair section and details", group: "Architectural", status: "not-needed", reasons: [{ text: "No stairs in this house" }] },
+  );
+  const settings = project.plans.structure;
+  const basis: Reason = { text: `Soil ${settings.soilPsf.toLocaleString()} psf, wind exposure ${settings.windExposure}, ${settings.lumber === "df-l" ? "Douglas fir" : "hem-fir"} lumber. Change them in Plan details.`, action: "details" };
+  out.push({ id: "struct-notes", number: "S-001", title: "Structural notes and header schedule", group: "Structural", status: s.engineer.length ? "notes" : "ready", reasons: s.engineer.length ? [{ text: `${s.engineer.length} item${s.engineer.length === 1 ? " needs" : "s need"} an engineer; they're listed on this sheet.` }, basis] : [basis] });
+  const fd = s.foundation;
+  if (fd) {
+    const reasons: Reason[] = fd.hillside ? [{ text: "An engineer must design this foundation (Boise hillside rules)" }, ...eng(fd.engineer.slice(1))] : eng(fd.engineer);
+    out.push({ id: "foundation", number: "S-101", title: "Foundation plan", group: "Structural", status: reasons.length ? "notes" : "ready", reasons: [...reasons, basis] });
+  }
+  if (!s.floors.length) out.push({ id: "floor-framing", number: "S-201", title: "Floor framing plans", group: "Structural", status: "not-needed", reasons: [{ text: "Not needed: the only floor sits on a slab" }] });
+  s.floors.forEach((f, i) => {
+    const level = h.levels.find((l) => l.id === f.levelId)!;
+    out.push({ id: `floor-framing:${f.levelId}`, number: `S-${201 + i}`, title: `${level.name} floor framing`, group: "Structural", status: f.engineer.length ? "notes" : "ready", reasons: eng(f.engineer), levelId: f.levelId });
+  });
+  out.push({ id: "roof-framing", number: "S-301", title: "Roof framing plan (truss layout)", group: "Structural", status: "ready", reasons: [{ text: "The truss supplier's engineer designs the trusses from this layout." }] });
+  const levels = [...(s.main ? [s.main] : []), ...s.upper];
+  levels.forEach((level, i) => {
+    const bad = s.bracing.filter((b) => b.levelId === level.id && b.problems.length);
+    out.push({ id: `bracing:${level.id}`, number: `S-${401 + i}`, title: `${level.name} wall bracing`, group: "Structural", status: bad.length ? "notes" : "ready", reasons: bad.map((b) => ({ text: `Line ${b.label}: ${b.problems.join(" ")}`, stage: "plan" as const })), levelId: level.id });
+  });
   return out;
 }
