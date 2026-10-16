@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { House3D, type FloorPlan, type Opening, type PlanRoom, type Point } from "@/lib/model/schema";
+import { House3D, SCHEMA_VERSION, type FloorPlan, type Opening, type PlanRoom, type Point } from "@/lib/model/schema";
 import { createProject, migrateProject } from "@/lib/model/project";
 import { generatePlot, FLAT_PLOT_SEED } from "@/lib/land/generate";
 import { levelFor, MAIN_LEVEL_ID } from "@/lib/brief/levels";
@@ -74,7 +74,7 @@ function project(plans: Record<string, FloorPlan>) {
 }
 
 function ctx(plans: Record<string, FloorPlan>): HouseContext {
-  return { levels: [levelFor(MAIN_LEVEL_ID)], basics: defaultBasics(), house3d: { roof: House3D.parse({}).roof }, site: siteFor(null, { x: 0, y: 0 }, plans), frame: { ox: 0, oy: 0 } };
+  return { levels: [levelFor(MAIN_LEVEL_ID)], basics: defaultBasics(), house3d: House3D.parse({}), site: siteFor(null, { x: 0, y: 0 }, plans), frame: { ox: 0, oy: 0 } };
 }
 
 describe("arc math", () => {
@@ -278,7 +278,7 @@ describe("saved data", () => {
     const p = project({ [MAIN_LEVEL_ID]: plan([room("a", 0, 0, 120, 120)]) });
     const old = JSON.parse(JSON.stringify({ ...p, schemaVersion: 19 }));
     const m = migrateProject(old);
-    expect(m.schemaVersion).toBe(20);
+    expect(m.schemaVersion).toBe(SCHEMA_VERSION);
     expect(m.floorPlans[MAIN_LEVEL_ID].rooms[0].bulges).toBeUndefined();
   });
 

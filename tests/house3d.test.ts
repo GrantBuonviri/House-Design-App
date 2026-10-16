@@ -32,7 +32,7 @@ function plan(rooms: PlanRoom[], extra: Partial<FloorPlan> = {}): FloorPlan {
 const ROOF: House3D["roof"] = House3D.parse({}).roof;
 
 function ctx(levels = [levelFor(MAIN_LEVEL_ID)], plans: Record<string, FloorPlan> = {}, roof = ROOF): HouseContext {
-  return { levels, basics: defaultBasics(), house3d: { roof }, site: siteFor(null, { x: 0, y: 0 }, plans), frame: { ox: 0, oy: 0 } };
+  return { levels, basics: defaultBasics(), house3d: { ...House3D.parse({}), roof }, site: siteFor(null, { x: 0, y: 0 }, plans), frame: { ox: 0, oy: 0 } };
 }
 
 /** Highest and lowest y (scene feet) of some meshes. */
@@ -274,7 +274,7 @@ function houseOn(seed: number | "flat", types: [string, string?][], above: numbe
   const plans = suggestPlans(bubbles, { brief, plot, levels, basics }).plans;
   const p = { ...createProject("Test"), plot, brief, levels, bubbles, floorPlans: plans };
   const site = siteFor(plot, lotOffsetFor(p), plans);
-  const c: HouseContext = { levels, basics, house3d: { roof: ROOF }, site, frame: { ox: 0, oy: 0 } };
+  const c: HouseContext = { levels, basics, house3d: { ...House3D.parse({}), roof: ROOF }, site, frame: { ox: 0, oy: 0 } };
   return { p, plans, site, c, levels };
 }
 

@@ -67,6 +67,8 @@ export function migrateProject(raw: unknown): Project {
   if (version < 19) migrated = migrateV18(migrated);
   // Version 19 to 20 added curved walls (room `bulges`, wall `bulge`). Left out
   // means straight, so older projects need no change beyond the version.
+  // Version 20 to 21 added the walkthrough's floor label settings (`house3d.walkLabels`),
+  // all with defaults, so older projects need no change beyond the version.
   return Project.parse({ ...migrated, schemaVersion: SCHEMA_VERSION });
 }
 

@@ -79,7 +79,7 @@ export const TOUR: TourStep[] = [
   {
     target: "walkthrough",
     title: "Walk through it",
-    body: "Once there's a floor plan, walk through the house in first person. Press E inside to paint walls, pick finishes and place furniture.",
+    body: "Once there's a floor plan, walk through the house in first person. Press E inside to paint walls, pick finishes and place furniture, L for room labels on the floor, and T for a tape measure.",
   },
   {
     target: "undo",

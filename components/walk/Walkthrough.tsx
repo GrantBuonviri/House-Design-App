@@ -24,6 +24,11 @@ import { HouseMeshes, Sky, type AimTarget } from "@/components/house3d/Scene";
 import { AddFurniturePanel, FinishPanel, FurniturePanel, OutsidePanel } from "./DesignPanel";
 import { FurnitureGhost, Player, type Look } from "./Player";
 import { AimDot, WalkControls, WalkHelp, WalkTopBar } from "./WalkOverlays";
+import { FloorLabels } from "./FloorLabels";
+import LabelSettingsPanel from "./LabelSettingsPanel";
+import { TapeMeasure } from "./TapeMeasure";
+import { lockAxis, snap, tapeCandidates, TAPE_KEEP, type Tape, type TapePoint } from "@/lib/house3d/tape";
+import type { WalkLabels } from "@/lib/model/schema";
 import { effectiveExterior } from "@/lib/exterior/style";
 import { canvasSettings, useGraphics } from "@/lib/graphics";
 
@@ -32,7 +37,8 @@ type Panel =
   | { kind: "finish"; aim: Extract<Aim, { kind: "finish" }> }
   | { kind: "outside"; aim: Extract<Aim, { kind: "outside" }> }
   | { kind: "furniture"; levelId: string; id: string }
-  | { kind: "add" };
+  | { kind: "add" }
+  | { kind: "labels" };
 
 /** Furniture being carried: it follows where you look until you click to put it down. */
 type Carry = { item: FurnitureItem; levelId: string; isNew: boolean; check: PlaceCheck };
@@ -60,6 +66,13 @@ export default function Walkthrough({ project, cost, onClose }: { project: Proje
   const answers = useMemo(() => effectiveAnswers(project.interior.answers, project.discovery.answers.feel ?? ""), [project.interior.answers, project.discovery.answers.feel]);
 
   const [design, setDesign] = useState(false);
+  // Floor labels (L) and the tape measure (T). Measurements aren't saved.
+  const [labelsOn, setLabelsOn] = useState(false);
+  const [tapeOn, setTapeOn] = useState(false);
+  const [tape, setTape] = useState<{ done: Tape[]; first: TapePoint | null; hover: TapePoint | null }>({ done: [], first: null, hover: null });
+  const shiftDown = useRef(false);
+  const labelSettings = project.house3d.walkLabels;
+  const setLabelSettings = (next: WalkLabels) => update((p) => ({ ...p, house3d: { ...p.house3d, walkLabels: next } }));
   const [aim, setAim] = useState<Aim | null>(null);
   const [panel, setPanel] = useState<Panel | null>(null);
   const [carry, setCarry] = useState<Carry | null>(null);
@@ -105,8 +118,9 @@ export default function Walkthrough({ project, cost, onClose }: { project: Proje
   const aimTarget = useRef<AimTarget | null>(null);
 
   // The latest of everything, for the mouse and key handlers.
-  const latest = useRef({ aim, carry, panel, design, locked, plans: project.floorPlans });
-  latest.current = { aim, carry, panel, design, locked, plans: project.floorPlans };
+  const snapPoints = useMemo(() => tapeCandidates(project.floorPlans, heights, levels.map((l) => l.id)), [project.floorPlans, heights, levels]);
+  const latest = useRef({ aim, carry, panel, design, locked, plans: project.floorPlans, tapeOn, tape, snapPoints });
+  latest.current = { aim, carry, panel, design, locked, plans: project.floorPlans, tapeOn, tape, snapPoints };
 
   function jump(spot: Spot, keepYaw = true) {
     walker.current = { ...walker.current, p: spot.p, feet: spot.feet, vz: 0, yaw: keepYaw ? walker.current.yaw : spot.yaw };
@@ -212,6 +226,19 @@ export default function Walkthrough({ project, cost, onClose }: { project: Proje
         setCarry({ ...c, item, check: checkPlacement(withFurniture(pl, (f) => f.filter((x) => x.id !== item.id)), item) });
         return;
       }
+      if (latest.current.tapeOn) {
+        // Measuring: the spot you're aiming at, snapped to corners and door/window edges.
+        const h = look.hit;
+        let hover: TapePoint | null = null;
+        if (h) {
+          const at = toPlan(h.point);
+          hover = snap({ x: at.x, y: at.y, z: h.point.y * IN_PER_UNIT }, latest.current.snapPoints);
+          const first = latest.current.tape.first;
+          if (first && shiftDown.current) hover = lockAxis(first, hover);
+        }
+        setTape((t) => (JSON.stringify(t.hover) === JSON.stringify(hover) ? t : { ...t, hover }));
+        return;
+      }
       let next: Aim = { kind: "none" };
       const h = look.hit;
       if (h) {
@@ -243,6 +270,8 @@ export default function Walkthrough({ project, cost, onClose }: { project: Proje
       if (!on) {
         unlockedAt.current = performance.now();
         setAim(null);
+        // Letting go of the mouse also cancels a measurement in progress.
+        setTape((t) => (t.first || t.hover ? { ...t, first: null, hover: null } : t));
         // Letting go of the mouse while carrying puts the piece back where it was.
         if (latest.current.carry) {
           setCarry(null);
@@ -253,6 +282,7 @@ export default function Walkthrough({ project, cost, onClose }: { project: Proje
     const onKey = (e: KeyboardEvent) => {
       const t = e.target as HTMLElement | null;
       if (t?.closest("input, textarea, select")) return;
+      if (e.key === "Shift") shiftDown.current = true;
       if (e.key === "Escape" && !document.pointerLockElement) {
         if (latest.current.panel) setPanel(null);
         else if (performance.now() - unlockedAt.current > 400) onClose();
@@ -263,6 +293,22 @@ export default function Walkthrough({ project, cost, onClose }: { project: Proje
       if (e.code === "KeyE") {
         setDesign(!d);
         if (d) setCarry(null);
+        else setTapeOn(false);
+        return;
+      }
+      if (e.code === "KeyL") {
+        setLabelsOn((v) => !v);
+        return;
+      }
+      if (e.code === "KeyT" && !c) {
+        const next = !latest.current.tapeOn;
+        setTapeOn(next);
+        if (next) setDesign(false);
+        setTape((t) => ({ ...t, first: null, hover: null }));
+        return;
+      }
+      if (e.code === "KeyC" && latest.current.tapeOn) {
+        setTape({ done: [], first: null, hover: null });
         return;
       }
       if (!on || !d) return;
@@ -287,6 +333,13 @@ export default function Walkthrough({ project, cost, onClose }: { project: Proje
         putDown();
         return;
       }
+      if (latest.current.tapeOn) {
+        const { first, hover } = latest.current.tape;
+        if (!hover) return;
+        const at = first && e.shiftKey ? lockAxis(first, hover) : hover;
+        setTape((t) => (!first ? { ...t, first: at } : { done: [...t.done, { a: first, b: at }].slice(-TAPE_KEEP), first: null, hover: null }));
+        return;
+      }
       if (!d || !a) return;
       if (a.kind === "finish") {
         setPanel({ kind: "finish", aim: a });
@@ -299,12 +352,17 @@ export default function Walkthrough({ project, cost, onClose }: { project: Proje
         stopWalking();
       } else if (a.hint) say(a.hint);
     };
+    const onKeyUp = (e: KeyboardEvent) => {
+      if (e.key === "Shift") shiftDown.current = false;
+    };
     document.addEventListener("pointerlockchange", onChange);
+    window.addEventListener("keyup", onKeyUp);
     window.addEventListener("keydown", onKey);
     window.addEventListener("mousedown", onDown);
     return () => {
       document.removeEventListener("pointerlockchange", onChange);
       window.removeEventListener("keydown", onKey);
+      window.removeEventListener("keyup", onKeyUp);
       window.removeEventListener("mousedown", onDown);
     };
   });
@@ -354,6 +412,8 @@ export default function Walkthrough({ project, cost, onClose }: { project: Proje
         <Sky day={seasonInfo.day} hour={shownHour} span={span} version={model} center={model.bounds ? [(model.bounds.min[0] + model.bounds.max[0]) / 2, 0, (model.bounds.min[2] + model.bounds.max[2]) / 2] : [0, 0, 0]} />
         <Ground site={site} frame={frame} plans={plans} ctx={ctx} heights={heights} yard={false} />
         <HouseMeshes parts={model.parts} aimRef={aimTarget} />
+        {labelsOn && <FloorLabels project={project} settings={labelSettings} frame={frame} heights={heights} walker={walker} costTotal={cost?.total.likely} />}
+        <TapeMeasure done={tape.done} first={tape.first} hover={tapeOn ? tape.hover : null} frame={frame} units={labelSettings.units} />
         {carry && <FurnitureGhost item={carry.item} floorIn={heights[carry.levelId]?.floorIn ?? 0} frame={frame} ok={carry.check.ok} />}
         <Player
           walker={walker}
@@ -365,7 +425,7 @@ export default function Walkthrough({ project, cost, onClose }: { project: Proje
             setWhere((cur) => (cur.levelName === next.levelName && cur.roomName === next.roomName ? cur : next));
           }}
           aimTarget={aimTarget}
-          looking={locked && (design || !!carry)}
+          looking={locked && (design || !!carry || tapeOn)}
           fastLook={!!carry}
           onLook={onLook}
         />
@@ -380,7 +440,19 @@ export default function Walkthrough({ project, cost, onClose }: { project: Proje
         onDesign={() => {
           setDesign(!design);
           if (design) setCarry(null);
+          else setTapeOn(false);
         }}
+        labelsOn={labelsOn}
+        tapeOn={tapeOn}
+        onLabels={() => setLabelsOn(!labelsOn)}
+        onLabelSettings={() => setPanel({ kind: "labels" })}
+        onTape={() => {
+          setTapeOn(!tapeOn);
+          if (!tapeOn) setDesign(false);
+          setTape((t) => ({ ...t, first: null, hover: null }));
+        }}
+        onClearTape={() => setTape({ done: [], first: null, hover: null })}
+        hasTape={tape.done.length > 0}
         onAddFurniture={() => setPanel({ kind: "add" })}
         onClose={onClose}
       />
@@ -391,6 +463,13 @@ export default function Walkthrough({ project, cost, onClose }: { project: Proje
         <button className="absolute inset-0 cursor-pointer" onClick={start} aria-label="Keep walking" />
       ) : (
         <WalkHelp onStart={start} />
+      )}
+
+      {locked && tapeOn && (
+        <div className="pointer-events-none absolute top-1/2 left-1/2 mt-5 -translate-x-1/2 rounded-md bg-black/65 px-3 py-1.5 text-center text-sm text-white" data-testid="tape-hint">
+          {tape.first ? "Click the second point" : "Click to start measuring"}
+          <span className="block text-xs text-white/60">Shift keeps it level or straight up · C clears · T stops</span>
+        </div>
       )}
 
       {toast && (
@@ -423,6 +502,15 @@ export default function Walkthrough({ project, cost, onClose }: { project: Proje
               />
             )}
             {panel.kind === "add" && <AddFurniturePanel onPick={addFurniture} />}
+            {panel.kind === "labels" && (
+              <LabelSettingsPanel
+                settings={labelSettings}
+                onChange={setLabelSettings}
+                onHideAll={() => {
+                  setLabelsOn(false);
+                }}
+              />
+            )}
           </div>
         </aside>
       )}

@@ -22,8 +22,15 @@ export function WalkTopBar(props: {
   onDesign: () => void;
   onAddFurniture: () => void;
   onClose: () => void;
+  labelsOn: boolean;
+  tapeOn: boolean;
+  hasTape: boolean;
+  onLabels: () => void;
+  onLabelSettings: () => void;
+  onTape: () => void;
+  onClearTape: () => void;
 }) {
-  const { name, where, cost, design, locked, onDesign, onAddFurniture, onClose } = props;
+  const { name, where, cost, design, locked, onDesign, onAddFurniture, onClose, labelsOn, tapeOn, hasTape, onLabels, onLabelSettings, onTape, onClearTape } = props;
   return (
     <div className="pointer-events-none absolute top-0 right-0 left-0 z-20 flex items-start justify-between gap-3 p-4">
       <div className="rounded-lg bg-black/55 px-3 py-2 text-white">
@@ -48,6 +55,34 @@ export function WalkTopBar(props: {
         >
           Design {design ? "on" : "off"}
         </button>
+        <button
+          className={`pointer-events-auto rounded-md px-3 py-1.5 text-sm font-medium shadow ${labelsOn ? "bg-accent text-white" : "bg-white/90 text-ink hover:bg-white"}`}
+          onClick={onLabels}
+          aria-pressed={labelsOn}
+          title="Show room labels on the floor (L)"
+          data-testid="labels-toggle"
+        >
+          Labels {labelsOn ? "on" : "off"}
+        </button>
+        {!locked && (
+          <button className="pointer-events-auto rounded-md bg-white/90 px-2.5 py-1.5 text-sm text-ink shadow hover:bg-white" onClick={onLabelSettings} aria-label="Label settings" title="Label settings" data-testid="label-settings-button">
+            ⚙
+          </button>
+        )}
+        <button
+          className={`pointer-events-auto rounded-md px-3 py-1.5 text-sm font-medium shadow ${tapeOn ? "bg-accent text-white" : "bg-white/90 text-ink hover:bg-white"}`}
+          onClick={onTape}
+          aria-pressed={tapeOn}
+          title="Measure: click two points (T)"
+          data-testid="tape-toggle"
+        >
+          Tape {tapeOn ? "on" : "off"}
+        </button>
+        {!locked && hasTape && (
+          <button className="pointer-events-auto rounded-md bg-white/90 px-3 py-1.5 text-sm text-ink shadow hover:bg-white" onClick={onClearTape}>
+            Clear tape
+          </button>
+        )}
         {design && !locked && (
           <button className="pointer-events-auto rounded-md bg-white/90 px-3 py-1.5 text-sm text-ink shadow hover:bg-white" onClick={onAddFurniture}>
             Add furniture
@@ -109,6 +144,8 @@ export function WalkHelp({ onStart }: { onStart: () => void }) {
           <li>Hold Shift to walk faster</li>
           <li>E turns Design on: aim at a floor, wall, counter, furniture, or outside at the siding, roof, doors and yard, and click to change it</li>
           <li>With Design on, F adds furniture</li>
+          <li>L shows room labels on the floor (the ⚙ button sets what they say)</li>
+          <li>T is the tape measure: click two points. Shift keeps it level or upright, C clears</li>
           <li>Esc to stop, and Esc again to close</li>
         </ul>
       </div>
