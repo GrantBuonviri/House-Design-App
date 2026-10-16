@@ -85,7 +85,7 @@ function moved(a: object, b: object): boolean {
 function describePlan(a: FloorPlan | undefined, b: FloorPlan | undefined): string | null {
   if (!a || !b) return b ? "start the floor plan" : "clear the floor plan";
   const roomName = (r: FloorPlan["rooms"][number]) => r.name || "a room";
-  const special = describeOpenWalls(a, b, roomName) ?? describeSplit(a, b, roomName);
+  const special = describeOpenWalls(a, b, roomName) ?? describeSplit(a, b, roomName) ?? describeTrim(a, b, roomName);
   if (special) return special;
   const rooms = describeList(a.rooms, b.rooms, roomName, (was, now) =>
     was.name !== now.name ? `rename ${roomName(was)}` : moved(was, now) ? `move ${roomName(now)}` : `change ${roomName(now)}`,
@@ -188,4 +188,22 @@ function describeSplit(a: FloorPlan, b: FloorPlan, roomName: (r: FloorPlan["room
   const shrunk = b.rooms.filter((r) => was.has(r.id) && json(was.get(r.id)!.polygon) !== json(r.polygon));
   if (added.length !== 1 || shrunk.length !== 1 || b.rooms.length !== a.rooms.length + 1) return null;
   return `split ${roomName(was.get(shrunk[0].id)!)}`;
+}
+
+/** A room dropped on another one trims it: "Trimmed Living to fit Kitchen". */
+function describeTrim(a: FloorPlan, b: FloorPlan, roomName: (r: FloorPlan["rooms"][number]) => string): string | null {
+  if (a.rooms.length !== b.rooms.length) return null;
+  const was = new Map(a.rooms.map((r) => [r.id, r]));
+  const changed = b.rooms.filter((r) => was.get(r.id) && json(was.get(r.id)!.polygon) !== json(r.polygon));
+  const shift = (r: FloorPlan["rooms"][number]) => {
+    const old = was.get(r.id)!.polygon;
+    if (old.length !== r.polygon.length) return null;
+    const dx = r.polygon[0].x - old[0].x;
+    const dy = r.polygon[0].y - old[0].y;
+    return r.polygon.every((p, i) => Math.abs(p.x - old[i].x - dx) < 0.2 && Math.abs(p.y - old[i].y - dy) < 0.2) ? true : null;
+  };
+  const slid = changed.filter(shift);
+  const cut = changed.filter((r) => !shift(r));
+  if (slid.length < 1 || cut.length !== 1) return null;
+  return `trim ${roomName(cut[0])} to fit ${roomName(slid[0])}`;
 }
