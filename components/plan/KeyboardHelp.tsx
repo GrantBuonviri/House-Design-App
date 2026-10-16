@@ -7,6 +7,7 @@ const OTHER: [string, string][] = [
   ["⌘D", "Duplicate what's picked"],
   ["Arrow keys", "Nudge what's picked (Shift for a foot)"],
   ["Shift", "Hold while drawing or dragging for any angle, no snapping"],
+  ["Shift-click walls", "Pick two or more walls that meet end to end: one diamond bends them together as one curve, with the corners kept on it"],
   ["Option", "Hold while dragging a corner or wall to pull it away from neighbors; hold while finishing a wall or curve to keep it a divider; hold while bending a wall to curve only one room's side"],
   ["F", "Go to Furnish (fixtures, cabinets, outlets, built-ins, furniture and stair railings)"],
   ["L", "Show or hide all labels"],
@@ -14,7 +15,7 @@ const OTHER: [string, string][] = [
   ["Space + drag", "Move around the drawing"],
   ["Escape", "Let go of a tool or selection"],
   ["⌘Z / ⇧⌘Z", "Undo and redo"],
-  ["Right-click", "Menu with the main actions for what's under the pointer: on a corner, Round corner and Combine walls; on a wall, Split wall here or into 2, 3 or 4 equal pieces (two picked walls that meet: Combine walls); on a room, wall or stairs, Turn 90° or 15° or by any angle; on an outside wall, Add half-round bay"],
+  ["Right-click", "Menu with the main actions for what's under the pointer: on a corner, Round corner and Combine walls; on a wall, Split wall here or into 2, 3 or 4 equal pieces (two picked walls that meet: Combine walls; two or more: Curve together and Make straight); on a room, wall or stairs, Turn 90° or 15° or by any angle; on an outside wall, Add half-round bay"],
   ["?", "Show or hide this card"],
 ];
 

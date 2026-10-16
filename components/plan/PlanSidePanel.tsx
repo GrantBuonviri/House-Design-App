@@ -2,7 +2,7 @@
 
 import { keepRailingEdits, resetRailings } from "@/lib/plan/railings";
 import ArrangeButtons from "./ArrangeButtons";
-import CurveFields from "./CurveFields";
+import CurveFields, { RunCurveFields } from "./CurveFields";
 import { BayFields, RoundCornerFields } from "./ShapeFields";
 import { useEffect, useRef, useState } from "react";
 import { WINDOW_OPERATIONS, type WindowOperation } from "@/lib/model/schema";
@@ -23,7 +23,7 @@ import { canPreview } from "@/lib/house3d/windowView";
 import { CANTILEVER_MAX_IN, OVERHANG_LABEL, overhangOf, type Overhang } from "@/lib/plan/support";
 import type { OverhangKind } from "@/lib/model/schema";
 import { ROOM_TYPES, roomType } from "@/lib/brief/rooms";
-import { parseEdgeId, type PlanSelection, type PlanTool } from "./types";
+import { parseEdgeId, runTargets, type PlanSelection, type PlanTool } from "./types";
 
 /** Room types a plan can have that a brief doesn't: hallways and closets. */
 const PLAN_ONLY = ROOM_TYPES.filter((t) => t.planOnly).map((t) => t.id);
@@ -142,15 +142,19 @@ export default function PlanSidePanel(props: Props) {
   // ---- Several things ----
   if (selection.length > 1) {
     const turnable = selection.filter((s) => s.kind !== "edge" && s.kind !== "opening").map((s) => s.id);
+    const runTs = runTargets(selection);
     return (
       <Panel title={`${selection.length} selected`}>
         <p className="text-xs text-muted">Drag any of them to move them together. Shift-click to add or remove one.</p>
         {selection.every((s) => s.kind === "room") && <CombineButton plan={plan} ids={selection.map((s) => s.id)} label="Combine into one room" onCombine={combine} />}
+        {runTs && <RunCurveFields plan={plan} targets={runTs} onChange={onChange} />}
         {turnable.length > 0 && <TurnButtons onTurn={(deg) => onChange(rotateMany(plan, turnable, deg, centerOfMany(plan, turnable)))} />}
         <ArrangeButtons plan={plan} ids={turnable} onChange={onChange} onSelect={onSelect} />
-        <button className="btn mt-4 w-full text-red-700" onClick={() => remove(selection.filter((s) => s.kind !== "edge").map((s) => s.id))}>
-          Delete {selection.filter((s) => s.kind !== "edge").length} things
-        </button>
+        {selection.some((s) => s.kind !== "edge") && (
+          <button className="btn mt-4 w-full text-red-700" onClick={() => remove(selection.filter((s) => s.kind !== "edge").map((s) => s.id))}>
+            Delete {selection.filter((s) => s.kind !== "edge").length} things
+          </button>
+        )}
       </Panel>
     );
   }

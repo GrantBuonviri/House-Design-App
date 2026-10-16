@@ -52,7 +52,7 @@ export const TOUR: TourStep[] = [
     target: "stage-plan",
     stage: "plan",
     title: "5. Floor plan",
-    body: "Real walls, doors, windows, stairs and fixtures. Pick a room and drag the + on a wall to reshape it, or the diamond to bend a wall into a curve. Press C for the Curve tool, pick Round room in the Room tool, or right-click a corner or an outside wall to round it or add a half-round bay. Start from your sketch or a blank page, then switch to 3D to see the whole house on the land.",
+    body: "Real walls, doors, windows, stairs and fixtures. Pick a room and drag the + on a wall to reshape it, or the diamond to bend a wall into a curve (Shift-click walls that meet to bend them together). Press C for the Curve tool, pick Round room in the Room tool, or right-click a corner or an outside wall to round it or add a half-round bay. Start from your sketch or a blank page, then switch to 3D to see the whole house on the land.",
   },
   {
     target: "stage-interior",

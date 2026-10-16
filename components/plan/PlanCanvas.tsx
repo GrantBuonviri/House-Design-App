@@ -13,9 +13,10 @@ import type { ClosetSize } from "@/lib/furnish/closets";
 import { trimOverlap } from "@/lib/plan/overlaps";
 import { bendInfo, bendWall, bowFromPoint, planRadii, snapBow, type BendSnap, type BendTarget } from "@/lib/plan/bend";
 import { DRAW_STEP_DEG, flatPlan, roomOutline, savedHost } from "@/lib/plan/flatten";
-import { leftBulge, pointOnEdge, projectOnEdge, roomEdgeLength } from "@/lib/plan/arcs";
+import { arcBetween, leftBulge, pointOnEdge, projectOnEdge, roomEdgeLength } from "@/lib/plan/arcs";
 import { makeRoundRoom } from "@/lib/plan/shapes";
 import { splitWall } from "@/lib/plan/wallEdits";
+import { curveRun, isRun, runInfo, runOf, sharesOf, startBow, type Run } from "@/lib/plan/curveRun";
 import { addRoom, emptyPlan, insertGluedCorner, makeRoom, moveEdge, moveMany, moveOpeningTo, newPlanId, removeCorner, setCornerGlued, type Plans } from "@/lib/plan/edit";
 import { railingsOn, type Railing, type RailingSlot } from "@/lib/plan/railings";
 import { add, boundsOf, dist, polygonArea, polygonsOverlap, project, rectangle, round1, roundPoint, scale as scaleV, sub, unit } from "@/lib/plan/geometry";
@@ -33,9 +34,9 @@ import type { LandView, Side } from "@/components/bubbles/types";
 import { Grid, ScaleBar, SideLabels, useSpacePan, type View } from "@/components/canvas/CanvasBits";
 import { ACCENT, OpeningSymbol, StairsSymbol } from "./PlanShapes";
 import { dedupe, flat, ghostOpeningAt, roomFill, type Box } from "./canvasHelpers";
-import { BendHandles, BendTip, DraftPreview, GuidesAndBox, MidNodes, NodeReadout, OverhangLayer, PlanWalls, RailingLines, ReferenceLayer, ZoomButtons } from "./PlanCanvasLayers";
+import { BendHandles, BendTip, RUN_HANDLE_ID, RunHandle, DraftPreview, GuidesAndBox, MidNodes, NodeReadout, OverhangLayer, PlanWalls, RailingLines, ReferenceLayer, ZoomButtons } from "./PlanCanvasLayers";
 import { DistanceGuides, OutsideDims, RoomLabels, TapeLine, ThingLabels } from "./PlanMeasureLayers";
-import { edgeId, isPicked, parseEdgeId, type PlanItem, type PlanSelection, type PlanTool } from "./types";
+import { edgeId, isPicked, parseEdgeId, runTargets, type PlanItem, type PlanSelection, type PlanTool } from "./types";
 
 /**
  * The floor plan drawing for one level, at real scale: 1 unit is 1 inch.
@@ -48,6 +49,7 @@ type Gesture =
   | { type: "corner"; roomId: string; i: number; base?: FloorPlan; born?: boolean; moved: boolean }
   | { type: "edge"; roomId: string; edge: number; start: Point; moved: boolean }
   | { type: "bend"; target: BendTarget; alone: boolean; moved: boolean }
+  | { type: "run"; run: Run; shares: number[]; alone: boolean; moved: boolean }
   | { type: "opening"; id: string; moved: boolean }
   | { type: "box"; start: Point; additive: boolean; base: PlanSelection }
   | { type: "lot"; start: Point }
@@ -62,6 +64,15 @@ function bendReadout(plan: FloorPlan, target: BendTarget, snap: BendSnap): { at:
   if (!info.radius) return { at, text: `Straight · ${formatLength(info.chord)}` };
   const note = snap === "half" ? "half circle · " : snap === "radius" ? "matches a curve · " : "";
   return { at, text: `${note}R ${formatLength(info.radius)} · arc ${formatLength(info.length)}` };
+}
+
+/** The same for several walls bent together: the one circle they're on. */
+function runReadout(run: Run, left: number, snap: BendSnap): { at: Point; text: string } {
+  const at = scaleV(add(run.a, run.b), 0.5);
+  const arc = arcBetween(run.a, run.b, left);
+  if (!arc) return { at, text: `Straight · ${formatLength(dist(run.a, run.b))}` };
+  const note = snap === "half" ? "half circle · " : snap === "radius" ? "matches a curve · " : "";
+  return { at, text: `${note}${run.pieces.length} walls · R ${formatLength(arc.radius)} · arc ${formatLength(arc.length)}` };
 }
 
 const MIN_SCALE = 0.04;
@@ -324,6 +335,12 @@ export default function PlanCanvas(props: Props) {
     if (single.kind === "wall") return [{ wallId: single.id }];
     return [];
   }, [single, selRoom]);
+  // Two or more picked walls that meet end to end: one diamond bends them together.
+  const pickedRun = useMemo(() => {
+    const targets = !furnishing && tool === "select" ? runTargets(selection) : null;
+    const r = targets ? runOf(shown, targets) : null;
+    return r && isRun(r) ? r : null;
+  }, [furnishing, tool, selection, shown]);
   useEffect(() => {
     setSelCorner((c) => (c && c.roomId === selRoomId ? c : null));
   }, [selRoomId]);
@@ -647,6 +664,15 @@ export default function PlanCanvas(props: Props) {
       setBox({ x0: p.x, y0: p.y, x1: p.x, y1: p.y });
       return;
     }
+    if (el.bend === RUN_HANDLE_ID) {
+      // The run's diamond: bend every picked wall as one curve. Corners keep their share of the length.
+      const targets = runTargets(selection);
+      const r = targets ? runOf(plan, targets) : null;
+      if (!r || !isRun(r)) return;
+      const shares = runInfo(plan, r).together ? sharesOf(plan, r) : startBow(plan, r).shares;
+      gesture.current = { type: "run", run: r, shares, alone: e.evt.altKey, moved: false };
+      return;
+    }
     if (el.bend !== undefined) {
       // The diamond: pull the wall into a curve. Option bends one room's side alone.
       const target: BendTarget = el.bend.includes("#") ? { roomId: parseEdgeId(el.bend).roomId, edge: parseEdgeId(el.bend).edge } : { wallId: el.bend };
@@ -805,6 +831,17 @@ export default function PlanCanvas(props: Props) {
       const next = bendWall(base, g.target, sn.left, alone);
       setPreview(next);
       setBendTip(bendReadout(next, g.target, sn.snap));
+    } else if (g.type === "run") {
+      const raw = bowFromPoint(g.run.a, g.run.b, p);
+      const sn = snapBow(dist(g.run.a, g.run.b), raw, planRadii(base, g.run.pieces.map((x) => x.target)), s, shift);
+      const out = curveRun(base, g.run, sn.left, { alone: g.alone || e.evt.altKey, shares: g.shares });
+      if ("why" in out) {
+        setBendTip({ at: scaleV(add(g.run.a, g.run.b), 0.5), text: out.why });
+        return;
+      }
+      g.moved = true;
+      setPreview(out.plan);
+      setBendTip(runReadout(g.run, sn.left, sn.snap));
     } else if (g.type === "box") {
       setBox({ x0: g.start.x, y0: g.start.y, x1: p.x, y1: p.y });
     } else if (g.type === "lot") {
@@ -1103,6 +1140,7 @@ export default function PlanCanvas(props: Props) {
               </Group>
             )}
             {tool === "select" && !dragCorner && !lotMode && <BendHandles targets={bendTargets} plan={shown} s={s} />}
+            {pickedRun && !dragCorner && !lotMode && <RunHandle run={pickedRun} plan={shown} s={s} />}
             {bendTip && <BendTip at={bendTip.at} text={bendTip.text} s={s} />}
             {nodeRoom &&
               nodeRoom.polygon.map((p, i) => (

@@ -1,5 +1,7 @@
 /** Shared by the floor plan editor and its canvas (which loads separately, in the browser only). */
 
+import type { BendTarget } from "@/lib/plan/bend";
+
 export type PlanTool = "select" | "room" | "wall" | "curve" | "door" | "stairs" | "place" | "pan";
 
 /**
@@ -14,7 +16,7 @@ export const PLAN_TOOLS: { id: PlanTool; label: string; key: string; hint: strin
     id: "select",
     label: "Select and move",
     key: "V",
-    hint: "Click a room, wall or door to change it. Drag a wall to push it, or a room's corner dots to reshape it. Double-click a wall to show its corner dots, and again to add one (on a loose wall, to split it there). Right-click a wall to split it or a corner to combine its two walls. Drag the + on a wall to add a corner, or the diamond in the middle to bend it into a curve; Delete removes a picked corner. Hold Option to pull one room away from its neighbors (or to bend one side of a shared wall alone), Shift for any angle. Shift-click or drag a box to pick several.",
+    hint: "Click a room, wall or door to change it. Drag a wall to push it, or a room's corner dots to reshape it. Double-click a wall to show its corner dots, and again to add one (on a loose wall, to split it there). Right-click a wall to split it or a corner to combine its two walls. Drag the + on a wall to add a corner, or the diamond in the middle to bend it into a curve; Delete removes a picked corner. Hold Option to pull one room away from its neighbors (or to bend one side of a shared wall alone), Shift for any angle. Shift-click two or more walls that meet to bend them together with one diamond (or right-click them for Curve together). Shift-click or drag a box to pick several.",
   },
   {
     id: "room",
@@ -48,4 +50,10 @@ export function edgeId(roomId: string, edge: number): string {
 export function parseEdgeId(id: string): { roomId: string; edge: number } {
   const at = id.lastIndexOf("#");
   return { roomId: id.slice(0, at), edge: Number(id.slice(at + 1)) };
+}
+
+/** Two or more picked walls (room sides or loose walls) as bend targets, for curving them together; null for any other pick. */
+export function runTargets(sel: PlanSelection): BendTarget[] | null {
+  if (sel.length < 2 || !sel.every((s) => s.kind === "edge" || s.kind === "wall")) return null;
+  return sel.map((s) => (s.kind === "edge" ? parseEdgeId(s.id) : { wallId: s.id }));
 }
