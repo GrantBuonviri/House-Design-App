@@ -358,7 +358,7 @@ export function GuidesAndBox({ guides, box }: { guides: Guides; box: Box | null 
 }
 
 /** Zoom out, the zoom level, zoom in and Fit, bottom right. */
-export function ZoomButtons({ percent, onZoom, onFit }: { percent: number; onZoom: (factor: number) => void; onFit: () => void }) {
+export function ZoomButtons({ percent, onZoom, onFit, onFitLot }: { percent: number; onZoom: (factor: number) => void; onFit: () => void; onFitLot?: () => void }) {
   return (
     <div className="absolute right-3 bottom-3 flex items-center gap-1 rounded-md border border-line bg-white p-0.5 text-sm shadow-sm">
       <button className="rounded px-2 py-1 hover:bg-stone-100" onClick={() => onZoom(1 / 1.25)} aria-label="Zoom out" title="Zoom out">
@@ -371,6 +371,11 @@ export function ZoomButtons({ percent, onZoom, onFit }: { percent: number; onZoo
       <button className="rounded px-2 py-1 text-xs hover:bg-stone-100" onClick={onFit} title="Fit the drawing on screen">
         Fit
       </button>
+      {onFitLot && (
+        <button className="rounded px-2 py-1 text-xs hover:bg-stone-100" onClick={onFitLot} title="Zoom out to show the whole lot and the house">
+          Fit lot
+        </button>
+      )}
     </div>
   );
 }

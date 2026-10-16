@@ -92,6 +92,8 @@ export default function LandLayer({ land, scale, shift }: { land: LandView; scal
         {show.property && (
           <>
             <Line points={flat(drawing.outline)} closed stroke={LOT} strokeWidth={2} strokeScaleEnabled={false} dash={[10, 6]} />
+            {drawing.edges.map((e, i) => <Group key={`edge${i}`}>{label(e.text, { x: e.mid.x + e.out.x * px(e.road ? -26 : 14), y: e.mid.y + e.out.y * px(e.road ? -26 : 14) }, LOT, 11)}</Group>)}
+            {drawing.sizeNote && label(drawing.sizeNote, sizeNotePoint(drawing, px), LOT, 12)}
             {drawing.roads.map((r, i) => (
               <Group key={`road${i}`}>
                 <Line points={[r.a.x, r.a.y, r.b.x, r.b.y]} stroke="#8d8f8c" strokeWidth={r.main ? 6 : 4} strokeScaleEnabled={false} lineCap="round" />
@@ -121,6 +123,12 @@ export default function LandLayer({ land, scale, shift }: { land: LandView; scal
       {show.sun && <SunDial center={land.sun.center} radius={land.sun.radius} scale={scale} />}
     </Layer>
   );
+}
+
+/** The size note goes above the top of the lot, past that edge's length. */
+function sizeNotePoint(d: LandView["drawing"], px: (n: number) => number): Point {
+  const xs = d.outline.map((p) => p.x);
+  return { x: (Math.min(...xs) + Math.max(...xs)) / 2, y: Math.min(...d.outline.map((p) => p.y)) - px(32) };
 }
 
 /** Where the downhill label goes: just past the arrow's tip, far enough that the text clears it. */

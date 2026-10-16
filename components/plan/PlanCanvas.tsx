@@ -207,7 +207,7 @@ export default function PlanCanvas(props: Props) {
 
   // ---- Fit ----
   const propertyPoints = land?.show.property ? land.drawing.outline.map((p) => ({ x: p.x - land.offset.x, y: p.y - land.offset.y })) : [];
-  const fit = useCallback(() => {
+  const fitView = useCallback((withLot: boolean) => {
     if (!width) return;
     const pts: Point[] = [
       ...plan.rooms.flatMap((r) => r.polygon),
@@ -217,7 +217,7 @@ export default function PlanCanvas(props: Props) {
         { x: b.x - b.rx, y: b.y - b.ry },
         { x: b.x + b.rx, y: b.y + b.ry },
       ]) ?? []),
-      ...propertyPoints,
+      ...(withLot ? propertyPoints : []),
     ];
     const b = boundsOf(pts);
     if (!b) {
@@ -229,13 +229,17 @@ export default function PlanCanvas(props: Props) {
     setView({ scale: sc, x: width / 2 - ((b.x0 + b.x1) / 2) * sc, y: height / 2 - ((b.y0 + b.y1) / 2) * sc });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [width, height, plan, below, sketch, JSON.stringify(propertyPoints)]);
+  // Fit keeps to the house; Fit lot adds the lot line. The first fit on opening includes the lot when it's showing.
+  const fit = useCallback(() => fitView(false), [fitView]);
+  const fitLot = useCallback(() => fitView(true), [fitView]);
+  const firstFit = useCallback(() => fitView(true), [fitView]);
 
   useEffect(() => {
     if (width && !fitted.current) {
       fitted.current = true;
-      fit();
+      firstFit();
     }
-  }, [width, fit]);
+  }, [width, firstFit]);
 
   // Center on a spot when asked (a warning was clicked), zooming in a little if far out.
   const focus = props.focus;
@@ -1067,7 +1071,7 @@ export default function PlanCanvas(props: Props) {
         </p>
       )}
       <ScaleBar scale={s} />
-      <ZoomButtons percent={Math.round((s / 0.6) * 100)} onZoom={zoomBy} onFit={fit} />
+      <ZoomButtons percent={Math.round((s / 0.6) * 100)} onZoom={zoomBy} onFit={fit} onFitLot={land?.show.property ? fitLot : undefined} />
     </div>
   );
 }
