@@ -9,7 +9,7 @@ import { z } from "zod";
  * Angles are degrees clockwise from north (0 = N, 90 = E).
  */
 
-export const SCHEMA_VERSION = 20;
+export const SCHEMA_VERSION = 21;
 
 export const Point = z.object({ x: z.number(), y: z.number() });
 export type Point = z.infer<typeof Point>;
@@ -600,8 +600,26 @@ export const Roof = z.object({
 });
 export type Roof = z.infer<typeof Roof>;
 
+/** Which labels lie on the floor in the walkthrough, and how they look. Every field has a default. */
+export const WalkLabels = z.object({
+  name: z.boolean().default(true),
+  size: z.boolean().default(true),
+  sqft: z.boolean().default(true),
+  floorName: z.boolean().default(false),
+  ceiling: z.boolean().default(false),
+  finishes: z.boolean().default(false),
+  costShare: z.boolean().default(false),
+  textSize: z.enum(["small", "medium", "large"]).default("medium"),
+  textColor: z.enum(["dark", "light", "auto"]).default("auto"),
+  background: z.enum(["none", "soft"]).default("soft"),
+  units: z.enum(["feet", "inches"]).default("feet"),
+});
+export type WalkLabels = z.infer<typeof WalkLabels>;
+
 export const House3D = z.object({
   roof: Roof.prefault({}),
+  /** Room labels on the floor in the walkthrough. */
+  walkLabels: WalkLabels.prefault({}),
 });
 export type House3D = z.infer<typeof House3D>;
 

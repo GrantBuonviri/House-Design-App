@@ -138,7 +138,7 @@ describe("half walls", () => {
     const w: PlanWall = { id: "half", a: { x: cx - 30, y: (Math.min(...ys) + Math.max(...ys)) / 2 }, b: { x: cx + 30, y: (Math.min(...ys) + Math.max(...ys)) / 2 }, thicknessIn: 4.5, height };
     return { ...p, floorPlans: { ...p.floorPlans, [id]: { ...fp, walls: [...fp.walls, w] } } };
   }
-  const ctx = (p: Project) => ({ levels: p.levels, basics: p.plan.basics ?? defaultBasics(), house3d: { roof: ROOF }, site: siteFor(null, { x: 0, y: 0 }, p.floorPlans), frame: { ox: 0, oy: 0 }, heights: levelHeights(p.levels, p.plan.basics ?? defaultBasics()) });
+  const ctx = (p: Project) => ({ levels: p.levels, basics: p.plan.basics ?? defaultBasics(), house3d: { ...House3D.parse({}), roof: ROOF }, site: siteFor(null, { x: 0, y: 0 }, p.floorPlans), frame: { ox: 0, oy: 0 }, heights: levelHeights(p.levels, p.plan.basics ?? defaultBasics()) });
   const tallest = (p: Project) => {
     const parts = buildLevel(p.floorPlans, p.levels[0], ctx(p)).filter((x) => x.layer === "walls" && x.wall === "inside");
     return parts;

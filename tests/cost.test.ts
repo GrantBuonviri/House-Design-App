@@ -245,7 +245,7 @@ describe("the estimate", () => {
     const small = estimate(project(box()))!;
     const big = estimate(project({ [MAIN_LEVEL_ID]: plan([room("a", 0, 0, 60 * FT, 45 * FT)]) }))!;
     expect(big.total.likely).toBeGreaterThan(small.total.likely);
-    const steep = estimate({ ...project(box()), house3d: { roof: { ...ROOF, pitch: 12 } } })!;
+    const steep = estimate({ ...project(box()), house3d: { ...House3D.parse({}), roof: { ...ROOF, pitch: 12 } } })!;
     expect(cat(steep, "roofing")).toBeGreaterThan(cat(small, "roofing"));
   });
 

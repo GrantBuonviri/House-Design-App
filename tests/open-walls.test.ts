@@ -169,7 +169,7 @@ describe("removed walls everywhere else", () => {
   it("leaves the wall out of the 3D house and the walkthrough", () => {
     const { before, after } = opened();
     const level = before.levels[0];
-    const ctx = (p: Project) => ({ levels: p.levels, basics: p.plan.basics ?? defaultBasics(), house3d: { roof: ROOF }, site: siteFor(null, { x: 0, y: 0 }, p.floorPlans), frame: { ox: 0, oy: 0 }, heights: levelHeights(p.levels, p.plan.basics ?? defaultBasics()) });
+    const ctx = (p: Project) => ({ levels: p.levels, basics: p.plan.basics ?? defaultBasics(), house3d: { ...House3D.parse({}), roof: ROOF }, site: siteFor(null, { x: 0, y: 0 }, p.floorPlans), frame: { ox: 0, oy: 0 }, heights: levelHeights(p.levels, p.plan.basics ?? defaultBasics()) });
     const count = (p: Project) => buildLevel(p.floorPlans, level, ctx(p)).filter((x) => x.layer === "walls").reduce((s, x) => s + x.mesh.count, 0);
     expect(count(after)).toBeLessThan(count(before));
     const walls = (p: Project) => walkWorld(p.floorPlans, ctx(p)).blockers.length;

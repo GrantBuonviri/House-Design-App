@@ -21,7 +21,7 @@ export function describeChange(before: Project, after: Project): string {
   if (!same("sketch")) return "change the flow sketch settings";
   if (!same("floorPlans")) return describeLevels(before, after, "floorPlans", describePlan) ?? "change the floor plan";
   if (!same("plan")) return before.plan.basics === null && after.plan.basics ? "answer the plan basics" : "change the plan settings";
-  if (!same("house3d")) return "change the roof";
+  if (!same("house3d")) return json(before.house3d.walkLabels) !== json(after.house3d.walkLabels) ? "change the floor labels" : "change the roof";
   if (!same("cost")) return "change the water and sewer setting";
   if (!same("plans")) return "change the plan details";
   if (!same("interior")) return describeDesign(before.interior, after.interior, "inside");
