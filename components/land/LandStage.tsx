@@ -1,7 +1,13 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import type { Plot } from "@/lib/model/schema";
+import type { CustomLand, Plot } from "@/lib/model/schema";
+import { buildCustomPlot, newCustomLand } from "@/lib/land/custom";
+import { houseWarnings, offsetKeepingHouse } from "@/lib/land/designer";
+import { deleteMyLand, listMyLand, saveMyLand, type MyLandRow } from "@/lib/storage/db";
+import LandDesigner from "./LandDesigner";
+import DesignCard from "./DesignCard";
+import MyLandList from "./MyLandList";
 import { FLAT_PLOT_SEED, feedPlotSeed, generatePlot } from "@/lib/land/generate";
 import { useProjectStore } from "@/lib/store/projectStore";
 import PlotCard from "./PlotCard";
@@ -52,11 +58,13 @@ function useViewMode(): [LandViewMode, (m: LandViewMode) => void] {
 }
 
 /**
- * The feed is endless: slot 0 is always the perfectly flat plot, and every
- * slot after it is a new made-up plot from the feed seed.
+ * The feed is endless: slot 0 is always the perfectly flat plot, slot 1 the
+ * "Design your own land" card, and every slot after is a new made-up plot.
  */
-function plotAt(feedSeed: number, slot: number, flat: Plot): Plot {
-  return slot === 0 ? flat : generatePlot(feedPlotSeed(feedSeed, slot - 1));
+function plotAt(feedSeed: number, slot: number, flat: Plot): Plot | "design" {
+  if (slot === 0) return flat;
+  // Slot 1 is the pinned "Design your own land" card.
+  return slot === 1 ? "design" : generatePlot(feedPlotSeed(feedSeed, slot - 2));
 }
 
 export default function LandStage({ onContinue }: { onContinue: () => void }) {
@@ -66,6 +74,8 @@ export default function LandStage({ onContinue }: { onContinue: () => void }) {
   const [open, setOpen] = useState<Plot | null>(null);
   const [mode, setMode] = useViewMode();
   const feed = useFeed(project.id);
+  const [designing, setDesigning] = useState<CustomLand | null>(null);
+  const [myLand, setMyLand] = useState<MyLandRow[]>([]);
   const [direction, setDirection] = useState<"next" | "prev">("next");
 
   const flat = useMemo(() => generatePlot(FLAT_PLOT_SEED, { flat: true }), []);
@@ -110,6 +120,47 @@ export default function LandStage({ onContinue }: { onContinue: () => void }) {
     [update],
   );
 
+  useEffect(() => {
+    listMyLand().then(setMyLand, () => {});
+  }, []);
+
+  const applyDesigned = useCallback(
+    (land: CustomLand) => {
+      const plot = buildCustomPlot(land);
+      const before = project.plot?.custom;
+      saveMyLand(land).then(
+        () => listMyLand().then(setMyLand, () => {}),
+        () => {},
+      );
+      update((p) => {
+        // Editing the land the house is on keeps the house where it was on the drawing.
+        const sameLand = before && before.id === land.id && p.plot?.seed === plot.seed;
+        return {
+          ...p,
+          plot,
+          sketch: sameLand
+            ? { ...p.sketch, lotOffset: offsetKeepingHouse(p, before, land) }
+            : p.plot?.seed === plot.seed
+              ? p.sketch
+              : { ...p.sketch, lotOffset: null },
+        };
+      });
+      setDesigning(null);
+      setBrowsing(false);
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    },
+    [update, project.plot],
+  );
+
+  const warnings = useCallback(
+    (plot: Plot, land: CustomLand) => {
+      const before = project.plot?.custom;
+      if (!project.plot || !before) return [];
+      return houseWarnings(project, plot, offsetKeepingHouse(project, before, land));
+    },
+    [project],
+  );
+
   const openPlot = useCallback((p: Plot) => setOpen(p), []);
   const first = feed.page * PER_PAGE + 1;
 
@@ -124,6 +175,11 @@ export default function LandStage({ onContinue }: { onContinue: () => void }) {
             </div>
             <div className="flex items-center gap-2">
               <ViewModeSwitch mode={mode} onChange={setMode} />
+              {project.plot.source === "custom" && project.plot.custom && (
+                <button className="btn" onClick={() => setDesigning(project.plot!.custom)}>
+                  Edit this land
+                </button>
+              )}
               <button className="btn" onClick={() => setBrowsing(true)}>
                 Choose different land
               </button>
@@ -161,15 +217,28 @@ export default function LandStage({ onContinue }: { onContinue: () => void }) {
             </div>
           </div>
 
+          {myLand.length > 0 && (
+            <MyLandList
+              rows={myLand}
+              onUse={(l) => applyDesigned(l)}
+              onEdit={setDesigning}
+              onDelete={(id) => deleteMyLand(id).then(() => listMyLand().then(setMyLand), () => {})}
+            />
+          )}
+
           <div className="relative">
             <CarouselArrow side="left" disabled={feed.page === 0} onClick={goPrev} />
             <div
               key={`${feed.seed}:${feed.page}`}
               className={`grid grid-cols-3 gap-5 ${direction === "next" ? "slide-from-right" : "slide-from-left"}`}
             >
-              {plots.map((p) => (
-                <PlotCard key={`${p.seed}:${p.isFlat}`} plot={p} pinned={p.isFlat} onOpen={openPlot} />
-              ))}
+              {plots.map((p) =>
+                p === "design" ? (
+                  <DesignCard key="design" onOpen={() => setDesigning(newCustomLand())} />
+                ) : (
+                  <PlotCard key={`${p.seed}:${p.isFlat}`} plot={p} pinned={p.isFlat} onOpen={openPlot} />
+                ),
+              )}
             </div>
             <CarouselArrow side="right" onClick={goNext} />
           </div>
@@ -177,6 +246,17 @@ export default function LandStage({ onContinue }: { onContinue: () => void }) {
             Plots {first}–{first + PER_PAGE - 1} · use ← → on your keyboard too
           </p>
         </section>
+      )}
+
+      {designing && (
+        <LandDesigner
+          key={designing.id}
+          start={designing}
+          editing={project.plot?.custom?.id === designing.id}
+          warnings={warnings}
+          onUse={applyDesigned}
+          onCancel={() => setDesigning(null)}
+        />
       )}
 
       {open && (
