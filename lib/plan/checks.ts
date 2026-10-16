@@ -1,4 +1,6 @@
-import type { DesignBrief, FloorPlan, Level, PlanBasics, PlanRoom, Point } from "@/lib/model/schema";
+import type { DesignBrief, FloorPlan, Level, PlanBasics, PlanRoom, Plot, Point } from "@/lib/model/schema";
+import { landUnder } from "@/lib/land/onLot";
+import { placeName } from "@/lib/land/implications";
 import { formatFeetInches } from "@/lib/model/units";
 import { MAIN_LEVEL_ID } from "@/lib/brief/levels";
 import { INTERIOR_WALL_IN, levelAbove } from "./basics";
@@ -36,7 +38,13 @@ export const MIN_HALL_CLEAR_IN = 36;
 const TOO_SMALL = 0.75;
 const TOO_BIG = 1.4;
 
-type Ctx = { levels: Level[]; brief: DesignBrief | null; basics: PlanBasics | null };
+type Ctx = {
+  levels: Level[];
+  brief: DesignBrief | null;
+  basics: PlanBasics | null;
+  /** The land and where the house sits on it (plot point = plan point + offset), for the land checks. */
+  land?: { plot: Plot | null; offset: Point } | null;
+};
 
 /** A window you could climb out of: wide enough, and low enough to reach. */
 const isEgress = (o: FloorPlan["openings"][number]) => o.kind === "window" && o.widthIn >= 24 && o.heightIn >= 24 && (o.sillIn ?? 30) <= 44;
@@ -139,6 +147,8 @@ export function planWarnings(plans: Plans, ctx: Ctx): PlanWarning[] {
     }
   }
 
+  if (ctx.land?.plot) out.push(...landWarnings(plans, levels, ctx.land.plot, ctx.land.offset));
+
   // Rooms from the brief that aren't drawn anywhere yet.
   if (ctx.brief && levels.some((l) => planOf(plans, l.id).rooms.length)) {
     const drawn = new Set(levels.flatMap((l) => planOf(plans, l.id).rooms.map((r) => r.briefRoomId)));
@@ -146,6 +156,56 @@ export function planWarnings(plans: Plans, ctx: Ctx): PlanWarning[] {
       if (drawn.has(b.id)) continue;
       const levelId = b.levelId && levels.some((l) => l.id === b.levelId) ? b.levelId : MAIN_LEVEL_ID;
       out.push({ id: `${levelId}:missing:${b.id}`, levelId, text: `${b.name} from your brief isn't in the plan yet.`, roomIds: [], at: null });
+    }
+  }
+  return out;
+}
+
+/**
+ * The house on its land: sitting on a big rock, in water, on a creek or
+ * river bank, in a dry wash's path, or past the lot line. Checked for the
+ * floors on the ground (the main floor and anything below it).
+ */
+function landWarnings(plans: Plans, levels: Level[], plot: Plot, offset: Point): PlanWarning[] {
+  const out: PlanWarning[] = [];
+  const main = levels.find((l) => l.id === MAIN_LEVEL_ID) ?? levels.find((l) => l.kind === "main");
+  const ground = levels.filter((l) => l === main || l.kind === "basement");
+  const seen = new Set<string>();
+  for (const level of ground) {
+    const rooms = planOf(plans, level.id).rooms;
+    if (!rooms.length) continue;
+    const toPlot = (p: Point) => ({ x: p.x + offset.x, y: p.y + offset.y });
+    const toPlan = (p: Point) => ({ x: p.x - offset.x, y: p.y - offset.y });
+    for (const hit of landUnder(plot, rooms.map((r) => r.polygon.map(toPlot)))) {
+      const room = rooms[hit.footprint];
+      let key: string;
+      let text: string;
+      let at: Point;
+      if (hit.kind === "rock") {
+        key = `rock:${hit.rock.id}`;
+        text = `${room.name} sits on the big rock near the ${placeName(plot, hit.rock.at)}. Move the house on the lot, or budget for removing the rock.`;
+        at = toPlan(hit.rock.at);
+      } else if (hit.kind === "water") {
+        key = `water:${hit.water}`;
+        text = `${room.name} is in the ${hit.water}. Move the house on the lot to dry ground.`;
+        at = toPlan(hit.at);
+      } else if (hit.kind === "bank") {
+        key = `bank:${hit.water}`;
+        text = `${room.name} is ${hit.distFt} ft from the ${hit.water}, on its bank. Keep the house back from the water and above the flood line.`;
+        at = toPlan(hit.at);
+      } else if (hit.kind === "wash") {
+        key = "wash";
+        text = `${room.name} is in the path of the dry wash, which can run fast in spring. Move the house out of it.`;
+        at = toPlan(hit.at);
+      } else {
+        key = "lot";
+        text = `${room.name} reaches past the lot line. Use Move on lot to put the house back on the land.`;
+        at = toPlan(hit.at);
+      }
+      // One warning per thing per floor, on the first room that touches it.
+      if (seen.has(`${level.id}:${key}`)) continue;
+      seen.add(`${level.id}:${key}`);
+      out.push({ id: `${level.id}:land:${key}`, levelId: level.id, text, roomIds: [room.id], at });
     }
   }
   return out;

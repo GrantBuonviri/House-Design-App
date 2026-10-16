@@ -8,6 +8,7 @@ import { hostPiece } from "@/lib/house3d/build";
 import { floorFootprint, joinRooms, offsetRing, regionArea, subtractRegions, type Region } from "@/lib/house3d/footprint";
 import { levelHeights } from "@/lib/house3d/levels";
 import { lotOffsetFor, siteFor, type Site } from "@/lib/house3d/site";
+import { rockCuyd, rocksUnder } from "@/lib/land/onLot";
 import { yardAmounts, yardLayout } from "@/lib/exterior/yard";
 import { type Quantities, sqft, ft, FROST_DEPTH_IN, JOIST_DEPTH_IN, OVERDIG_IN, SHALLOW_DIG_IN, ringLength, samplesAround, type Ctx, empty, siteFacts, toRoad, type MeasuredRoom, roomFixtures, centerOf, applyRoof } from "./quantityBasics";
 import { measureRoof } from "./measureRoof";
@@ -80,6 +81,11 @@ export function measurePlan(p: Ctx): Quantities | null {
       q.stemWallSqft += sqft(step * Math.max(12, h));
     }
     q.excavationCuyd += (polygonArea(r.outline) * SHALLOW_DIG_IN) / 46656;
+  }
+  // Big rocks under the house (ground floors and basements) are broken up and hauled away.
+  if (p.plot?.features.length) {
+    const footprints = [...groundRegions, ...basementRegions].map((r) => r.outline.map((pt) => ({ x: pt.x + offset.x, y: pt.y + offset.y })));
+    q.rockCuyd = rocksUnder(p.plot, footprints).reduce((t, r) => t + rockCuyd(r.sizeFt), 0);
   }
   // Ground floors where they sit over a basement are framed too.
   const groundAll = joinRooms(groundLevels.flatMap((l) => planOf(plans, l.id).rooms.filter((r) => areaKind(r) !== "outdoor").map((r) => r.polygon)));

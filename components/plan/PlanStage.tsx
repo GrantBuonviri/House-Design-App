@@ -369,7 +369,7 @@ export default function PlanStage({ onContinue, onGoToSketch }: { onContinue: ()
     setEditingBasics(false);
   }
 
-  const warnings = useMemo(() => (basics && !choosing ? planWarnings(plans, { levels, brief, basics }) : []), [plans, levels, brief, basics, choosing]);
+  const warnings = useMemo(() => (basics && !choosing ? planWarnings(plans, { levels, brief, basics, land: { plot, offset } }) : []), [plans, levels, brief, basics, choosing, plot, offset]);
 
   /** A warning was clicked: go to its floor, select its rooms and center them. */
   function pickWarning(w: PlanWarning) {

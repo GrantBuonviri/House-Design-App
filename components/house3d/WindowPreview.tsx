@@ -10,6 +10,7 @@ import { IN_PER_UNIT, toScene, type Frame } from "@/lib/house3d/mesh";
 import { planBounds, siteFor } from "@/lib/house3d/site";
 import { SEASONS, clockTime, daylight, type SeasonId } from "@/lib/house3d/sun";
 import { blockersOf, sunNote, sunThroughWindow } from "@/lib/house3d/sunHours";
+import { buildLandFeatures } from "@/lib/house3d/yard";
 import { windowViews, type Shot, type WindowViews } from "@/lib/house3d/windowView";
 import type { Plans } from "@/lib/plan/edit";
 import { Ground } from "./House3DView";
@@ -128,7 +129,7 @@ export default function WindowPreview(props: Props) {
   const [note, setNote] = useState<string | null>(null);
   useEffect(() => {
     if (!views) return;
-    const t = setTimeout(() => setNote(sunNote(sunThroughWindow(views, blockersOf(allParts), site, frame))), 250);
+    const t = setTimeout(() => setNote(sunNote(sunThroughWindow(views, blockersOf([...allParts, ...buildLandFeatures(site, frame)]), site, frame))), 250);
     return () => clearTimeout(t);
   }, [views, allParts, site, frame]);
 
