@@ -12,13 +12,13 @@ import { DRAW_STEP_DEG, flatPlan, roomOutline, savedHost } from "@/lib/plan/flat
 import { leftBulge, pointOnEdge, projectOnEdge, roomEdgeLength } from "@/lib/plan/arcs";
 import { makeRoundRoom } from "@/lib/plan/shapes";
 import { addRoom, insertCorner, insertGluedCorner, makeRoom, moveEdge, moveMany, moveOpeningTo, newPlanId, removeCorner, setCornerGlued } from "@/lib/plan/edit";
-import { add, angleOf, boundsOf, dist, leftNormal, polygonArea, project, rectangle, round1, roundPoint, scale as scaleV, sub, unit } from "@/lib/plan/geometry";
+import { add, angleOf, boundsOf, dist, leftNormal, polygonArea, polygonsOverlap, project, rectangle, round1, roundPoint, scale as scaleV, sub, unit } from "@/lib/plan/geometry";
 import { curvedOpeningGuides, distanceGuides, formatLength, labelOn, openingGuides, wallSegments, type Guide } from "@/lib/plan/labels";
 import { snapFrom, snapMove, snapNode, snapPush, snapTargets, type Guides } from "@/lib/plan/snap";
 import { mergeTargets, overhangsOf, supportTargets } from "@/lib/plan/support";
 import { roofFootprint, type Region } from "@/lib/house3d/footprint";
 import { parseTypedLength } from "@/lib/model/units";
-import { DEFAULT_STAIRS_WIDTH_IN, stairsDrawing } from "@/lib/plan/stairs";
+import { DEFAULT_STAIRS_WIDTH_IN, stairsCut, stairsDrawing } from "@/lib/plan/stairs";
 import { clampOffset, hostSegment, nearestHost, sameHost, openingGeometries, solidWalls, wallPieces, type OpeningGeometry } from "@/lib/plan/walls";
 import { fillRoomAt, splitRoom, whyNotFill } from "@/lib/plan/partitions";
 import { bowForTyped, curveBow, drawCurve } from "@/lib/plan/curveTool";
@@ -981,11 +981,13 @@ export default function PlanCanvas(props: Props) {
             ))}
 
             {stairsComingUp.map((st) => (
-              <StairsSymbol key={`down-${st.id}`} d={stairsDrawing(st, riseFor(st, below!.level))} scale={s} down />
+              <StairsSymbol key={`down-${st.id}`} d={stairsDrawing(st, riseFor(st, below!.level))} cut={stairsCut(st, riseFor(st, below!.level))} scale={s} down />
             ))}
-            {shown.stairs.map((st) => (
-              <StairsSymbol key={st.id} id={st.id} d={stairsDrawing(st, riseFor(st, level))} selected={isPicked(selection, st.id)} scale={s} />
-            ))}
+            {shown.stairs.map((st) => {
+              const d = stairsDrawing(st, riseFor(st, level));
+              const under = stairsComingUp.some((b) => polygonsOverlap(stairsDrawing(b, riseFor(b, below!.level)).footprint, d.footprint));
+              return <StairsSymbol key={st.id} id={st.id} d={d} cut={stairsCut(st, riseFor(st, level))} hideAbove={under} selected={isPicked(selection, st.id)} scale={s} />;
+            })}
 
             {shown.fixtures.map((f) => (
               <FixtureSymbol key={f.id} f={f} selected={isPicked(selection, f.id)} scale={s} onTransformEnd={onTransformEnd} />

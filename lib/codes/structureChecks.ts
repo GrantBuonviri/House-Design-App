@@ -1,6 +1,6 @@
 import { ceilingFor } from "@/lib/plan/basics";
 import { polygonsOverlap } from "@/lib/plan/geometry";
-import { stairsDrawing } from "@/lib/plan/stairs";
+import { stackedHeadroom, stairsDrawing } from "@/lib/plan/stairs";
 import { formatFeetInches } from "@/lib/model/units";
 import type { HouseFacts } from "@/lib/plans/house";
 import { structureOf } from "@/lib/structure";
@@ -84,12 +84,23 @@ export function headroomChecks(h: HouseFacts, minIn: number): RuleResult[] {
       const rise = h.riseFor(st, level);
       const d = stairsDrawing(st, rise);
       const above = h.levels.filter((l) => h.levels.indexOf(l) > h.levels.indexOf(level));
+      const to = h.levels.find((l) => l.id === st.toLevelId);
+      // Stairs on the floor they climb to, stacked over them: headroom up to that flight's underside.
+      const stacked = to ? h.plan(to.id).stairs.map((s2) => ({ l: to, room: stackedHeadroom(st, rise, s2, h.riseFor(s2, to)) })).filter((x) => x.room < Infinity) : [];
+      if (stacked.length) {
+        const low = stacked.reduce((a, b) => (b.room < a.room ? b : a));
+        out.push(
+          low.room >= minIn
+            ? { status: "pass", text: `${level.name} stairs run under the ${low.l.name.toLowerCase()} stairs with about ${formatFeetInches(Math.round(low.room))} of headroom.`, levelId: level.id }
+            : { status: "fail", text: `${level.name} stairs run under the ${low.l.name.toLowerCase()} stairs with about ${formatFeetInches(Math.max(0, Math.round(low.room)))} of headroom.`, fix: "Make both U-shaped stairs turned the same way (Things to check on the floor plan does it).", levelId: level.id, stage: "plan" },
+        );
+        continue;
+      }
       const over = above.flatMap((l) => h.plan(l.id).stairs.map((s2) => ({ l, fp: stairsDrawing(s2, h.riseFor(s2, l)).footprint }))).find((x) => polygonsOverlap(d.footprint, x.fp));
       if (over) {
         out.push({ status: "manual", text: `${level.name} stairs run under the ${over.l.name.toLowerCase()} stairs. Check the headroom under the upper flight on the stair section (A-501).`, levelId: level.id });
         continue;
       }
-      const to = h.levels.find((l) => l.id === st.toLevelId);
       const clear = rise + (to ? ceilingFor(h.basics, to) : 96) - d.riserIn;
       out.push(
         clear >= minIn

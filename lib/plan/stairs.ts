@@ -1,5 +1,5 @@
 import type { PlanStairs, Point } from "@/lib/model/schema";
-import { add, rotate } from "./geometry";
+import { add, polygonsOverlap, rotate } from "./geometry";
 
 /**
  * Stairs sized from how far they climb. Steps are at most 7 3/4" tall (a
@@ -97,5 +97,126 @@ export function stairsDrawing(s: Pick<PlanStairs, "x" | "y" | "rotation" | "widt
     risers,
     riserIn,
     runIn: r.run,
+  };
+}
+
+/** Each tread is a board this thick, over a riser. */
+export const TREAD_BOARD_IN = 1.5;
+/** How deep the stringers and soffit run under a flight, square to its slope. */
+export const SOFFIT_DEPTH_IN = 10;
+/** A landing is a slab this thick. */
+export const LANDING_THICK_IN = 10;
+
+/**
+ * One flight in the stairs' own climbing-north frame: it starts on the edge
+ * through `origin`, climbs along `dir` and is the stairs' width across
+ * `side`. `z0` is what it starts from (the floor, or the landing), `base`
+ * the lowest its underside goes (the floor, or the landing's underside).
+ */
+export type StairFlight = { origin: Point; dir: Point; side: Point; n: number; z0: number; base: number; closed: boolean };
+/** A tread or landing to stand on: its outline (stairs frame), the height of its top, and the lowest point of what's under it. */
+export type StairStep = { outline: Point[]; top: number; under: number };
+
+/**
+ * The stairs as built: flights on sloped stringers with an open soffit
+ * under them and a landing slab between them. `closed` boxes the bottom
+ * flight in down to the floor (nothing comes up underneath it).
+ */
+export function stairLayout(shape: PlanStairs["shape"], w: number, treads: number, riserIn: number, closed = false) {
+  const T = TREAD_IN;
+  const P = (x: number, y: number): Point => ({ x, y });
+  const flights: StairFlight[] = [];
+  let landing: { outline: Point[]; top: number } | null = null;
+  const rect = (x0: number, y0: number, x1: number, y1: number) => [P(x0, y0), P(x1, y0), P(x1, y1), P(x0, y1)];
+  if (shape === "straight") {
+    flights.push({ origin: P(0, 0), dir: P(0, -1), side: P(1, 0), n: treads, z0: 0, base: 0, closed });
+  } else {
+    const { n1, n2 } = flightSplit(treads);
+    const L1 = n1 * T;
+    const top = (n1 + 1) * riserIn;
+    flights.push({ origin: P(0, 0), dir: P(0, -1), side: P(1, 0), n: n1, z0: 0, base: 0, closed });
+    landing = { outline: shape === "l" ? rect(0, -L1 - w, w, -L1) : rect(0, -L1 - w, 2 * w, -L1), top };
+    const base = top - LANDING_THICK_IN;
+    if (shape === "l") flights.push({ origin: P(w, -L1), dir: P(1, 0), side: P(0, -1), n: n2, z0: top, base, closed: false });
+    else flights.push({ origin: P(w, -L1), dir: P(0, 1), side: P(1, 0), n: n2, z0: top, base, closed: false });
+  }
+  const at = (f: StairFlight, a: number, t: number): Point => ({ x: f.origin.x + f.dir.x * a + f.side.x * t, y: f.origin.y + f.dir.y * a + f.side.y * t });
+  const tread = (f: StairFlight, k: number): StairStep => ({
+    outline: [at(f, k * T, 0), at(f, (k + 1) * T, 0), at(f, (k + 1) * T, w), at(f, k * T, w)],
+    top: f.z0 + (k + 1) * riserIn,
+    under: flightUnderside(f, k * T, riserIn),
+  });
+  const steps: StairStep[] = [];
+  for (let k = 0; k < flights[0].n; k++) steps.push(tread(flights[0], k));
+  if (landing) steps.push({ ...landing, under: landing.top - LANDING_THICK_IN });
+  if (flights[1]) for (let k = 0; k < flights[1].n; k++) steps.push(tread(flights[1], k));
+  return { flights, landing, steps, at };
+}
+
+/** The height of a flight's underside `a` inches along it: a slope parallel to the treads, or the floor where it's closed in. */
+export function flightUnderside(f: StairFlight, a: number, riserIn: number): number {
+  if (f.closed) return f.z0;
+  const T = TREAD_IN;
+  const drop = (SOFFIT_DEPTH_IN * Math.hypot(T, riserIn)) / T;
+  return Math.max(f.base, f.z0 + (a * riserIn) / T - drop);
+}
+
+type Placed = Pick<PlanStairs, "x" | "y" | "rotation" | "widthIn" | "shape" | "flip">;
+
+/** Each tread and landing of placed stairs, in plan coordinates, heights above the floor they stand on. */
+export function placedSteps(s: Placed, riseIn: number, closed = false): StairStep[] {
+  const fr = stairsFrame(s, riseIn);
+  return stairLayout(s.shape, s.widthIn, fr.treads, fr.riserIn, closed).steps.map((st) => ({ ...st, outline: st.outline.map(fr.place) }));
+}
+
+/** Stairs are boxed in under their bottom flight unless other stairs come up underneath them (`holes`: the footprints of stairs arriving at this floor). */
+export function isClosedIn(s: Placed, riseIn: number, holes: Point[][]): boolean {
+  const fp = stairsDrawing(s, riseIn).footprint;
+  return !holes.some((h) => polygonsOverlap(h, fp));
+}
+
+/**
+ * The least headroom over stairs `lower` when stairs `upper` start on the
+ * floor they climb to (`riseIn` of the lower stairs higher), measured up
+ * from each tread to the underside of whatever upper tread or landing sits
+ * over it. Infinity when they don't overlap.
+ */
+export function stackedHeadroom(lower: Placed, lowerRise: number, upper: Placed, upperRise: number): number {
+  const lo = placedSteps(lower, lowerRise);
+  const hi = placedSteps(upper, upperRise);
+  let min = Infinity;
+  for (const a of lo) for (const b of hi) if (polygonsOverlap(a.outline, b.outline)) min = Math.min(min, lowerRise + b.under - a.top);
+  return min;
+}
+
+/** Plans are cut about 4 ft above the floor: stairs going up are drawn to there, stairs going down from there. */
+export const PLAN_CUT_IN = 48;
+
+export type StairsCut = {
+  /** The diagonal break line across the tread where the plan is cut. */
+  line: [Point, Point];
+  /** Treads and landings below the cut (drawn on this floor going UP), and above it (seen from the floor above going DN). */
+  below: Point[][];
+  above: Point[][];
+  /** Walking lines: UP from the bottom step to the cut, DN from the top step to the cut. */
+  up: Point[];
+  down: Point[];
+};
+
+/** Where plan drawings break the stairs, the way real floor plans draw stacked stairs. */
+export function stairsCut(s: Placed, riseIn: number): StairsCut {
+  const steps = placedSteps(s, riseIn);
+  const mid = (o: Point[]) => ({ x: o.reduce((t, p) => t + p.x, 0) / o.length, y: o.reduce((t, p) => t + p.y, 0) / o.length });
+  const c = Math.max(1, Math.min(steps.length - 1, steps.findIndex((st) => st.top >= PLAN_CUT_IN)));
+  const o = steps[c].outline;
+  const front = (st: StairStep) => ({ x: (st.outline[0].x + st.outline[3].x) / 2, y: (st.outline[0].y + st.outline[3].y) / 2 });
+  const back = (st: StairStep) => ({ x: (st.outline[1].x + st.outline[2].x) / 2, y: (st.outline[1].y + st.outline[2].y) / 2 });
+  const last = steps[steps.length - 1];
+  return {
+    line: [o[0], o[2]],
+    below: [...steps.slice(0, c).map((st) => st.outline), [o[0], o[2], o[3]]],
+    above: [[o[0], o[1], o[2]], ...steps.slice(c + 1).map((st) => st.outline)],
+    up: [front(steps[0]), ...steps.slice(0, c).map((st) => mid(st.outline)), mid(o)],
+    down: [back(last), ...steps.slice(c + 1).reverse().map((st) => mid(st.outline)), mid(o)],
   };
 }

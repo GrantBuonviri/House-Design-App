@@ -1,10 +1,10 @@
 import type { Fixture, Level, Point } from "@/lib/model/schema";
-import { add, dist, dot, isRectangle, leftNormal, polygonCenter, rotate, scale, sub, unit, edgesOf, boundsOf } from "@/lib/plan/geometry";
+import { add, dist, dot, isRectangle, leftNormal, polygonCenter, polygonsOverlap, rotate, scale, sub, unit, edgesOf, boundsOf } from "@/lib/plan/geometry";
 import { openingType } from "@/lib/plan/catalog";
 import { openingRooms, roleOf, sharedWall } from "@/lib/plan/connect";
 import { roomSqft } from "@/lib/plan/measure";
 import { ceilingFor, INTERIOR_WALL_IN } from "@/lib/plan/basics";
-import { stairsDrawing } from "@/lib/plan/stairs";
+import { stairsCut, stairsDrawing } from "@/lib/plan/stairs";
 import { HALF_WALL_IN, openingGeometries, solidWalls, wallPieces, type OpeningGeometry, type WallPiece } from "@/lib/plan/walls";
 import { floorFootprint, offsetRing } from "@/lib/house3d/footprint";
 import { codeNum, codeRef } from "@/lib/codes/data";
@@ -186,14 +186,22 @@ function drawPlan(project: Project, level: Level, viewNumber: number, base: bool
 
   // ---------- Stairs ----------
   const notes: string[] = [];
+  // Stairs coming up from the floor below, drawn past the cut line going DN.
+  const comingUp = h.levels
+    .filter((l) => l.elevationIn < level.elevationIn)
+    .flatMap((l) => h.plan(l.id).stairs.filter((x) => x.toLevelId === level.id).map((st) => ({ st, rise: h.riseFor(st, l) })));
   plan.stairs.forEach((st, i) => {
     const d = own[i];
-    ppoly(d.footprint, "medium");
-    for (const [a, e] of d.lines) pline([a, e], "fine");
-    pline(d.arrow, "fine");
-    arrowHead(d.arrow[d.arrow.length - 2], d.arrow[d.arrow.length - 1]);
-    const start = T(d.arrow[0]);
-    const towards = unit(sub(T(d.arrow[1]), start));
+    // Up to the cut line about 4 ft up, the rest dashed unless stairs from below are drawn there.
+    const cut = stairsCut(st, h.riseFor(st, level));
+    const under = comingUp.some((b) => polygonsOverlap(stairsDrawing(b.st, b.rise).footprint, d.footprint));
+    for (const pc of cut.below) ppoly(pc, "fine");
+    if (!under) for (const pc of cut.above) ppoly(pc, "hair", undefined, DASH.hidden);
+    pline(cut.line, "medium");
+    pline(cut.up, "fine");
+    arrowHead(cut.up[cut.up.length - 2], cut.up[cut.up.length - 1]);
+    const start = T(cut.up[0]);
+    const towards = unit(sub(T(cut.up[1]), start));
     items.push({ t: "text", at: sub(start, scale(towards, 0.16)), text: `UP ${d.risers}R`, size: 6, bold: true, align: "center", valign: "middle" });
     if (d.risers >= codeNum("stairs.handrailRequiredRisers")) {
       const c = T(polygonCenter(d.footprint));
@@ -203,15 +211,15 @@ function drawPlan(project: Project, level: Level, viewNumber: number, base: bool
       `Stairs: ${d.risers} risers at ${f2(d.riserIn)}" max ${inchText(codeNum("stairs.maxRiser"))}, 10" treads, ${archFeet(st.widthIn)} wide. Handrail ${codeNum("stairs.handrailMinHeight")}" to ${codeNum("stairs.handrailMaxHeight")}" above the nosings on at least one side (${codeRef("stairs.handrailMinHeight")}). Guards where a side drops more than 30" (IRC R312.1).`,
     );
   });
-  const below = h.levels.filter((l) => l.elevationIn < level.elevationIn);
-  for (const l of below) {
-    for (const st of h.plan(l.id).stairs.filter((x) => x.toLevelId === level.id)) {
-      const d = stairsDrawing(st, h.riseFor(st, l));
-      ppoly(d.footprint, "fine", undefined, DASH.hidden);
-      const end = T(d.arrow[d.arrow.length - 1]);
-      const back = unit(sub(T(d.arrow[d.arrow.length - 2]), end));
-      items.push({ t: "text", at: sub(end, scale(back, -0.16)), text: "DN", size: 6, bold: true, align: "center", valign: "middle" });
-    }
+  for (const { st, rise } of comingUp) {
+    const cut = stairsCut(st, rise);
+    for (const pc of cut.above) ppoly(pc, "fine", undefined, DASH.hidden);
+    pline(cut.line, "fine");
+    pline(cut.down, "hair");
+    arrowHead(cut.down[cut.down.length - 2], cut.down[cut.down.length - 1]);
+    const end = T(cut.down[0]);
+    const back = unit(sub(T(cut.down[1]), end));
+    items.push({ t: "text", at: sub(end, scale(back, 0.16)), text: "DN", size: 6, bold: true, align: "center", valign: "middle" });
   }
 
   // ---------- Fixtures ----------

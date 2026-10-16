@@ -3,7 +3,7 @@ import { exteriorWallIn, INTERIOR_WALL_IN } from "@/lib/plan/basics";
 import { planOf, type Plans } from "@/lib/plan/edit";
 import { add, collinearOverlap, dist, lerp, pointInPolygon, polygonArea, polygonCenter, project, scale, sub, subtractIntervals, unit } from "@/lib/plan/geometry";
 import { areaKind } from "@/lib/plan/measure";
-import { stairsDrawing } from "@/lib/plan/stairs";
+import { isClosedIn, stairsDrawing } from "@/lib/plan/stairs";
 import { HALF_WALL_IN, openingGeometries, roomEdgeAt, WALL_CAP_IN, WALL_CAP_OVERHANG_IN, wallPieces, type OpeningGeometry, type WallPiece } from "@/lib/plan/walls";
 import { wallKey } from "@/lib/interior/picks";
 import { COLORS, floorColor } from "./colors";
@@ -329,7 +329,7 @@ export function buildLevel(
     const rise = to ? to.floorIn - floorIn : ceilingIn + 13;
     if (rise <= 12) continue;
     const mb = new MeshBuilder();
-    drawStairs(mb, f, s, rise, floorIn);
+    drawStairs(mb, f, s, rise, floorIn, isClosedIn(s, rise, stairHoles));
     parts.push({ key: `${L}:s:${s.id}`, levelId: L, layer: "stairs", pick: { kind: "stairs", id: s.id, levelId: L }, mesh: mb.build() });
   }
 

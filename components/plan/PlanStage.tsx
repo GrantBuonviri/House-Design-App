@@ -14,7 +14,7 @@ import { blankPlans, moveMany, planHasContent, planOf, removeMany } from "@/lib/
 import { removeWall } from "@/lib/plan/openWalls";
 import { plansFromSketch } from "@/lib/plan/fromSketch";
 import { suggestPlanAlternatives, type PlanAlternative } from "@/lib/plan/alternatives";
-import { planWarnings, type PlanWarning } from "@/lib/plan/checks";
+import { makeStairsU, planWarnings, type PlanWarning } from "@/lib/plan/checks";
 import { suggestPlans } from "@/lib/plan/suggest";
 import { boundsOf, dist } from "@/lib/plan/geometry";
 import { houseTotals, totalsText } from "@/lib/plan/measure";
@@ -405,6 +405,11 @@ export default function PlanStage({ onContinue, onGoToSketch }: { onContinue: ()
       if (!sup) return;
       setPlans((ps) => ({ ...ps, [w.levelId]: pullBack(p, w.pullBack!.roomId, sup.regions, sup.arcs) }));
       setFlash("Pulled the room back over the floor below. Undo puts it back.");
+      return;
+    }
+    if (w.stairsU) {
+      setPlans((ps) => makeStairsU(ps, w.stairsU!));
+      setFlash("Made both stairs U-shaped. Undo puts them back.");
       return;
     }
     if (!w.gap) return;
