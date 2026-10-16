@@ -20,6 +20,9 @@ import { MAIN_LEVEL_ID, levelFor } from "@/lib/brief/levels";
 import { defaultBasics } from "@/lib/plan/basics";
 import { House3D } from "@/lib/model/schema";
 import { house, RANCH } from "./samples";
+import { copyToRooms, dragItem, duplicateItem, furnishLayouts, ghostAt, patchItem, placeGhost, sameTypeRooms, setWallGap, stageItems, wallGaps } from "@/lib/furnish/stage";
+import { describeChange } from "@/lib/store/describe";
+import { PLAN_TOOLS } from "@/components/plan/types";
 
 const SYSTEMS = HouseSystems.parse({});
 
@@ -280,5 +283,114 @@ describe("furnish in 3D and saved data", () => {
     expect(m.plan.showFurnishings).toBeUndefined();
     const withFurnishStage = migrateProject({ ...JSON.parse(JSON.stringify(m)), stage: "furnish" });
     expect(withFurnishStage.stage).toBe("furnish");
+  });
+});
+
+
+describe("the 2D Furnish page", () => {
+  it("lists the app's own cabinets with the hand-placed ones, less any hidden", () => {
+    const { plan } = twoRooms();
+    const { plan: p, id } = placeItem(plan, "fixture:counter", { x: 192, y: 15 }, { widthIn: 120 });
+    const layouts = { cabinets: cabinetLayout(p, 96).cabinets, devices: [] };
+    const all = stageItems(p, layouts);
+    const auto = all.filter((i) => i.kind === "cabinet" && i.auto);
+    expect(auto.length).toBeGreaterThan(1);
+    expect(all.some((i) => i.id === id)).toBe(true);
+    // Dragging one gives a hand-placed copy with a new id, and the app's own is hidden in the preview.
+    const drag = dragItem(p, auto[0], { x: auto[0].x + 6, y: auto[0].y }, all);
+    expect(drag.id).not.toBe(auto[0].id);
+    const preview = stageItems(drag.plan, layouts);
+    expect(preview.some((i) => i.id === auto[0].id)).toBe(false);
+    expect(preview.some((i) => i.id === drag.id && !i.auto)).toBe(true);
+    expect(preview).toHaveLength(all.length);
+  });
+
+  it("shows a ghost that backs onto a wall and goes red where it can't go", () => {
+    const { plan } = twoRooms();
+    const near = ghostAt(plan, "fixture:toilet", { x: 190, y: 20 }, 0, []);
+    expect(near?.check.ok).toBe(true);
+    // Backed onto the north wall of the bedroom: its back is at the wall.
+    expect(near!.y).toBeLessThan(40);
+    expect(near!.rotation).toBe(0);
+    const turned = ghostAt(plan, "fixture:toilet", { x: 190, y: 20 }, 180, []);
+    expect(turned!.rotation).toBe(180);
+    const outside = ghostAt(plan, "fixture:toilet", { x: 900, y: 900 }, 0, []);
+    expect(outside?.check.ok).toBe(false);
+    expect(outside?.check.problem).toMatch(/inside a room/);
+    expect(placeGhost(plan, outside!).id).toBeNull();
+    const noWall = ghostAt(plan, "addon:mirror", { x: 190, y: 70 }, 0, []);
+    expect(noWall?.check.ok).toBe(false);
+    expect(ghostAt(plan, "opening:door-hinged", { x: 190, y: 70 }, 0, [])).toBeNull();
+    const placed = placeGhost(plan, near!);
+    expect(placed.id).toBeTruthy();
+    expect(placed.plan.fixtures).toHaveLength(1);
+  });
+
+  it("says where a moved app-placed outlet is afterwards", () => {
+    const { plan } = twoRooms();
+    const { plan: p, id } = placeItem(plan, "device:outlet", { x: 150, y: 2 });
+    const it = only(p, id);
+    const out = patchItem(p, it, { x: 170, y: 2 });
+    expect(out.id).toBe(id);
+    expect(only(out.plan, id).x).toBe(170);
+  });
+
+  it("measures the walls around an item and moves it to a typed distance", () => {
+    const { plan, bed } = twoRooms();
+    const { plan: p, id } = placeItem(plan, "furniture:sofa", { x: 192, y: 72 }, { rotation: 0 });
+    const it = only(p, id);
+    expect(it.roomId).toBe(bed);
+    const gaps = wallGaps(p, it);
+    const up = gaps.find((g) => g.side === "up")!;
+    expect(up.inches).toBeGreaterThan(0);
+    const out = setWallGap(p, it, up, 10);
+    const moved = only(out.plan, out.id);
+    expect(wallGaps(out.plan, moved).find((g) => g.side === "up")!.inches).toBeCloseTo(10, 0);
+  });
+
+  it("duplicates an item beside itself and copies it to the other rooms of its kind", () => {
+    const b1 = makeRoom([{ x: 0, y: 0 }, { x: 120, y: 0 }, { x: 120, y: 96 }, { x: 0, y: 96 }], "Bath 1", { type: "bathroom" });
+    const b2 = makeRoom([{ x: 240, y: 0 }, { x: 360, y: 0 }, { x: 360, y: 96 }, { x: 240, y: 96 }], "Bath 2", { type: "bathroom" });
+    const plan: FloorPlan = { ...emptyPlan(), rooms: [b1, b2] };
+    const { plan: p, id } = placeItem(plan, "fixture:vanity", { x: 40, y: 13 });
+    const it = only(p, id);
+    const dup = duplicateItem(p, it)!;
+    expect(dup.plan.fixtures).toHaveLength(2);
+    expect(dup.id).not.toBe(id);
+    expect(sameTypeRooms(p, it).map((r) => r.name)).toEqual(["Bath 2"]);
+    const copied = copyToRooms(p, it);
+    expect(copied.placed).toBe(1);
+    expect(copied.plan.fixtures.find((f) => f.roomId === b2.id)?.kind).toBe("vanity");
+    // Nothing to copy to without another room of the kind.
+    expect(copyToRooms(dup.plan, only(dup.plan, dup.id)).placed).toBe(1);
+  });
+
+  it("names what was placed, moved, recolored and deleted for Undo", () => {
+    const project = createProject("Test");
+    const level = Object.keys(project.floorPlans)[0] ?? "main";
+    const { plan } = twoRooms();
+    const mk = (pl: FloorPlan) => ({ ...project, floorPlans: { ...project.floorPlans, [level]: pl } });
+    const { plan: p, id } = placeItem(plan, "fixture:toilet", { x: 40, y: 20 });
+    expect(describeChange(mk(plan), mk(p))).toBe("place a toilet in Bath");
+    expect(describeChange(mk(p), mk(moveItem(p, only(p, id), { x: 70, y: 20 })))).toBe("move the toilet");
+    expect(describeChange(mk(p), mk(removeItem(p, only(p, id))))).toBe("delete the toilet in Bath");
+    const { plan: q, id: sid } = placeItem(plan, "furniture:sofa", { x: 190, y: 70 });
+    expect(describeChange(mk(q), mk(updateItem(q, only(q, sid), { color: "#111111" })))).toBe("recolor the sofa");
+  });
+
+  it("no longer has a Fixture tool on the floor plan", () => {
+    expect(PLAN_TOOLS.some((t) => (t.id as string) === "fixture")).toBe(false);
+    expect(PLAN_TOOLS.some((t) => t.key === "F")).toBe(false);
+  });
+});
+
+describe("furnish layouts", () => {
+  it("reads the app's devices for a sample house floor", () => {
+    const project = house(RANCH);
+    const level = project.levels[0];
+    const l = furnishLayouts(project, level);
+    expect(l.devices.length).toBeGreaterThan(0);
+    const items = stageItems(project.floorPlans[level.id], l);
+    expect(items.some((i) => i.kind === "device" && i.auto)).toBe(true);
   });
 });

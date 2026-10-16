@@ -1,18 +1,21 @@
 "use client";
 
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
-import { Circle, Group, Layer, Line, Stage, Transformer } from "react-konva";
+import { Circle, Group, Layer, Line, Stage, Text, Transformer } from "react-konva";
 import Konva from "konva";
-import type { BubbleDiagram, Fixture, FloorPlan, Level, Opening, OpeningHost, PlanBasics, PlanLabels, PlanStairs, Point } from "@/lib/model/schema";
+import type { BubbleDiagram, FloorPlan, Level, Opening, OpeningHost, PlanBasics, PlanLabels, PlanStairs, Point, WallHeight } from "@/lib/model/schema";
 import { exteriorWallIn, riseBetween } from "@/lib/plan/basics";
-import { fixtureType, openingType } from "@/lib/plan/catalog";
+import { openingType } from "@/lib/plan/catalog";
+import { catalogEntry } from "@/lib/furnish/catalog";
+import { dragItem, ghostAt, placeGhost, stageItems, wallGaps, type Layouts } from "@/lib/furnish/stage";
+import { FurnishGhost, FurnishItems } from "@/components/furnish/FurnishLayers";
 import { trimOverlap } from "@/lib/plan/overlaps";
 import { bendInfo, bendWall, bowFromPoint, planRadii, snapBow, type BendSnap, type BendTarget } from "@/lib/plan/bend";
 import { DRAW_STEP_DEG, flatPlan, roomOutline, savedHost } from "@/lib/plan/flatten";
 import { leftBulge, pointOnEdge, projectOnEdge, roomEdgeLength } from "@/lib/plan/arcs";
 import { makeRoundRoom } from "@/lib/plan/shapes";
 import { addRoom, insertCorner, insertGluedCorner, makeRoom, moveEdge, moveMany, moveOpeningTo, newPlanId, removeCorner, setCornerGlued } from "@/lib/plan/edit";
-import { add, angleOf, boundsOf, dist, leftNormal, polygonArea, polygonsOverlap, project, rectangle, round1, roundPoint, scale as scaleV, sub, unit } from "@/lib/plan/geometry";
+import { add, boundsOf, dist, polygonArea, polygonsOverlap, project, rectangle, round1, roundPoint, scale as scaleV, sub, unit } from "@/lib/plan/geometry";
 import { curvedOpeningGuides, distanceGuides, formatLength, labelOn, openingGuides, wallSegments, type Guide } from "@/lib/plan/labels";
 import { snapFrom, snapMove, snapNode, snapPush, snapTargets, type Guides } from "@/lib/plan/snap";
 import { mergeTargets, overhangsOf, supportTargets } from "@/lib/plan/support";
@@ -25,9 +28,9 @@ import { bowForTyped, curveBow, drawCurve } from "@/lib/plan/curveTool";
 import LandLayer from "@/components/bubbles/LandLayer";
 import type { LandView, Side } from "@/components/bubbles/types";
 import { Grid, ScaleBar, SideLabels, useSpacePan, type View } from "@/components/canvas/CanvasBits";
-import { ACCENT, FixtureSymbol, OpeningSymbol, StairsSymbol } from "./PlanShapes";
-import { dedupe, flat, ghostOpeningAt, pointIn, roomFill, type Box } from "./canvasHelpers";
-import { BendHandles, BendTip, DraftPreview, FurnitureOutlines, GuidesAndBox, MidNodes, NodeReadout, OverhangLayer, PlanWalls, ReferenceLayer, ZoomButtons } from "./PlanCanvasLayers";
+import { ACCENT, OpeningSymbol, StairsSymbol } from "./PlanShapes";
+import { dedupe, flat, ghostOpeningAt, roomFill, type Box } from "./canvasHelpers";
+import { BendHandles, BendTip, DraftPreview, GuidesAndBox, MidNodes, NodeReadout, OverhangLayer, PlanWalls, ReferenceLayer, ZoomButtons } from "./PlanCanvasLayers";
 import { DistanceGuides, OutsideDims, RoomLabels, TapeLine, ThingLabels } from "./PlanMeasureLayers";
 import { edgeId, isPicked, parseEdgeId, type PlanItem, type PlanSelection, type PlanTool } from "./types";
 
@@ -45,7 +48,8 @@ type Gesture =
   | { type: "opening"; id: string; moved: boolean }
   | { type: "box"; start: Point; additive: boolean; base: PlanSelection }
   | { type: "lot"; start: Point }
-  | { type: "rect"; start: Point; moved: boolean };
+  | { type: "rect"; start: Point; moved: boolean }
+  | { type: "furn"; id: string; grab: Point; moved: boolean; ok: boolean; problem?: string; newId: string };
 
 /** What to say beside the diamond while a wall is bent: radius and length, or that it snapped flat or to a half circle. */
 function bendReadout(plan: FloorPlan, target: BendTarget, snap: BendSnap): { at: Point; text: string } | null {
@@ -82,9 +86,14 @@ type Props = {
   /** The Room tool draws a round room: click for the typed diameter, or drag out from the middle. */
   roomShape?: "box" | "round";
   roundDiameter?: number;
-  /** What the Doors and windows tool and the Fixtures tool place. */
+  /** What the Doors and windows tool places. */
   placeOpening: string;
-  placeFixture: string;
+  /** The floor plan editor, or the Furnish page: rooms are locked there, and furnish items are drawn full and can be moved. */
+  mode?: "plan" | "furnish";
+  /** The floor plan shows furnish items faded (the Show furnishings switch). */
+  showFurnishings?: boolean;
+  /** The Furnish page: the app's own cabinets and devices, the catalog entry being placed, how far it is turned, the wall the Wall tool draws, and the ceiling. */
+  furnish?: { layouts?: Layouts; pick: string | null; turn: number; wallHeight: WallHeight; ceilingIn: number };
   selection: PlanSelection;
   snap: boolean;
   labels: PlanLabels;
@@ -110,8 +119,9 @@ type Props = {
 };
 
 export default function PlanCanvas(props: Props) {
-  const { plan, level, levels, basics, below, support, above, sketch, tool, placeOpening, placeFixture, selection, snap, labels, tape, sides, height, land, lotMode, onLotMove } = props;
-  const { onSelect, onChange, onToolDone, onDrafting, onMessage, fillMode = false, roomShape = "box", roundDiameter = 144 } = props;
+  const { plan, level, levels, basics, below, support, above, sketch, tool, placeOpening, selection, snap, labels, tape, sides, height, land, lotMode, onLotMove } = props;
+  const { onSelect, onChange, onToolDone, onDrafting, onMessage, fillMode = false, roomShape = "box", roundDiameter = 144, mode = "plan", showFurnishings = true, furnish } = props;
+  const furnishing = mode === "furnish";
   // Option (Alt) held while finishing a wall keeps it a divider wall, even right across a room.
   const altDown = useRef(false);
   useEffect(() => {
@@ -147,6 +157,7 @@ export default function PlanCanvas(props: Props) {
   const [tapePts, setTapePts] = useState<Point[]>([]);
   const [tapeEnd, setTapeEnd] = useState<Point | null>(null);
   const [dragCorner, setDragCorner] = useState<{ roomId: string; i: number } | null>(null);
+  const [badId, setBadId] = useState<string | null>(null);
   const { spaceDown, hovering } = useSpacePan();
   const shown = preview ?? plan;
   const overhangs = useMemo(() => (support ? overhangsOf(shown.rooms, support.regions) : []), [shown, support]);
@@ -257,6 +268,9 @@ export default function PlanCanvas(props: Props) {
   const fp = useMemo(() => flatPlan(shown, DRAW_STEP_DEG), [shown]);
   const pieces = useMemo(() => wallPieces(fp, exteriorIn), [fp, exteriorIn]);
   const geos = useMemo(() => openingGeometries(fp), [fp]);
+  const layouts = furnish?.layouts;
+  const baseItems = useMemo(() => stageItems(plan, layouts), [plan, layouts]);
+  const shownItems = useMemo(() => (preview ? stageItems(preview, layouts) : baseItems), [preview, layouts, baseItems]);
   const solids = useMemo(() => solidWalls(pieces, geos), [pieces, geos]);
   const thicknessAt = useCallback(
     (g: OpeningGeometry) => {
@@ -278,7 +292,6 @@ export default function PlanCanvas(props: Props) {
 
   const single = selection.length === 1 ? selection[0] : null;
   const selRoom = single?.kind === "room" && tool === "select" ? shown.rooms.find((r) => r.id === single.id) : undefined;
-  const selFixture = single?.kind === "fixture" && tool === "select" ? shown.fixtures.find((f) => f.id === single.id) : undefined;
   const selRoomId = selRoom?.id;
   // The diamonds: every side of a picked room, the picked side of a room, or a picked wall.
   const bendTargets: BendTarget[] = useMemo(() => {
@@ -291,7 +304,7 @@ export default function PlanCanvas(props: Props) {
   useEffect(() => {
     setSelCorner((c) => (c && c.roomId === selRoomId ? c : null));
   }, [selRoomId]);
-  const transformTarget = !lotMode && !preview ? (selFixture?.id ?? selRoom?.id) : undefined;
+  const transformTarget = !lotMode && !preview ? selRoom?.id : undefined;
 
   useEffect(() => {
     const tr = trRef.current;
@@ -306,19 +319,26 @@ export default function PlanCanvas(props: Props) {
   /** The plan element under a Konva node. */
   function elementOf(node: Konva.Node | null): (PlanItem & { corner?: number; mid?: number; bend?: string }) | null {
     if (!node) return null;
-    const mid = node.findAncestor(".mid", true);
+    const mid = furnishing ? null : node.findAncestor(".mid", true);
     if (mid) {
       const { roomId, edge } = parseEdgeId(mid.id());
       return { kind: "room", id: roomId, mid: edge };
     }
-    const bend = node.findAncestor(".bend", true);
+    const bend = furnishing ? null : node.findAncestor(".bend", true);
     if (bend) return bend.id().includes("#") ? { kind: "room", id: bend.id().split("#")[0], bend: bend.id() } : { kind: "wall", id: bend.id(), bend: bend.id() };
-    const corner = node.findAncestor(".corner", true);
+    const corner = furnishing ? null : node.findAncestor(".corner", true);
     if (corner) {
       const { roomId, edge } = parseEdgeId(corner.id());
       return { kind: "room", id: roomId, corner: edge };
     }
-    for (const kind of ["opening", "fixture", "stairs", "edge", "wall", "room"] as const) {
+    const furn = node.findAncestor(".furnish", true);
+    if (furn) return { kind: "furnish", id: furn.id() };
+    // On the Furnish page the rooms and walls are locked: only furnishings, doors and windows answer to the mouse.
+    if (furnishing) {
+      const op = node.findAncestor(".opening", true);
+      return op ? { kind: "opening", id: op.id() } : null;
+    }
+    for (const kind of ["opening", "stairs", "edge", "wall", "room"] as const) {
       const hit = node.findAncestor(`.${kind}`, true);
       if (hit) return { kind, id: hit.id() };
     }
@@ -353,23 +373,20 @@ export default function PlanCanvas(props: Props) {
     onToolDone();
   }
 
-  /** A fixture at a point, backed up against a wall when one is close. */
-  function fixtureAt(p: Point): Fixture {
-    const t = fixtureType(placeFixture);
-    const f: Fixture = { id: newPlanId("f"), kind: t.id, x: Math.round(p.x), y: Math.round(p.y), rotation: 0, widthIn: t.widthIn, depthIn: t.depthIn };
-    const near = nearestHost(plan, p, t.depthIn / 2 + 18);
-    if (near) {
-      const u = near.u;
-      const inward = scaleV(leftNormal(u), near.side);
-      const along = pointOnEdge(near.seg.a, near.seg.b, near.seg.bulge ?? 0, clampOffset(near.t, t.widthIn, near.seg.length));
-      const at = add(along, scaleV(inward, t.depthIn / 2 + 2.5));
-      f.x = round1(at.x);
-      f.y = round1(at.y);
-      f.rotation = Math.round(angleOf(inward) - 90);
-    }
-    const room = plan.rooms.find((r) => pointIn(f, r.polygon));
-    if (room) f.roomId = room.id;
-    return f;
+  /** Where the catalog item being placed would land with the mouse at `p`, and whether it fits. */
+  function ghostFor(p: Point) {
+    return furnish?.pick ? ghostAt(plan, furnish.pick, p, furnish.turn, baseItems, furnish.ceilingIn) : null;
+  }
+
+  function placeFurnishAt(p: Point) {
+    const g = ghostFor(p);
+    if (!g) return;
+    if (!g.check.ok) return onMessage(g.check.problem ?? "It doesn't fit there.");
+    const out = placeGhost(plan, g, furnish?.ceilingIn);
+    if (!out.id) return;
+    onChange(out.plan);
+    onSelect([{ kind: "furnish", id: out.id }]);
+    if (g.check.blocksDoors.length) onMessage("That's in front of a door. It's allowed, and shows in Things to check.");
   }
 
   function placeStairsAt(p: Point) {
@@ -429,7 +446,8 @@ export default function PlanCanvas(props: Props) {
       onToolDone();
       return;
     }
-    const walls = pts.slice(1).map((b, i) => ({ id: newPlanId("w"), a: roundPoint(pts[i]), b: roundPoint(b), thicknessIn: 4.5 }));
+    const height = furnishing && furnish && furnish.wallHeight !== "full" ? { height: furnish.wallHeight } : {};
+    const walls = pts.slice(1).map((b, i) => ({ id: newPlanId("w"), a: roundPoint(pts[i]), b: roundPoint(b), thicknessIn: 4.5, ...height }));
     onChange({ ...plan, walls: [...plan.walls, ...walls] });
     onSelect(walls.map((w) => ({ kind: "wall" as const, id: w.id })));
     onToolDone();
@@ -533,7 +551,6 @@ export default function PlanCanvas(props: Props) {
   function movedGuides(moved: FloorPlan, ids: string[]): Guide[] {
     const pts: Point[] = [
       ...moved.rooms.filter((r) => ids.includes(r.id)).flatMap((r) => r.polygon),
-      ...moved.fixtures.filter((f) => ids.includes(f.id)).flatMap((f) => rectangle(f.x, f.y, f.widthIn, f.depthIn, f.rotation)),
       ...moved.walls.filter((w) => ids.includes(w.id)).flatMap((w) => [w.a, w.b]),
     ];
     const box = boundsOf(pts);
@@ -566,13 +583,7 @@ export default function PlanCanvas(props: Props) {
     }
     if (tool === "door") return placeOpeningAt(p);
     if (tool === "stairs") return placeStairsAt(p);
-    if (tool === "fixture") {
-      const f = fixtureAt(p);
-      onChange({ ...plan, fixtures: [...plan.fixtures, f] });
-      onSelect([{ kind: "fixture", id: f.id }]);
-      onToolDone();
-      return;
-    }
+    if (tool === "place") return placeFurnishAt(p);
     if (tool === "room" && fillMode) {
       const why = whyNotFill(plan, p);
       const out = why ? null : fillRoomAt(plan, p);
@@ -635,6 +646,12 @@ export default function PlanCanvas(props: Props) {
       setDragCorner({ roomId: el.id, i: el.corner });
       return;
     }
+    if (el.kind === "furnish") {
+      onSelect([el]);
+      const item = baseItems.find((x) => x.id === el.id);
+      if (item) gesture.current = { type: "furn", id: el.id, grab: sub(p, item), moved: false, ok: true, newId: el.id };
+      return;
+    }
     if (shift) {
       onSelect(isPicked(selection, el.id) ? selection.filter((x) => x.id !== el.id) : [...selection, el]);
       return;
@@ -655,7 +672,7 @@ export default function PlanCanvas(props: Props) {
   function onMouseMove(e: Konva.KonvaEventObject<MouseEvent>) {
     const p = world();
     const shift = e.evt.shiftKey;
-    if (tool === "door" || tool === "fixture" || tool === "stairs" || drafting) setCursor(p);
+    if (tool === "door" || tool === "place" || tool === "stairs" || drafting) setCursor(p);
     const g = gesture.current;
     if (tape) {
       if (tapePts.length === 1) setTapeEnd(snapFrom(tapePts[0], p, pickTargets([]), tol, snap, shift).p);
@@ -736,6 +753,19 @@ export default function PlanCanvas(props: Props) {
         const og = openingGeometries(next).find((x) => x.opening.id === g.id);
         setDragGuides(og ? openingGuides(og) : []);
       }
+    } else if (g.type === "furn") {
+      const item = baseItems.find((x) => x.id === g.id);
+      if (!item) return;
+      const to = sub(p, g.grab);
+      if (!g.moved && Math.hypot(to.x - item.x, to.y - item.y) * s < 3) return;
+      g.moved = true;
+      const out = dragItem(base, item, to, baseItems);
+      g.ok = out.check.ok;
+      g.problem = out.check.problem;
+      g.newId = out.id;
+      setBadId(out.check.ok ? null : out.id);
+      setPreview(out.plan);
+      setDragGuides(wallGaps(out.plan, out.item).map((w) => w.guide));
     } else if (g.type === "bend") {
       const info = bendInfo(base, g.target);
       if (!info) return;
@@ -760,8 +790,20 @@ export default function PlanCanvas(props: Props) {
     setDragGuides([]);
     setDragCorner(null);
     setBendTip(null);
+    setBadId(null);
     if (!g) return;
     const { preview: pv } = latest.current;
+    if (g.type === "furn") {
+      // Dropped where it doesn't fit: it goes back, and the reason is said.
+      if (pv && g.moved) {
+        if (g.ok) {
+          onChange(pv);
+          onSelect([{ kind: "furnish", id: g.newId }]);
+        } else onMessage(`${g.problem ?? "It doesn't fit there."} It went back.`);
+      }
+      setPreview(null);
+      return;
+    }
     if (g.type === "rect") {
       if (tool === "room" && roomShape === "round") {
         finishRoundRoom(g.start, g.moved && rectEnd ? Math.round(dist(rectEnd, g.start) * 2) : roundDiameter);
@@ -851,7 +893,7 @@ export default function PlanCanvas(props: Props) {
     const layer = layerRef.current;
     if (!layer) return;
     const hits: PlanItem[] = [];
-    for (const kind of ["room", "wall", "fixture", "stairs"] as const) {
+    for (const kind of furnishing ? (["furnish"] as const) : (["room", "wall", "stairs"] as const)) {
       for (const node of layer.find(`.${kind}`)) {
         if (Konva.Util.haveIntersection(r, node.getClientRect({ relativeTo: layer }))) hits.push({ kind, id: node.id() });
       }
@@ -886,11 +928,10 @@ export default function PlanCanvas(props: Props) {
     setView({ scale: s, x: stage.x(), y: stage.y() });
   }
 
-  /** Turning a room or fixture (or stretching a fixture) with the handles. */
+  /** Turning a room with the handles. */
   function onTransformEnd(e: Konva.KonvaEventObject<Event>) {
     const node = e.target;
     const m = node.getTransform().copy();
-    const sx = node.scaleX();
     node.setAttrs({ x: 0, y: 0, rotation: 0, scaleX: 1, scaleY: 1 });
     const id = node.id();
     const room = plan.rooms.find((r) => r.id === id);
@@ -905,17 +946,6 @@ export default function PlanCanvas(props: Props) {
       });
       return;
     }
-    const f = plan.fixtures.find((x) => x.id === id);
-    if (f) {
-      const at = m.point({ x: 0, y: 0 });
-      const dec = m.decompose();
-      onChange({
-        ...plan,
-        fixtures: plan.fixtures.map((x) =>
-          x.id === id ? { ...x, x: round1(at.x), y: round1(at.y), rotation: Math.round(dec.rotation), widthIn: Math.max(12, Math.round(x.widthIn * Math.abs(sx))) } : x,
-        ),
-      });
-    }
   }
 
   // ---- Drawing ----
@@ -924,7 +954,8 @@ export default function PlanCanvas(props: Props) {
   const hoverSeg = hoverWall ? hostSegment(shown, hoverWall) : null;
   const selectedEdge = single?.kind === "edge" ? parseEdgeId(single.id) : null;
   const ghostOpening = tool === "door" && cursor ? ghostOpeningAt(plan, cursor, placeOpening, s) : null;
-  const ghostFixture = tool === "fixture" && cursor ? fixtureAt(cursor) : null;
+  const ghost = tool === "place" && cursor ? ghostFor(cursor) : null;
+  const ghostEntry = ghost ? catalogEntry(ghost.entryId) : undefined;
   const ghostStairs = tool === "stairs" && cursor ? { x: cursor.x, y: cursor.y, rotation: 0, widthIn: DEFAULT_STAIRS_WIDTH_IN, shape: basics?.stairs ?? "straight", flip: false } : null;
   const rectPreview = rectEnd && gesture.current?.type === "rect" ? gesture.current.start : null;
 
@@ -993,11 +1024,7 @@ export default function PlanCanvas(props: Props) {
               return <StairsSymbol key={st.id} id={st.id} d={d} cut={stairsCut(st, riseFor(st, level))} hideAbove={under} selected={isPicked(selection, st.id)} scale={s} />;
             })}
 
-            {shown.fixtures.map((f) => (
-              <FixtureSymbol key={f.id} f={f} selected={isPicked(selection, f.id)} scale={s} onTransformEnd={onTransformEnd} />
-            ))}
-
-            <FurnitureOutlines furniture={shown.furniture ?? []} s={s} names={labelOn(labels, "fixtureNames")} />
+            {(furnishing || showFurnishings) && <FurnishItems items={shownItems} selectedId={single?.kind === "furnish" ? single.id : undefined} badId={badId ?? undefined} s={s} faded={!furnishing} names={labelOn(labels, "fixtureNames")} />}
 
             <PlanWalls exteriorIn={exteriorIn} solids={solids} selection={selection} s={s} toSaved={(h) => savedHost(fp, h)} />
 
@@ -1036,7 +1063,10 @@ export default function PlanCanvas(props: Props) {
             <DraftPreview rectStart={rectPreview} rectEnd={rectEnd} draft={draft} cursor={cursor} tool={tool} typed={typed} bow={bow} s={s} round={tool === "room" && roomShape === "round"} />
 
             {ghostOpening && <OpeningSymbol g={ghostOpening.g} thickness={ghostOpening.thickness} selected scale={s} ghost />}
-            {ghostFixture && <FixtureSymbol f={ghostFixture} selected={false} scale={s} ghost />}
+            {ghost && ghostEntry && <FurnishGhost ghost={ghost} label={ghostEntry.label} mount={ghostEntry.mount} s={s} />}
+            {ghost && !ghost.check.ok && ghost.check.problem && (
+              <Text x={ghost.x - 90 / s} y={ghost.y + (Math.max(ghost.depthIn, ghost.widthIn) / 2 + 10 / s)} width={180 / s} align="center" text={ghost.check.problem} fontSize={11 / s} fill="#b3261e" listening={false} />
+            )}
             {ghostStairs && (
               <Group opacity={0.5} listening={false}>
                 <StairsSymbol d={stairsDrawing(ghostStairs, 121)} scale={s} />
@@ -1050,7 +1080,7 @@ export default function PlanCanvas(props: Props) {
               rotateEnabled
               rotationSnaps={[0, 45, 90, 135, 180, 225, 270, 315]}
               rotationSnapTolerance={4}
-              enabledAnchors={selFixture && fixtureType(selFixture.kind).stretch ? ["middle-left", "middle-right"] : []}
+              enabledAnchors={[]}
               anchorSize={9}
               borderStroke={ACCENT}
               anchorStroke={ACCENT}

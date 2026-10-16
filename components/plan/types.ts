@@ -1,12 +1,12 @@
 /** Shared by the floor plan editor and its canvas (which loads separately, in the browser only). */
 
-export type PlanTool = "select" | "room" | "wall" | "curve" | "door" | "stairs" | "fixture" | "pan";
+export type PlanTool = "select" | "room" | "wall" | "curve" | "door" | "stairs" | "place" | "pan";
 
 /**
  * Something selected on the plan. An "edge" is one side of a room, with the
  * id written as `roomId#edge`; a "wall" is a wall drawn on its own.
  */
-export type PlanItem = { kind: "room" | "edge" | "wall" | "opening" | "stairs" | "fixture"; id: string };
+export type PlanItem = { kind: "room" | "edge" | "wall" | "opening" | "stairs" | "fixture" | "furnish"; id: string };
 export type PlanSelection = PlanItem[];
 
 export const PLAN_TOOLS: { id: PlanTool; label: string; key: string; hint: string }[] = [
@@ -14,7 +14,7 @@ export const PLAN_TOOLS: { id: PlanTool; label: string; key: string; hint: strin
     id: "select",
     label: "Select and move",
     key: "V",
-    hint: "Click a room, wall, door or fixture to change it. Drag a wall to push it, or a room's corner dots to reshape it. Drag the + on a wall to add a corner, or the diamond in the middle to bend it into a curve; Delete removes a picked corner. Hold Option to pull one room away from its neighbors (or to bend one side of a shared wall alone), Shift for any angle. Shift-click or drag a box to pick several.",
+    hint: "Click a room, wall or door to change it. Drag a wall to push it, or a room's corner dots to reshape it. Drag the + on a wall to add a corner, or the diamond in the middle to bend it into a curve; Delete removes a picked corner. Hold Option to pull one room away from its neighbors (or to bend one side of a shared wall alone), Shift for any angle. Shift-click or drag a box to pick several.",
   },
   {
     id: "room",
@@ -36,7 +36,6 @@ export const PLAN_TOOLS: { id: PlanTool; label: string; key: string; hint: strin
   },
   { id: "door", label: "Doors and windows", key: "D", hint: "Pick a door or window on the right, then click a wall to put it there." },
   { id: "stairs", label: "Stairs", key: "S", hint: "Click to place stairs. They climb to the floor above and show there too." },
-  { id: "fixture", label: "Fixtures", key: "F", hint: "Pick a fixture on the right, then click to place it. Near a wall, it backs up against it." },
   { id: "pan", label: "Pan", key: "H", hint: "Drag to move around the drawing." },
 ];
 

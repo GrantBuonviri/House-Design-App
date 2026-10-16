@@ -10,9 +10,6 @@ import { codeReportPages } from "@/lib/plans/report";
 import { reportCounts, type RuleReport, type RuleStatus } from "@/lib/codes/rules";
 import SheetSvg from "./SheetSvg";
 import RealLotForm from "./RealLotForm";
-import CabinetEditor from "./CabinetEditor";
-import DeviceEditor from "./DeviceEditor";
-import { hasCabinetRuns } from "@/lib/plans/sheets/cabinets";
 
 /**
  * The Plans page: every sheet a Boise permit asks for, with its status and
@@ -35,15 +32,13 @@ const RESULT_CHIP: Record<RuleStatus, string> = {
 };
 const RESULT_LABEL: Record<RuleStatus, string> = { pass: "Pass", fail: "Fail", manual: "Check by hand" };
 
-export default function PlansPage({ project, onClose, onGo }: { project: Project; onClose: () => void; onGo: (stage: Stage) => void }) {
+export default function PlansPage({ project, onClose, onGo, onEditInFurnish }: { project: Project; onClose: () => void; onGo: (stage: Stage) => void; onEditInFurnish: (levelId?: string) => void }) {
   const update = useProjectStore((s) => s.update);
   const r = readiness(project);
   const [tab, setTab] = useState<"sheets" | "code">("sheets");
   const [preview, setPreview] = useState<string>(() => r.sheets.find((s) => s.id.startsWith("floor:"))?.id ?? "cover");
   const [details, setDetails] = useState(false);
   const [lotOpen, setLotOpen] = useState(false);
-  const [cabinetsOpen, setCabinetsOpen] = useState(false);
-  const [devicesOpen, setDevicesOpen] = useState(false);
   const [busy, setBusy] = useState<string | null>(null);
   const [zoom, setZoom] = useState(1);
   const selected = useMemo(() => new Set(selectedIds(project)), [project]);
@@ -51,10 +46,10 @@ export default function PlansPage({ project, onClose, onGo }: { project: Project
   const half = project.plans.sheetSize === "half";
 
   useEffect(() => {
-    const esc = (e: KeyboardEvent) => e.key === "Escape" && !details && !lotOpen && !cabinetsOpen && !devicesOpen && onClose();
+    const esc = (e: KeyboardEvent) => e.key === "Escape" && !details && !lotOpen && onClose();
     window.addEventListener("keydown", esc);
     return () => window.removeEventListener("keydown", esc);
-  }, [onClose, details, lotOpen, cabinetsOpen, devicesOpen]);
+  }, [onClose, details, lotOpen]);
 
   const previewEntry = r.sheets.find((s) => s.id === preview && canDraw(s));
   const sheets = useMemo(() => (previewEntry ? buildSet(project, { only: [...selected, previewEntry.id] }) : []), [project, selected, previewEntry]);
@@ -82,11 +77,12 @@ export default function PlansPage({ project, onClose, onGo }: { project: Project
     }
   }
 
+  // Cabinets, outlets and lights are changed in the Furnish stage, on the floor of the sheet being looked at.
+  const editInFurnish = () => onEditInFurnish(preview.startsWith("floor:") ? preview.slice(6) : undefined);
   const go = (reason: Reason) => {
     if (reason.action === "details") setDetails(true);
     else if (reason.action === "lot") setLotOpen(true);
-    else if (reason.action === "cabinets") setCabinetsOpen(true);
-    else if (reason.action === "devices") setDevicesOpen(true);
+    else if (reason.action === "cabinets" || reason.action === "devices") editInFurnish();
     else if (reason.stage) onGo(reason.stage);
   };
   const counts = reportCounts(r.report);
@@ -110,14 +106,9 @@ export default function PlansPage({ project, onClose, onGo }: { project: Project
             <option value="full">Full size, 24&quot; x 36&quot;</option>
             <option value="half">Half size, 12&quot; x 18&quot;</option>
           </select>
-          {hasCabinetRuns(project) && (
-            <button className="btn" onClick={() => setCabinetsOpen(true)} data-testid="edit-cabinets">
-              Cabinets
-            </button>
-          )}
           {houseHasRooms(project) && (
-            <button className="btn" onClick={() => setDevicesOpen(true)} data-testid="edit-devices">
-              Outlets and lights
+            <button className="btn" onClick={editInFurnish} data-testid="edit-cabinets" title="Change the cabinets in the Furnish stage">
+              Edit in Furnish
             </button>
           )}
           <button className="btn" onClick={() => setLotOpen(true)} data-testid="real-lot">
@@ -205,8 +196,6 @@ export default function PlansPage({ project, onClose, onGo }: { project: Project
           )}
         </main>
       </div>
-      {devicesOpen && <DeviceEditor project={project} onClose={() => setDevicesOpen(false)} />}
-      {cabinetsOpen && <CabinetEditor project={project} onClose={() => setCabinetsOpen(false)} />}
       {lotOpen && <RealLotForm project={project} onSave={(patch) => setPlans(patch)} onClose={() => setLotOpen(false)} />}
       {details && <PlanDetails project={project} onSave={(patch) => setPlans(patch)} onClose={() => setDetails(false)} />}
     </div>
@@ -237,7 +226,7 @@ function SheetRow({ s, active, checked, onCheck, onPreview, onGo }: { s: SheetEn
               {r.text}
               {(r.stage || r.action) && (
                 <button className="ml-1 text-accent underline" onClick={() => onGo(r)}>
-                  {r.action === "details" ? "Plan details" : r.action === "lot" ? "My real lot" : r.action === "cabinets" ? "Change the cabinets" : r.action === "devices" ? "Change them" : "Take me there"}
+                  {r.action === "details" ? "Plan details" : r.action === "lot" ? "My real lot" : r.action === "cabinets" || r.action === "devices" ? "Edit in Furnish" : "Take me there"}
                 </button>
               )}
             </li>

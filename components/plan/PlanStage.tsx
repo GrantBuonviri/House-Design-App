@@ -64,7 +64,7 @@ const FT = 12;
 type Compare = { alternatives: PlanAlternative[]; note?: string; basis: Record<string, FloorPlan> };
 
 /** Stage 5: the floor plan. Rooms with real walls, doors, windows, stairs and fixtures, one tab per floor. */
-export default function PlanStage({ onContinue, onGoToSketch }: { onContinue: () => void; onGoToSketch: () => void }) {
+export default function PlanStage({ onContinue, onGoToSketch, onGoToFurnish }: { onContinue: () => void; onGoToSketch: () => void; onGoToFurnish: () => void }) {
   const project = useProjectStore((s) => s.project)!;
   const update = useProjectStore((s) => s.update);
   const { brief, plot } = project;
@@ -72,6 +72,7 @@ export default function PlanStage({ onContinue, onGoToSketch }: { onContinue: ()
   const sketches = project.bubbles;
   const { overlays, lotOffset } = project.sketch;
   const { basics, showSketch, labels } = project.plan;
+  const showFurnishings = project.plan.showFurnishings !== false;
   const levels = useMemo(() => [...project.levels].sort((a, b) => a.elevationIn - b.elevationIn), [project.levels]);
 
   const [levelId, setLevelId] = useState(MAIN_LEVEL_ID);
@@ -79,7 +80,6 @@ export default function PlanStage({ onContinue, onGoToSketch }: { onContinue: ()
   const [selection, setSelection] = useState<PlanSelection>([]);
   const [snap, setSnap] = useState(true);
   const [placeOpening, setPlaceOpening] = useState("door-hinged");
-  const [placeFixture, setPlaceFixture] = useState("counter");
   const [fillMode, setFillMode] = useState(false);
   const [roomShape, setRoomShape] = useState<"box" | "round">("box");
   const [roundDiameter, setRoundDiameter] = useState(DEFAULT_ROUND_ROOM_IN);
@@ -316,6 +316,12 @@ export default function PlanStage({ onContinue, onGoToSketch }: { onContinue: ()
           setTool("select");
           setSelection([]);
         }
+        return;
+      }
+      // Fixtures, cabinets and outlets are placed in Furnish now.
+      if (display === "plan" && !locked && (e.key === "f" || e.key === "F")) {
+        e.preventDefault();
+        onGoToFurnish();
         return;
       }
       // The drawing tools belong to the 2D plan.
@@ -615,9 +621,7 @@ export default function PlanStage({ onContinue, onGoToSketch }: { onContinue: ()
                 selection={sel}
                 tool="select"
                 placeOpening={placeOpening}
-                placeFixture={placeFixture}
                 onPlaceOpening={setPlaceOpening}
-                onPlaceFixture={setPlaceFixture}
                 onChange={setLevelPlan}
                 onSelect={setSelection}
                 onPreviewWindow={(id) => setPreviewing({ levelId: level.id, openingId: id })}
@@ -648,6 +652,10 @@ export default function PlanStage({ onContinue, onGoToSketch }: { onContinue: ()
                 <span aria-hidden>📏</span>
                 Measure{tape ? " (click two points)" : ""}
               </button>
+              <label className="flex cursor-pointer items-center gap-2" title="Fixtures, built-ins and furniture placed in Furnish, drawn faded">
+                <input type="checkbox" className={box} checked={showFurnishings} onChange={(e) => setView({ showFurnishings: e.target.checked })} data-testid="show-furnishings" />
+                Show furnishings
+              </label>
               <label className={`flex items-center gap-2 ${sketch.bubbles.length ? "cursor-pointer" : "cursor-not-allowed opacity-50"}`}>
                 <input type="checkbox" className={box} checked={showSketch} disabled={!sketch.bubbles.length} onChange={(e) => setView({ showSketch: e.target.checked })} />
                 Flow sketch
@@ -674,10 +682,10 @@ export default function PlanStage({ onContinue, onGoToSketch }: { onContinue: ()
               roomShape={roomShape}
               roundDiameter={roundDiameter}
               placeOpening={placeOpening}
-              placeFixture={placeFixture}
               selection={sel}
               snap={snap}
               labels={labels}
+              showFurnishings={showFurnishings}
               tape={tape}
               sides={sides}
               height={CANVAS_HEIGHT}
@@ -707,7 +715,12 @@ export default function PlanStage({ onContinue, onGoToSketch }: { onContinue: ()
             )}
             {menu && <PlanContextMenu at={menu} items={contextItems(plan, menu, sel, { change: setLevelPlan, select: setSelection, message: setFlash })} onClose={() => setMenu(null)} />}
             {lotOn && <LotModeBanner onDone={() => setLotMode(false)} />}
-            <p className="mt-2 text-xs text-muted">{hint} Pinch or hold Control and scroll to zoom; scroll to move around. Arrow keys nudge what&apos;s selected.</p>
+            <p className="mt-2 text-xs text-muted">
+              {hint}{" "}
+              <button className="text-accent hover:underline" onClick={onGoToFurnish} title="Fixtures, cabinets, outlets, built-ins and furniture are placed in Furnish (F)">
+                Fixtures, cabinets and outlets are placed in Furnish (F).
+              </button>{" "}
+              Pinch or hold Control and scroll to zoom; scroll to move around. Arrow keys nudge what&apos;s selected.</p>
           </div>
 
           <div className="space-y-3">
@@ -727,9 +740,7 @@ export default function PlanStage({ onContinue, onGoToSketch }: { onContinue: ()
               roundDiameter={roundDiameter}
               onRoundDiameter={setRoundDiameter}
               placeOpening={placeOpening}
-              placeFixture={placeFixture}
               onPlaceOpening={setPlaceOpening}
-              onPlaceFixture={setPlaceFixture}
               onChange={setLevelPlan}
               onSelect={setSelection}
               onPreviewWindow={(id) => setPreviewing({ levelId: level.id, openingId: id })}
