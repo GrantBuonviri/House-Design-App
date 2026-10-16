@@ -4,6 +4,7 @@ import { openingType, fixtureType } from "@/lib/plan/catalog";
 import { furnitureType } from "@/lib/plan/furniture";
 import { layerItems } from "@/lib/furnish/layer";
 import { isClosetRod } from "@/lib/furnish/closets";
+import { leftBulge, projectOnEdge } from "@/lib/plan/arcs";
 
 /**
  * A short, plain description of what changed between two versions of a
@@ -118,7 +119,7 @@ function moved(a: object, b: object): boolean {
 function describePlan(a: FloorPlan | undefined, b: FloorPlan | undefined): string | null {
   if (!a || !b) return b ? "start the floor plan" : "clear the floor plan";
   const roomName = (r: FloorPlan["rooms"][number]) => r.name || "a room";
-  const special = describeBend(a, b, roomName) ?? describeOpenWalls(a, b, roomName) ?? describeSplit(a, b, roomName) ?? describeTrim(a, b, roomName) ?? describeCloset(a, b, roomName) ?? describeFurnish(a, b, roomName);
+  const special = describeWallEdits(a, b, roomName) ?? describeBend(a, b, roomName) ?? describeOpenWalls(a, b, roomName) ?? describeSplit(a, b, roomName) ?? describeTrim(a, b, roomName) ?? describeCloset(a, b, roomName) ?? describeFurnish(a, b, roomName);
   if (special) return special;
   const rooms = describeList(a.rooms, b.rooms, roomName, (was, now) =>
     was.name !== now.name ? `rename ${roomName(was)}` : moved(was, now) ? `move ${roomName(now)}` : `change ${roomName(now)}`,
@@ -268,6 +269,29 @@ function article(label: string, the = false): string {
   const l = label.toLowerCase();
   if (the) return `the ${l}`;
   return /^[aeiou]/.test(l) ? `an ${l}` : `a ${l}`;
+}
+
+/** Split wall here / equal pieces, and Combine walls: corners added on a room's walls (or taken away), or a loose wall cut into pieces (or joined). */
+function describeWallEdits(a: FloorPlan, b: FloorPlan, roomName: (r: FloorPlan["rooms"][number]) => string): string | null {
+  if (a.rooms.length === b.rooms.length && b.rooms.every((r, i) => a.rooms[i]?.id === r.id)) {
+    const near = (p: { x: number; y: number }, list: { x: number; y: number }[]) => list.some((q) => Math.abs(p.x - q.x) < 1 && Math.abs(p.y - q.y) < 1);
+    const changed = b.rooms.filter((r, i) => r.polygon.length !== a.rooms[i].polygon.length);
+    if (changed.length && changed.length === b.rooms.filter((r, i) => json(r.polygon) !== json(a.rooms[i].polygon)).length) {
+      const was = (r: FloorPlan["rooms"][number]) => a.rooms.find((x) => x.id === r.id)!;
+      const onOld = (r: FloorPlan["rooms"][number], p: { x: number; y: number }) =>
+        r.polygon.some((q, i) => projectOnEdge(p, q, r.polygon[(i + 1) % r.polygon.length], leftBulge(r, i)).d < 1);
+      if (changed.every((r) => r.polygon.length > was(r).polygon.length && was(r).polygon.every((p) => near(p, r.polygon)) && r.polygon.every((p) => onOld(was(r), p)))) return `split the ${roomName(changed[0])} wall`;
+      if (changed.every((r) => r.polygon.length < was(r).polygon.length && r.polygon.every((p) => near(p, was(r).polygon)))) return `combine ${roomName(changed[0])} walls`;
+    }
+  }
+  if (json(a.rooms) !== json(b.rooms)) return null;
+  const before = new Set(a.walls.map((w) => w.id));
+  const after = new Set(b.walls.map((w) => w.id));
+  const added = b.walls.filter((w) => !before.has(w.id)).length;
+  const gone = a.walls.filter((w) => !after.has(w.id)).length;
+  if (added && !gone) return b.walls.length > a.walls.length && a.walls.some((w) => after.has(w.id) && json(w) !== json(b.walls.find((x) => x.id === w.id))) ? "split a wall" : null;
+  if (gone && !added) return a.walls.some((w) => after.has(w.id) && json(w) !== json(b.walls.find((x) => x.id === w.id))) ? "combine walls" : null;
+  return null;
 }
 
 /** A wall drawn across a room split it: one room got smaller and a new one appeared. */

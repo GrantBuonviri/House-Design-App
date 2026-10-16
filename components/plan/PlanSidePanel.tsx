@@ -217,7 +217,7 @@ export default function PlanSidePanel(props: Props) {
         )}
         <p className="field-hint">
           {rect ? "Type a size, drag a wall to push it, or drag a corner dot." : `${room.polygon.length} corners. Drag a wall to push it, or a corner dot to reshape it.`} Drag the + on a wall to add a
-          corner, or the diamond to bend the wall into a curve; double-click a wall to show the corner dots, and again to add one. To take a corner away, pick it and press Delete, or right-click it.
+          corner, or the diamond to bend the wall into a curve; double-click a wall to show the corner dots, and again to add one. To take a corner away, pick it and press Delete, or right-click it and pick Combine walls. Right-click a wall to split it here or into equal pieces.
         </p>
 
         <RoundCornerFields plan={plan} roomId={room.id} onChange={onChange} />

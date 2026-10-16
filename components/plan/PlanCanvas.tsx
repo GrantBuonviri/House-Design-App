@@ -15,6 +15,7 @@ import { bendInfo, bendWall, bowFromPoint, planRadii, snapBow, type BendSnap, ty
 import { DRAW_STEP_DEG, flatPlan, roomOutline, savedHost } from "@/lib/plan/flatten";
 import { leftBulge, pointOnEdge, projectOnEdge, roomEdgeLength } from "@/lib/plan/arcs";
 import { makeRoundRoom } from "@/lib/plan/shapes";
+import { splitWall } from "@/lib/plan/wallEdits";
 import { addRoom, emptyPlan, insertGluedCorner, makeRoom, moveEdge, moveMany, moveOpeningTo, newPlanId, removeCorner, setCornerGlued, type Plans } from "@/lib/plan/edit";
 import { railingsOn, type Railing, type RailingSlot } from "@/lib/plan/railings";
 import { add, boundsOf, dist, polygonArea, polygonsOverlap, project, rectangle, round1, roundPoint, scale as scaleV, sub, unit } from "@/lib/plan/geometry";
@@ -310,7 +311,9 @@ export default function PlanCanvas(props: Props) {
   // The room whose corner dots show: the picked room, and still that room while one of its walls is picked (so a second double-click can add a corner).
   const [reveal, setReveal] = useState<string | null>(null);
   useEffect(() => {
-    setReveal((r) => (single?.kind === "room" && tool === "select" ? single.id : single?.kind === "edge" && tool === "select" && parseEdgeId(single.id).roomId === r ? r : null));
+    setReveal((r) =>
+      single?.kind === "room" && tool === "select" ? single.id : tool === "select" && ((single?.kind === "edge" && parseEdgeId(single.id).roomId === r) || (single?.kind === "wall" && single.id === r)) ? r : null,
+    );
   }, [single, tool]);
   const nodeRoom = selRoom ?? (single?.kind === "edge" && reveal && parseEdgeId(single.id).roomId === reveal ? shown.rooms.find((r) => r.id === reveal) : undefined);
   // The diamonds: every side of a picked room, the picked side of a room, or a picked wall.
@@ -908,6 +911,21 @@ export default function PlanCanvas(props: Props) {
       const b = room.polygon[(edge + 1) % room.polygon.length];
       onChange(insertGluedCorner(plan, roomId, edge, projectOnEdge(world(), a, b, leftBulge(room, edge)).point).plan);
       onSelect([{ kind: "room", id: roomId }]);
+    }
+    if (el.kind === "wall" && !furnishing) {
+      // A loose wall: the first double-click picks it (its end dots show); a second one splits it there.
+      if (reveal !== el.id) {
+        setReveal(el.id);
+        onSelect([{ kind: "wall", id: el.id }]);
+        return;
+      }
+      const out = splitWall(plan, el.id, world());
+      if ("why" in out) onMessage(out.why);
+      else {
+        onChange(out.plan);
+        if (out.note) onMessage(out.note);
+        onSelect([{ kind: "wall", id: el.id }]);
+      }
     }
   }
 

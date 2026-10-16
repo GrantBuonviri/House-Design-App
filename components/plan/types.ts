@@ -14,7 +14,7 @@ export const PLAN_TOOLS: { id: PlanTool; label: string; key: string; hint: strin
     id: "select",
     label: "Select and move",
     key: "V",
-    hint: "Click a room, wall or door to change it. Drag a wall to push it, or a room's corner dots to reshape it. Double-click a wall to show its corner dots, and again to add one. Drag the + on a wall to add a corner, or the diamond in the middle to bend it into a curve; Delete removes a picked corner. Hold Option to pull one room away from its neighbors (or to bend one side of a shared wall alone), Shift for any angle. Shift-click or drag a box to pick several.",
+    hint: "Click a room, wall or door to change it. Drag a wall to push it, or a room's corner dots to reshape it. Double-click a wall to show its corner dots, and again to add one (on a loose wall, to split it there). Right-click a wall to split it or a corner to combine its two walls. Drag the + on a wall to add a corner, or the diamond in the middle to bend it into a curve; Delete removes a picked corner. Hold Option to pull one room away from its neighbors (or to bend one side of a shared wall alone), Shift for any angle. Shift-click or drag a box to pick several.",
   },
   {
     id: "room",
