@@ -1,4 +1,4 @@
-import type { FloorPlan, Opening, OpeningHost, Point } from "@/lib/model/schema";
+import type { FloorPlan, OpenWall, Opening, OpeningHost, Point } from "@/lib/model/schema";
 import { INTERIOR_WALL_IN } from "./basics";
 import { areaKind } from "./measure";
 import { add, collinearOverlap, dist, dot, edgesOf, leftNormal, lerp, polygonCenter, project, scale, sub, subtractIntervals, unit } from "./geometry";
@@ -8,6 +8,8 @@ import { add, collinearOverlap, dist, dot, edgesOf, leftNormal, lerp, polygonCen
  * rooms share an edge (on the same line, overlapping), that stretch is one
  * interior wall, and the rest of the edge is an outside wall. Walls drawn on
  * their own are interior walls too. Doors and windows cut gaps in them.
+ * An inside wall between two rooms can be removed (`plan.openWalls`): that
+ * stretch becomes an open piece with no wall, and the rooms open onto each other.
  */
 
 export type HostSegment = { a: Point; b: Point; host: OpeningHost; length: number };
@@ -18,8 +20,10 @@ export type WallPiece = {
   thicknessIn: number;
   /** An outside wall of the house. */
   exterior: boolean;
-  /** The open edge of a porch, deck or patio: drawn as a dashed line, not a wall. */
+  /** The open edge of a porch, deck or patio, or a removed wall: drawn as a dashed line, not a wall. */
   open: boolean;
+  /** An inside wall that was taken out (one of `plan.openWalls`): open, and the rooms on both sides count as one space. */
+  removed?: boolean;
   host: OpeningHost;
   /** Where the piece starts and ends along its host, inches from the host's start. */
   t0: number;
@@ -64,6 +68,21 @@ export function hostSegments(plan: FloorPlan): HostSegment[] {
   return out.filter((s) => s.length > 0.5);
 }
 
+export const openWallsOf = (plan: FloorPlan): OpenWall[] => plan.openWalls ?? [];
+
+/** The stretches of segment a-b (inches from a) where a wall was removed. */
+export function openSpans(plan: FloorPlan, a: Point, b: Point): [number, number][] {
+  const out: [number, number][] = [];
+  for (const w of openWallsOf(plan)) {
+    const o = collinearOverlap(a, b, w.a, w.b, SAME_LINE_IN);
+    if (o) out.push(o);
+  }
+  return out;
+}
+
+/** Whether the point `t` inches along a-b is on a removed wall. */
+export const inSpans = (spans: [number, number][], t: number) => spans.some(([t0, t1]) => t0 - 0.01 <= t && t <= t1 + 0.01);
+
 /** Every wall on a level, each stretch once, before doors and windows are cut in. */
 export function wallPieces(plan: FloorPlan, exteriorIn: number): WallPiece[] {
   const pieces: WallPiece[] = [];
@@ -81,8 +100,9 @@ export function wallPieces(plan: FloorPlan, exteriorIn: number): WallPiece[] {
           if (o) covers.push({ t0: o[0], t1: o[1], roomId: other.id });
         }
       }
-      const cuts = [...new Set([0, L, ...covers.flatMap((c) => [c.t0, c.t1])])].sort((p, q) => p - q);
-      let run: { t0: number; t1: number; exterior: boolean; open: boolean; emit: boolean } | null = null;
+      const gone = covers.length ? openSpans(plan, e.a, e.b) : [];
+      const cuts = [...new Set([0, L, ...covers.flatMap((c) => [c.t0, c.t1]), ...gone.flat()])].filter((t) => t >= 0 && t <= L).sort((p, q) => p - q);
+      let run: { t0: number; t1: number; exterior: boolean; open: boolean; removed: boolean; emit: boolean } | null = null;
       const flush = () => {
         if (run && run.emit && run.t1 - run.t0 > 0.01) {
           pieces.push({
@@ -91,6 +111,7 @@ export function wallPieces(plan: FloorPlan, exteriorIn: number): WallPiece[] {
             thicknessIn: run.open ? 0 : run.exterior ? exteriorIn : INTERIOR_WALL_IN,
             exterior: run.exterior,
             open: run.open,
+            ...(run.removed ? { removed: true } : {}),
             host: { roomId: room.id, edge: e.i },
             t0: run.t0,
             t1: run.t1,
@@ -107,14 +128,17 @@ export function wallPieces(plan: FloorPlan, exteriorIn: number): WallPiece[] {
         const indoors = sides.filter((id) => !outdoor.has(id)).length;
         // Nothing on the other side, or a porch or deck there: an outside wall.
         // A porch's own edges, away from the house, have no wall at all.
-        const open = indoors === 0;
-        const exterior = !open && (by.length === 0 || indoors < sides.length);
+        const shut = indoors > 0 && (by.length === 0 || indoors < sides.length);
+        // Only an inside wall between two rooms can be taken out; outside walls always stay.
+        const removed = !shut && indoors > 0 && inSpans(gone, mid);
+        const open = indoors === 0 || removed;
+        const exterior = shut;
         // A shared stretch is drawn once, from the room with the smallest id.
         const emit = by.length === 0 || by.every((id) => room.id < id);
-        if (run && run.exterior === exterior && run.open === open && run.emit === emit) run.t1 = q;
+        if (run && run.exterior === exterior && run.open === open && run.removed === removed && run.emit === emit) run.t1 = q;
         else {
           flush();
-          run = { t0: p, t1: q, exterior, open, emit };
+          run = { t0: p, t1: q, exterior, open, removed, emit };
         }
       }
       flush();

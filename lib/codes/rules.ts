@@ -3,7 +3,8 @@ import { MAIN_LEVEL_ID } from "@/lib/brief/levels";
 import { ceilingFor, INTERIOR_WALL_IN } from "@/lib/plan/basics";
 import { openingType } from "@/lib/plan/catalog";
 import { OUTSIDE, openingRooms, roleOf } from "@/lib/plan/connect";
-import { add, dist, dot, edgesOf, leftNormal, polygonArea, polygonCenter, rotate, sub, unit } from "@/lib/plan/geometry";
+import { add, dist, dot, edgesOf, leftNormal, lerp, polygonArea, polygonCenter, rotate, sub, subtractIntervals, unit } from "@/lib/plan/geometry";
+import { openSpans } from "@/lib/plan/walls";
 import { stairsDrawing, TREAD_IN } from "@/lib/plan/stairs";
 import { formatFeetInches } from "@/lib/model/units";
 import { houseFacts, type HouseFacts } from "@/lib/plans/house";
@@ -635,7 +636,17 @@ export function toiletClearance(plan: FloorPlan, f: FloorPlan["fixtures"][number
   const r = plan.rooms.find((x) => x.id === f.roomId);
   const obstacles: [Point, Point][] = [];
   const half = INTERIOR_WALL_IN / 2;
-  if (r) for (const e of edgesOf(r.polygon)) obstacles.push([e.a, e.b]);
+  // The room's walls, less any stretch where a wall was taken out.
+  const walls = new Set<Point>();
+  if (r)
+    for (const e of edgesOf(r.polygon)) {
+      const L = dist(e.a, e.b);
+      for (const [t0, t1] of subtractIntervals(L, openSpans(plan, e.a, e.b))) {
+        const a = lerp(e.a, e.b, t0 / L);
+        walls.add(a);
+        obstacles.push([a, lerp(e.a, e.b, t1 / L)]);
+      }
+    }
   for (const g of plan.fixtures) {
     if (g.id === f.id) continue;
     const pts = [
@@ -650,7 +661,7 @@ export function toiletClearance(plan: FloorPlan, f: FloorPlan["fixtures"][number
     let best = 120;
     for (const [a, b] of obstacles) {
       const t = rayHit(from, d, a, b);
-      if (t !== null) best = Math.min(best, t - (r && edgesOf(r.polygon).some((e) => e.a === a) ? wallPad : 0));
+      if (t !== null) best = Math.min(best, t - (walls.has(a) ? wallPad : 0));
     }
     return best;
   };

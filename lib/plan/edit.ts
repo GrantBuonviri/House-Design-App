@@ -2,6 +2,7 @@ import type { FloorPlan, Opening, PlanRoom, Point } from "@/lib/model/schema";
 import { newElementId } from "@/lib/bubbles/edit";
 import { add, clockwise, collinearOverlap, dist, dot, edgesOf, polygonCenter, project, rotate, round1, roundPoint, scale, sub, unit } from "./geometry";
 import { clampOffset, hostSegment, nearestHost, sameHost } from "./walls";
+import { carryOpenWalls, pruneOpenWalls } from "./openWalls";
 
 /**
  * Editing helpers for one level's floor plan. Each returns a new plan, so the
@@ -45,7 +46,8 @@ export function updateRoom(plan: FloorPlan, id: string, patch: Partial<PlanRoom>
 export function removeMany(plan: FloorPlan, ids: string[]): FloorPlan {
   const gone = new Set(ids);
   const hostGone = (o: Opening) => ("roomId" in o.host ? gone.has(o.host.roomId) : gone.has(o.host.wallId));
-  return {
+  return pruneOpenWalls({
+    ...(plan.openWalls ? { openWalls: plan.openWalls } : {}),
     rooms: plan.rooms.filter((r) => !gone.has(r.id)),
     walls: plan.walls.filter((w) => !gone.has(w.id)),
     openings: plan.openings.filter((o) => !gone.has(o.id) && !hostGone(o)),
@@ -53,7 +55,7 @@ export function removeMany(plan: FloorPlan, ids: string[]): FloorPlan {
     // Fixtures stay when their room goes; they just stop following it.
     fixtures: plan.fixtures.filter((f) => !gone.has(f.id)).map((f) => (f.roomId && gone.has(f.roomId) ? { ...f, roomId: undefined } : f)),
     furniture: plan.furniture.filter((f) => !gone.has(f.id)).map((f) => (f.roomId && gone.has(f.roomId) ? { ...f, roomId: undefined } : f)),
-  };
+  });
 }
 
 /**
@@ -64,14 +66,14 @@ export function moveMany(plan: FloorPlan, ids: string[], dx: number, dy: number)
   const ids_ = new Set(ids);
   const d = { x: dx, y: dy };
   const mv = (p: Point) => roundPoint(add(p, d));
-  return {
+  return carryOpenWalls(plan, {
     ...plan,
     rooms: plan.rooms.map((r) => (ids_.has(r.id) ? { ...r, polygon: r.polygon.map(mv) } : r)),
     walls: plan.walls.map((w) => (ids_.has(w.id) ? { ...w, a: mv(w.a), b: mv(w.b) } : w)),
     stairs: plan.stairs.map((s) => (ids_.has(s.id) ? { ...s, ...mv(s) } : s)),
     fixtures: plan.fixtures.map((f) => (ids_.has(f.id) || (f.roomId && ids_.has(f.roomId)) ? { ...f, ...mv(f) } : f)),
     furniture: plan.furniture.map((f) => (f.roomId && ids_.has(f.roomId) ? { ...f, ...mv(f) } : f)),
-  };
+  });
 }
 
 /** Turn rooms (with their fixtures), walls, stairs and fixtures around a point. */
@@ -79,14 +81,14 @@ export function rotateMany(plan: FloorPlan, ids: string[], deg: number, about: P
   const ids_ = new Set(ids);
   const rt = (p: Point) => roundPoint(rotate(p, deg, about));
   const turn = (r: number) => ((Math.round((r + deg) * 10) / 10) % 360 + 360) % 360;
-  return {
+  return carryOpenWalls(plan, {
     ...plan,
     rooms: plan.rooms.map((r) => (ids_.has(r.id) ? { ...r, polygon: r.polygon.map(rt) } : r)),
     walls: plan.walls.map((w) => (ids_.has(w.id) ? { ...w, a: rt(w.a), b: rt(w.b) } : w)),
     stairs: plan.stairs.map((s) => (ids_.has(s.id) ? { ...s, ...rt(s), rotation: turn(s.rotation) } : s)),
     fixtures: plan.fixtures.map((f) => (ids_.has(f.id) || (f.roomId && ids_.has(f.roomId)) ? { ...f, ...rt(f), rotation: turn(f.rotation) } : f)),
     furniture: plan.furniture.map((f) => (f.roomId && ids_.has(f.roomId) ? { ...f, ...rt(f), rotation: turn(f.rotation) } : f)),
-  };
+  });
 }
 
 /** The middle of everything with these ids, for turning them together. */
@@ -103,9 +105,13 @@ export function centerOfMany(plan: FloorPlan, ids: string[]): Point {
 /**
  * After rooms change shape (same corners, moved), keep each door and window
  * where it was on its wall, instead of letting it slide along with the
- * corner its wall starts from.
+ * corner its wall starts from. Removed walls stay with the rooms they sit between.
  */
 export function keepOpeningsInPlace(before: FloorPlan, after: FloorPlan): FloorPlan {
+  return keepDoorsInPlace(before, carryOpenWalls(before, after));
+}
+
+function keepDoorsInPlace(before: FloorPlan, after: FloorPlan): FloorPlan {
   const was = new Map(before.rooms.map((r) => [r.id, r]));
   const now = new Map(after.rooms.map((r) => [r.id, r]));
   let changed = false;

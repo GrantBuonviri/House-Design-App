@@ -1,6 +1,6 @@
 import type { Cabinet, CabinetEdits, FloorPlan, Fixture, Point } from "@/lib/model/schema";
 import { add, dist, dot, edgesOf, project, rotate, round1, scale, sub, subtractIntervals } from "./geometry";
-import { openingGeometries } from "./walls";
+import { inSpans, openSpans, openingGeometries } from "./walls";
 import { newPlanId } from "./edit";
 
 /**
@@ -445,9 +445,9 @@ function wallsBehind(plan: FloorPlan, origin: Point, u: Point, n: Point, t0: num
     const hit = edges.some((e) => {
       const pr = project(p, e.a, e.b);
       if (pr.d > 5) return false;
-      // The wall has to run the same way as the cabinets.
+      // The wall has to run the same way as the cabinets, and still be there (not taken out).
       const dir = sub(e.b, e.a);
-      return Math.abs(dot(dir, n)) / Math.max(1e-6, dist(e.a, e.b)) < 0.1;
+      return Math.abs(dot(dir, n)) / Math.max(1e-6, dist(e.a, e.b)) < 0.1 && !inSpans(openSpans(plan, e.a, e.b), pr.t);
     });
     if (hit && start === null) start = Math.min(t, t1);
     if (!hit && start !== null) {

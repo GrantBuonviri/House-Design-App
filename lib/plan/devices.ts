@@ -4,7 +4,7 @@ import { openingRooms, roleOf } from "./connect";
 import { newPlanId } from "./edit";
 import { INTERIOR_WALL_IN } from "./basics";
 import { add, angleOf, boundsOf, dist, dot, edgesOf, leftNormal, pointInPolygon, polygonArea, polygonCenter, project, rotate, round1, scale, sub, subtractIntervals, unit } from "./geometry";
-import { openingGeometries, type OpeningGeometry } from "./walls";
+import { inSpans, openSpans, openingGeometries, type OpeningGeometry } from "./walls";
 import type { CabinetLayout, CabinetRun } from "./cabinets";
 
 /**
@@ -114,9 +114,9 @@ function onWall(plan: FloorPlan, room: PlanRoom, e: RoomEdge, t: number, exterio
   return { p: add(at, scale(dir, half + 1)), rotation: Math.round(angleOf(dir) - 90) };
 }
 
-/** Where a door, opening or built-in sits along a room edge. */
-function blockedOn(e: RoomEdge, geos: OpeningGeometry[], boxes: Box[]): [number, number][] {
-  const cuts: [number, number][] = [];
+/** Where a door, opening, built-in or removed wall sits along a room edge. */
+function blockedOn(plan: FloorPlan, e: RoomEdge, geos: OpeningGeometry[], boxes: Box[]): [number, number][] {
+  const cuts: [number, number][] = openSpans(plan, e.a, e.b);
   for (const g of geos) {
     if (g.opening.kind === "window") continue;
     const pr = project(g.center, e.a, e.b);
@@ -142,7 +142,7 @@ export type WallSpace = { pieces: { edge: RoomEdge; t0: number; t1: number }[]; 
 export function wallSpaces(plan: FloorPlan, room: PlanRoom, boxes: Box[]): WallSpace[] {
   const geos = openingGeometries(plan);
   const edges = roomEdges(room);
-  const free = edges.map((e) => subtractIntervals(e.length, blockedOn(e, geos, boxes)).filter(([a, b]) => b - a > 0.5));
+  const free = edges.map((e) => subtractIntervals(e.length, blockedOn(plan, e, geos, boxes)).filter(([a, b]) => b - a > 0.5));
   const anyCut = edges.some((e, k) => free[k].length !== 1 || free[k][0][0] > 0.5 || free[k][0][1] < e.length - 0.5);
   if (!anyCut) {
     const pieces = edges.map((edge) => ({ edge, t0: 0, t1: edge.length }));
@@ -727,6 +727,8 @@ export function snapToWall(plan: FloorPlan, p: Point, exteriorIn: number, maxD =
     if (!pointInPolygon(p, room.polygon)) continue;
     for (const e of roomEdges(room)) {
       const pr = project(p, e.a, e.b);
+      // No wall to hang it on where a wall was taken out.
+      if (inSpans(openSpans(plan, e.a, e.b), pr.t)) continue;
       if (!best || pr.d < best.d) best = { room, edge: e, t: pr.t, d: pr.d };
     }
   }

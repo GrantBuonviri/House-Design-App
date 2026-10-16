@@ -2,7 +2,7 @@ import type { FloorPlan, Opening, OpeningHost, PlanRoom, Point } from "@/lib/mod
 import { roomType } from "@/lib/brief/rooms";
 import { openingType } from "./catalog";
 import { add, collinearOverlap, edgesOf, pointInPolygon, polygonArea, round1, scale, sub, unit } from "./geometry";
-import { hostSegment, openingGeometry, type OpeningGeometry } from "./walls";
+import { hostSegment, openSpans, openingGeometry, wallPieces, type OpeningGeometry } from "./walls";
 
 /**
  * How rooms connect: which rooms a door or opening joins, which rooms are
@@ -82,9 +82,25 @@ export function openingRooms(plan: FloorPlan, o: Opening): [string | null, strin
   return [roomAt(add(g.center, scale(g.n, 8))), roomAt(add(g.center, scale(g.n, -8)))];
 }
 
-/** Which rooms each room can walk into through a door or opening ("outside" for doors to the outside). */
+/** A removed wall this long or more lets you walk between the rooms on either side. */
+const OPEN_LINK_IN = 24;
+
+/** Which rooms each room can walk into through a door, an opening or a removed wall ("outside" for doors to the outside). */
 export function roomLinks(plan: FloorPlan): Map<string, Set<string>> {
   const links = new Map<string, Set<string>>(plan.rooms.map((r) => [r.id, new Set<string>()]));
+  if (plan.openWalls?.length) {
+    const roomAt = (p: Point) => plan.rooms.find((r) => pointInPolygon(p, r.polygon))?.id ?? null;
+    for (const w of wallPieces(plan, 0)) {
+      if (!w.removed || Math.hypot(w.b.x - w.a.x, w.b.y - w.a.y) < OPEN_LINK_IN) continue;
+      const mid = scale(add(w.a, w.b), 0.5);
+      const n = scale(unit(sub(w.b, w.a)), 8);
+      const [a, b] = [roomAt(add(mid, { x: n.y, y: -n.x })), roomAt(add(mid, { x: -n.y, y: n.x }))];
+      if (a && b && a !== b) {
+        links.get(a)!.add(b);
+        links.get(b)!.add(a);
+      }
+    }
+  }
   for (const o of plan.openings) {
     if (o.kind === "window") continue;
     const [a, b] = openingRooms(plan, o);
@@ -121,9 +137,12 @@ export function freeSpot(plan: FloorPlan, host: OpeningHost, t0: number, t1: num
   const seg = hostSegment(plan, host);
   if (!seg || t1 - t0 < width + 2) return null;
   const others = spans(plan);
+  const gone = openSpans(plan, seg.a, seg.b);
   const u = unit(sub(seg.b, seg.a));
   const fits = (t: number) => {
     const half = width / 2 + gap;
+    // Not where the wall was taken out: there's nothing to hang a door in.
+    if (gone.some(([g0, g1]) => Math.min(g1, t + half) - Math.max(g0, t - half) > 0)) return false;
     const a = add(seg.a, scale(u, t - half));
     const b = add(seg.a, scale(u, t + half));
     return others.every((g) => !collinearOverlap(a, b, g.a, g.b, 4));

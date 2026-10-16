@@ -60,8 +60,20 @@ export function PlanWalls({ solids, selection, s }: { solids: SolidWall[]; selec
         const id = "roomId" in host ? edgeId(host.roomId, host.edge) : host.wallId;
         const on = isPicked(selection, id) || ("wallId" in host ? false : isPicked(selection, host.roomId) && selection.length === 1);
         if (w.open) {
+          // A removed wall: a faint line where one room ends and the next begins. A porch edge: a stronger dash.
+          const removed = w.piece.removed;
           return (
-            <Line key={i} id={id} name="edge" points={[w.a.x, w.a.y, w.b.x, w.b.y]} stroke={on ? ACCENT : "#7d766a"} strokeWidth={1.5} strokeScaleEnabled={false} dash={[8, 5]} hitStrokeWidth={12 / s} />
+            <Line
+              key={i}
+              id={id}
+              name="edge"
+              points={[w.a.x, w.a.y, w.b.x, w.b.y]}
+              stroke={on ? ACCENT : removed ? "#b3ab9c" : "#7d766a"}
+              strokeWidth={removed ? 1 : 1.5}
+              strokeScaleEnabled={false}
+              dash={removed ? [4, 4] : [8, 5]}
+              hitStrokeWidth={12 / s}
+            />
           );
         }
         const u = unit(sub(w.b, w.a));
