@@ -7,16 +7,18 @@ import { add, dist, edgesOf, leftNormal, scale as scaleV, sub, unit } from "@/li
 import { roomSqft } from "@/lib/plan/measure";
 import { furnitureOutline, furnitureType } from "@/lib/plan/furniture";
 import type { SolidWall } from "@/lib/plan/walls";
+import type { Overhang } from "@/lib/plan/support";
+import type { Region } from "@/lib/house3d/footprint";
 import type { Guides } from "@/lib/plan/snap";
 import BubbleShape from "@/components/bubbles/BubbleShape";
 import { ACCENT, INK } from "./PlanShapes";
 import { edgeId, isPicked, type PlanSelection, type PlanTool } from "./types";
-import { flat, uprightAngle, type Box } from "./canvasHelpers";
+import { flat, stripes, uprightAngle, type Box } from "./canvasHelpers";
 
 /** The pieces PlanCanvas draws. Each takes plain props, so the canvas keeps the state and mouse handling. */
 
 /** The flow sketch and the floor below, drawn faintly to trace over. */
-export function ReferenceLayer({ sketch, below, s }: { sketch: BubbleDiagram | null; below: { plan: FloorPlan; level: Level } | null; s: number }) {
+export function ReferenceLayer({ sketch, below, support, above, s }: { sketch: BubbleDiagram | null; below: { plan: FloorPlan; level: Level } | null; support?: Region[] | null; above?: FloorPlan | null; s: number }) {
   return (
     <Layer listening={false}>
       {sketch?.bubbles.map((b) => (
@@ -27,6 +29,39 @@ export function ReferenceLayer({ sketch, below, s }: { sketch: BubbleDiagram | n
       ))}
       {below?.plan.rooms.map((r) => (
         <Line key={r.id} points={flat(r.polygon)} closed stroke={INK} strokeWidth={1} strokeScaleEnabled={false} dash={[6, 4]} opacity={0.3} />
+      ))}
+      {above?.rooms.map((r) => (
+        <Line key={`above-${r.id}`} points={flat(r.polygon)} closed stroke={INK} strokeWidth={1} strokeScaleEnabled={false} dash={[2, 4]} opacity={0.3} />
+      ))}
+      {support?.flatMap((r, i) => [r.outline, ...r.holes].map((ring, k) => <Line key={`support-${i}-${k}`} points={flat(ring)} closed stroke={INK} strokeWidth={2} strokeScaleEnabled={false} opacity={0.55} />))}
+    </Layer>
+  );
+}
+
+/** The parts of rooms that hang past the floor below: red stripes, and how far they reach. */
+export function OverhangLayer({ overhangs, s, past = "the wall below" }: { overhangs: Overhang[]; s: number; past?: string }) {
+  const pattern = stripes();
+  const w = 260 / s;
+  return (
+    <Layer listening={false}>
+      {overhangs.flatMap((o) =>
+        o.pieces.map((piece, i) => (
+          <Line
+            key={`${o.roomId}-${i}`}
+            points={flat(piece)}
+            closed
+            fill="rgba(200,50,40,0.18)"
+            fillPatternImage={pattern as unknown as HTMLImageElement}
+            fillPatternScale={{ x: 1 / s, y: 1 / s }}
+            fillPriority={pattern ? "pattern" : "color"}
+            stroke="#c8322a"
+            strokeWidth={1.5}
+            strokeScaleEnabled={false}
+          />
+        )),
+      )}
+      {overhangs.map((o) => (
+        <Text key={`t-${o.roomId}`} x={o.at.x} y={o.at.y} width={w} offsetX={w / 2} offsetY={6 / s} align="center" text={`hangs ${formatFeetInches(o.depthIn)} past ${past}`} fontSize={11.5 / s} fontStyle="600" fill="#a3231c" />
       ))}
     </Layer>
   );
