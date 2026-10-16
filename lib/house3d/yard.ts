@@ -7,6 +7,7 @@ import { YARD_COLORS, type Finish } from "./exterior";
 import type { LevelHeights } from "./levels";
 import type { Site } from "./site";
 import { MeshBuilder, toScene, type Frame, type RGB, type Vec3 } from "./mesh";
+import { flatPlans } from "@/lib/plan/flatten";
 
 /**
  * The yard in 3D (laid out in lib/exterior/yard.ts): paving and beds laid on
@@ -81,6 +82,7 @@ function flatPart(key: string, levelId: string, id: string, mb: MeshBuilder): Pa
 
 /** Draw the yard. `yard` can be passed in when it's already laid out. */
 export function buildYard(plans: Plans, ctx: HouseContext & { heights: LevelHeights }, yard?: Yard | null): Part[] {
+  plans = flatPlans(plans);
   const y = yard ?? yardLayout(plans, ctx.levels, ctx.basics, ctx.site.plot, ctx.site.offset);
   if (!y) return [];
   const { frame: f, site } = ctx;

@@ -6,6 +6,7 @@ import { floorFootprint, offsetRing, regionArea, roofFootprint, subtractRegions,
 import { levelHeights } from "@/lib/house3d/levels";
 import { roofShape, type RoofShape } from "@/lib/house3d/roof";
 import { sqft, ft, ringLength } from "./quantityBasics";
+import { ROOF_STEP_DEG, flatPlans } from "@/lib/plan/flatten";
 
 /** Measures the roof: its areas, gable ends, hips and valleys, gutters and eaves, and the attic. */
 
@@ -71,6 +72,7 @@ export function foldLength(tris: RoofShape["tris"]): number {
 
 /** Roof surfaces, gable walls, hips and valleys, gutters and attic ceilings over the whole house. */
 export function measureRoof(plans: Plans, levels: Level[], basics: PlanBasics | null, roof: Roof) {
+  plans = flatPlans(plans, ROOF_STEP_DEG);
   const heights = levelHeights(levels, basics);
   const ordered = [...levels].sort((a, b) => heights[a.id].floorIn - heights[b.id].floorIn);
   const exteriorIn = exteriorWallIn(basics);

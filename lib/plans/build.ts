@@ -19,6 +19,7 @@ import { mechanicalSheet } from "./sheets/mechanical";
 import { energySheets } from "./sheets/energy";
 import { bracingSheet, floorFramingSheet, foundationSheet, roofFramingSheet, structuralNotesSheets } from "./sheets/structure";
 import { sectionSheets, stairSectionSheet } from "./sheets/sections";
+import { flatProject } from "@/lib/plan/flatten";
 
 /**
  * Put a set of sheets together: draw each chosen sheet, then add the
@@ -44,6 +45,7 @@ export function selectedIds(project: Project): string[] {
 }
 
 export function buildSet(project: Project, opts: SetOptions = {}): Sheet[] {
+  project = flatProject(project);
   const r = readiness(project);
   const ids = new Set(opts.only ?? selectedIds(project));
   const chosen = r.sheets.filter((s) => canDraw(s) && ids.has(s.id));

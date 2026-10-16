@@ -13,6 +13,7 @@ import { foundationOf, zonesOf, type Foundation } from "./foundation";
 import { roofFraming, type RoofFraming } from "./roof";
 import { headersFor, type HeaderResult, type LevelWalls } from "./headers";
 import { bracingFor, type BracedLine } from "./bracing";
+import { flatProject } from "@/lib/plan/flatten";
 
 /**
  * The house's structure, worked out once from the plans: floor framing,
@@ -37,6 +38,7 @@ export type Structure = {
 const cache = new WeakMap<Project, Structure>();
 
 export function structureOf(project: Project): Structure {
+  project = flatProject(project);
   const hit = cache.get(project);
   if (hit) return hit;
   const h = houseFacts(project);

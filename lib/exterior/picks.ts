@@ -1,6 +1,7 @@
 import { WHOLE_HOUSE, type DesignChoices, type Project, type Selection } from "@/lib/model/schema";
 import { EXTERIOR_CATEGORIES, exteriorCategory, paintable, type ExteriorCategory, type ExteriorCategoryId } from "@/lib/catalog/exterior";
 import { pickFor } from "@/lib/interior/picks";
+import { flatProject } from "@/lib/plan/flatten";
 
 /**
  * Exterior picks: one product per part of the outside, for the whole house.
@@ -14,6 +15,7 @@ export function exteriorPick(selections: Selection[], category: ExteriorCategory
 
 /** The parts this house has: no garage door pick without a garage door, no decking without a deck. Everything shows before there's a floor plan. */
 export function exteriorPartsFor(p: Pick<Project, "floorPlans" | "house3d">): ExteriorCategory[] {
+  p = flatProject(p);
   const plans = Object.values(p.floorPlans);
   if (!plans.some((pl) => pl.rooms.length)) return EXTERIOR_CATEGORIES;
   const styles = new Set(plans.flatMap((pl) => pl.openings.map((o) => o.style)));

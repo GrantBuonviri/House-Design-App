@@ -6,6 +6,7 @@ import { INTERIOR_WALL_IN } from "./basics";
 import { add, angleOf, boundsOf, dist, dot, edgesOf, leftNormal, pointInPolygon, polygonArea, polygonCenter, project, rotate, round1, scale, sub, subtractIntervals, unit } from "./geometry";
 import { inSpans, openSpans, openingGeometries, type OpeningGeometry } from "./walls";
 import type { CabinetLayout, CabinetRun } from "./cabinets";
+import { flatPlan } from "./flatten";
 
 /**
  * Outlets, switches, lights, smoke and CO alarms, fans, the panel, heating
@@ -140,6 +141,8 @@ export type WallSpace = { pieces: { edge: RoomEdge; t0: number; t1: number }[]; 
 
 /** The wall spaces of a room, measured along the floor line around corners (NEC 210.52(A)). */
 export function wallSpaces(plan: FloorPlan, room: PlanRoom, boxes: Box[]): WallSpace[] {
+  plan = flatPlan(plan);
+  room = plan.rooms.find((r) => r.id === room.id) ?? room;
   const geos = openingGeometries(plan);
   const edges = roomEdges(room);
   const free = edges.map((e) => subtractIntervals(e.length, blockedOn(plan, e, geos, boxes)).filter(([a, b]) => b - a > 0.5));
@@ -215,6 +218,7 @@ export function largestGap(space: WallSpace, at: number[]): number {
 
 /** Built-ins that break up wall space: fixtures plus base cabinets. */
 export function builtIns(plan: FloorPlan, cabinets: CabinetLayout): Box[] {
+  plan = flatPlan(plan);
   return [...plan.fixtures.filter((f) => BUILT_IN.has(f.kind) && f.kind !== "island"), ...cabinets.cabinets.filter((c) => c.bottomIn < 24)];
 }
 
@@ -722,6 +726,7 @@ export const devicesEdited = (plan: FloorPlan) => Boolean(plan.devices && (plan.
 
 /** Snap a wall device to the nearest wall face, facing into the room it was dropped in. */
 export function snapToWall(plan: FloorPlan, p: Point, exteriorIn: number, maxD = 36): { p: Point; rotation: number } | null {
+  plan = flatPlan(plan);
   let best: { room: PlanRoom; edge: RoomEdge; t: number; d: number } | null = null;
   for (const room of plan.rooms) {
     if (!pointInPolygon(p, room.polygon)) continue;

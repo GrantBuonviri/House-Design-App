@@ -12,6 +12,7 @@ import { MIN_STAIRS_WIDTH_IN } from "./stairs";
 import { findGaps, type Gap } from "./overlaps";
 import { isWayIn, stairsBoxes, wayInRooms } from "./suggest";
 import { CANTILEVER_MAX_IN, overhangsOf, pulledBack, supportOf } from "./support";
+import { flatPlans } from "./flatten";
 
 /**
  * Friendly checks on a floor plan: rooms you can't get into, bedrooms without
@@ -53,6 +54,7 @@ type Ctx = {
 const isEgress = (o: FloorPlan["openings"][number]) => o.kind === "window" && o.widthIn >= 24 && o.heightIn >= 24 && (o.sillIn ?? 30) <= 44;
 
 export function planWarnings(plans: Plans, ctx: Ctx): PlanWarning[] {
+  plans = flatPlans(plans);
   const out: PlanWarning[] = [];
   const levels = [...ctx.levels].sort((a, b) => a.elevationIn - b.elevationIn);
   const add_ = (levelId: string, key: string, text: string, rooms: PlanRoom[] = [], at?: Point | null) =>

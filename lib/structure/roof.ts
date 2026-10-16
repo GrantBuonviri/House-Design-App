@@ -1,6 +1,7 @@
 import type { Point, Project } from "@/lib/model/schema";
 import { add, dot, pointInPolygon, scale, unit } from "@/lib/plan/geometry";
 import { houseScene } from "@/lib/plans/scene";
+import { flatProject } from "@/lib/plan/flatten";
 
 /**
  * Roof framing: trusses at 24" on center, drawn across each roof plane in
@@ -47,6 +48,7 @@ function clipLine(poly: Point[], p: Point, d: Point): [number, number][] {
 }
 
 export function roofFraming(project: Project): RoofFraming {
+  project = flatProject(project);
   const sc = houseScene(project);
   const roof = project.house3d.roof;
   const planes: RoofPlane[] = [];

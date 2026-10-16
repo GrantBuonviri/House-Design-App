@@ -9,6 +9,7 @@ import { hostPiece, type Layer, type Pick } from "@/lib/house3d/build";
 import { interiorCategory, TILE_ROOMS, type InteriorCategoryId } from "@/lib/catalog/categories";
 import type { ExteriorCategoryId } from "@/lib/catalog/exterior";
 import { wallKey } from "./picks";
+import { flatPlan, sourceEdge } from "@/lib/plan/flatten";
 
 /**
  * What you're aiming at in the walkthrough, as the room and the kinds of
@@ -114,6 +115,7 @@ export function aimAt(
   /** The floor below, whose ceiling is the underside of this floor. */
   below?: { levelId: string; plan: FloorPlan },
 ): Aim {
+  plan = flatPlan(plan);
   const L = part.levelId;
   const faceUp = hit.normal.up > 0.7;
   const faceDown = hit.normal.up < -0.7;
@@ -139,7 +141,7 @@ export function aimAt(
   if (part.layer === "floors" && part.pick?.kind === "room") {
     const room = plan.rooms.find((r) => r.id === part.pick!.id);
     if (!room) return { kind: "none" };
-    if (faceDown) return below ? ceilingAim(below.plan, below.levelId, hit.p) : { kind: "none" };
+    if (faceDown) return below ? ceilingAim(flatPlan(below.plan), below.levelId, hit.p) : { kind: "none" };
     if (!faceUp) return { kind: "none" };
     if (room.type === "deck") return outside(L, room.name, ["decking"]);
     if (room.type === "patio") return outside(L, room.name, ["patio"]);
@@ -165,7 +167,7 @@ export function aimAt(
     if (!cats.length) return { kind: "none", label: `${room.name} wall` };
     // Which of the room's walls: the edge of its outline behind the point you're looking at.
     const edge = roomEdgeAt(room.polygon, add(hit.p, scale(n, -2)), exteriorWallIn(basics) + 2, n);
-    const wall = edge !== null ? { key: wallKey(edge), label: `${edgeCompass(room.polygon, edge)} wall` } : undefined;
+    const wall = edge !== null ? { key: wallKey(sourceEdge(room, edge)), label: `${edgeCompass(room.polygon, edge)} wall` } : undefined;
     return { kind: "finish", levelId: L, room: roomRef(room), label: wall ? `${room.name}, ${wall.label}` : `${room.name} wall`, categories: cats, ...(wall ? { wall } : {}) };
   }
 

@@ -1,4 +1,5 @@
 import type { FloorPlan, Opening, PlanRoom, Point } from "@/lib/model/schema";
+import { reverseBulges, roomEdgeLength, withBulges } from "./arcs";
 import { boundsOf, dist, edgesOf, isRectangle, round1, roundPoint } from "./geometry";
 import { moveMany, newPlanId, reshapeRoom } from "./edit";
 import { pruneOpenWalls } from "./openWalls";
@@ -125,16 +126,16 @@ export function mirrorMany(plan: FloorPlan, ids: string[], flip: Flip): FloorPla
     if (!m.roomIds.has(r.id)) return r;
     flipped.set(r.id, r.polygon.length);
     // Flipping turns the outline counter-clockwise; reversing puts it back clockwise.
-    return { ...r, polygon: r.polygon.map(mp).reverse() };
+    // Bulges count outward from the room, so they keep their values and just follow their edges.
+    return withBulges({ ...r, polygon: r.polygon.map(mp).reverse() }, reverseBulges(r.bulges, r.polygon.length));
   });
   const openings = plan.openings.map((o) => {
     if ("roomId" in o.host) {
       const n = flipped.get(o.host.roomId);
       if (n === undefined) return o;
       const room = plan.rooms.find((r) => r.id === (o.host as { roomId: string }).roomId)!;
-      const e = edgesOf(room.polygon)[o.host.edge];
       // Old edge i becomes edge n - 2 - i, running the other way: offsets measure from the other end and the hinge swaps ends.
-      return { ...o, host: { roomId: o.host.roomId, edge: (2 * n - 2 - o.host.edge) % n }, offsetIn: round1(dist(e.a, e.b) - o.offsetIn), hinge: o.hinge === "start" ? ("end" as const) : ("start" as const) };
+      return { ...o, host: { roomId: o.host.roomId, edge: (2 * n - 2 - o.host.edge) % n }, offsetIn: round1(roomEdgeLength(room, o.host.edge) - o.offsetIn), hinge: o.hinge === "start" ? ("end" as const) : ("start" as const) };
     }
     if (!m.wallIds.has(o.host.wallId)) return o;
     // A loose wall keeps its direction, so the swing side is what flips.
@@ -146,7 +147,8 @@ export function mirrorMany(plan: FloorPlan, ids: string[], flip: Flip): FloorPla
     ...plan,
     ...(openWalls ? { openWalls } : {}),
     rooms,
-    walls: plan.walls.map((w) => (m.wallIds.has(w.id) ? { ...w, a: mp(w.a), b: mp(w.b) } : w)),
+    // A loose wall keeps its direction, so a curve that bowed to its left now bows to its right.
+    walls: plan.walls.map((w) => (m.wallIds.has(w.id) ? { ...w, a: mp(w.a), b: mp(w.b), ...(w.bulge ? { bulge: -w.bulge } : {}) } : w)),
     openings,
     stairs: plan.stairs.map((s) => (m.stairs.includes(s) ? { ...s, ...mp(s), rotation: turn(s.rotation), flip: s.shape === "l" ? !s.flip : s.flip } : s)),
     fixtures: plan.fixtures.map((f) => (m.fixtures.includes(f) ? { ...f, ...mp(f), rotation: turn(f.rotation) } : f)),

@@ -5,6 +5,7 @@ import { lotOffsetFor } from "@/lib/house3d/site";
 import { ACRE_SQ_IN, polygonArea } from "./generate";
 import { drawingToCompass } from "./custom";
 import { pointInPolygon } from "./geometry";
+import { flatProject } from "@/lib/plan/flatten";
 
 /** Editing helpers for the land designer. Pure functions on the designer's settings (inches, drawing frame). */
 
@@ -162,6 +163,7 @@ function houseCorners(project: Project, offset: Point): Point[] {
 
 /** Warnings after the land changed: the house hanging off the lot or sitting in water. */
 export function houseWarnings(project: Project, plot: Plot, offset: Point): string[] {
+  project = flatProject(project);
   const pts = houseCorners(project, offset);
   if (!pts.length) return [];
   const out: string[] = [];

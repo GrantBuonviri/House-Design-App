@@ -9,6 +9,7 @@ import { fixtureLines } from "./sheets/schedules";
 import { gasFixtures } from "./sheets/plumbing";
 import { levelDevices } from "./systems";
 import { structureOf } from "@/lib/structure";
+import { flatProject } from "@/lib/plan/flatten";
 
 /**
  * Every plan sheet a Boise house permit asks for (checklist #402), grouped
@@ -77,6 +78,7 @@ export type Readiness = {
 const cache = new WeakMap<Project, Readiness>();
 
 export function readiness(project: Project): Readiness {
+  project = flatProject(project);
   const hit = cache.get(project);
   if (hit) return hit;
   const h = houseFacts(project);

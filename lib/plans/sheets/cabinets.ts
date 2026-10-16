@@ -22,6 +22,7 @@ import { DRAW_AREA } from "../frame";
 import { archFeet, capHeight, DASH, heading, HEADING_H, line, readable, rect, table, textBlock, type Item } from "../draw";
 import { houseFacts } from "../house";
 import { viewTitle } from "../view";
+import { flatProject } from "@/lib/plan/flatten";
 
 /**
  * Cabinet plans and elevations (I-201): an enlarged plan of each room with
@@ -42,6 +43,7 @@ const ELEV = { inPerFt: 1 / 2, label: '1/2" = 1\'-0"' };
 
 /** A floor's cabinets, with that floor's ceiling height and the range clearance from the code data. */
 export function levelCabinets(project: Project, level: Pick<Level, "id" | "kind">): CabinetLayout {
+  project = flatProject(project);
   const plan = houseFacts(project).plan(level.id);
   return cabinetLayout(plan, ceilingFor(project.plan.basics, level), codeNum("kitchen.rangeClearanceAbove"));
 }

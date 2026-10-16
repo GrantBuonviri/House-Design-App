@@ -4,6 +4,7 @@ import { planOf } from "@/lib/plan/edit";
 import { stairsDrawing } from "@/lib/plan/stairs";
 import { openingGeometries } from "@/lib/plan/walls";
 import { safetyGlazing } from "@/lib/codes/openings";
+import { flatProject } from "@/lib/plan/flatten";
 
 /**
  * Everything the plan sheets and code checks share about the house, worked
@@ -33,6 +34,7 @@ export type HouseFacts = {
 const cache = new WeakMap<Project, HouseFacts>();
 
 export function houseFacts(project: Project): HouseFacts {
+  project = flatProject(project);
   const hit = cache.get(project);
   if (hit) return hit;
   const levels = [...project.levels].sort((a, b) => a.elevationIn - b.elevationIn);

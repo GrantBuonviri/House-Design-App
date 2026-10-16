@@ -1,6 +1,7 @@
 import type { Ctx, Quantities } from "./quantityBasics";
 import { measurePlan } from "./measurePlan";
 import { measureRough } from "./measureRough";
+import { flatProject } from "@/lib/plan/flatten";
 export type { Quantities, RoomFinish } from "./quantityBasics";
 export { FROST_DEPTH_IN } from "./quantityBasics";
 export { foldLength, measureRoof } from "./measureRoof";
@@ -25,6 +26,7 @@ let last: { p: Ctx; q: Quantities | null } | null = null;
  * shape (like picking a finish) don't measure it all again.
  */
 export function measureHouse(p: Ctx): Quantities | null {
+  p = flatProject(p);
   if (last && CTX_KEYS.every((k) => last!.p[k] === p[k])) return last.q;
   const q = measurePlan(p) ?? measureRough(p);
   last = { p: Object.fromEntries(CTX_KEYS.map((k) => [k, p[k]])) as Ctx, q };

@@ -16,6 +16,7 @@ import type { RGB } from "@/lib/house3d/mesh";
 import { operationOf } from "@/lib/codes/openings";
 import { houseFacts } from "./house";
 import { DASH, type Item, type Weight } from "./draw";
+import { flatProject } from "@/lib/plan/flatten";
 
 /**
  * The outside of the house as flat faces in 3D (inches; x east, y south, z up
@@ -86,6 +87,7 @@ const covers = (polys: Point[][], p: Point) => polys.some((poly) => pointInPolyg
 const cache = new WeakMap<Project, HouseScene>();
 
 export function houseScene(project: Project): HouseScene {
+  project = flatProject(project);
   const hit = cache.get(project);
   if (hit) return hit;
   const h = houseFacts(project);

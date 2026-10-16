@@ -5,6 +5,7 @@ import { offsetRing, roofFootprint } from "@/lib/house3d/footprint";
 import { plotRoadEdges } from "@/lib/land/custom";
 import { bearingVector } from "@/lib/land/generate";
 import { houseFacts } from "./house";
+import { flatProject } from "@/lib/plan/flatten";
 
 /**
  * The lot the site plan is drawn on, in plan inches (x east, y south): the
@@ -65,6 +66,7 @@ export function realLotOk(lot: RealLot | null): lot is RealLot {
 
 /** The house's outside faces on every floor, porches included. */
 export function houseOutlines(project: Project): Point[][] {
+  project = flatProject(project);
   const h = houseFacts(project);
   return h.drawn.flatMap((l) => roofFootprint(h.plan(l.id)).map((r) => offsetRing(r.outline, h.exteriorIn / 2)));
 }
@@ -79,6 +81,7 @@ const cache = new WeakMap<Project, SiteLayout | null>();
 
 /** The site the site plan draws, or null when there's neither a real lot nor a made-up one. */
 export function siteLayout(project: Project): SiteLayout | null {
+  project = flatProject(project);
   if (cache.has(project)) return cache.get(project)!;
   const out = layout(project);
   cache.set(project, out);

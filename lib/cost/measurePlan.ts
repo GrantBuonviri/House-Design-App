@@ -13,9 +13,12 @@ import { yardAmounts, yardLayout } from "@/lib/exterior/yard";
 import { type Quantities, sqft, ft, FROST_DEPTH_IN, JOIST_DEPTH_IN, OVERDIG_IN, SHALLOW_DIG_IN, ringLength, samplesAround, type Ctx, empty, siteFacts, toRoad, type MeasuredRoom, roomFixtures, centerOf, applyRoof } from "./quantityBasics";
 import { measureRoof } from "./measureRoof";
 import { overhangsOf, postsUnder, supportOf } from "@/lib/plan/support";
+import { flatProject, savedRoom } from "@/lib/plan/flatten";
+import { roomArea } from "@/lib/plan/arcs";
 
 /** Measures the house from its floor plan. Null when there is no floor plan with rooms. */
 export function measurePlan(p: Ctx): Quantities | null {
+  p = flatProject(p);
   const plans = p.floorPlans;
   if (!Object.values(plans).some((pl) => pl.rooms.length > 0)) return null;
   const q = empty("plan");
@@ -111,7 +114,7 @@ export function measurePlan(p: Ctx): Quantities | null {
     const story = ceilingIn + FLOOR_STRUCTURE_IN;
     const isBelow = below(l.id);
     for (const r of plan.rooms) {
-      const a = sqft(polygonArea(r.polygon));
+      const a = sqft(roomArea(savedRoom(r)));
       const kind = areaKind(r);
       if (kind === "living") q.livingSqft += a;
       else if (kind === "garage") q.garageSqft += a;
