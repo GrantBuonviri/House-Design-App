@@ -108,7 +108,7 @@ describe("aiming in the walkthrough", () => {
   it("finds furniture", () => {
     const sofa = newFurniture("sofa", { x: 8 * FT, y: 7 * FT }, 0, "#888888", "s1");
     const a = aimAt(plan([living], { furniture: [sofa] }), part("furniture", undefined, "s1"), { p: { x: 8 * FT, y: 7 * FT }, heightIn: 18, normal: up }, basics);
-    expect(a).toEqual({ kind: "furniture", levelId: L, id: "s1", label: "Sofa" });
+    expect(a).toEqual({ kind: "furnish", levelId: L, id: "s1", label: "Sofa", item: "furniture" });
   });
 });
 

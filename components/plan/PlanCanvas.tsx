@@ -94,7 +94,7 @@ type Props = {
   /** The floor plan shows furnish items faded (the Show furnishings switch). */
   showFurnishings?: boolean;
   /** The Furnish page: the app's own cabinets and devices, the catalog entry being placed, how far it is turned, the wall the Wall tool draws, and the ceiling. */
-  furnish?: { layouts?: Layouts; pick: string | null; turn: number; wallHeight: WallHeight; ceilingIn: number; closetSize?: ClosetSize };
+  furnish?: { layouts?: Layouts; pick: string | null; turn: number; wallHeight: WallHeight; ceilingIn: number; closetSize?: ClosetSize; here?: { p: Point; dir: Point } };
   selection: PlanSelection;
   snap: boolean;
   labels: PlanLabels;
@@ -1041,6 +1041,13 @@ export default function PlanCanvas(props: Props) {
 
             {/* "+" nodes in the middle of each edge, and corner dots, on the selected room. */}
             {selRoom && !dragCorner && <MidNodes room={selRoom} s={s} />}
+            {furnish?.here && (
+              <Group x={furnish.here.p.x} y={furnish.here.p.y} listening={false} name="you-are-here">
+                <Line points={[0, 0, (furnish.here.dir.x * 26) / s, (furnish.here.dir.y * 26) / s]} stroke="#2f7fd1" strokeWidth={4} strokeScaleEnabled={false} lineCap="round" />
+                <Circle radius={8 / s} fill="#2f7fd1" stroke="#fff" strokeWidth={2} strokeScaleEnabled={false} />
+                <Text text="You are here" x={12 / s} y={-20 / s} fontSize={13 / s} fontStyle="bold" fill="#1d5fa3" />
+              </Group>
+            )}
             {tool === "select" && !dragCorner && !lotMode && <BendHandles targets={bendTargets} plan={shown} s={s} />}
             {bendTip && <BendTip at={bendTip.at} text={bendTip.text} s={s} />}
             {selRoom &&

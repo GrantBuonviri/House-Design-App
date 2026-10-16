@@ -1,12 +1,9 @@
 "use client";
 
-import type { FurnitureItem } from "@/lib/model/schema";
 import type { Estimate } from "@/lib/cost/estimate";
 import { shortMoney } from "@/lib/cost/estimate";
 import { SEASONS, clockTime, type SeasonId } from "@/lib/house3d/sun";
 import type { Spot, walkWorld } from "@/lib/house3d/walk";
-import type { PlaceCheck } from "@/lib/plan/furniture";
-import { furnitureType } from "@/lib/plan/furniture";
 import type { DoorMode } from "@/lib/house3d/doors";
 import DoorsPicker from "@/components/house3d/DoorsPicker";
 import UndoButtons from "@/components/project/UndoButtons";
@@ -20,9 +17,12 @@ export function WalkTopBar(props: {
   where: { levelName: string; roomName: string };
   cost?: Estimate | null;
   design: boolean;
+  /** The Design panel's tab. */
+  tab: "finishes" | "place";
   locked: boolean;
   onDesign: () => void;
-  onAddFurniture: () => void;
+  onPlace: () => void;
+  onTopDown: () => void;
   onClose: () => void;
   labelsOn: boolean;
   tapeOn: boolean;
@@ -32,7 +32,7 @@ export function WalkTopBar(props: {
   onTape: () => void;
   onClearTape: () => void;
 }) {
-  const { name, where, cost, design, locked, onDesign, onAddFurniture, onClose, labelsOn, tapeOn, hasTape, onLabels, onLabelSettings, onTape, onClearTape } = props;
+  const { name, where, cost, design, tab, locked, onDesign, onPlace, onTopDown, onClose, labelsOn, tapeOn, hasTape, onLabels, onLabelSettings, onTape, onClearTape } = props;
   return (
     <div className="pointer-events-none absolute top-0 right-0 left-0 z-20 flex items-start justify-between gap-3 p-4">
       <div className="rounded-lg bg-black/55 px-3 py-2 text-white">
@@ -52,10 +52,10 @@ export function WalkTopBar(props: {
           className={`pointer-events-auto rounded-md px-3 py-1.5 text-sm font-medium shadow ${design ? "bg-accent text-white" : "bg-white/90 text-ink hover:bg-white"}`}
           onClick={onDesign}
           aria-pressed={design}
-          title="Aim at something and click to change it (E)"
+          title="Aim at something and click to change it (E). Tab switches between Finishes and Place."
           data-testid="design-toggle"
         >
-          Design {design ? "on" : "off"}
+          Design {design ? (tab === "place" ? "on · Place" : "on · Finishes") : "off"}
         </button>
         <button
           className={`pointer-events-auto rounded-md px-3 py-1.5 text-sm font-medium shadow ${labelsOn ? "bg-accent text-white" : "bg-white/90 text-ink hover:bg-white"}`}
@@ -85,9 +85,14 @@ export function WalkTopBar(props: {
             Clear tape
           </button>
         )}
-        {design && !locked && (
-          <button className="pointer-events-auto rounded-md bg-white/90 px-3 py-1.5 text-sm text-ink shadow hover:bg-white" onClick={onAddFurniture}>
-            Add furniture
+        {!locked && (
+          <button className="pointer-events-auto rounded-md bg-white/90 px-3 py-1.5 text-sm text-ink shadow hover:bg-white" onClick={onPlace} title="Furniture, fixtures, cabinets, outlets, doors, windows and walls (F)" data-testid="place-button">
+            Place
+          </button>
+        )}
+        {!locked && (
+          <button className="pointer-events-auto rounded-md bg-white/90 px-3 py-1.5 text-sm text-ink shadow hover:bg-white" onClick={onTopDown} title="See this floor from above, with the Furnish tools (M)" data-testid="top-down-button">
+            Top-down
           </button>
         )}
         {!locked && (
@@ -106,8 +111,8 @@ export function WalkTopBar(props: {
   );
 }
 
-/** The dot in the middle while walking, and what it's on (or the furniture being carried). */
-export function AimDot({ design, aimText, aimable, carry }: { design: boolean; aimText?: string; aimable: boolean; carry: { item: FurnitureItem; check: PlaceCheck } | null }) {
+/** The dot in the middle while walking, and what it's on (or what's being placed, and whether it fits there). */
+export function AimDot({ design, aimText, aimable, carry }: { design: boolean; aimText?: string; aimable: boolean; carry: { label: string; ok: boolean; problem?: string; note?: string; keys: string } | null }) {
   return (
     <>
       <div className={`pointer-events-none absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full ring-1 ring-black/40 ${design ? "size-2.5 bg-accent ring-white/80" : "size-1.5 bg-white/80"}`} />
@@ -115,11 +120,9 @@ export function AimDot({ design, aimText, aimable, carry }: { design: boolean; a
         <div className="pointer-events-none absolute top-1/2 left-1/2 mt-5 -translate-x-1/2 rounded-md bg-black/65 px-3 py-1.5 text-center text-sm text-white" data-testid="aim-label">
           {carry ? (
             <>
-              <span className="font-medium">{furnitureType(carry.item.kind)?.label}</span>
-              <span className={carry.check.ok ? "text-white/80" : "text-red-300"}>
-                {carry.check.ok ? (carry.check.blocksDoors.length ? " · in front of a door" : " · click to put it down") : ` · ${carry.check.problem}`}
-              </span>
-              <span className="block text-xs text-white/60">R to turn · Esc to cancel</span>
+              <span className="font-medium">{carry.label}</span>
+              <span className={carry.ok ? "text-white/80" : "text-red-300"}>{carry.ok ? ` · ${carry.note ?? "click to put it down"}` : ` · ${carry.problem ?? "it can't go there"}`}</span>
+              <span className="block text-xs text-white/60">{carry.keys}</span>
             </>
           ) : (
             <>
@@ -144,8 +147,9 @@ export function WalkHelp({ onStart }: { onStart: () => void }) {
           <li>Move the mouse to look around</li>
           <li>W A S D or the arrow keys to walk</li>
           <li>Hold Shift to walk faster</li>
-          <li>E turns Design on: aim at a floor, wall, counter, furniture, or outside at the siding, roof, doors and yard, and click to change it</li>
-          <li>With Design on, F adds furniture</li>
+          <li>E turns Design on. Finishes: aim at a floor, wall, counter, or outside at the siding, roof, doors and yard, and click to pick its finish</li>
+          <li>F opens Place: furniture, fixtures, cabinets, outlets, hookups, built-ins, doors, windows and walls. Aim at anything placed and click to move, turn, size, swap or delete it. Tab switches between Finishes and Place</li>
+          <li>M shows this floor from above with the Furnish tools; M or Esc comes back</li>
           <li>Walk into a door to open it, or click it to open and close it by hand. K locks the door you aim at (a locked door only opens when clicked). O changes the Doors setting</li>
           <li>L shows room labels on the floor (the ⚙ button sets what they say)</li>
           <li>T is the tape measure: click two points. Shift keeps it level or upright, C clears</li>

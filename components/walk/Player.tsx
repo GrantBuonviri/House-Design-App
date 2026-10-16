@@ -3,14 +3,11 @@
 import { useEffect, useMemo, useRef } from "react";
 import { useFrame, useThree } from "@react-three/fiber";
 import * as THREE from "three";
-import type { FurnitureItem } from "@/lib/model/schema";
-import { drawFurniture } from "@/lib/house3d/fixtures";
-import { IN_PER_UNIT, MeshBuilder, type Frame } from "@/lib/house3d/mesh";
+import { IN_PER_UNIT, type Frame } from "@/lib/house3d/mesh";
 import { EYE_IN, type Walker } from "@/lib/house3d/walk";
-import { toGeometry } from "@/components/house3d/geometry";
 import type { AimTarget } from "@/components/house3d/Scene";
 
-/** The walker in the 3D view: moving the camera, and the furniture being carried. Used by Walkthrough.tsx. */
+/** The walker in the 3D view: moving the camera, and what the dot in the middle is on. Used by Walkthrough.tsx (what is being placed is drawn by WalkGhosts.tsx). */
 
 const LOOK_PER_PX = 0.0022;
 
@@ -20,22 +17,6 @@ export type Look = {
   dir: THREE.Vector3;
   hit: { point: THREE.Vector3; normal: THREE.Vector3; owner: AimTarget["owners"][number] } | null;
 };
-
-/** A piece of furniture being carried, drawn on its own (and see-through), tinted red where it doesn't fit. */
-export function FurnitureGhost({ item, floorIn, frame, ok }: { item: FurnitureItem; floorIn: number; frame: Frame; ok: boolean }) {
-  const geometry = useMemo(() => {
-    const mb = new MeshBuilder();
-    drawFurniture(mb, frame, item, floorIn + 0.3);
-    return toGeometry(mb.build());
-  }, [item, floorIn, frame]);
-  useEffect(() => () => geometry.dispose(), [geometry]);
-  const material = useMemo(() => new THREE.MeshStandardMaterial({ vertexColors: true, transparent: true, opacity: 0.75, roughness: 0.9 }), []);
-  useEffect(() => {
-    material.color.set(ok ? "#ffffff" : "#ff6b6b");
-  }, [material, ok]);
-  useEffect(() => () => material.dispose(), [material]);
-  return <mesh geometry={geometry} material={material} />;
-}
 
 type StepFn = (w: Walker, input: { forward: number; right: number; fast: boolean }, dt: number) => Walker;
 
