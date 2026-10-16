@@ -137,6 +137,48 @@ export function fillShapes(plan: FloorPlan, regions: Region[]): Point[][] {
   return left.map((r) => clockwise(r.outline)).filter((p) => polygonArea(p) >= MIN_ROOM_SQIN);
 }
 
+/** The biggest part of an outline that sits on the support area. Null when none of it does. */
+export function largestInside(poly: Point[], regions: Region[]): Point[] | null {
+  let out: ReturnType<typeof polygonClipping.intersection>;
+  try {
+    out = polygonClipping.intersection([ring(poly)], ...asPolygons(regions));
+  } catch {
+    return null;
+  }
+  const pieces = out.map((piece) => clockwise(cleanRing(fromRing(piece[0]), 0.25))).filter((pts) => pts.length >= 3 && polygonArea(pts) >= MIN_ROOM_SQIN);
+  return pieces.length ? pieces.reduce((a, b) => (polygonArea(b) > polygonArea(a) ? b : a)) : null;
+}
+
+/** Every room that hangs past the support area without being held up on purpose, cut back to its biggest part inside it. For the automatic plans. */
+export function keepInside(plan: FloorPlan, regions: Region[]): { plan: FloorPlan; trimmed: number } {
+  let out = plan;
+  let trimmed = 0;
+  for (const o of overhangsOf(plan.rooms, regions)) {
+    if (o.ok) continue;
+    const room = out.rooms.find((r) => r.id === o.roomId)!;
+    const pts = largestInside(room.polygon, regions);
+    if (!pts) continue;
+    out = reshapeRoom(out, room.id, pts);
+    trimmed++;
+  }
+  return { plan: out, trimmed };
+}
+
+/** How much of a floor hangs past the floor below without being held up on purpose (sq in). */
+export function hangingArea(plans: Plans, levels: Level[], level: Level): number {
+  const s = supportOf(plans, levels, level);
+  if (!s) return 0;
+  return overhangsOf(planOf(plans, level.id).rooms, s.regions)
+    .filter((o) => !o.ok)
+    .reduce((t, o) => t + o.pieces.reduce((a, p) => a + polygonArea(p), 0), 0);
+}
+
+/** The note for a floor whose rooms need more room than the floor below holds. */
+export function tooBigNote(level: Pick<Level, "name">, below: Pick<Level, "name">, needSqFt: number, haveSqFt: number): string {
+  const sqft = (n: number) => `${Math.round(n).toLocaleString("en-US")} sq ft`;
+  return `The ${level.name.toLowerCase()} needs ${sqft(needSqFt)} but the ${below.name.toLowerCase()} is ${sqft(haveSqFt)}, so its rooms were made smaller to fit on top of it. Make the ${below.name.toLowerCase()} bigger, or mark rooms that should stick out with "Hangs over the floor below".`;
+}
+
 /** "Fill the floor below": one room on each part of the support area that's still empty. */
 export function fillBelow(plan: FloorPlan, regions: Region[]): FloorPlan {
   const shapes = fillShapes(plan, regions);

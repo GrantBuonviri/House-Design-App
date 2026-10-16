@@ -315,15 +315,16 @@ export default function PlanStage({ onContinue, onGoToSketch }: { onContinue: ()
   function fromSketch() {
     const res = plansFromSketch(sketches, { brief, plot, levels, basics });
     update((p) => ({ ...p, floorPlans: { ...blankPlans(levels), ...res.plans }, plan: { ...p.plan, showSketch: false } }));
-    setNotes(
-      res.needHall.length
+    setNotes([
+      ...(res.needHall.length
         ? [
             `${res.needHall.length === 1 ? "These rooms are" : "These pairs of rooms are"} connected in your sketch but don't share a wall yet: ${res.needHall
               .map((h) => `${h.a} and ${h.b}`)
               .join("; ")}. Push rooms together, or draw a hallway between them with the Room tool.`,
           ]
-        : [],
-    );
+        : []),
+      ...res.notes,
+    ]);
     setSelection([]);
     setChoosing(false);
   }

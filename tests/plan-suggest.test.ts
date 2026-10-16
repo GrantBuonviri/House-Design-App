@@ -27,6 +27,7 @@ import {
   wayInRooms,
 } from "@/lib/plan/suggest";
 import { openingGeometry } from "@/lib/plan/walls";
+import { hangingArea } from "@/lib/plan/support";
 
 const FT = 12;
 const EXT = 6.5;
@@ -265,6 +266,53 @@ describe("Suggest a plan", () => {
       // Bedrooms get closets, wherever they are.
       expect(ctx.levels.some((l) => planOf(result.plans, l.id).rooms.some((r) => r.type === "closet"))).toBe(true);
       expect(planOf(result.plans, MAIN_LEVEL_ID).openings.some((o) => o.kind === "window")).toBe(true);
+    }
+  });
+});
+
+// ---------- Upper floors stay over the floor below ----------
+
+describe("upper floors fit on the floor below", () => {
+  it("Suggest a plan keeps every upper floor inside the floor below, still sound and reachable", () => {
+    for (const seed of [1, 2, 7, 11]) {
+      const { ctx, result } = house(TWO_STORY, 2, 0, seed);
+      for (const level of ctx.levels) {
+        expect(hangingArea(result.plans, ctx.levels, level)).toBe(0);
+        const p = planOf(result.plans, level.id);
+        expectSound(p);
+        const seen = reachable(p, wayInRooms(p, stairsBoxes(result.plans, ctx, level)));
+        expect(p.rooms.filter((r) => !seen.has(r.id) && !["patio", "deck", "porch"].includes(r.type ?? "")).map((r) => r.name)).toEqual([]);
+      }
+      expect(result.notes.some((n) => /needs .* sq ft/.test(n))).toBe(false);
+    }
+  });
+
+  it("says so when the upstairs needs more room than the main floor", () => {
+    const big: [string, string?][] = [["entry"], ["kitchen"], ["half-bath"], ...(["primary-bedroom", "primary-bath", "bedroom", "bedroom", "bedroom", "bathroom", "family"].map((t) => [t, "floor-2"]) as [string, string][])];
+    const { ctx, result } = house(big, 2);
+    expect(result.notes.find((n) => /needs .* sq ft/.test(n))).toMatch(/^The second floor needs [\d,]+ sq ft but the main floor is [\d,]+ sq ft/);
+    for (const level of ctx.levels) expect(hangingArea(result.plans, ctx.levels, level)).toBe(0);
+  });
+
+  it("alternatives don't push upper rooms past the floor below", () => {
+    const two = levelsFor(2, 0);
+    const ctx = { brief: null, plot: flat, levels: two, basics: defaultBasics() };
+    const plans: Plans = {
+      "floor-1": plan([room("k", "kitchen", 0, 0, 20, 20)]),
+      "floor-2": plan([room("bed", "bedroom", 0, 0, 12, 20), room("bath", "bathroom", 12, 0, 8, 20)]),
+    };
+    // Growing the bedroom out to the west would hang it 3' past the kitchen wall below.
+    expect(applyChanges(plans, [{ op: "grow", room: "bed", other: "", side: "W", feet: 3 }], ctx).applied).toEqual([]);
+    // Shrinking the kitchen would leave the upstairs hanging over nothing.
+    expect(applyChanges(plans, [{ op: "shrink", room: "k", other: "", side: "E", feet: 3 }], ctx).applied).toEqual([]);
+    // Growing the bedroom into the bathroom stays on top of the kitchen.
+    expect(applyChanges(plans, [{ op: "grow", room: "bed", other: "", side: "E", feet: 2 }], ctx).applied).toHaveLength(1);
+  });
+
+  it("the built-in alternatives of a two-story plan keep the upstairs on the floor below", () => {
+    const { ctx, result } = house(TWO_STORY, 2);
+    for (const alt of ruleAlternatives(result.plans, ctx)) {
+      for (const level of ctx.levels) expect(hangingArea(alt.plans, ctx.levels, level)).toBe(0);
     }
   });
 });
