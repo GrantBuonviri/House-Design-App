@@ -1,43 +1,32 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Canvas, useFrame, useThree } from "@react-three/fiber";
+import { Canvas } from "@react-three/fiber";
 import { PerspectiveCamera } from "@react-three/drei";
 import * as THREE from "three";
 import type { FloorPlan, FurnitureItem, Point, Project, Selection } from "@/lib/model/schema";
 import { newId } from "@/lib/model/project";
 import { useProjectStore } from "@/lib/store/projectStore";
-import UndoButtons from "@/components/project/UndoButtons";
-import GraphicsToggle from "@/components/project/GraphicsToggle";
 import type { Estimate } from "@/lib/cost/estimate";
-import { shortMoney } from "@/lib/cost/estimate";
 import { buildHouse, type HouseContext } from "@/lib/house3d/build";
-import { drawFurniture } from "@/lib/house3d/fixtures";
 import { levelHeights } from "@/lib/house3d/levels";
-import { IN_PER_UNIT, MeshBuilder, type Frame } from "@/lib/house3d/mesh";
+import { IN_PER_UNIT, type Frame } from "@/lib/house3d/mesh";
 import { lotOffsetFor, planBounds, siteFor } from "@/lib/house3d/site";
-import { SEASONS, clockTime, daylight, type SeasonId } from "@/lib/house3d/sun";
-import { EYE_IN, heading, walkStep, walkWorld, whereAmI, type Spot, type Walker } from "@/lib/house3d/walk";
+import { SEASONS, daylight, type SeasonId } from "@/lib/house3d/sun";
+import { heading, walkStep, walkWorld, whereAmI, type Spot, type Walker } from "@/lib/house3d/walk";
 import { planOf } from "@/lib/plan/edit";
 import { add, scale } from "@/lib/plan/geometry";
 import { checkPlacement, defaultFurnitureColor, furnitureType, newFurniture, type PlaceCheck } from "@/lib/plan/furniture";
 import { effectiveAnswers } from "@/lib/interior/style";
 import { aimAt, type Aim } from "@/lib/interior/surfaces";
 import { Ground } from "@/components/house3d/House3DView";
-import { toGeometry } from "@/components/house3d/geometry";
 import { HouseMeshes, Sky, type AimTarget } from "@/components/house3d/Scene";
 import { AddFurniturePanel, FinishPanel, FurniturePanel, OutsidePanel } from "./DesignPanel";
+import { FurnitureGhost, Player, type Look } from "./Player";
+import { AimDot, WalkControls, WalkHelp, WalkTopBar } from "./WalkOverlays";
 import { effectiveExterior } from "@/lib/exterior/style";
 import { canvasSettings, useGraphics } from "@/lib/graphics";
 
-const LOOK_PER_PX = 0.0022;
-
-/**
- * Walk through the house in first person, like a video game. Click to start,
- * the mouse looks around, W A S D or the arrow keys walk, Shift to go faster,
- * Esc to stop. Walls stop you, doors let you through, stairs take you up and
- * down, and you can walk out onto the land.
- */
 /** What the panel on the right shows: what you clicked, or the list of furniture to add. */
 type Panel =
   | { kind: "finish"; aim: Extract<Aim, { kind: "finish" }> }
@@ -47,13 +36,6 @@ type Panel =
 
 /** Furniture being carried: it follows where you look until you click to put it down. */
 type Carry = { item: FurnitureItem; levelId: string; isNew: boolean; check: PlaceCheck };
-
-/** What the dot in the middle of the screen is on, from the 3D view. */
-type Look = {
-  origin: THREE.Vector3;
-  dir: THREE.Vector3;
-  hit: { point: THREE.Vector3; normal: THREE.Vector3; owner: AimTarget["owners"][number] } | null;
-};
 
 const withFurniture = (plan: FloorPlan, change: (f: FurnitureItem[]) => FurnitureItem[]): FloorPlan => ({ ...plan, furniture: change(plan.furniture) });
 const turnBy = (deg: number, by: number) => (((Math.round(deg + by) % 360) + 360) % 360);
@@ -389,91 +371,26 @@ export default function Walkthrough({ project, cost, onClose }: { project: Proje
         />
       </Canvas>
 
-      {/* Where you are, design mode, undo and the cost, and the way out. */}
-      <div className="pointer-events-none absolute top-0 right-0 left-0 z-20 flex items-start justify-between gap-3 p-4">
-        <div className="rounded-lg bg-black/55 px-3 py-2 text-white">
-          <p className="text-xs text-white/70">{project.name}</p>
-          <p className="text-sm font-medium" data-testid="walk-where">
-            {where.roomName}
-            {where.roomName !== "Outside" && where.levelName ? <span className="font-normal text-white/70"> · {where.levelName}</span> : null}
-          </p>
-        </div>
-        <div className="flex flex-wrap items-center justify-end gap-2">
-          {cost && (
-            <span className="rounded-md bg-black/55 px-3 py-1.5 text-sm text-white tabular-nums" data-testid="walk-cost" title="The cost estimate, with your picks">
-              {cost.source === "rough" ? "Rough cost" : "Cost"} about {shortMoney(cost.total.likely)}
-            </span>
-          )}
-          <button
-            className={`pointer-events-auto rounded-md px-3 py-1.5 text-sm font-medium shadow ${design ? "bg-accent text-white" : "bg-white/90 text-ink hover:bg-white"}`}
-            onClick={() => {
-              setDesign(!design);
-              if (design) setCarry(null);
-            }}
-            aria-pressed={design}
-            title="Aim at something and click to change it (E)"
-            data-testid="design-toggle"
-          >
-            Design {design ? "on" : "off"}
-          </button>
-          {design && !locked && (
-            <button className="pointer-events-auto rounded-md bg-white/90 px-3 py-1.5 text-sm text-ink shadow hover:bg-white" onClick={() => setPanel({ kind: "add" })}>
-              Add furniture
-            </button>
-          )}
-          {!locked && (
-            <>
-              <UndoButtons className="pointer-events-auto rounded-md bg-white/90 px-3 py-1.5 text-sm text-ink shadow hover:bg-white disabled:opacity-50" />
-              <span className="pointer-events-auto">
-                <GraphicsToggle dark />
-              </span>
-            </>
-          )}
-          <button className="pointer-events-auto rounded-md bg-white/90 px-3 py-1.5 text-sm font-medium text-ink shadow hover:bg-white" onClick={onClose}>
-            Close walkthrough
-          </button>
-        </div>
-      </div>
+      <WalkTopBar
+        name={project.name}
+        where={where}
+        cost={cost}
+        design={design}
+        locked={locked}
+        onDesign={() => {
+          setDesign(!design);
+          if (design) setCarry(null);
+        }}
+        onAddFurniture={() => setPanel({ kind: "add" })}
+        onClose={onClose}
+      />
 
       {locked ? (
-        <>
-          <div className={`pointer-events-none absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full ring-1 ring-black/40 ${design ? "size-2.5 bg-accent ring-white/80" : "size-1.5 bg-white/80"}`} />
-          {(carry || (design && aimText)) && (
-            <div className="pointer-events-none absolute top-1/2 left-1/2 mt-5 -translate-x-1/2 rounded-md bg-black/65 px-3 py-1.5 text-center text-sm text-white" data-testid="aim-label">
-              {carry ? (
-                <>
-                  <span className="font-medium">{furnitureType(carry.item.kind)?.label}</span>
-                  <span className={carry.check.ok ? "text-white/80" : "text-red-300"}>
-                    {carry.check.ok ? (carry.check.blocksDoors.length ? " · in front of a door" : " · click to put it down") : ` · ${carry.check.problem}`}
-                  </span>
-                  <span className="block text-xs text-white/60">R to turn · Esc to cancel</span>
-                </>
-              ) : (
-                <>
-                  {aimText}
-                  {aim?.kind !== "none" && <span className="text-white/60"> · click to change</span>}
-                </>
-              )}
-            </div>
-          )}
-        </>
+        <AimDot design={design} aimText={aimText} aimable={aim?.kind !== "none"} carry={carry} />
       ) : showPanel ? (
         <button className="absolute inset-0 cursor-pointer" onClick={start} aria-label="Keep walking" />
       ) : (
-        <>
-          <button className="absolute inset-0 cursor-pointer bg-black/25" onClick={start} aria-label="Start walking" />
-          <div className="pointer-events-none absolute top-1/2 left-1/2 w-[min(92vw,440px)] -translate-x-1/2 -translate-y-1/2 rounded-xl bg-white/95 p-5 text-center shadow-lg">
-            <p className="text-base font-semibold">Click to walk</p>
-            <ul className="mt-2 space-y-0.5 text-sm text-muted">
-              <li>Move the mouse to look around</li>
-              <li>W A S D or the arrow keys to walk</li>
-              <li>Hold Shift to walk faster</li>
-              <li>E turns Design on: aim at a floor, wall, counter, furniture, or outside at the siding, roof, doors and yard, and click to change it</li>
-              <li>With Design on, F adds furniture</li>
-              <li>Esc to stop, and Esc again to close</li>
-            </ul>
-          </div>
-        </>
+        <WalkHelp onStart={start} />
       )}
 
       {toast && (
@@ -512,204 +429,18 @@ export default function Walkthrough({ project, cost, onClose }: { project: Proje
 
       {/* Time of day, season, and jumping around. Hidden while walking so the mouse stays in the view. */}
       {!locked && !showPanel && (
-        <div className="absolute right-0 bottom-0 left-0 flex flex-wrap items-end gap-x-6 gap-y-3 bg-black/60 px-4 py-3 text-white">
-          <label className="min-w-[240px] flex-1 text-sm">
-            <span className="flex justify-between text-xs text-white/75">
-              <span>Time of day</span>
-              <span data-testid="walk-time">{clockTime(shownHour, seasonInfo.daylightSaving)}</span>
-            </span>
-            <input
-              type="range"
-              className="mt-1 w-full accent-white"
-              min={sunrise}
-              max={sunset}
-              step={0.25}
-              value={shownHour}
-              onChange={(e) => setHour(Number(e.target.value))}
-              aria-label="Time of day"
-            />
-            <span className="flex justify-between text-[11px] text-white/60">
-              <span>Sunrise {clockTime(sunrise, seasonInfo.daylightSaving)}</span>
-              <span>Sunset {clockTime(sunset, seasonInfo.daylightSaving)}</span>
-            </span>
-          </label>
-          <div className="text-sm">
-            <span className="block text-xs text-white/75">Season</span>
-            <div className="mt-1 flex overflow-hidden rounded-md border border-white/30" role="radiogroup" aria-label="Season">
-              {SEASONS.map((s) => (
-                <button
-                  key={s.id}
-                  role="radio"
-                  aria-checked={season === s.id}
-                  onClick={() => setSeason(s.id)}
-                  className={`px-3 py-1 text-sm ${season === s.id ? "bg-white text-ink" : "hover:bg-white/15"}`}
-                >
-                  {s.label}
-                </button>
-              ))}
-            </div>
-          </div>
-          <label className="text-sm">
-            <span className="block text-xs text-white/75">Go to</span>
-            <select
-              className="mt-1 rounded-md border border-white/30 bg-black/40 px-2 py-1 text-sm"
-              value=""
-              onChange={(e) => {
-                const v = e.target.value;
-                if (v === "front") jump(world.start, false);
-                else {
-                  const r = world.rooms.find((x) => `${x.levelId}:${x.id}` === v);
-                  if (r) jump(r.spot);
-                }
-              }}
-            >
-              <option value="" disabled>
-                Pick a room…
-              </option>
-              <option value="front">The front door (outside)</option>
-              {world.levels.map((l) => (
-                <optgroup key={l.id} label={l.name}>
-                  {world.rooms
-                    .filter((r) => r.levelId === l.id)
-                    .map((r) => (
-                      <option key={r.id} value={`${r.levelId}:${r.id}`}>
-                        {r.name}
-                      </option>
-                    ))}
-                </optgroup>
-              ))}
-            </select>
-          </label>
-        </div>
+        <WalkControls
+          hour={shownHour}
+          sunrise={sunrise}
+          sunset={sunset}
+          daylightSaving={seasonInfo.daylightSaving}
+          season={season}
+          world={world}
+          onHour={setHour}
+          onSeason={setSeason}
+          onJump={jump}
+        />
       )}
     </div>
   );
-}
-
-/** A piece of furniture being carried, drawn on its own (and see-through), tinted red where it doesn't fit. */
-function FurnitureGhost({ item, floorIn, frame, ok }: { item: FurnitureItem; floorIn: number; frame: Frame; ok: boolean }) {
-  const geometry = useMemo(() => {
-    const mb = new MeshBuilder();
-    drawFurniture(mb, frame, item, floorIn + 0.3);
-    return toGeometry(mb.build());
-  }, [item, floorIn, frame]);
-  useEffect(() => () => geometry.dispose(), [geometry]);
-  const material = useMemo(() => new THREE.MeshStandardMaterial({ vertexColors: true, transparent: true, opacity: 0.75, roughness: 0.9 }), []);
-  useEffect(() => {
-    material.color.set(ok ? "#ffffff" : "#ff6b6b");
-  }, [material, ok]);
-  useEffect(() => () => material.dispose(), [material]);
-  return <mesh geometry={geometry} material={material} />;
-}
-
-type StepFn = (w: Walker, input: { forward: number; right: number; fast: boolean }, dt: number) => Walker;
-
-const CENTER = new THREE.Vector2(0, 0);
-
-/** Moves the camera: mouse look and keys while the mouse is captured, every frame. With `looking`, also reports what the dot in the middle is on. */
-function Player({
-  walker,
-  locked,
-  frame,
-  step,
-  onWhere,
-  aimTarget,
-  looking,
-  fastLook,
-  onLook,
-}: {
-  walker: React.RefObject<Walker>;
-  locked: boolean;
-  frame: Frame;
-  step: StepFn;
-  onWhere: (w: Walker) => void;
-  aimTarget: React.RefObject<AimTarget | null>;
-  looking: boolean;
-  fastLook: boolean;
-  onLook: (look: Look) => void;
-}) {
-  const { camera } = useThree();
-  const keys = useRef(new Set<string>());
-  const eyeY = useRef<number | null>(null);
-  const sinceWhere = useRef(0);
-  const sinceLook = useRef(0);
-  const ray = useMemo(() => {
-    const r = new THREE.Raycaster();
-    r.far = 60;
-    return r;
-  }, []);
-
-  useEffect(() => {
-    camera.rotation.order = "YXZ";
-  }, [camera]);
-
-  useEffect(() => {
-    if (!locked) {
-      keys.current.clear();
-      return;
-    }
-    const down = (e: KeyboardEvent) => {
-      keys.current.add(e.code);
-      if (e.code.startsWith("Arrow") || e.code === "Space") e.preventDefault();
-    };
-    const up = (e: KeyboardEvent) => keys.current.delete(e.code);
-    const move = (e: MouseEvent) => {
-      // Some browsers send one huge jump right after the mouse is captured; skip it.
-      if (Math.abs(e.movementX) > 250 || Math.abs(e.movementY) > 250) return;
-      const w = walker.current;
-      w.yaw += e.movementX * LOOK_PER_PX;
-      w.pitch = Math.max(-1.45, Math.min(1.45, w.pitch - e.movementY * LOOK_PER_PX));
-    };
-    window.addEventListener("keydown", down);
-    window.addEventListener("keyup", up);
-    window.addEventListener("mousemove", move);
-    return () => {
-      window.removeEventListener("keydown", down);
-      window.removeEventListener("keyup", up);
-      window.removeEventListener("mousemove", move);
-    };
-  }, [locked, walker]);
-
-  useFrame((_, dt) => {
-    const k = keys.current;
-    const has = (...codes: string[]) => codes.some((c) => k.has(c));
-    const forward = (has("KeyW", "ArrowUp") ? 1 : 0) - (has("KeyS", "ArrowDown") ? 1 : 0);
-    const right = (has("KeyD", "ArrowRight") ? 1 : 0) - (has("KeyA", "ArrowLeft") ? 1 : 0);
-    let w = walker.current;
-    if (forward || right || w.vz !== 0) {
-      // Small steps, so a slow frame doesn't skip through a wall.
-      const input = { forward, right, fast: has("ShiftLeft", "ShiftRight") };
-      for (let left = Math.min(dt, 0.25); left > 1e-4; left -= 0.05) w = step(w, input, Math.min(left, 0.05));
-      walker.current = w;
-    }
-    // Ease the eye up and down over steps, so stairs feel smooth.
-    const target = (w.feet + EYE_IN) / IN_PER_UNIT;
-    eyeY.current = eyeY.current === null || Math.abs(eyeY.current - target) > 6 ? target : eyeY.current + (target - eyeY.current) * (1 - Math.exp(-dt * 14));
-    camera.position.set((w.p.x - frame.ox) / IN_PER_UNIT, eyeY.current, (w.p.y - frame.oy) / IN_PER_UNIT);
-    camera.rotation.set(w.pitch, -w.yaw, 0);
-    sinceWhere.current += dt;
-    if (sinceWhere.current > 0.2) {
-      sinceWhere.current = 0;
-      onWhere(w);
-    }
-    // What the dot is on, a few times a second (more often while carrying furniture, so it follows smoothly).
-    sinceLook.current += dt;
-    if (looking && sinceLook.current > (fastLook ? 0.04 : 0.1)) {
-      sinceLook.current = 0;
-      camera.updateMatrixWorld();
-      ray.setFromCamera(CENTER, camera);
-      const t = aimTarget.current;
-      const h = t ? ray.intersectObject(t.mesh, false)[0] : undefined;
-      const owner = h && h.faceIndex != null ? t!.owners[h.faceIndex] : undefined;
-      // The side you're looking at, whichever way the triangle happens to be wound.
-      const normal = h?.face ? h.face.normal.clone() : undefined;
-      if (normal && normal.dot(ray.ray.direction) > 0) normal.negate();
-      onLook({
-        origin: ray.ray.origin.clone(),
-        dir: ray.ray.direction.clone(),
-        hit: h && normal && owner ? { point: h.point.clone(), normal, owner } : null,
-      });
-    }
-  });
-  return null;
 }
