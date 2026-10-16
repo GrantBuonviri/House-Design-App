@@ -21,6 +21,7 @@ import { drawStairs, prism } from "./stairs";
 import { buildYard } from "./yard";
 import { cabinetLayout } from "@/lib/plan/cabinets";
 import { codeNum } from "@/lib/codes/data";
+import { overhangsOf, postsUnder, supportOf } from "@/lib/plan/support";
 
 /**
  * The whole 3D house from the project: walls with doors and windows cut in,
@@ -77,6 +78,8 @@ const FOOTPRINT_COLOR = { outside: solidColor(COLORS.footprintOutside), inside: 
 
 /** Floor structure under the lowest floor (a slab or the floor over a crawlspace). */
 const GROUND_SLAB_IN = 8;
+/** The beam under a room held up on posts (a built-up 2x12). */
+const BEAM_DEPTH_IN = 11.25;
 const OUTDOOR_SLAB_IN = 5;
 
 const covers = (polys: Point[][], p: Point, near = 6) =>
@@ -267,6 +270,36 @@ export function buildLevel(
       if (floorIn - thick - low > 1) skirt(mb, f, room, low - 6, floorIn - thick);
     }
     if (!mb.empty) parts.push({ key: `${L}:r:${room.id}`, levelId: L, layer: "floors", pick: { kind: "room", id: room.id, levelId: L }, mesh: mb.build() });
+  }
+
+  // ---- Overhangs: the underside of any room past the floor below, and posts and a beam where it's "On posts" ----
+  const sup = supportOf(plans, ctx.levels, level);
+  if (sup) {
+    const under = floorIn - 13;
+    for (const o of overhangsOf(plan.rooms, sup.regions)) {
+      const mb = new MeshBuilder();
+      for (const piece of o.pieces) mb.flat(f, piece, [], under - 0.25, ext.trim, false);
+      if (o.kind === "posts") {
+        const { posts, beams } = postsUnder(o, sup.regions);
+        const inward = (p: Point, d: number) => {
+          const c = polygonCenter(o.pieces.reduce((a, b) => (polygonArea(b) > polygonArea(a) ? b : a)));
+          return add(p, scale(unit(sub(c, p)), d));
+        };
+        const beamBottom = under - 0.25 - BEAM_DEPTH_IN;
+        for (const [a, b] of beams) {
+          const n = unit({ x: -(b.y - a.y), y: b.x - a.x });
+          const mid = lerp(a, b, 0.5);
+          // Set the beam just inside the outer edge.
+          const toward = pointInPolygon(add(mid, scale(n, 3)), o.pieces.find((pc) => pc.some((q) => dist(q, a) < 1)) ?? o.pieces[0]) ? n : scale(n, -1);
+          mb.box(f, add(a, scale(toward, 3)), add(b, scale(toward, 3)), 5.5, beamBottom, under - 0.25, { left: ext.trim, right: ext.trim, ends: ext.trim, top: ext.trim, bottom: ext.trim });
+        }
+        for (const p of posts) {
+          const at = inward(p, 4);
+          mb.block(f, at, 0, 5.5, 5.5, Math.min(site.groundAt(at), floorIn) - 2, beamBottom, ext.trim);
+        }
+      }
+      if (!mb.empty) parts.push({ key: `${L}:oh:${o.roomId}`, levelId: L, layer: "floors", pick: { kind: "room", id: o.roomId, levelId: L }, mesh: mb.build() });
+    }
   }
 
   // ---- Ceilings, where nothing is built on top (seen from inside) ----

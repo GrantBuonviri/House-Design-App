@@ -1,11 +1,13 @@
 import type { FloorPlan, HouseStructure, Level, Point } from "@/lib/model/schema";
-import { floorFootprint, type Region } from "@/lib/house3d/footprint";
+import { floorFootprint, roofFootprint, type Region } from "@/lib/house3d/footprint";
 import { areaKind } from "@/lib/plan/measure";
 import { wallPieces, type WallPiece } from "@/lib/plan/walls";
-import { lerp, pointInPolygon } from "@/lib/plan/geometry";
+import { lerp, pointInPolygon, project as projectOnto } from "@/lib/plan/geometry";
+import { formatFeetInches } from "@/lib/model/units";
+import { outerEdges, overhangsOf, overPorches, type Overhang } from "@/lib/plan/support";
 import { codeNum, codeTable } from "@/lib/codes/data";
 import { along, intersectRegions, lineIntervals, other, pt, regionBounds, runsAcross, stripPositions, type Axis } from "./geometry";
-import { pickHeader, pickJoist, type HeaderPick, type JoistPick } from "./tables";
+import { pickCantilever, pickHeader, pickJoist, type CantileverPick, type HeaderPick, type JoistPick } from "./tables";
 
 /**
  * Floor framing, one floor at a time: which way the joists run, what holds
@@ -46,6 +48,9 @@ export type Girder = {
   bayIn: number;
 };
 
+/** A room on this floor that sticks out past the wall below on its joists, sized from the IRC cantilever table. */
+export type Cantilever = { roomId: string; name: string; depthIn: number; pick: CantileverPick; backspanIn: number; at: Point };
+
 export type FloorFraming = {
   levelId: string;
   /** What's under this floor. */
@@ -63,6 +68,8 @@ export type FloorFraming = {
   unsupported: Point[];
   /** How many 12" strips of floor have an end with nothing under it. */
   looseStrips: number;
+  /** Short cantilevers the table covers. */
+  cantilevers: Cantilever[];
   engineer: Engineer[];
 };
 
@@ -79,6 +86,8 @@ export type FramingInput = {
   structure: HouseStructure;
   /** Walls on this floor that hold up the floor above, so girders must go under them. */
   carry?: Bearing[];
+  /** There's a floor on top of this one (a cantilever then holds more than a wall and roof). */
+  floorAbove?: boolean;
 };
 
 const HALF_SUPPORT_IN = 6;
@@ -130,7 +139,7 @@ export function frameFloor(input: FramingInput): FloorFraming {
 }
 
 function base(input: FramingInput, axis: Axis): FloorFraming {
-  return { levelId: input.level.id, over: input.over, regions: input.regions, openings: input.openings, axis, joist: null, maxSpanIn: 0, bearingWalls: [], girders: [], unsupported: [], looseStrips: 0, engineer: [] };
+  return { levelId: input.level.id, over: input.over, regions: input.regions, openings: input.openings, axis, joist: null, maxSpanIn: 0, bearingWalls: [], girders: [], unsupported: [], looseStrips: 0, cantilevers: [], engineer: [] };
 }
 
 /** A floor resting on the walls of the floor below. */
@@ -187,9 +196,112 @@ function overFloor(input: FramingInput, axis: Axis): FloorFraming {
   const anySupported = stripPositions(input.regions, axis).some((w) => !loose.has(w));
   out.joist = anySupported ? pickJoist(lumber, stats.max) : null;
   if (!out.joist && anySupported) out.engineer.push({ levelId: input.level.id, text: `${input.level.name} floor: the joists would span ${feet(stats.max)}, longer than the IRC span table allows. A beam or engineered floor joists need an engineer or the joist supplier.` });
-  if (out.unsupported.length)
-    out.engineer.push({ levelId: input.level.id, text: `${input.level.name}: part of the floor isn't over a wall of the floor below (an overhang or a floor over open space). An engineer must design the beam or cantilever.`, at: out.unsupported[0] });
+  const held = input.below ? heldUp(input, input.below) : { cantilevers: [], engineer: [], fine: [], named: [] };
+  out.cantilevers = held.cantilevers;
+  out.engineer.push(...held.engineer);
+  // Joist ends at a short cantilever the table covers are fine; ends a named note covers don't need the general one.
+  const near = (p: Point, polys: Point[][]) => polys.some((poly) => pointInPolygon(p, poly) || poly.some((a, i) => projectOnto(p, a, poly[(i + 1) % poly.length]).d <= 3));
+  out.unsupported = out.unsupported.filter((p) => !near(p, held.fine));
+  const unexplained = out.unsupported.filter((p) => !near(p, held.named));
+  if (unexplained.length)
+    out.engineer.push({ levelId: input.level.id, text: `${input.level.name}: part of the floor isn't over a wall of the floor below (an overhang or a floor over open space). An engineer must design the beam or cantilever.`, at: unexplained[0] });
   return out;
+}
+
+/** How far the floor reaches along a line through `c` in direction `n` (the roof width the cantilever table asks for). */
+function widthThrough(regions: Region[], c: Point, n: Point): number {
+  const ts: number[] = [];
+  for (const r of regions)
+    for (const ring of [r.outline, ...r.holes])
+      ring.forEach((a, i) => {
+        const b = ring[(i + 1) % ring.length];
+        const e = { x: b.x - a.x, y: b.y - a.y };
+        const den = n.x * e.y - n.y * e.x;
+        if (Math.abs(den) < 1e-9) return;
+        const t = ((a.x - c.x) * e.y - (a.y - c.y) * e.x) / den;
+        const u = ((a.x - c.x) * n.y - (a.y - c.y) * n.x) / den;
+        if (u >= 0 && u <= 1) ts.push(t);
+      });
+  const lo = Math.max(...ts.filter((t) => t <= 0));
+  const hi = Math.min(...ts.filter((t) => t >= 0));
+  return Number.isFinite(lo) && Number.isFinite(hi) ? hi - lo : Infinity;
+}
+
+/** The outward direction of an overhang piece: across its longest outer edge. */
+function outward(o: Overhang, support: Region[]): Point | null {
+  let best: { e: [Point, Point]; piece: Point[]; len: number } | null = null;
+  for (const piece of o.pieces)
+    for (const e of outerEdges(piece, support)) {
+      const len = Math.hypot(e[1].x - e[0].x, e[1].y - e[0].y);
+      if (!best || len > best.len) best = { e, piece, len };
+    }
+  if (!best) return null;
+  const [a, b] = best.e;
+  const n = { x: (b.y - a.y) / best.len, y: -(b.x - a.x) / best.len };
+  // Point it away from the room.
+  const mid = lerp(a, b, 0.5);
+  return pointInPolygon({ x: mid.x + n.x * 2, y: mid.y + n.y * 2 }, best.piece) ? { x: -n.x, y: -n.y } : n;
+}
+
+/** Rooms on a floor over a floor that are held up on purpose (per their "Hangs over the floor below" setting) or sit over a porch. */
+function heldUp(input: FramingInput, below: FloorPlan): { cantilevers: Cantilever[]; engineer: Engineer[]; fine: Point[][]; named: Point[][] } {
+  const L = input.level.id;
+  const support = roofFootprint(below);
+  const byId = new Map(input.plan.rooms.map((r) => [r.id, r]));
+  const cantilevers: Cantilever[] = [];
+  const engineer: Engineer[] = [];
+  const fine: Point[][] = [];
+  const named: Point[][] = [];
+  const snow = codeNum("design.groundSnowLoad");
+  for (const o of overhangsOf(input.plan.rooms, support)) {
+    const room = byId.get(o.roomId)!;
+    const reach = formatFeetInches(o.depthIn);
+    if (o.kind === "none") {
+      engineer.push({ levelId: L, text: `${room.name} hangs ${reach} past the wall below with nothing holding it up: an engineer must design a beam or cantilever (or pull the room back over the wall below).`, at: o.at });
+      named.push(...o.pieces);
+      continue;
+    }
+    if (o.kind === "posts") {
+      engineer.push({ levelId: L, text: `${room.name} hangs ${reach} past the wall below on posts and a beam: an engineer must size the beam, the posts and their footings.`, at: o.at });
+      named.push(...o.pieces);
+      continue;
+    }
+    if (o.kind === "engineered") {
+      engineer.push({ levelId: L, text: `${room.name} hangs ${reach} past the wall below on an engineered beam or truss: an engineer must design it.`, at: o.at });
+      named.push(...o.pieces);
+      continue;
+    }
+    // A short cantilever: the joists run out past the wall below.
+    const n = outward(o, support);
+    const roofWidthIn = n ? widthThrough(input.regions, o.at, n) : Infinity;
+    const backspanIn = roofWidthIn - o.depthIn;
+    const pick = !input.floorAbove && o.ok ? pickCantilever(o.depthIn, roofWidthIn, snow) : null;
+    if (pick && backspanIn >= 3 * o.depthIn) {
+      cantilevers.push({ roomId: room.id, name: room.name, depthIn: o.depthIn, pick, backspanIn, at: o.at });
+      fine.push(...o.pieces);
+      continue;
+    }
+    const why = input.floorAbove
+      ? "it holds up a floor above, and the IRC cantilever table only covers an outside wall and roof"
+      : !o.ok
+        ? "that's past a short cantilever's 2'"
+        : !pick
+          ? "that's past the IRC cantilever table for this roof width"
+          : "the joists don't run back far enough inside (the IRC asks for 3 times the cantilever)";
+    engineer.push({ levelId: L, text: `${room.name} sticks out ${reach} past the wall below on its joists, but ${why}. An engineer must design the cantilever.`, at: o.at });
+    named.push(...o.pieces);
+  }
+  // Rooms over a covered porch or patio: the porch's beam and posts carry them.
+  const seen = new Set<string>();
+  for (const { roomId, porch } of overPorches(input.plan.rooms, below)) {
+    if (seen.has(`${roomId}:${porch.id}`)) continue;
+    seen.add(`${roomId}:${porch.id}`);
+    const room = byId.get(roomId)!;
+    const p = porch.name.toLowerCase();
+    engineer.push({ levelId: L, text: `${room.name} sits over the ${p}: the ${p} beam and posts must be sized by an engineer.`, at: porch.polygon[0] && lerp(porch.polygon[0], porch.polygon[Math.floor(porch.polygon.length / 2)], 0.5) });
+    named.push(porch.polygon);
+  }
+  return { cantilevers, engineer, fine, named };
 }
 
 /** A floor over a crawlspace or basement: girders on piers or posts wherever they help, plus girders under walls that hold up the floor above. */

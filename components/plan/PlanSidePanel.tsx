@@ -16,6 +16,8 @@ import { clampOffset, hostSegment } from "@/lib/plan/walls";
 import { combineRooms, edgeWalls, removeWall, restoreWall, roomsAlong, whyNotCombine, whyWallStays } from "@/lib/plan/openWalls";
 import { newOpening } from "@/lib/plan/connect";
 import { canPreview } from "@/lib/house3d/windowView";
+import { CANTILEVER_MAX_IN, OVERHANG_LABEL, overhangOf, type Overhang } from "@/lib/plan/support";
+import type { OverhangKind } from "@/lib/model/schema";
 import { ROOM_TYPES, roomType } from "@/lib/brief/rooms";
 import { parseEdgeId, type PlanSelection, type PlanTool } from "./types";
 
@@ -24,6 +26,8 @@ const PLAN_ONLY = ROOM_TYPES.filter((t) => t.planOnly).map((t) => t.id);
 
 type Props = {
   plan: FloorPlan;
+  /** Rooms on this floor that reach past the floor below. */
+  overhangs?: Overhang[];
   level: Level;
   levels: Level[];
   brief: DesignBrief | null;
@@ -205,6 +209,8 @@ export default function PlanSidePanel(props: Props) {
           {rect ? "Type a size, drag a wall to push it, or drag a corner dot." : `${room.polygon.length} corners. Drag a wall to push it, or a corner dot to reshape it.`} Drag the + on a wall to add a
           corner; double-click a corner (or pick it and press Delete) to take it away.
         </p>
+
+        <OverhangField room={room} overhang={props.overhangs?.find((o) => o.roomId === room.id)} onSet={(v) => set({ overhang: v === "none" ? undefined : v }, "overhang")} />
 
         <TurnButtons onTurn={(deg) => onChange(rotateMany(plan, [room.id], deg, polygonCenter(room.polygon)))} />
         <ArrangeButtons plan={plan} ids={[room.id]} onChange={onChange} onSelect={onSelect} />
@@ -657,6 +663,38 @@ function CombineButton({ plan, ids, label, onCombine, bare }: { plan: FloorPlan;
     <>
       {button}
       {why && <p className="field-hint">{why}</p>}
+    </>
+  );
+}
+
+const OVERHANG_HINT: Record<OverhangKind, string> = {
+  none: "Nothing holds up the part past the wall below, so it shows as a warning.",
+  cantilever: `The floor joists reach out past the wall below, up to ${formatFeetInches(CANTILEVER_MAX_IN)}. The building plans size them from the IRC cantilever table.`,
+  posts: "Posts and a beam hold up the outer edge. They show in 3D and are added to the cost; an engineer sizes the beam.",
+  engineered: "An engineer designs the beam or truss that holds it up. The building plans list it as Engineer required.",
+};
+
+/** "Hangs over the floor below": how a room that reaches past the floor below is held up. */
+function OverhangField({ room, overhang, onSet }: { room: { overhang?: OverhangKind }; overhang?: Overhang; onSet: (v: OverhangKind) => void }) {
+  const kind = overhangOf(room);
+  if (!overhang && kind === "none") return null;
+  return (
+    <>
+      <label className="field-label mt-4" htmlFor="room-overhang">
+        Hangs over the floor below
+      </label>
+      <select id="room-overhang" className="input" value={kind} onChange={(e) => onSet(e.target.value as OverhangKind)}>
+        {(Object.keys(OVERHANG_LABEL) as OverhangKind[]).map((k) => (
+          <option key={k} value={k}>
+            {OVERHANG_LABEL[k]}
+          </option>
+        ))}
+      </select>
+      <p className="field-hint">
+        {overhang ? `Reaches ${formatFeetInches(overhang.depthIn)} past the wall below. ` : "It doesn't reach past the wall below right now. "}
+        {OVERHANG_HINT[kind]}
+        {overhang && kind === "cantilever" && overhang.depthIn > CANTILEVER_MAX_IN && " This one reaches farther, so it still shows as a warning."}
+      </p>
     </>
   );
 }

@@ -9,7 +9,7 @@ import { z } from "zod";
  * Angles are degrees clockwise from north (0 = N, 90 = E).
  */
 
-export const SCHEMA_VERSION = 18;
+export const SCHEMA_VERSION = 19;
 
 export const Point = z.object({ x: z.number(), y: z.number() });
 export type Point = z.infer<typeof Point>;
@@ -340,8 +340,15 @@ export const PlanRoom = z.object({
   type: z.string().optional(),
   /** Corners in order, at least three. The edge from corner i to corner i + 1 is "edge i". */
   polygon: z.array(Point).min(3),
+  /**
+   * How a room on an upper floor that reaches past the floor below is held
+   * up: it doesn't (a warning), a short cantilever (up to 2'), posts and a
+   * beam, or an engineered beam or truss. Left out means "none".
+   */
+  overhang: z.enum(["none", "cantilever", "posts", "engineered"]).optional(),
 });
 export type PlanRoom = z.infer<typeof PlanRoom>;
+export type OverhangKind = NonNullable<PlanRoom["overhang"]>;
 
 /** How tall a wall drawn on its own stands: to the ceiling, a 42" half wall, or a half wall with a counter cap on top. */
 export const WallHeight = z.enum(["full", "half", "half-cap"]);

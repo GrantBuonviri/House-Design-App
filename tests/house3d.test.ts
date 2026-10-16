@@ -150,6 +150,33 @@ describe("roofs", () => {
   });
 });
 
+describe("rooms hanging past the floor below", () => {
+  const levels = levelsFor(2, 0);
+  const build = (overhang?: PlanRoom["overhang"]) => {
+    const plans = { "floor-1": plan([room("a", 0, 0, 30 * FT, 20 * FT)]), "floor-2": plan([{ ...room("b", 0, 0, 20 * FT, 26 * FT), overhang }]) };
+    return buildHouse(plans, ctx(levels, plans));
+  };
+
+  it("draws the underside of every overhang", () => {
+    const under = build().parts.find((p) => p.key === "floor-2:oh:b")!;
+    expect(under).toBeDefined();
+    const h = levelHeights(levels, defaultBasics())["floor-2"].floorIn;
+    // Flat, just under the second floor's structure, over the 6' past the wall.
+    const [lo, hi] = yRange([under.mesh]);
+    expect(lo * IN_PER_UNIT).toBeCloseTo(h - 13.25, 1);
+    expect(hi * IN_PER_UNIT).toBeCloseTo(h - 13.25, 1);
+  });
+
+  it("stands posts and a beam under a room on posts, down to the ground", () => {
+    const under = build("posts").parts.find((p) => p.key === "floor-2:oh:b")!;
+    const [lo] = yRange([under.mesh]);
+    expect(lo * IN_PER_UNIT).toBeLessThan(0);
+    // Engineered (or not held up at all) gets the underside only.
+    const plain = build("engineered").parts.find((p) => p.key === "floor-2:oh:b")!;
+    expect(yRange([plain.mesh])[0]).toBeGreaterThan(0);
+  });
+});
+
 describe("walls, doors and windows", () => {
   const windowOn = (roomId: string): Opening => ({ id: "w", host: { roomId, edge: 0 }, offsetIn: 60, kind: "window", style: "window", widthIn: 36, heightIn: 60, sillIn: 30, side: 1, hinge: "start" });
 

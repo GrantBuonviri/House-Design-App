@@ -156,6 +156,8 @@ export function estimate(
   line("framing", "roof-framing", q.roofSqft);
   line("framing", "stairs", q.stairs);
   line("framing", "deck", q.deckSqft);
+  line("framing", "overhang-post", q.overhangPosts);
+  line("framing", "overhang-beam", q.overhangBeamLf);
 
   // Roofing
   line("roofing", "roof-shingle", q.roofSqft - q.flatRoofSqft);

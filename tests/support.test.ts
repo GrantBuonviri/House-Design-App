@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import type { FloorPlan, Level, PlanRoom } from "@/lib/model/schema";
 import { emptyPlan, makeRoom } from "@/lib/plan/edit";
 import { polygonArea, rectangle } from "@/lib/plan/geometry";
-import { fillBelow, fillShapes, overhangsOf, pullBack, supportOf, supportTargets } from "@/lib/plan/support";
+import { CANTILEVER_MAX_IN, fillBelow, fillShapes, overhangsOf, overPorches, postsUnder, pullBack, supportOf, supportTargets } from "@/lib/plan/support";
 import { planWarnings } from "@/lib/plan/checks";
 import { defaultBasics } from "@/lib/plan/basics";
 import { roofFootprint } from "@/lib/house3d/footprint";
@@ -112,5 +112,48 @@ describe("snapping to the floor below", () => {
     const t = supportTargets(supportOf({ main, up: plan([]) }, levels, levels[1])!.regions);
     expect(t.points.length).toBe(4);
     expect(t.segments.length).toBe(4);
+  });
+});
+
+describe("overhangs on purpose", () => {
+  const sup = supportOf({ main, up: plan([]) }, levels, levels[1])!;
+  const ctx = { levels, brief: null, basics: defaultBasics() };
+  const warn = (r: PlanRoom) => planWarnings({ main, up: plan([r]) }, ctx).find((x) => x.id === `up:overhang:${r.id}`);
+
+  it("lets a short cantilever reach up to 2' with no warning, and warns past that", () => {
+    const short = room("bed", 10, 10, 15, 11.5, { name: "Bedroom 2", overhang: "cantilever" }); // 1' 6" past y=20
+    const [o] = overhangsOf([short], sup.regions);
+    expect(o.depthIn).toBe(18);
+    expect(o.ok).toBe(true);
+    expect(warn(short)).toBeUndefined();
+    const edge = room("bed", 10, 10, 15, 10 + CANTILEVER_MAX_IN / FT, { overhang: "cantilever" });
+    expect(warn(edge)).toBeUndefined();
+    const far = room("bed", 10, 10, 15, 13, { name: "Bedroom 2", overhang: "cantilever" });
+    expect(warn(far)?.text).toBe("Bedroom 2 hangs 3' past the outside wall of the main floor. That's more than a short cantilever's 2': set it to On posts or Engineered, or pull it back.");
+  });
+
+  it("clears the warning for rooms on posts or engineered, however far they reach", () => {
+    expect(warn(room("bed", 10, 10, 15, 20, { overhang: "posts" }))).toBeUndefined();
+    expect(warn(room("bed", 10, 10, 15, 20, { overhang: "engineered" }))).toBeUndefined();
+    expect(warn(room("bed", 10, 10, 15, 20))).toBeDefined();
+  });
+
+  it("puts a beam along the outer edges and posts at its ends and every 8'", () => {
+    // 20' wide, 6' past the south wall: one beam along the south edge, posts at both ends and 2 between.
+    const [o] = overhangsOf([room("bonus", 5, 10, 20, 16, { overhang: "posts" })], sup.regions);
+    const { posts, beams } = postsUnder(o, sup.regions);
+    expect(beams).toHaveLength(3);
+    const south = beams.filter(([a, b]) => a.y === 26 * FT && b.y === 26 * FT);
+    expect(south).toHaveLength(1);
+    expect(posts.every((p) => p.y > 20 * FT)).toBe(true);
+    expect(posts.filter((p) => p.y === 26 * FT)).toHaveLength(4);
+  });
+
+  it("finds rooms over a covered porch, with no warning", () => {
+    const below = plan([...main.rooms, room("porch", 0, 20, 30, 6, { type: "porch", name: "Front porch" })]);
+    const over = room("bed", 0, 14, 15, 12, { name: "Bedroom 3" });
+    expect(overPorches([over], below).map((x) => x.porch.name)).toEqual(["Front porch"]);
+    expect(planWarnings({ main: below, up: plan([over]) }, ctx).some((x) => x.id.includes("overhang"))).toBe(false);
+    expect(overPorches([room("bed", 0, 0, 15, 12)], below)).toEqual([]);
   });
 });

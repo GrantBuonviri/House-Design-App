@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
-import type { Project } from "@/lib/model/schema";
+import type { PlanRoom, Project } from "@/lib/model/schema";
 import { structureOf } from "@/lib/structure";
-import { footingSize, pickHeader, pickJoist, bracingBase, bracingFactors, csPanelMin } from "@/lib/structure/tables";
+import { footingSize, pickCantilever, pickHeader, pickJoist, bracingBase, bracingFactors, csPanelMin } from "@/lib/structure/tables";
 import { readiness } from "@/lib/plans/catalog";
 import { buildSet } from "@/lib/plans/build";
 import { sectionCuts } from "@/lib/plans/sheets/sections";
@@ -25,6 +25,16 @@ function stacked(): Project {
 }
 
 const ranch = () => house(RANCH, 1, 0, 6);
+
+/** The stacked house with its east-most second-floor room pushed out past the wall below, held up as `overhang` says. */
+function pushedOut(outIn: number, overhang?: PlanRoom["overhang"]): { p: Project; roomName: string } {
+  const p = stacked();
+  const up = p.floorPlans["floor-2"];
+  const maxX = Math.max(...up.rooms.flatMap((r) => r.polygon.map((q) => q.x)));
+  const target = up.rooms.find((r) => r.polygon.filter((q) => Math.abs(q.x - maxX) < 0.5).length >= 2)!;
+  const rooms = up.rooms.map((r) => (r.id === target.id ? { ...r, overhang, polygon: r.polygon.map((q) => (Math.abs(q.x - maxX) < 0.5 ? { ...q, x: q.x + outIn } : q)) } : r));
+  return { p: { ...p, floorPlans: { ...p.floorPlans, "floor-2": { ...up, rooms } } }, roomName: target.name };
+}
 const withProject = (p: Project, patch: Partial<Project["plans"]["structure"]>): Project => ({ ...p, plans: { ...p.plans, structure: { ...p.plans.structure, ...patch } } });
 
 describe("structural tables", () => {
@@ -130,5 +140,49 @@ describe("structure of a house", () => {
     expect(framing.results.some((x) => x.status === "manual" && x.text.startsWith("Engineer required"))).toBe(true);
     for (const x of r.find((y) => y.rule.id === "wall-bracing")!.results) if (x.status === "fail") expect(x.fix).toBeTruthy();
     expect(r.find((x) => x.rule.id === "stairs-headroom")!.status).not.toBe("manual");
+  });
+});
+
+describe("overhangs on purpose", () => {
+  it("reads the IRC cantilever table, rounding the roof width up", () => {
+    expect(pickCantilever(18, 24 * 12, 20)).toEqual({ size: "2x8", spacing: 12, allowIn: 20, roofWidthFt: 24 });
+    expect(pickCantilever(24, 30 * 12, 20)).toEqual({ size: "2x12", spacing: 16, allowIn: 32, roofWidthFt: 32 });
+    expect(pickCantilever(24, 40 * 12, 20)).toEqual({ size: "2x12", spacing: 16, allowIn: 25, roofWidthFt: 40 });
+    expect(pickCantilever(28, 40 * 12, 20)).toEqual({ size: "2x12", spacing: 12, allowIn: 31, roofWidthFt: 40 });
+    expect(pickCantilever(36, 40 * 12, 20)).toBeNull();
+    expect(pickCantilever(12, 44 * 12, 20)).toBeNull();
+  });
+
+  it("sizes a short cantilever from the table instead of asking for an engineer", () => {
+    const { p, roomName } = pushedOut(18, "cantilever");
+    const up = structureOf(p).floors.find((x) => x.levelId === "floor-2")!;
+    expect(up.cantilevers.map((c) => [c.name, c.depthIn])).toEqual([[roomName, 18]]);
+    expect(up.engineer).toEqual([]);
+    expect(up.unsupported).toEqual([]);
+  });
+
+  it("keeps Engineer required for an overhang that isn't marked, and names rooms on posts or engineered", () => {
+    const none = structureOf(pushedOut(18).p).floors.find((x) => x.levelId === "floor-2")!;
+    expect(none.cantilevers).toEqual([]);
+    expect(none.engineer.map((e) => e.text)).toEqual([`${pushedOut(18).roomName} hangs 1' 6" past the wall below with nothing holding it up: an engineer must design a beam or cantilever (or pull the room back over the wall below).`]);
+    const posts = pushedOut(48, "posts");
+    const onPosts = structureOf(posts.p).floors.find((x) => x.levelId === "floor-2")!;
+    expect(onPosts.engineer.map((e) => e.text)).toEqual([`${posts.roomName} hangs 4' past the wall below on posts and a beam: an engineer must size the beam, the posts and their footings.`]);
+    const eng = structureOf(pushedOut(48, "engineered").p).floors.find((x) => x.levelId === "floor-2")!;
+    expect(eng.engineer).toHaveLength(1);
+    expect(eng.engineer[0].text).toMatch(/engineered beam or truss/);
+  });
+
+  it("names the porch beam under a room that sits over a covered porch", () => {
+    const { p, roomName } = pushedOut(72);
+    const up = p.floorPlans["floor-2"];
+    const main = p.floorPlans["floor-1"];
+    const maxX = Math.max(...main.rooms.flatMap((r) => r.polygon.map((q) => q.x)));
+    const over = up.rooms.find((r) => r.name === roomName)!;
+    const ys = over.polygon.map((q) => q.y);
+    const porch: PlanRoom = { id: "porch", name: "Side porch", type: "porch", polygon: [{ x: maxX, y: Math.min(...ys) }, { x: maxX + 72, y: Math.min(...ys) }, { x: maxX + 72, y: Math.max(...ys) }, { x: maxX, y: Math.max(...ys) }] };
+    const withPorch = { ...p, floorPlans: { ...p.floorPlans, "floor-1": { ...main, rooms: [...main.rooms, porch] } } };
+    const f = structureOf(withPorch).floors.find((x) => x.levelId === "floor-2")!;
+    expect(f.engineer.map((e) => e.text)).toEqual([`${roomName} sits over the side porch: the side porch beam and posts must be sized by an engineer.`]);
   });
 });

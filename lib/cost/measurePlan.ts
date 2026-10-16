@@ -12,6 +12,7 @@ import { rockCuyd, rocksUnder } from "@/lib/land/onLot";
 import { yardAmounts, yardLayout } from "@/lib/exterior/yard";
 import { type Quantities, sqft, ft, FROST_DEPTH_IN, JOIST_DEPTH_IN, OVERDIG_IN, SHALLOW_DIG_IN, ringLength, samplesAround, type Ctx, empty, siteFacts, toRoad, type MeasuredRoom, roomFixtures, centerOf, applyRoof } from "./quantityBasics";
 import { measureRoof } from "./measureRoof";
+import { overhangsOf, postsUnder, supportOf } from "@/lib/plan/support";
 
 /** Measures the house from its floor plan. Null when there is no floor plan with rooms. */
 export function measurePlan(p: Ctx): Quantities | null {
@@ -120,6 +121,16 @@ export function measurePlan(p: Ctx): Quantities | null {
       // Wall length on each side of the room, less any stretch where the wall was taken out.
       const edgesIn = edgesOf(r.polygon).map((e) => dist(e.a, e.b) - openSpans(plan, e.a, e.b).reduce((t, [t0, t1]) => t + t1 - t0, 0));
       allRooms.push({ id: r.id, name: r.name, type: r.type ?? "other", sqft: a, fixtures: plan.fixtures.filter((f) => f.roomId === r.id), edgesIn });
+    }
+    // Rooms held up "On posts" past the floor below: posts with footings, and a beam.
+    const sup = supportOf(plans, p.levels, l);
+    if (sup) {
+      for (const o of overhangsOf(plan.rooms, sup.regions)) {
+        if (o.kind !== "posts") continue;
+        const { posts, beams } = postsUnder(o, sup.regions);
+        q.overhangPosts += posts.length;
+        q.overhangBeamLf += ft(beams.reduce((t, [a, b]) => t + dist(a, b), 0));
+      }
     }
     // Floors framed over something: upper floors, and lower basements' upper floors.
     if (!groundLevels.includes(l) && floorIn > lowestUsed + 12) q.floorFramingSqft += sqft(floorFootprint(plan).reduce((s, r) => s + regionArea(r), 0));

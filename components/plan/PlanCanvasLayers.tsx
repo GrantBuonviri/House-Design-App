@@ -38,30 +38,49 @@ export function ReferenceLayer({ sketch, below, support, above, s }: { sketch: B
   );
 }
 
-/** The parts of rooms that hang past the floor below: red stripes, and how far they reach. */
+/** How a room held up on purpose reads on the plan. */
+const HELD_BY: Record<Overhang["kind"], string> = { none: "", cantilever: "short cantilever", posts: "on posts", engineered: "engineered" };
+
+/** The parts of rooms that hang past the floor below: red stripes and how far they reach, or blue when it's held up on purpose. */
 export function OverhangLayer({ overhangs, s, past = "the wall below" }: { overhangs: Overhang[]; s: number; past?: string }) {
   const pattern = stripes();
   const w = 260 / s;
   return (
     <Layer listening={false}>
       {overhangs.flatMap((o) =>
-        o.pieces.map((piece, i) => (
-          <Line
-            key={`${o.roomId}-${i}`}
-            points={flat(piece)}
-            closed
-            fill="rgba(200,50,40,0.18)"
-            fillPatternImage={pattern as unknown as HTMLImageElement}
-            fillPatternScale={{ x: 1 / s, y: 1 / s }}
-            fillPriority={pattern ? "pattern" : "color"}
-            stroke="#c8322a"
-            strokeWidth={1.5}
-            strokeScaleEnabled={false}
-          />
-        )),
+        o.pieces.map((piece, i) =>
+          o.ok ? (
+            <Line key={`${o.roomId}-${i}`} points={flat(piece)} closed fill="rgba(40,110,190,0.12)" stroke="#2c6eb8" strokeWidth={1.5} strokeScaleEnabled={false} dash={[6, 4]} />
+          ) : (
+            <Line
+              key={`${o.roomId}-${i}`}
+              points={flat(piece)}
+              closed
+              fill="rgba(200,50,40,0.18)"
+              fillPatternImage={pattern as unknown as HTMLImageElement}
+              fillPatternScale={{ x: 1 / s, y: 1 / s }}
+              fillPriority={pattern ? "pattern" : "color"}
+              stroke="#c8322a"
+              strokeWidth={1.5}
+              strokeScaleEnabled={false}
+            />
+          ),
+        ),
       )}
       {overhangs.map((o) => (
-        <Text key={`t-${o.roomId}`} x={o.at.x} y={o.at.y} width={w} offsetX={w / 2} offsetY={6 / s} align="center" text={`hangs ${formatFeetInches(o.depthIn)} past ${past}`} fontSize={11.5 / s} fontStyle="600" fill="#a3231c" />
+        <Text
+          key={`t-${o.roomId}`}
+          x={o.at.x}
+          y={o.at.y}
+          width={w}
+          offsetX={w / 2}
+          offsetY={6 / s}
+          align="center"
+          text={o.ok ? `${HELD_BY[o.kind]}, ${formatFeetInches(o.depthIn)} out` : `hangs ${formatFeetInches(o.depthIn)} past ${past}`}
+          fontSize={11.5 / s}
+          fontStyle="600"
+          fill={o.ok ? "#1f548f" : "#a3231c"}
+        />
       ))}
     </Layer>
   );

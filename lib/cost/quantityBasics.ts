@@ -33,6 +33,9 @@ export type Quantities = {
   garageSlabSqft: number;
   basementSlabSqft: number;
   footingLf: number;
+  /** Posts (with footings) and beam under upper-floor rooms held up "On posts". */
+  overhangPosts: number;
+  overhangBeamLf: number;
   stemWallSqft: number;
   basementWallSqft: number;
   waterproofSqft: number;
@@ -179,6 +182,8 @@ export function empty(source: Quantities["source"]): Quantities {
     garageSlabSqft: 0,
     basementSlabSqft: 0,
     footingLf: 0,
+    overhangPosts: 0,
+    overhangBeamLf: 0,
     stemWallSqft: 0,
     basementWallSqft: 0,
     waterproofSqft: 0,
