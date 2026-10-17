@@ -23,7 +23,7 @@ export type ConnectOptions = {
 };
 
 /** Accessibility tags that mean the whole main floor, not one room. */
-const WHOLE_FLOOR = /wheelchair|walker|mobility|whole|every|single[- ]level|one[- ]level|aging|universal|ada\b|accessible/i;
+export const WHOLE_FLOOR = /wheelchair|walker|mobility|whole|every|single[- ]level|one[- ]level|aging|universal|ada\b|accessible/i;
 
 /** A room on the main floor the brief's accessibility list asks to be easy to get into. */
 export function accessibleRoom(brief: DesignBrief | null | undefined, room: PlanRoom): boolean {

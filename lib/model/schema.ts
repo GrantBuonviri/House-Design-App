@@ -9,7 +9,7 @@ import { z } from "zod";
  * Angles are degrees clockwise from north (0 = N, 90 = E).
  */
 
-export const SCHEMA_VERSION = 36;
+export const SCHEMA_VERSION = 37;
 
 export const Point = z.object({ x: z.number(), y: z.number() });
 export type Point = z.infer<typeof Point>;
@@ -196,20 +196,30 @@ export const ChosenRoom = z.object({
   /** Optional size, in inches. */
   lengthIn: z.number().positive().optional(),
   widthIn: z.number().positive().optional(),
+  /** Optional size in sq ft, for a size typed without length and width. */
+  sqft: z.number().positive().optional(),
   /** Which floor. Empty means "let the app decide". */
   levelId: z.string().optional(),
 });
 export type ChosenRoom = z.infer<typeof ChosenRoom>;
 
-/** Answers on the rooms page. */
+/** Answers on the rooms page: the only saved copy of what the user picked. The brief is worked out from them (lib/brief/live.ts). */
 export const DiscoveryAnswers = z.object({
   floorsAbove: z.number().int().min(1).max(5).default(1),
   floorsBelow: z.number().int().min(0).max(3).default(0),
   rooms: z.array(ChosenRoom).default([]),
   garageCars: z.number().int().min(0).max(4).default(2),
   connections: z.array(Adjacency).default([]),
+  /** Connections the app would add on its own (kitchen and dining...) that the user took out. */
+  removedConnections: z.array(z.object({ a: z.string(), b: z.string() })).default([]),
   /** "Describe how the house should feel", plus anything else. */
   feel: z.string().max(3000).default(""),
+  /** Open or closed kitchen. Empty means the app picks (open, unless the feel asks for a closed kitchen). */
+  openKitchen: z.boolean().optional(),
+  /** Ticked priorities, ids from lib/brief/live.ts `PRIORITIES` ("sun", "cost", "fit", "quiet"). */
+  priorities: z.array(z.string()).default([]),
+  /** "Easy to get around with a wheelchair or walker": wider doors and a bedroom and bath on the main floor. */
+  accessible: z.boolean().default(false),
 });
 export type DiscoveryAnswers = z.infer<typeof DiscoveryAnswers>;
 
@@ -991,6 +1001,7 @@ export const Project = z.object({
   location: Location.nullable().default(null),
   plot: Plot.nullable().default(null),
   discovery: Discovery.prefault({}),
+  /** Worked out from `discovery.answers` on every edit (lib/brief/live.ts); null until the first room is picked. */
   brief: DesignBrief.nullable().default(null),
   levels: z.array(Level).min(1),
   bubbles: z.record(z.string(), BubbleDiagram).default({}),

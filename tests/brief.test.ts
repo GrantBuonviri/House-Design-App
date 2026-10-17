@@ -2,7 +2,11 @@ import { describe, expect, it } from "vitest";
 import { DiscoveryAnswers, SCHEMA_VERSION, type ChosenRoom, type DesignBrief, type Profile } from "@/lib/model/schema";
 import { createProject, migrateProject } from "@/lib/model/project";
 import { FLAT_PLOT_SEED, generatePlot } from "@/lib/land/generate";
-import { buildRuleBrief, briefTotals, householdFactor, householdSizing, missingEssentials, sizingNote, type BriefContext } from "@/lib/brief/rules";
+import { applyBriefEdit, priorityIdsFrom, withLiveBrief } from "@/lib/brief/live";
+import { ACCESSIBLE_TAG, PRIORITIES } from "@/lib/brief/priorities";
+import { DEFAULT_WEIGHTS, priorityWeights } from "@/lib/plan/score";
+import { WHOLE_FLOOR } from "@/lib/plan/doors";
+import { mainFloorPicks, samePair, buildRuleBrief, briefTips, briefTotals, householdFactor, householdSizing, missingEssentials, sizingNote, type BriefContext } from "@/lib/brief/rules";
 import { dropLevelRooms, levelIdsFor, levelsFor, nearestLevel, removeRoomsQuestion, removedLevelIds, roomsOnLevels, syncLevels } from "@/lib/brief/levels";
 import { GARAGE_SQFT, roomType, setTypeCount, sqftFromDims } from "@/lib/brief/rooms";
 
@@ -151,10 +155,11 @@ describe("rule-based brief", () => {
     expect(b.adjacencies).toContainEqual({ a: kitchen.id, b: dining.id, strength: "must" });
   });
 
-  it("reads the feel for vibe words and priorities", () => {
+  it("reads the feel for vibe words and tips", () => {
     const b = buildRuleBrief(ctx({ rooms: typical(), feel: "Cozy and bright, lots of wood. We host big dinners." }));
     expect(b.vibe).toEqual(expect.arrayContaining(["Cozy", "Bright and sunny", "Natural materials"]));
-    expect(b.priorities[0]).toBe("Room to host and entertain");
+    expect(briefTips(ctx({ rooms: typical(), feel: "Cozy and bright, lots of wood. We host big dinners." }))[0]).toBe("Room to host and entertain");
+    expect(b.priorities).toEqual([]);
     expect(b.freeText).toBe("Cozy and bright, lots of wood. We host big dinners.");
     expect(b.openKitchen).toBe(true);
     expect(buildRuleBrief(ctx({ rooms: typical(), feel: "A closed kitchen please" })).openKitchen).toBe(false);
@@ -163,8 +168,9 @@ describe("rule-based brief", () => {
   it("suggests a walkout when there's a basement on sloped land", () => {
     const hill = sloped(9, 14);
     const b = buildRuleBrief(ctx({ rooms: typical(), floorsBelow: 1 }, { plot: hill }));
-    expect(b.priorities.some((p) => p.startsWith("Walkout basement"))).toBe(true);
-    expect(buildRuleBrief(ctx({ rooms: typical() }, { plot: hill })).priorities.some((p) => p.startsWith("Walkout"))).toBe(false);
+    expect(briefTips(ctx({ rooms: typical(), floorsBelow: 1 }, { plot: hill })).some((p) => p.startsWith("Walkout basement"))).toBe(true);
+    expect(b.priorities).toEqual([]);
+    expect(briefTips(ctx({ rooms: typical() }, { plot: hill })).some((p) => p.startsWith("Walkout"))).toBe(false);
   });
 
   it("flags essentials that are missing without adding rooms", () => {
@@ -313,9 +319,11 @@ describe("opening projects saved before the rooms page", () => {
     expectConsistent(brief);
   });
 
-  it("starts the rooms page fresh", () => {
+  it("starts the rooms page from the old brief", () => {
     const p = migrateProject(versionOne());
-    expect(p.discovery.answers).toEqual(DiscoveryAnswers.parse({}));
+    expect(p.discovery.answers.rooms.map((r) => r.name)).toEqual(["Kitchen", "Primary bedroom", "Media room"]);
+    expect(p.discovery.answers.rooms[2].description).toBe("Big screen");
+    expect(p.discovery.answers.floorsAbove).toBe(2);
     expect("followUps" in p.discovery).toBe(false);
   });
 
@@ -375,5 +383,85 @@ describe("sizes that fit the household", () => {
     const b = buildRuleBrief(ctx({ rooms }, { profile: { ...profile, adults: 6, kids: 4, budget: { high: 200_000 } } }));
     expect(size(b, "living")).toBe(300);
     expect(sizingNote({ rooms: [room("living", { lengthIn: 240, widthIn: 180 })] }, profile)).toBeNull();
+  });
+});
+
+describe("one source of truth", () => {
+  it("typed sizes, floors, names and kitchen beat the app's guesses", () => {
+    const rooms = [room("kitchen"), room("bedroom", { sqft: 333, name: "Kid's room" }), room("bedroom", { levelId: "floor-1" }), room("bedroom")];
+    const b = buildRuleBrief(ctx({ rooms, floorsAbove: 2, openKitchen: false }));
+    expect(b.rooms[1]).toMatchObject({ targetSqFt: 333, name: "Kid's room", levelId: "floor-2" });
+    expect(b.rooms[2].levelId).toBe("floor-1");
+    expect(b.rooms[3].levelId).toBe("floor-2");
+    expect(b.openKitchen).toBe(false);
+    expect(buildRuleBrief(ctx({ rooms, feel: "a closed kitchen", openKitchen: true })).openKitchen).toBe(true);
+    expect(sizingNote({ rooms: [room("kitchen", { sqft: 200 })] }, profile)).toBeNull();
+  });
+
+  it("ticked priorities go in the brief and really change the ranking", () => {
+    const b = buildRuleBrief(ctx({ rooms: typical(), priorities: ["cost", "quiet"] }));
+    expect(b.priorities).toEqual(["Lower cost", "Quiet bedrooms"]);
+    for (const p of PRIORITIES) {
+      const { weights, rankedFor } = priorityWeights([p.label]);
+      const changed = (Object.keys(weights) as (keyof typeof weights)[]).filter((k) => weights[k] !== DEFAULT_WEIGHTS[k]);
+      expect(changed, p.label).toHaveLength(1);
+      expect(rankedFor).toEqual([p.label]);
+    }
+    // "spaces" counted as roomy rooms before too; land priorities like the trees never counted.
+    expect(priorityIdsFrom(["Living spaces on the sunny south side", "Keep the trees for shade and privacy", "Stay on budget"])).toEqual(["sun", "cost", "fit"]);
+    expect(priorityIdsFrom(["Keep the trees for shade and privacy"])).toEqual([]);
+  });
+
+  it("easy to get around puts a bedroom and bath on the main floor only when the app picks their floors", () => {
+    const rooms = [room("kitchen"), room("primary-bedroom"), room("primary-bath"), room("primary-closet"), room("bedroom"), room("bathroom")];
+    const off = buildRuleBrief(ctx({ rooms, floorsAbove: 2 }));
+    expect(off.rooms.filter((r) => r.levelId === "floor-1").map((r) => r.type)).toEqual(["kitchen"]);
+    expect(off.accessibility).toEqual([]);
+    const on = buildRuleBrief(ctx({ rooms, floorsAbove: 2, accessible: true }));
+    expect(on.rooms.filter((r) => r.levelId === "floor-1").map((r) => r.type)).toEqual(["kitchen", "primary-bedroom", "primary-bath", "primary-closet"]);
+    expect(on.accessibility).toEqual([ACCESSIBLE_TAG]);
+    expect(WHOLE_FLOOR.test(on.accessibility[0])).toBe(true);
+    expect(on.primarySuiteLevel).toBe("floor-1");
+    // Floors the user typed stay put; the app moves the next room it picks.
+    const typed = rooms.map((r) => (r.type.startsWith("primary") ? { ...r, levelId: "floor-2" } : r));
+    const t = buildRuleBrief(ctx({ rooms: typed, floorsAbove: 2, accessible: true }));
+    expect(t.rooms.filter((r) => r.levelId === "floor-1").map((r) => r.type)).toEqual(["kitchen", "bedroom", "bathroom"]);
+    const all = typed.map((r) => ({ ...r, levelId: r.levelId ?? "floor-2" }));
+    expect(mainFloorPicks({ rooms: all, floorsAbove: 2, floorsBelow: 0, accessible: true })).toEqual([]);
+  });
+
+  it("a removed obvious connection stays out, and Next to edits the same list", () => {
+    const rooms = typical();
+    const kitchen = rooms.find((r) => r.type === "kitchen")!;
+    const dining = rooms.find((r) => r.type === "dining")!;
+    const b = buildRuleBrief(ctx({ rooms }));
+    expect(b.adjacencies.some((e) => samePair(e, kitchen.id, dining.id))).toBe(true);
+    const answers = applyBriefEdit(DiscoveryAnswers.parse({ rooms }), b, { ...b, adjacencies: b.adjacencies.filter((e) => !samePair(e, kitchen.id, dining.id)) });
+    expect(answers.removedConnections).toEqual([{ a: kitchen.id, b: dining.id }]);
+    expect(answers.connections).toEqual([]);
+    expect(buildRuleBrief(ctx(answers)).adjacencies.some((e) => samePair(e, kitchen.id, dining.id))).toBe(false);
+  });
+
+  it("brief page edits write only what changed", () => {
+    const rooms = typical();
+    const a = DiscoveryAnswers.parse({ rooms });
+    const b = buildRuleBrief(ctx(a));
+    const edited = { ...b, rooms: b.rooms.map((r, i) => (i === 0 ? { ...r, name: "Cook's kitchen", targetSqFt: 260 } : r)) };
+    const next = applyBriefEdit(a, b, edited);
+    expect(next.rooms[0]).toMatchObject({ name: "Cook's kitchen", sqft: 260 });
+    expect(next.rooms.slice(1).every((r) => r.sqft === undefined && r.levelId === undefined)).toBe(true);
+    expect(buildRuleBrief(ctx(next)).rooms[0]).toMatchObject({ name: "Cook's kitchen", targetSqFt: 260 });
+  });
+
+  it("the store's brief keeps up with the answers, who it's for and the place", () => {
+    const p = { ...createProject("Live"), discovery: { answers: DiscoveryAnswers.parse({ rooms: typical() }) } };
+    const built = withLiveBrief(null, p);
+    expect(built.brief!.rooms).toHaveLength(typical().length);
+    expect(withLiveBrief(built, { ...built, name: "Renamed" }).brief).toBe(built.brief);
+    const two = withLiveBrief(built, { ...built, discovery: { answers: { ...built.discovery.answers, floorsAbove: 2 } } });
+    expect(two.levels.map((l) => l.id)).toEqual(["floor-1", "floor-2"]);
+    const bigger = withLiveBrief(built, { ...built, profile: { ...built.profile, adults: 2, kids: 4 } });
+    expect(bigger.brief!.rooms.find((r) => r.type === "living")!.targetSqFt).toBeGreaterThan(built.brief!.rooms.find((r) => r.type === "living")!.targetSqFt);
+    expect(withLiveBrief(null, createProject("Empty")).brief).toBeNull();
   });
 });

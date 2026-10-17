@@ -242,7 +242,7 @@ export default function BubbleStage({ onContinue, onGoToRooms }: { onContinue: (
     return (
       <div className="card mx-auto max-w-xl px-8 py-12 text-center">
         <h2 className="text-xl font-semibold tracking-tight">Your flow sketch starts from your rooms</h2>
-        <p className="mt-2 text-sm text-muted">Pick your rooms and build your brief first, and the app can lay them out for you. Or start with a blank page.</p>
+        <p className="mt-2 text-sm text-muted">Pick your rooms first, and the app can lay them out for you. Or start with a blank page.</p>
         <div className="mt-6 flex justify-center gap-3">
           <button className="btn" onClick={startBlank}>
             Start blank

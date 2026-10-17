@@ -21,7 +21,7 @@ export function stagesDone(p: Project): Record<"setup" | "land" | "brief" | "bub
   return {
     setup: p.location !== null,
     land: p.plot !== null,
-    brief: p.brief !== null,
+    brief: (p.brief?.rooms.length ?? 0) > 0,
     bubbles: Object.values(p.bubbles).some((b) => b.bubbles.length > 0),
     plan: plans.some((f) => f.rooms.length > 0 || f.walls.length > 0),
     furnish: plans.some((f) => f.furniture.length > 0 || (f.addOns?.length ?? 0) > 0 || f.cabinets !== undefined || f.devices !== undefined),

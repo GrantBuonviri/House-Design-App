@@ -1,10 +1,11 @@
 "use client";
 
-import type { DesignBrief } from "@/lib/model/schema";
+import type { DesignBrief, DiscoveryAnswers } from "@/lib/model/schema";
 import { BRIEF_ROOM_TYPES, isHeated, newRoomId, roomType, sqftFromDims } from "@/lib/brief/rooms";
 import { MAX_ABOVE, MAX_BELOW, levelIdsFor, levelName, levelsFor, nearestLevel } from "@/lib/brief/levels";
-import { briefTotals } from "@/lib/brief/rules";
-import { Choice, CommitNumber, FeetInput, Field, Stepper, TagEditor } from "./controls";
+import { briefTotals, mainFloorPicks } from "@/lib/brief/rules";
+import { PRIORITIES } from "@/lib/brief/priorities";
+import { Choice, CommitNumber, FeetInput, Field, Stepper } from "./controls";
 import Connections from "./Connections";
 
 type Room = DesignBrief["rooms"][number];
@@ -14,19 +15,28 @@ function formatSqFt(sqft: number): string {
   return `${Math.round(sqft).toLocaleString("en-US")} sq ft`;
 }
 
-/** The Design Brief, fully editable. Every later stage reads from it. */
+/** The Design Brief, worked out from the answers. Edits here go back to the answers. Every later stage reads from it. */
 export default function BriefEditor({
   brief,
   onChange,
+  answers,
+  setAnswers,
+  tips,
   sizing,
 }: {
   brief: DesignBrief;
   onChange: (brief: DesignBrief, key: string) => void;
+  /** The rooms page's answers, for the feel, priorities and accessibility, which only live there. */
+  answers: DiscoveryAnswers;
+  setAnswers: (patch: Partial<DiscoveryAnswers>, key: string) => void;
+  /** Tips from the feel and the land, shown under the priorities. */
+  tips: string[];
   /** One line on how default sizes fit the household and budget. */
   sizing?: string | null;
 }) {
   const levels = levelIdsFor(brief.floors, brief.floorsBelow);
   const totals = briefTotals(brief);
+  const moved = mainFloorPicks(answers).map((id) => brief.rooms.find((r) => r.id === id)?.name ?? "").filter(Boolean);
   const set = (patch: Partial<DesignBrief>, key: string) => onChange({ ...brief, ...patch }, key);
 
   const setFloors = (patch: Partial<Pick<DesignBrief, "floors" | "floorsBelow">>, key: string) => {
@@ -248,28 +258,61 @@ export default function BriefEditor({
 
       <section className="card grid grid-cols-2 gap-6 p-6">
         <div className="col-span-2">
-          <Field label="The feel">
-            <TagEditor label="Vibe words" value={brief.vibe} onChange={(vibe) => set({ vibe }, "vibe")} />
-          </Field>
-        </div>
-        <Field label="Priorities" hint="Most important first.">
-          <TagEditor label="Priorities" value={brief.priorities} onChange={(priorities) => set({ priorities }, "priorities")} />
-        </Field>
-        <Field label="Accessibility">
-          <TagEditor label="Accessibility" value={brief.accessibility} onChange={(accessibility) => set({ accessibility }, "accessibility")} />
-        </Field>
-        <div className="col-span-2">
-          <label className="field-label" htmlFor="brief-notes">
-            How the house should feel, in your words
+          <label className="field-label" htmlFor="brief-feel">
+            How it should feel
           </label>
           <textarea
-            id="brief-notes"
+            id="brief-feel"
             className="input min-h-24"
-            maxLength={6000}
-            value={brief.freeText ?? ""}
-            onChange={(e) => set({ freeText: e.target.value || undefined }, "freeText")}
+            maxLength={3000}
+            value={answers.feel}
+            onChange={(e) => setAnswers({ feel: e.target.value }, "feel")}
           />
+          {brief.vibe.length > 0 && (
+            <div className="mt-2 flex flex-wrap gap-1.5" aria-label="Key words">
+              {brief.vibe.map((v) => (
+                <span key={v} className="rounded-full bg-paper px-2.5 py-0.5 text-xs">
+                  {v}
+                </span>
+              ))}
+            </div>
+          )}
         </div>
+        <Field label="Priorities" hint="Ticked ones change how sketches and plans are ranked.">
+          <div className="space-y-1.5">
+            {PRIORITIES.map((pr) => (
+              <label key={pr.id} className="flex items-center gap-2 text-sm">
+                <input
+                  type="checkbox"
+                  checked={answers.priorities.includes(pr.id)}
+                  onChange={(e) =>
+                    setAnswers({ priorities: e.target.checked ? [...answers.priorities, pr.id] : answers.priorities.filter((x) => x !== pr.id) }, "priorities")
+                  }
+                />
+                {pr.label}
+              </label>
+            ))}
+          </div>
+          {tips.length > 0 && (
+            <ul className="mt-3 space-y-1 text-xs text-muted">
+              {tips.map((t) => (
+                <li key={t}>Tip: {t}</li>
+              ))}
+            </ul>
+          )}
+        </Field>
+        <Field label="Accessibility">
+          <label className="flex items-center gap-2 text-sm">
+            <input type="checkbox" checked={answers.accessible} onChange={(e) => setAnswers({ accessible: e.target.checked }, "accessible")} />
+            Easy to get around with a wheelchair or walker
+          </label>
+          {answers.accessible && (
+            <p className="mt-2 text-xs text-muted">
+              Doors on the main floor are 36&quot; wide.
+              {moved.length > 0 && ` Moved to the main floor so there's a bedroom and bathroom on it: ${moved.join(", ")}.`}
+            </p>
+          )}
+        </Field>
       </section>
     </div>
   );
