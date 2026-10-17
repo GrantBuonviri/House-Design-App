@@ -1,18 +1,16 @@
 import { describe, expect, it } from "vitest";
-import polygonClipping from "polygon-clipping";
 import { createProject, migrateProject } from "@/lib/model/project";
 import { SCHEMA_VERSION, type FloorPlan, type Opening, type PlanRoom, type PlanStairs, type Point } from "@/lib/model/schema";
 import { levelsFor } from "@/lib/brief/levels";
 import { defaultBasics } from "@/lib/plan/basics";
-import { emptyPlan, moveEdge, moveMany, removeMany, rotateMany, type Plans } from "@/lib/plan/edit";
+import { emptyPlan, moveMany, removeMany, rotateMany, type Plans } from "@/lib/plan/edit";
 import { alignMany, duplicateMany, mirrorMany } from "@/lib/plan/arrange";
-import { closeGap, findGaps } from "@/lib/plan/overlaps";
-import { pullBack } from "@/lib/plan/support";
-import { boundsOf, polygonArea } from "@/lib/plan/geometry";
 import { bendWall } from "@/lib/plan/bend";
-import { combineRooms } from "@/lib/plan/openWalls";
-import { isLocked } from "@/lib/plan/locks";
-import { anchor, footprintOf, hallFloor, hallLimit, hallOn, reconcileStacks, unanchor, type StackCtx } from "@/lib/plan/anchor";
+import { combineRooms, whyNotCombine } from "@/lib/plan/openWalls";
+import { splitRoom } from "@/lib/plan/partitions";
+import { roundCorner } from "@/lib/plan/shapes";
+import { isLocked, lockedIds } from "@/lib/plan/locks";
+import { anchor, reconcileStacks, stackOfItem, unanchor, type StackCtx } from "@/lib/plan/anchor";
 import { describeChange } from "@/lib/store/describe";
 
 const levels = levelsFor(3, 0);
@@ -24,89 +22,49 @@ const stairs = (id: string, toLevelId: string, extra: Partial<PlanStairs> = {}):
 const plan = (rooms: PlanRoom[], st: PlanStairs[] = [], openings: Opening[] = []): FloorPlan => ({ ...emptyPlan(), rooms, stairs: st, openings });
 /** A box from x0,y0 to x1,y1, clockwise on screen. */
 const box = (x0: number, y0: number, x1: number, y1: number): Point[] => [{ x: x0, y: y0 }, { x: x1, y: y0 }, { x: x1, y: y1 }, { x: x0, y: y1 }];
-
-const ring = (p: Point[]) => [[...p.map((q): [number, number] => [q.x, q.y]), [p[0].x, p[0].y]]] as [number, number][][];
-const areaOf = (mp: ReturnType<typeof polygonClipping.union>) => mp.reduce((s, poly) => s + polygonArea(poly[0].slice(0, -1).map(([x, y]) => ({ x, y }))), 0);
-/** Is `inner` inside `outer` (to a square inch)? */
-const inside = (inner: Point[], outer: Point[]) => areaOf(polygonClipping.difference(ring(inner), ring(outer))) < 1;
-const sameRegion = (a: Point[], b: Point[]) => areaOf(polygonClipping.xor(ring(a), ring(b))) < 1;
+const door = (id: string, roomId: string, edge = 0): Opening => ({ id, host: { roomId, edge }, offsetIn: 40, kind: "door", style: "door-hinged", widthIn: 32, heightIn: 80, side: 1, hinge: "start" });
 
 /**
- * Three floors. Main-floor stairs climb north from y = 275 at x 180-220 and
- * floor-2 stairs sit right on top of them. The main floor has a living room
- * east of the stairs; floor 2 has a big hall around the stairwell and a
- * bedroom that reaches into the space past the stairs; floor 3 has a bedroom
- * over everything.
+ * Three floors. Main-floor stairs climb north at x 180-220 and floor-2 stairs
+ * sit right on top of them. The main floor has a living room the stairs
+ * stand in; floor 2 has a hall around the stairwell and a bedroom; floor 3
+ * has a bedroom over everything. Every floor has a door.
  */
 function house(): Plans {
   return {
-    [L1]: plan([room("living", box(220, 60, 460, 340))], [stairs("s1", L2)]),
-    [L2]: plan([room("hall2", box(100, 40, 300, 360), { type: "hall" }), room("bed2", box(300, 40, 500, 360), { type: "bedroom" })], [stairs("s2", L3)]),
-    [L3]: plan([room("bed3", box(100, 40, 500, 360), { type: "bedroom" })]),
+    [L1]: plan([room("living", box(100, 40, 460, 360))], [stairs("s1", L2)], [door("d1", "living")]),
+    [L2]: plan([room("hall2", box(100, 40, 300, 360), { type: "hall" }), room("bed2", box(300, 40, 500, 360), { type: "bedroom" })], [stairs("s2", L3)], [door("d2", "bed2", 3)]),
+    [L3]: plan([room("bed3", box(100, 40, 500, 360), { type: "bedroom" })], [], [door("d3", "bed3")]),
   };
 }
 
 const anchored = () => anchor(house(), ctx, L1, "s1")!;
-
-describe("stair stacks: limits", () => {
-  it("lets a stair hall be the stairs plus 3' past the bottom and top", () => {
-    const p = { ...house(), [L2]: plan([]) };
-    const s = { ...p, [L1]: { ...p[L1], stairs: [stairs("s1", L2, { stackId: "k" })] } };
-    const print = footprintOf(ctx, { levelId: L1, stairs: s[L1].stairs[0] });
-    const fb = boundsOf(print)!;
-    const lb = boundsOf(hallLimit(s, ctx, "k")!)!;
-    expect(lb.x0).toBeCloseTo(fb.x0);
-    expect(lb.x1).toBeCloseTo(fb.x1);
-    expect(lb.y0).toBeCloseTo(fb.y0 - 36, 0);
-    expect(lb.y1).toBeCloseTo(fb.y1 + 36, 0);
-    expect(sameRegion(hallFloor(s, ctx, "k")!, print)).toBe(true);
-  });
-
-  it("reaches 3' past the second flight of L stairs too, and stays one rectangle", () => {
-    const s = { [L1]: plan([], [stairs("s1", L2, { stackId: "k", shape: "l" })]), [L2]: plan([]) };
-    const limit = hallLimit(s, ctx, "k")!;
-    expect(limit).toHaveLength(4);
-    const fb = boundsOf(footprintOf(ctx, { levelId: L1, stairs: s[L1].stairs[0] }))!;
-    const lb = boundsOf(limit)!;
-    expect(lb.x1).toBeCloseTo(fb.x1 + 36, 0);
-    expect(lb.y1).toBeCloseTo(fb.y1 + 36, 0);
-  });
-});
+const json = (x: unknown) => JSON.stringify(x);
 
 describe("anchoring", () => {
-  it("links the stacked stairs and gives every floor a stair hall with the same outline", () => {
-    const { plans, stackId } = anchored();
-    expect(plans[L1].stairs[0]).toMatchObject({ stackId, anchored: true });
+  it("links and locks the stacked stairs and nothing else", () => {
+    const { plans, stackId, note } = anchored();
+    expect(plans[L1].stairs[0]).toMatchObject({ stackId, anchored: true, x: 200, y: 200, rotation: 0 });
     expect(plans[L2].stairs[0]).toMatchObject({ stackId, anchored: true });
-    const halls = [L1, L2, L3].map((l) => hallOn(plans[l], stackId)!);
-    expect(halls.every(Boolean)).toBe(true);
-    for (const h of halls) expect(sameRegion(h.polygon, halls[0].polygon)).toBe(true);
-    expect(halls.every((h) => h.anchored && h.type === "hall")).toBe(true);
+    expect(note).toBe("Anchored the stairs on every floor they connect.");
   });
 
-  it("keeps the stair hall inside the limit and around the stairs", () => {
-    const { plans, stackId } = anchored();
-    const hall = hallOn(plans[L1], stackId)!;
-    expect(inside(hall.polygon, hallLimit(plans, ctx, stackId)!)).toBe(true);
-    expect(inside(hallFloor(plans, ctx, stackId)!, hall.polygon)).toBe(true);
-  });
-
-  it("cuts a big existing hall down to the limit, keeping the room", () => {
-    const { plans, stackId } = anchored();
-    const hall = hallOn(plans[L2], stackId)!;
-    expect(hall.id).toBe("hall2");
-    expect(polygonArea(hall.polygon)).toBeLessThan(polygonArea(box(100, 40, 300, 360)));
-  });
-
-  it("trims rooms in the way upstairs, and leaves the stairs where they were", () => {
+  it("leaves every room, wall and opening on every floor exactly as it was", () => {
     const before = house();
-    const { plans, note } = anchored();
-    const bed3 = plans[L3].rooms.find((r) => r.id === "bed3")!;
-    const hall3 = plans[L3].rooms.find((r) => r.stairStack)!;
-    expect(polygonArea(bed3.polygon)).toBeLessThan(polygonArea(before[L3].rooms[0].polygon));
-    expect(areaOf(polygonClipping.intersection(ring(bed3.polygon), ring(hall3.polygon)))).toBeLessThan(1);
-    expect(plans[L1].stairs[0]).toMatchObject({ x: 200, y: 200, rotation: 0 });
-    expect(note).toMatch(/Made room for the stair hall/);
+    const { plans } = anchored();
+    for (const l of [L1, L2, L3]) {
+      expect(json(plans[l].rooms)).toBe(json(before[l].rooms));
+      expect(json(plans[l].walls)).toBe(json(before[l].walls));
+      expect(json(plans[l].openings)).toBe(json(before[l].openings));
+      expect(json(plans[l].openWalls)).toBe(json(before[l].openWalls));
+    }
+  });
+
+  it("says just 'Anchored the stairs.' for stairs with nothing stacked on them", () => {
+    const one = { [L1]: plan([room("r", box(0, 0, 400, 400))], [stairs("s", L2, { x: 600 })]), [L2]: plan([]) };
+    const out = anchor(one, ctx, L1, "s")!;
+    expect(out.note).toBe("Anchored the stairs.");
+    expect(json(out.plans[L1].rooms)).toBe(json(one[L1].rooms));
   });
 
   it("names the change for Undo", () => {
@@ -120,23 +78,33 @@ describe("anchoring", () => {
 });
 
 describe("what anchoring locks", () => {
-  it("leaves anchored stairs and stair halls out of moves, turns, deletes, flips and line ups", () => {
-    const { plans, stackId } = anchored();
+  it("locks only the anchored stairs", () => {
+    const { plans } = anchored();
+    expect([...lockedIds(plans[L1])]).toEqual(["s1"]);
+    expect([...lockedIds(plans[L2])]).toEqual(["s2"]);
+    expect(isLocked(plans[L2], "hall2")).toBe(false);
+  });
+
+  it("leaves anchored stairs out of moves, turns, deletes, flips; rooms still move", () => {
+    const { plans } = anchored();
     const p = plans[L1];
-    const hall = hallOn(p, stackId)!;
-    const ids = ["s1", hall.id, "living"];
-    expect(isLocked(p, "s1") && isLocked(p, hall.id)).toBe(true);
+    const ids = ["s1", "living"];
     const moved = moveMany(p, ids, 24, 0);
     expect(moved.stairs[0]).toEqual(p.stairs[0]);
-    expect(moved.rooms.find((r) => r.id === hall.id)).toEqual(hall);
-    expect(moved.rooms.find((r) => r.id === "living")!.polygon[0].x).toBe(p.rooms.find((r) => r.id === "living")!.polygon[0].x + 24);
+    expect(moved.rooms[0].polygon[0].x).toBe(p.rooms[0].polygon[0].x + 24);
     expect(rotateMany(p, ids, 90, { x: 0, y: 0 }).stairs[0]).toEqual(p.stairs[0]);
     expect(removeMany(p, ids).stairs).toHaveLength(1);
-    expect(removeMany(p, ids).rooms.some((r) => r.id === hall.id)).toBe(true);
+    expect(removeMany(p, ids).rooms).toHaveLength(0);
     expect(mirrorMany(p, ids, "left-right").stairs[0]).toEqual(p.stairs[0]);
-    expect(alignMany(p, [hall.id, "living"], "tops").rooms.find((r) => r.id === hall.id)).toEqual(hall);
-    expect(combineRooms(p, [hall.id, "living"])).toBeNull();
-    expect(bendWall(p, { roomId: hall.id, edge: 0 }, 12)).toBe(p);
+  });
+
+  it("lets the room around anchored stairs be lined up, combined and curved", () => {
+    const { plans } = anchored();
+    const p = plans[L2];
+    expect(alignMany(p, ["hall2", "bed2"], "tops")).toBeTruthy();
+    expect(whyNotCombine(p, ["hall2", "bed2"])).toBeNull();
+    expect(combineRooms(p, ["hall2", "bed2"])).not.toBeNull();
+    expect(bendWall(p, { roomId: "hall2", edge: 0 }, 12)).not.toBe(p);
   });
 
   it("makes copies of anchored stairs free", () => {
@@ -147,28 +115,14 @@ describe("what anchoring locks", () => {
     expect(made.stackId).toBeUndefined();
   });
 
-  it("keeps automatic fixes off the stair hall: Pull back and close gaps", () => {
-    const { plans, stackId } = anchored();
-    const p = plans[L2];
-    const hall = hallOn(p, stackId)!;
-    expect(pullBack(p, hall.id, [{ outline: box(0, 0, 10, 10), holes: [] }])).toBe(p);
-    // A room 3" east of the hall: closing the gap moves the room, never the hall.
-    const hb = boundsOf(hall.polygon)!;
-    const near = { ...p, rooms: [...p.rooms.filter((r) => r.id === hall.id), room("den", box(hb.x1 + 3, hb.y0, hb.x1 + 120, hb.y1))] };
-    const gap = findGaps(near).find((g) => [g.aId, g.bId].includes("den"))!;
-    const closed = closeGap(near, gap);
-    expect(closed.rooms.find((r) => r.id === hall.id)).toEqual(hall);
-    expect(boundsOf(closed.rooms.find((r) => r.id === "den")!.polygon)!.x0).toBeCloseTo(hb.x1);
-  });
-
-  it("puts anchored stairs and halls back when an edit moves or deletes them anyway", () => {
+  it("puts anchored stairs back when an edit moves or deletes them anyway", () => {
     const { plans } = anchored();
     const p = plans[L1];
-    const forced = { ...p, stairs: [{ ...p.stairs[0], x: 300 }], rooms: p.rooms.filter((r) => !r.stairStack) };
-    const r = reconcileStacks(plans, { ...plans, [L1]: forced }, L1, ctx);
-    expect(r.plans[L1].stairs[0].x).toBe(200);
-    expect(r.plans[L1].rooms.some((x) => x.stairStack)).toBe(true);
-    expect(r.note).toMatch(/anchored/);
+    const moved = reconcileStacks(plans, { ...plans, [L1]: { ...p, stairs: [{ ...p.stairs[0], x: 300 }] } }, L1, ctx);
+    expect(moved.plans[L1].stairs[0].x).toBe(200);
+    expect(moved.note).toMatch(/anchored/);
+    const gone = reconcileStacks(plans, { ...plans, [L1]: { ...p, stairs: [] } }, L1, ctx);
+    expect(gone.plans[L1].stairs.map((s) => s.id)).toEqual(["s1"]);
   });
 
   it("still lets the railings on anchored stairs change", () => {
@@ -177,63 +131,28 @@ describe("what anchoring locks", () => {
     const edited = { ...p, stairs: [{ ...p.stairs[0], railings: [{ edge: "f1-left", removed: true }] }] };
     const r = reconcileStacks(plans, { ...plans, [L1]: edited }, L1, ctx);
     expect(r.plans[L1].stairs[0].railings).toEqual([{ edge: "f1-left", removed: true }]);
-  });
-});
-
-describe("stair hall walls", () => {
-  it("move within the limit, and the change goes to every floor", () => {
-    const { plans, stackId } = anchored();
-    const hall = hallOn(plans[L1], stackId)!;
-    const hb = boundsOf(hall.polygon)!;
-    // Pull the east wall 2' east: past the limit, so it stops there (the limit is the stairs' width).
-    const east = hall.polygon.findIndex((q, i) => q.x === hb.x1 && hall.polygon[(i + 1) % hall.polygon.length].x === hb.x1);
-    const edited = moveEdge(plans[L1], hall.id, east, { x: 24, y: 0 }, false);
-    const r = reconcileStacks(plans, { ...plans, [L1]: edited }, L1, ctx);
-    const after = hallOn(r.plans[L1], stackId)!;
-    expect(inside(after.polygon, hallLimit(r.plans, ctx, stackId)!)).toBe(true);
-    // Pull the south wall 1' north instead: allowed, and every floor follows.
-    const south = hall.polygon.findIndex((q, i) => q.y === hb.y1 && hall.polygon[(i + 1) % hall.polygon.length].y === hb.y1);
-    const shorter = moveEdge(plans[L1], hall.id, south, { x: 0, y: -12 }, false);
-    const r2 = reconcileStacks(plans, { ...plans, [L1]: shorter }, L1, ctx);
-    const b1 = boundsOf(hallOn(r2.plans[L1], stackId)!.polygon)!;
-    expect(b1.y1).toBeCloseTo(hb.y1 - 12);
-    for (const l of [L2, L3]) expect(boundsOf(hallOn(r2.plans[l], stackId)!.polygon)!.y1).toBeCloseTo(hb.y1 - 12);
+    expect(r.note).toBeNull();
   });
 
-  it("never cut into the stairs", () => {
-    const { plans, stackId } = anchored();
-    const hall = hallOn(plans[L1], stackId)!;
-    const hb = boundsOf(hall.polygon)!;
-    const south = hall.polygon.findIndex((q, i) => q.y === hb.y1 && hall.polygon[(i + 1) % hall.polygon.length].y === hb.y1);
-    const crushed = moveEdge(plans[L1], hall.id, south, { x: 0, y: -100 }, false);
-    const r = reconcileStacks(plans, { ...plans, [L1]: crushed }, L1, ctx);
-    expect(inside(hallFloor(r.plans, ctx, stackId)!, hallOn(r.plans[L1], stackId)!.polygon)).toBe(true);
-  });
-
-  it("keep their doors per floor", () => {
-    const { plans, stackId } = anchored();
-    const hall1 = hallOn(plans[L1], stackId)!;
-    const door: Opening = { id: "d1", host: { roomId: hall1.id, edge: 0 }, offsetIn: 20, kind: "door", style: "door-hinged", widthIn: 32, heightIn: 80, side: 1, hinge: "start" };
-    const withDoor = { ...plans, [L1]: { ...plans[L1], openings: [door] } };
-    const hb = boundsOf(hall1.polygon)!;
-    const south = hall1.polygon.findIndex((q, i) => q.y === hb.y1 && hall1.polygon[(i + 1) % hall1.polygon.length].y === hb.y1);
-    const r = reconcileStacks(withDoor, { ...withDoor, [L1]: moveEdge(withDoor[L1], hall1.id, south, { x: 0, y: -12 }, false) }, L1, ctx);
-    expect(r.plans[L1].openings.map((o) => o.id)).toEqual(["d1"]);
-    expect(r.plans[L2].openings).toHaveLength(0);
+  it("leaves room edits alone", () => {
+    const { plans } = anchored();
+    const edited = { ...plans[L2], rooms: plans[L2].rooms.map((r) => (r.id === "hall2" ? { ...r, polygon: box(100, 40, 280, 360) } : r)) };
+    const r = reconcileStacks(plans, { ...plans, [L2]: edited }, L2, ctx);
+    expect(r.plans[L2]).toBe(edited);
+    expect(r.note).toBeNull();
   });
 });
 
 describe("unanchored stacks", () => {
-  it("move together on every floor", () => {
+  it("move together on every floor, and no room moves with them", () => {
     const { plans, stackId } = anchored();
     const free = unanchor(plans, stackId);
     expect(free[L1].stairs[0].anchored).toBeUndefined();
     expect(free[L1].stairs[0].stackId).toBe(stackId);
-    const hall3 = hallOn(free[L3], stackId)!;
+    expect(stackOfItem(free[L1], "s1")).toBe(stackId);
     const r = reconcileStacks(free, { ...free, [L1]: moveMany(free[L1], ["s1"], 24, -12) }, L1, ctx);
     expect(r.plans[L2].stairs[0]).toMatchObject({ x: 224, y: 188 });
-    expect(hallOn(r.plans[L3], stackId)!.polygon[0]).toEqual({ x: hall3.polygon[0].x + 24, y: hall3.polygon[0].y - 12 });
-    expect(hallOn(r.plans[L1], stackId)!.polygon[0]).toEqual({ x: hall3.polygon[0].x + 24, y: hall3.polygon[0].y - 12 });
+    for (const l of [L2, L3]) expect(json(r.plans[l].rooms)).toBe(json(free[l].rooms));
   });
 
   it("turn together", () => {
@@ -241,28 +160,48 @@ describe("unanchored stacks", () => {
     const free = unanchor(plans, stackId);
     const r = reconcileStacks(free, { ...free, [L2]: rotateMany(free[L2], ["s2"], 90, { x: 200, y: 200 }) }, L2, ctx);
     expect(r.plans[L1].stairs[0]).toMatchObject({ x: 200, y: 200, rotation: 90 });
-    const b = boundsOf(hallOn(r.plans[L3], stackId)!.polygon)!;
-    expect(b.x1 - b.x0).toBeGreaterThan(b.y1 - b.y0);
-  });
-
-  it("frees the stair halls when the last flight is deleted", () => {
-    const { plans, stackId } = anchored();
-    let free = unanchor(plans, stackId);
-    free = reconcileStacks(free, { ...free, [L2]: removeMany(free[L2], ["s2"]) }, L2, ctx).plans;
-    expect(hallOn(free[L1], stackId)).toBeTruthy();
-    free = reconcileStacks(free, { ...free, [L1]: removeMany(free[L1], ["s1"]) }, L1, ctx).plans;
-    for (const l of [L1, L2, L3]) expect(free[l].rooms.some((r) => r.stairStack)).toBe(false);
   });
 });
 
 describe("saved data", () => {
-  it("opens a version 27 project unchanged", () => {
-    const p = createProject("Old stairs");
-    const v27 = JSON.parse(JSON.stringify({ ...p, schemaVersion: 27, floorPlans: { [L1]: plan([room("r", box(0, 0, 100, 100))], [stairs("s", L2)]) } }));
-    const migrated = migrateProject(v27);
+  /** A version 30 project with an anchored stair hall on two floors, as part 1 of the stair anchor work saved them. */
+  function oldProject() {
+    const p = createProject("Old stair hall");
+    const hall = (id: string) => ({ ...room(id, box(160, 60, 260, 380), { type: "hall" }), name: "Stair hall", stairStack: "k", anchored: true });
+    return JSON.parse(
+      json({
+        ...p,
+        schemaVersion: 30,
+        levels,
+        floorPlans: {
+          [L1]: plan([hall("h1"), room("living", box(260, 60, 500, 380))], [stairs("s1", L2, { stackId: "k", anchored: true })], [door("dh", "h1", 1)]),
+          [L2]: plan([hall("h2"), room("bed", box(260, 60, 500, 380), { type: "bedroom" })], []),
+        },
+      }),
+    );
+  }
+
+  it("opens an old stair hall as an ordinary room with the same outline and openings", () => {
+    const raw = oldProject();
+    const migrated = migrateProject(raw);
     expect(migrated.schemaVersion).toBe(SCHEMA_VERSION);
-    expect(SCHEMA_VERSION).toBeGreaterThanOrEqual(28);
-    expect(migrated.floorPlans[L1].stairs[0].stackId).toBeUndefined();
-    expect(migrated.floorPlans[L1].rooms[0].stairStack).toBeUndefined();
+    expect(SCHEMA_VERSION).toBeGreaterThanOrEqual(32);
+    const h1 = migrated.floorPlans[L1].rooms.find((r) => r.id === "h1")!;
+    expect(Object.keys(h1)).not.toContain("stairStack");
+    expect(Object.keys(h1)).not.toContain("anchored");
+    expect(h1).toMatchObject({ name: "Stair hall", type: "hall", polygon: raw.floorPlans[L1].rooms[0].polygon });
+    expect(migrated.floorPlans[L1].openings).toEqual(raw.floorPlans[L1].openings);
+    // The stairs keep their stack and stay anchored.
+    expect(migrated.floorPlans[L1].stairs[0]).toMatchObject({ stackId: "k", anchored: true });
+  });
+
+  it("lets the old stair hall be moved, curved, rounded, split and combined", () => {
+    const p = migrateProject(oldProject()).floorPlans[L1];
+    expect(isLocked(p, "h1")).toBe(false);
+    expect(moveMany(p, ["h1"], 12, 0).rooms.find((r) => r.id === "h1")!.polygon[0].x).toBe(172);
+    expect(bendWall(p, { roomId: "h1", edge: 0 }, 12)).not.toBe(p);
+    expect(roundCorner(p, "h1", 0, 24)).not.toBeNull();
+    expect(splitRoom(p, [{ x: 160, y: 220 }, { x: 260, y: 220 }])?.roomId).toBe("h1");
+    expect(combineRooms(p, ["h1", "living"])).not.toBeNull();
   });
 });

@@ -90,6 +90,7 @@ export function migrateProject(raw: unknown): Project {
   // Version 28 to 29 added `house3d.walkLabels.locked` (default off), so no change beyond the version.
   if (version < 30) migrated = migrateV29(migrated);
   // Version 30 to 31 added faucet changes on fixtures (`Fixture.faucet`, optional), so no change beyond the version.
+  if (version < 32) migrated = migrateV31(migrated);
   return Project.parse({ ...migrated, schemaVersion: SCHEMA_VERSION });
 }
 
@@ -103,6 +104,25 @@ type Raw = Record<string, unknown>;
 /** Version 29 to 30: projects got a place to build. Older ones were all Boise, so they are set to Boise and nothing changes. */
 function migrateV29(data: Raw): Raw {
   return data.location ? data : { ...data, location: placeFromCity(cityById("boise-id")!) };
+}
+
+/**
+ * Version 31 to 32: stair halls are gone. Rooms lose `stairStack` and
+ * `anchored` and become ordinary rooms with the same name, outline, walls,
+ * doors and windows. Stairs keep their `stackId` and `anchored`.
+ */
+function migrateV31(data: Raw): Raw {
+  const plans = data.floorPlans;
+  if (!plans || typeof plans !== "object") return data;
+  const plain = (r: unknown) => {
+    if (!r || typeof r !== "object") return r;
+    const { stairStack: _s, anchored: _a, ...rest } = r as Raw;
+    void _s;
+    void _a;
+    return rest;
+  };
+  const fix = (v: unknown) => (v && typeof v === "object" && Array.isArray((v as Raw).rooms) ? { ...(v as Raw), rooms: ((v as Raw).rooms as unknown[]).map(plain) } : v);
+  return { ...data, floorPlans: Object.fromEntries(Object.entries(plans as Raw).map(([k, v]) => [k, fix(v)])) };
 }
 
 /**

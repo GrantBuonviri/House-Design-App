@@ -191,7 +191,7 @@ const covered = (plan: FloorPlan, b: Bounds) => {
 };
 
 /**
- * Stairs standing outside every room (even partly) get no stair hall: they sit in an
+ * Stairs standing outside every room (even partly) sit in an
  * ordinary room, like one a person would draw. The stairs plus 3' of standing
  * room at each end are taken in by the neighboring room that shares the
  * longest edge with them (a hall, entry, living, family, dining room or

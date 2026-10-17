@@ -45,7 +45,7 @@ export function updateRoom(plan: FloorPlan, id: string, patch: Partial<PlanRoom>
   return { ...plan, rooms: plan.rooms.map((r) => (r.id === id ? { ...r, ...patch } : r)) };
 }
 
-/** Delete rooms, walls, doors and windows, stairs, fixtures and furniture. Doors and windows in deleted walls go too. Anchored stairs and stair halls stay. */
+/** Delete rooms, walls, doors and windows, stairs, fixtures and furniture. Doors and windows in deleted walls go too. Anchored stairs stay. */
 export function removeMany(plan: FloorPlan, ids: string[]): FloorPlan {
   const gone = new Set(unlocked(plan, ids));
   const hostGone = (o: Opening) => ("roomId" in o.host ? gone.has(o.host.roomId) : gone.has(o.host.wallId));
@@ -71,8 +71,8 @@ export function removeMany(plan: FloorPlan, ids: string[]): FloorPlan {
 
 /**
  * Move rooms, walls, stairs and fixtures together. Doors and windows ride
- * along with their walls, and fixtures with their room. Anchored stairs and
- * stair halls stay put.
+ * along with their walls, and fixtures with their room. Anchored stairs stay
+ * put.
  */
 export function moveMany(plan: FloorPlan, ids: string[], dx: number, dy: number): FloorPlan {
   const ids_ = new Set(unlocked(plan, ids));
@@ -89,7 +89,7 @@ export function moveMany(plan: FloorPlan, ids: string[], dx: number, dy: number)
   });
 }
 
-/** Turn rooms (with their fixtures), walls, stairs and fixtures around a point. Anchored stairs and stair halls stay put. */
+/** Turn rooms (with their fixtures), walls, stairs and fixtures around a point. Anchored stairs stay put. */
 export function rotateMany(plan: FloorPlan, ids: string[], deg: number, about: Point): FloorPlan {
   const ids_ = new Set(unlocked(plan, ids));
   const rt = (p: Point) => roundPoint(rotate(p, deg, about));

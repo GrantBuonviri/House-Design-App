@@ -157,7 +157,6 @@ const toRing = (pts: Point[]): [number, number][] => [...pts.map((p) => [p.x, p.
 export function whyNotCombine(plan: FloorPlan, ids: string[]): string | null {
   const rooms = ids.map((id) => plan.rooms.find((r) => r.id === id)).filter((r): r is PlanRoom => !!r);
   if (rooms.length < 2) return "Pick two or more rooms that touch.";
-  if (rooms.some((r) => r.stairStack)) return "A stair hall stays its own room, lined up on every floor. Pick other rooms to combine.";
   const outdoor = rooms.filter((r) => areaKind(r) === "outdoor").length;
   if (outdoor && outdoor < rooms.length) return "A porch, deck or patio can't be combined with an inside room.";
   // Every room has to share a real stretch of wall with the others (not just a corner).

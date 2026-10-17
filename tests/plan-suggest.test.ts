@@ -263,7 +263,7 @@ describe("stairs in a room", () => {
     expect(byId(p, "b").polygon).toEqual(b.polygon);
     const hall = p.rooms.find((r) => r.type === "hall")!;
     expect(hall.name).toBe("Hall");
-    expect(hall.stairStack).toBeUndefined();
+    expect(Object.keys(hall)).not.toContain("stairStack");
     expectSound(p);
   });
 
@@ -286,7 +286,7 @@ describe("stairs in a room", () => {
       for (const level of c.levels) {
         const p = planOf(res.plans, level.id);
         expectSound(p);
-        expect(p.rooms.some((r) => /stair hall/i.test(r.name) || r.stairStack || r.anchored)).toBe(false);
+        expect(p.rooms.some((r) => /stair hall/i.test(r.name) || "stairStack" in r || "anchored" in r)).toBe(false);
         expect(p.stairs.every((st) => !st.stackId || st.anchored)).toBe(true);
         for (const b of boxes(p, res.plans, c, level.id)) {
           const cx = (b.x0 + b.x1) / 2;

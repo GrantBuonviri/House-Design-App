@@ -6,7 +6,7 @@ import { reverseBulges, roomEdgeLength, withBulges } from "./arcs";
 import { boundsOf, dist, edgesOf, isRectangle, round1, roundPoint } from "./geometry";
 import { moveMany, newPlanId, reshapeRoom } from "./edit";
 import { pruneOpenWalls } from "./openWalls";
-import { isLocked, unlocked } from "./locks";
+import { unlocked } from "./locks";
 
 /**
  * Whole-selection helpers: copy things (`duplicateMany`), flip them
@@ -80,10 +80,8 @@ export function duplicateMany(plan: FloorPlan, ids: string[], d: Point = { x: CO
   };
   let working = plan;
   const rooms = m.rooms.map((r) => {
-    const { briefRoomId: _brief, stairStack: _stack, anchored: _anchored, ...rest } = r;
+    const { briefRoomId: _brief, ...rest } = r;
     void _brief;
-    void _stack;
-    void _anchored;
     const copy = { ...rest, id: fresh(r.id, "r"), name: copyName(working, r.name), polygon: r.polygon.map(mv) };
     working = { ...working, rooms: [...working.rooms, copy] };
     return copy;
@@ -174,7 +172,6 @@ export type Align = "tops" | "bottoms" | "lefts" | "rights" | "same-width" | "sa
 export function whyNotAlign(plan: FloorPlan, ids: string[], how: Align): string | null {
   const rooms = plan.rooms.filter((r) => ids.includes(r.id));
   if (rooms.length < 2) return "Pick two or more rooms.";
-  if (rooms.some((r) => isLocked(plan, r.id))) return "Anchored stair halls stay where they are. Click Unanchor on the stairs to line them up.";
   if ((how === "same-width" || how === "same-depth") && !rooms.every((r) => isRectangle(r.polygon) && axisAligned(r.polygon))) return "Making sizes match works on straight rectangular rooms.";
   return null;
 }

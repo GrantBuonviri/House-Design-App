@@ -116,9 +116,6 @@ function describeStacks(before: Project, after: Project): string | null {
   if (floors.length < 2) return null;
   const stacked = [...b.values()].filter((s) => s.stackId && a.has(s.id));
   if (stacked.some((s) => moved(a.get(s.id)!, s) && json(a.get(s.id)) !== json(s))) return "move the stairs on every floor";
-  const halls = (p: Project) => new Map(Object.values(p.floorPlans).flatMap((f) => f.rooms).filter((r) => r.stairStack).map((r) => [r.id, r]));
-  const ha = halls(before);
-  if ([...halls(after).values()].some((r) => ha.has(r.id) && json(ha.get(r.id)!.polygon) !== json(r.polygon))) return "move the stair hall wall on every floor";
   return null;
 }
 
