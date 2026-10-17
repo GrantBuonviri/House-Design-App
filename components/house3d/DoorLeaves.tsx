@@ -8,6 +8,7 @@ import { leafPose } from "@/lib/house3d/doors";
 import { IN_PER_UNIT, toScene, type Frame } from "@/lib/house3d/mesh";
 import { toGeometry } from "./geometry";
 import { glassMaterial, solidMaterial } from "./House3DView";
+import { useHouseMaterials } from "./prettyMaterial";
 
 /** Event handlers for clicking a mesh, given which pick each of its triangles belongs to (see House3DView's useDrag). */
 export type PickHandlers = (picks: (Pick | undefined)[]) => {
@@ -45,6 +46,7 @@ export function DoorLeaves({
 
 function Leaf({ part, frame, amountOf, on }: { part: Part; frame: Frame; amountOf: (id: string) => number; on?: PickHandlers }) {
   const door = part.door!;
+  const mat = useHouseMaterials(solidMaterial, glassMaterial);
   const geometry = useMemo(() => toGeometry(part.mesh), [part.mesh]);
   useEffect(() => () => geometry.dispose(), [geometry]);
   // Turns and shrinks happen about this point (scene feet).
@@ -78,7 +80,7 @@ function Leaf({ part, frame, amountOf, on }: { part: Part; frame: Frame; amountO
     <group ref={outer}>
       <mesh
         geometry={geometry}
-        material={part.glass ? glassMaterial : solidMaterial}
+        material={part.glass ? mat.glass : mat.solid}
         position={[-pivot[0], -pivot[1], -pivot[2]]}
         castShadow={!part.glass}
         receiveShadow={!part.glass}

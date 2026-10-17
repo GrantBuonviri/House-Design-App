@@ -28,6 +28,22 @@ export const PATTERN = {
   seam: 11,
   grass: 12,
   mulch: 13,
+  // Pretty only (Fast draws these as plain color): photo textures and shine, see lib/house3d/looks.ts.
+  drywall: 14,
+  paint: 15,
+  wood: 16,
+  cabinet: 17,
+  marble: 18,
+  granite: 19,
+  concrete: 20,
+  metal: 21,
+  ceramic: 22,
+  fabric: 23,
+  leather: 24,
+  mirror: 25,
+  satin: 26,
+  butcherBlock: 27,
+  rug: 28,
 } as const;
 export type PatternId = (typeof PATTERN)[keyof typeof PATTERN];
 
@@ -37,6 +53,8 @@ export type RoomLook = {
   wall: RGB;
   cabinet: RGB;
   counter: RGB;
+  /** The counter's stone or wood, from its pick (quartz and no pick look like marble). */
+  counterPattern: PatternId;
   vanity: RGB;
   sink: RGB;
   fridge: RGB;
@@ -63,6 +81,20 @@ const patternOf = (p: Product | undefined): PatternId => {
   }
 };
 
+/** A counter pick's look: granite, butcher block and concrete-look have their own; quartz and no pick look like marble. */
+export function counterPatternOf(p: Product | undefined): PatternId {
+  switch (p?.kind) {
+    case "granite":
+      return PATTERN.granite;
+    case "butcher-block":
+      return PATTERN.butcherBlock;
+    case "concrete-look":
+      return PATTERN.concrete;
+    default:
+      return PATTERN.marble;
+  }
+}
+
 const colorOf = (p: Product | undefined, fallback: RGB): RGB => (p?.color ? hex(p.color) : fallback);
 
 /** How a room looks with what's picked for it (and for the whole house). */
@@ -75,10 +107,21 @@ export function roomLook(selections: Selection[] | undefined, room: Pick<PlanRoo
   const floor = floorPick && !(floorPick.kind === "shower" || floorPick.kind === "wall") ? floorPick : undefined;
   return {
     floor: colorOf(floor, plain),
-    floorPattern: floor ? patternOf(floor) : plain === COLORS.wood ? PATTERN.plank : plain === COLORS.tile ? PATTERN.tile : plain === COLORS.carpet ? PATTERN.carpet : PATTERN.none,
+    floorPattern: floor
+      ? patternOf(floor)
+      : plain === COLORS.wood
+        ? PATTERN.plank
+        : plain === COLORS.tile
+          ? PATTERN.tile
+          : plain === COLORS.carpet
+            ? PATTERN.carpet
+            : plain === COLORS.concrete
+              ? PATTERN.concrete
+              : PATTERN.none,
     wall: colorOf(picks.get("paint"), COLORS.drywall),
     cabinet: colorOf(picks.get("cabinets"), COLORS.cabinet),
     counter: colorOf(picks.get("counters"), COLORS.counter),
+    counterPattern: counterPatternOf(picks.get("counters")),
     vanity: colorOf(picks.get("vanities"), COLORS.cabinet),
     sink: colorOf(picks.get("kitchen-sinks"), COLORS.steel),
     fridge: colorOf(picks.get("fridges"), COLORS.steel),
