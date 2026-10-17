@@ -15,7 +15,9 @@ import { removeWall } from "@/lib/plan/openWalls";
 import { plansFromSketch } from "@/lib/plan/fromSketch";
 import { suggestPlanAlternatives, type PlanAlternative } from "@/lib/plan/alternatives";
 import { dismissWarning, makeStairsU, planWarnings, restoreWarning, splitDismissed, type PlanWarning } from "@/lib/plan/checks";
-import { suggestPlans } from "@/lib/plan/suggest";
+import { makeEscapeWindow, suggestPlans } from "@/lib/plan/suggest";
+import { fixMessage, recheck } from "@/lib/plan/recheck";
+import { coveredAbove } from "@/lib/plan/wells";
 import { boundsOf, dist } from "@/lib/plan/geometry";
 import { houseTotals, totalsText } from "@/lib/plan/measure";
 import { lotOffsetFor } from "@/lib/house3d/site";
@@ -95,6 +97,8 @@ export default function PlanStage({ onContinue, onGoToSketch, onGoToFurnish }: {
   const [editingBasics, setEditingBasics] = useState(false);
   const [choosing, setChoosing] = useState(() => !planHasContent(plans));
   const [notes, setNotes] = useState<string[]>([]);
+  /** Things to check that the last fix, Suggest a plan or alternative brought up: tagged "new" until the next edit (`skip` lets the fix's own change through). */
+  const [fresh, setFresh] = useState<{ ids: string[]; skip: boolean } | null>(null);
   /** After Suggest a plan: offer Furnish for me for the new plan. */
   const [offerFurnish, setOfferFurnish] = useState(false);
   const [flash, setFlash] = useState<string>();
@@ -122,6 +126,10 @@ export default function PlanStage({ onContinue, onGoToSketch, onGoToFurnish }: {
     setWasFilled(filled);
     if (filled && choosing) setChoosing(false);
   }
+
+  useEffect(() => {
+    setFresh((f) => (f && f.skip ? { ...f, skip: false } : null));
+  }, [plans]);
 
   useEffect(() => {
     if (!flash) return;
@@ -258,6 +266,8 @@ export default function PlanStage({ onContinue, onGoToSketch, onGoToFurnish }: {
   // Where the house sits on the lot in 3D. Kept as the same object while its value doesn't change.
   const offsetKey = JSON.stringify(lotOffsetFor(project));
   const offset = useMemo<Point>(() => JSON.parse(offsetKey), [offsetKey]);
+  /** What Things to check and the re-check after each fix look at. */
+  const checkCtx = useMemo(() => ({ levels, brief, basics, land: { plot, offset } }), [levels, brief, basics, plot, offset]);
 
   const chooseDisplay = (d: Display) => {
     if (d !== display) {
@@ -376,8 +386,11 @@ export default function PlanStage({ onContinue, onGoToSketch, onGoToFurnish }: {
   /** The sketch as a plan, plus hallways, closets, windows and doors from the built-in rules. */
   function suggest() {
     const res = suggestPlans(sketches, { brief, plot, levels, basics });
+    const next = keepFurnish(plans, { ...blankPlans(levels), ...res.plans });
+    const r = recheck(plans, next, checkCtx);
     update((p) => ({ ...p, floorPlans: keepFurnish(p.floorPlans, { ...blankPlans(levels), ...res.plans }), plan: { ...p.plan, showSketch: false } }));
-    setNotes(res.notes);
+    markFresh(r.added);
+    setNotes(r.summary ? [...res.notes, `Done. ${r.summary}`] : res.notes);
     setSelection([]);
     setChoosing(false);
     setOfferFurnish(true);
@@ -458,11 +471,14 @@ export default function PlanStage({ onContinue, onGoToSketch, onGoToFurnish }: {
   function takeAlternative(i: number, levelOnly: boolean) {
     if (!compare) return;
     const alt = compare.alternatives[i];
+    const next = levelOnly ? { ...plans, [level.id]: alt.plans[level.id] } : { ...plans, ...alt.plans };
+    const r = recheck(plans, next, checkCtx);
     setPlans((ps) => (levelOnly ? { ...ps, [level.id]: alt.plans[level.id] } : { ...ps, ...alt.plans }));
+    markFresh(r.added);
     setComparing(false);
     setSelection([]);
     setNotes([]);
-    setFlash(`Using “${alt.title}”${levelOnly ? ` for the ${level.name.toLowerCase()}` : ""}. Undo brings back your own plan.`);
+    setFlash(`Using “${alt.title}”${levelOnly ? ` for the ${level.name.toLowerCase()}` : ""}.${r.summary ? ` ${r.summary}` : ""} Undo brings back your own plan.`);
   }
 
   function saveBasics(b: PlanBasics) {
@@ -470,11 +486,12 @@ export default function PlanStage({ onContinue, onGoToSketch, onGoToFurnish }: {
     setEditingBasics(false);
   }
 
-  const warnings = useMemo(() => (basics && !choosing ? planWarnings(plans, { levels, brief, basics, land: { plot, offset } }) : []), [plans, levels, brief, basics, choosing, plot, offset]);
+  const warnings = useMemo(() => (basics && !choosing ? planWarnings(plans, checkCtx) : []), [plans, checkCtx, basics, choosing]);
 
   const split = useMemo(() => splitDismissed(warnings, project.plan.dismissed), [warnings, project.plan.dismissed]);
   const dismissProps = {
     warnings: split.active,
+    fresh: fresh?.ids,
     dismissed: split.dismissed,
     onDismiss: (w: PlanWarning) => {
       update((p) => ({ ...p, plan: { ...p.plan, dismissed: dismissWarning(p.plan.dismissed, w.id, warnings) } }));
@@ -495,7 +512,7 @@ export default function PlanStage({ onContinue, onGoToSketch, onGoToFurnish }: {
     if (w.at) setFocus({ at: w.at, key: Date.now() });
   }
 
-  /** Close gap on a warning: push the two rooms together. */
+  /** The fix buttons in Things to check. The change is always kept; the message says what it brought up. */
   function fixWarning(w: PlanWarning, action?: "inside" | "delete" | "plan") {
     const p = planOf(plans, w.levelId);
     if (w.closetWalls) {
@@ -516,18 +533,39 @@ export default function PlanStage({ onContinue, onGoToSketch, onGoToFurnish }: {
       const lv = levels.find((l) => l.id === w.levelId);
       const sup = lv && supportOf(plans, levels, lv);
       if (!sup) return;
-      setPlans((ps) => ({ ...ps, [w.levelId]: pullBack(p, w.pullBack!.roomId, sup.regions, sup.arcs) }));
-      setFlash("Pulled the room back over the floor below. Undo puts it back.");
+      applyFix({ ...plans, [w.levelId]: pullBack(p, w.pullBack.roomId, sup.regions, sup.arcs) }, "Pulled the room back over the floor below.");
       return;
     }
     if (w.stairsU) {
-      setPlans((ps) => refitHalls(makeStairsU(ps, w.stairsU!), stackCtx));
-      setFlash("Made both stairs U-shaped. Undo puts them back.");
+      applyFix(refitHalls(makeStairsU(plans, w.stairsU), stackCtx), "Made both stairs U-shaped.");
+      return;
+    }
+    if (w.escape) {
+      const lv = levels.find((l) => l.id === w.levelId);
+      const room = p.rooms.find((r) => r.id === w.escape!.roomId);
+      if (!lv || !room) return;
+      const res = makeEscapeWindow(p, room.id, lv, lv.kind === "basement" ? coveredAbove(plans, levels) : []);
+      if (!res.ok) {
+        setFlash(`There's no outside wall in ${room.name} with room for an escape window. Move the room to an outside wall, or add a door outside.`);
+        return;
+      }
+      applyFix({ ...plans, [w.levelId]: res.plan }, res.added ? `Added an escape window to ${room.name}.` : `Made ${room.name}'s window an escape window.`);
       return;
     }
     if (!w.gap) return;
-    setPlans((ps) => ({ ...ps, [w.levelId]: closeGap(p, w.gap!) }));
-    setFlash("Closed the gap. Undo puts it back.");
+    applyFix({ ...plans, [w.levelId]: closeGap(p, w.gap) }, "Closed the gap.");
+  }
+
+  /** Keep a fix's change, tag what it broke as new in Things to check, and say so. */
+  function applyFix(next: typeof plans, done: string) {
+    const r = recheck(plans, next, checkCtx);
+    setPlans(() => next);
+    markFresh(r.added);
+    setFlash(fixMessage(done, r));
+  }
+
+  function markFresh(added: PlanWarning[]) {
+    setFresh(added.length ? { ids: added.map((x) => x.id), skip: true } : null);
   }
 
   const hasGarage = Boolean(brief?.rooms.some((r) => r.type === "garage") || brief?.garageBays);
@@ -787,8 +825,11 @@ export default function PlanStage({ onContinue, onGoToSketch, onGoToFurnish }: {
                 className="btn absolute top-2 right-3 px-2 py-1 text-xs"
                 title={`Make a room over everything the ${sup.below.name.toLowerCase()} covers. Cut it up with the Split tool.`}
                 onClick={() => {
-                  setLevelPlan(fillBelow(plan, sup.regions, sup.arcs));
-                  setFlash(`Filled the space over the ${sup.below.name.toLowerCase()}. Use Split to cut it into rooms. Undo puts it back.`);
+                  const filled = fillBelow(plan, sup.regions, sup.arcs, planOf(plans, sup.below.id).rooms);
+                  const r = recheck(plans, { ...plans, [level.id]: filled }, checkCtx);
+                  setLevelPlan(filled);
+                  markFresh(r.added);
+                  setFlash(fixMessage(`Filled the space over the ${sup.below.name.toLowerCase()}, named for the rooms below. Use Split to cut it into rooms.`, r));
                 }}
               >
                 Fill the floor below

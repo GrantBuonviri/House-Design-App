@@ -10,11 +10,12 @@ import { anchor, floorsOf, hallFloor, hallLimit, hallOn, linkStacks, stackIds } 
 import { connectAll } from "./doors";
 import { addClosets } from "./closets";
 import { addWindows } from "./windows";
+import { coveredAbove } from "./wells";
 import { keepInside, supportOf } from "./support";
 export { HALL_IN, addHallways, addStairHalls, isWayIn, roomsNeedingHall } from "./hallways";
 export { connectAll, wayInRooms } from "./doors";
 export { addClosets } from "./closets";
-export { addWindows, outsideStretches, roomJustOutside, type Stretch } from "./windows";
+export { addWindows, makeEscapeWindow, outsideStretches, roomJustOutside, type Stretch } from "./windows";
 
 /**
  * "Suggest a plan": the flow sketch turned into a plan, plus what a real plan
@@ -91,7 +92,8 @@ export function suggestPlans(diagrams: Record<string, BubbleDiagram>, ctx: PlanC
       plan = connectAll(plan, obstacles, ctx.brief?.openKitchen ?? false);
       const c = addClosets(plan, exteriorIn, ctx.brief);
       closets += c.added;
-      const w = addWindows(c.plan, level);
+      // A basement's walls under the main floor are buried: no windows there.
+      const w = addWindows(c.plan, level, level.kind === "basement" ? coveredAbove(base.plans, ctx.levels) : []);
       windows += w.added;
       plan = w.plan;
       const links = roomLinks(plan);

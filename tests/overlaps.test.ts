@@ -49,7 +49,7 @@ describe("trimming overlaps", () => {
 });
 
 describe("closing gaps", () => {
-  it("finds rooms a few inches apart and pushes them together", () => {
+  it("finds rooms a few inches apart and closes the gap by moving the wall", () => {
     const p = plan([room("a", 0, 0, 12, 10), { ...room("b", 12, 0, 10, 10), polygon: room("b", 12, 0, 10, 10).polygon.map((q) => ({ x: q.x + 4, y: q.y })) }]);
     const gaps = findGaps(p);
     expect(gaps).toHaveLength(1);
@@ -58,7 +58,27 @@ describe("closing gaps", () => {
     expect(findGaps(fixed)).toHaveLength(0);
     const xs = fixed.rooms.flatMap((r) => r.polygon.map((q) => q.x));
     expect(Math.min(...xs)).toBe(0);
-    expect(Math.max(...xs)).toBe(22 * FT - 0); // b moved left, a (the bigger one) stayed
+    // b's facing wall moved left; its far wall stayed put, so no new gap opens there. a (the bigger one) stayed.
+    expect(Math.max(...xs)).toBe(22 * FT + 4);
+    const b = fixed.rooms.find((r) => r.id === "b")!;
+    expect(Math.min(...b.polygon.map((q) => q.x))).toBe(12 * FT);
+  });
+
+  it("closes a gap without opening one on the far side", () => {
+    // c sits right against b's far wall: pushing b would open a gap there, moving b's wall doesn't.
+    const shift = (r: ReturnType<typeof room>, dx: number) => ({ ...r, polygon: r.polygon.map((q) => ({ x: q.x + dx, y: q.y })) });
+    const p = plan([room("a", 0, 0, 12, 10), shift(room("b", 12, 0, 10, 10), 4), shift(room("c", 22, 0, 10, 10), 4)]);
+    const fixed = closeGap(p, findGaps(p)[0]);
+    expect(findGaps(fixed)).toHaveLength(0);
+  });
+
+  it("pushes the room over when no wall is known", () => {
+    const shift = (r: ReturnType<typeof room>, dx: number) => ({ ...r, polygon: r.polygon.map((q) => ({ x: q.x + dx, y: q.y })) });
+    const p = plan([room("a", 0, 0, 12, 10), shift(room("b", 12, 0, 10, 10), 4)]);
+    const g = findGaps(p)[0];
+    const fixed = closeGap(p, { ...g, aEdge: undefined, bEdge: undefined });
+    const xs = fixed.rooms.flatMap((r) => r.polygon.map((q) => q.x));
+    expect(Math.max(...xs)).toBe(22 * FT); // the old push, when no wall is known
   });
 
   it("ignores rooms that touch, are far apart, or only meet at a corner", () => {

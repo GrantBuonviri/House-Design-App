@@ -36,6 +36,8 @@ export type Quantities = {
   footingLf: number;
   /** Posts (with footings) and beam under upper-floor rooms held up "On posts". */
   overhangPosts: number;
+  /** Window wells outside basement escape windows (lib/plan/wells.ts). */
+  windowWells: number;
   overhangBeamLf: number;
   /** Length along the curve of all curved walls, in feet (shared walls counted once). */
   curvedWallLf: number;
@@ -196,6 +198,7 @@ export function empty(source: Quantities["source"]): Quantities {
     basementSlabSqft: 0,
     footingLf: 0,
     overhangPosts: 0,
+    windowWells: 0,
     overhangBeamLf: 0,
     curvedWallLf: 0,
     stemWallSqft: 0,

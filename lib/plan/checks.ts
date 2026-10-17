@@ -10,6 +10,9 @@ import { dist, edgesOf, isRectangle, polygonCenter, polygonsOverlap, scale, add 
 import { areaKind, roomSqft } from "./measure";
 import { MIN_STAIRS_WIDTH_IN, stackedHeadroom } from "./stairs";
 import { codeNum } from "@/lib/codes/data";
+import { escapeCheck, operationOf } from "@/lib/codes/openings";
+import { clearSqft, clearWidthIn, isHabitable } from "@/lib/codes/rules";
+import { windowWells } from "./wells";
 import { findGaps, type Gap } from "./overlaps";
 import { isWayIn, stairsBoxes, wayInRooms } from "./suggest";
 import { CANTILEVER_MAX_IN, overhangsOf, pulledBack, supportOf } from "./support";
@@ -44,6 +47,8 @@ export type PlanWarning = {
   stairsU?: { lower: { levelId: string; id: string }; upper: { levelId: string; id: string } };
   /** A Furnish item that lost its spot: "Move inside" (when it can) and "Delete" buttons. */
   furnish?: { kind: LayerKind; id: string; canMoveInside: boolean };
+  /** A bedroom (or basement) with no window to climb out of: "Make this an escape window". */
+  escape?: { roomId: string };
   /** A closet piece whose rod and shelf were deleted in Furnish: "Remove the closet walls" (on the floor plan). */
   closetWalls?: { stem: string };
 };
@@ -76,9 +81,6 @@ type Ctx = {
   /** The land and where the house sits on it (plot point = plan point + offset), for the land checks. */
   land?: { plot: Plot | null; offset: Point } | null;
 };
-
-/** A window you could climb out of: wide enough, and low enough to reach. */
-const isEgress = (o: FloorPlan["openings"][number]) => o.kind === "window" && o.widthIn >= 24 && o.heightIn >= 24 && (o.sillIn ?? 30) <= 44;
 
 export function planWarnings(plans: Plans, ctx: Ctx): PlanWarning[] {
   const saved = plans;
@@ -170,11 +172,36 @@ export function planWarnings(plans: Plans, ctx: Ctx): PlanWarning[] {
       if (via.length === next.length) add_(level.id, `through:${r.id}`, `${r.name} can only be reached through ${via.map((n) => n.name).join(" or ")}.`, [r]);
     }
 
-    // Bedrooms need a window you could climb out of.
+    // Bedrooms need a window you could climb out of: the same clear-opening math as the code check (lib/codes/openings.ts), so fixed windows never count.
+    const below = level.kind === "basement";
+    // Below ground, a window only gets you out with a well dug outside it (not where the main floor covers the ground).
+    const wells = below ? new Set(windowWells(plans, levels, ctx.basics).map((w) => w.openingId)) : null;
+    const escapes = (o: FloorPlan["openings"][number]) => escapeCheck(o, below).ok && (!wells || wells.has(o.id));
+    const outsideDoor = (id: string | null) => plan.openings.some((o) => o.kind === "door" && openingRooms(plan, o).includes(null) && (id === null || openingRooms(plan, o).includes(id)));
     for (const r of plan.rooms.filter((x) => BEDROOMS.has(x.type ?? ""))) {
+      if (outsideDoor(r.id)) continue;
       const windows = plan.openings.filter((o) => o.kind === "window" && openingRooms(plan, o).includes(r.id));
+      if (windows.some(escapes)) continue;
+      const opening = windows.filter((o) => operationOf(o) !== "fixed");
       if (!windows.length) add_(level.id, `egress:${r.id}`, `${r.name} has no window. A bedroom needs one you could climb out of in an emergency.`, [r]);
-      else if (!windows.some(isEgress)) add_(level.id, `egress:${r.id}`, `${r.name}'s windows are too small or too high to climb out of in an emergency.`, [r]);
+      else if (!opening.length) add_(level.id, `egress:${r.id}`, `${r.name}'s windows don't open, so there's no way to climb out in an emergency.`, [r]);
+      else if (opening.every((o) => escapeCheck(o, below).ok)) add_(level.id, `egress:${r.id}`, `${r.name}'s windows are in walls buried under the floor above, so there's no room for a window well to climb out through.`, [r]);
+      else add_(level.id, `egress:${r.id}`, `${r.name}'s windows don't open wide enough to climb out of in an emergency (${escapeCheck(opening.find((o) => !escapeCheck(o, below).ok)!, below).problems[0]}).`, [r]);
+      out[out.length - 1].escape = { roomId: r.id };
+    }
+    // A basement with rooms to live in needs a way out: an escape window (with a well) or a door outside.
+    if (below && plan.rooms.some((r) => isHabitable(r) && areaKind(r) === "living") && !outsideDoor(null) && !plan.openings.some((o) => o.kind === "window" && escapes(o))) {
+      const big = [...plan.rooms].filter((r) => isHabitable(r) && areaKind(r) === "living").sort((a, b) => roomSqft(b) - roomSqft(a))[0];
+      add_(level.id, "egress-basement", `The ${level.name.toLowerCase()} has no emergency escape window or door outside.`, [big]);
+      out[out.length - 1].escape = { roomId: big.id };
+    }
+
+    // The code's smallest rooms: 70 sq ft and 7' across inside the walls (kitchens excepted), the same as the code check.
+    for (const r of plan.rooms.filter((x) => isHabitable(x) && x.type !== "kitchen" && areaKind(x) === "living")) {
+      const a = clearSqft(r);
+      const w = clearWidthIn(r);
+      if (a < codeNum("rooms.minHabitableArea")) add_(level.id, `code-area:${r.id}`, `${r.name} is about ${Math.round(a)} sq ft inside the walls. Code wants rooms you live in to be at least ${codeNum("rooms.minHabitableArea")} sq ft.`, [r]);
+      else if (w < codeNum("rooms.minHabitableDimension") - 0.5) add_(level.id, `code-width:${r.id}`, `${r.name} is ${formatFeetInches(Math.round(w))} across at the narrowest. Code wants at least ${formatFeetInches(codeNum("rooms.minHabitableDimension"))} inside the walls.`, [r]);
     }
 
     // Hallways at least 3 ft wide inside.

@@ -2,6 +2,7 @@ import polygonClipping, { type Polygon } from "polygon-clipping";
 import type { FloorPlan, Level, OverhangKind, PlanRoom, Point } from "@/lib/model/schema";
 import { cleanRing, COVERED, roofFootprint, subtractRegions, type Region } from "@/lib/house3d/footprint";
 import { levelBelow } from "./basics";
+import { doorBetween, sharedWall } from "./connect";
 import { planOf, makeRoom, reshapeRoom, type Plans } from "./edit";
 import { clockwise, dist, edgesOf, lerp, polygonArea, polygonCenter, roundPoint } from "./geometry";
 import { areaKind } from "./measure";
@@ -189,10 +190,47 @@ export function tooBigNote(level: Pick<Level, "name">, below: Pick<Level, "name"
 }
 
 /** "Fill the floor below": one room on each part of the support area that's still empty. */
-export function fillBelow(plan: FloorPlan, regions: Region[], arcs: Arc[] = []): FloorPlan {
+export function fillBelow(plan: FloorPlan, regions: Region[], arcs: Arc[] = [], below: PlanRoom[] = []): FloorPlan {
   const shapes = fillShapes(plan, regions);
   const curves = [...curvesOf(plan.rooms), ...arcs];
-  return { ...plan, rooms: [...plan.rooms, ...shapes.map((poly, i) => refitRoom(makeRoom(poly, shapes.length > 1 ? `Room ${i + 1}` : "Room"), clockwise(poly.map(roundPoint)), curves))] };
+  const used = new Set<string>();
+  let out: FloorPlan = { ...plan, rooms: [...plan.rooms] };
+  shapes.forEach((poly, i) => {
+    // Named for the room it sits over most ("Under Bed 2"); the type is left for the user to pick.
+    const under = mostUnder(poly, below);
+    let name = under ? `Under ${under.name}` : shapes.length > 1 ? `Room ${i + 1}` : "Room";
+    for (let k = 2; used.has(name); k++) name = `${under ? `Under ${under.name}` : "Room"} ${k}`;
+    used.add(name);
+    const room = refitRoom(makeRoom(poly, name), clockwise(poly.map(roundPoint)), curves);
+    out = { ...out, rooms: [...out.rooms, room] };
+    // A door to a room next to it, so it isn't shut in: a hallway or stair hall first, then any room but a closet.
+    const rank = (r: PlanRoom) => (r.type === "hall" || r.stairStack ? 0 : r.type === "closet" || r.type === "primary-closet" ? 9 : 1);
+    const next = out.rooms.filter((r) => r.id !== room.id && areaKind(r) !== "outdoor" && rank(r) < 9 && sharedWall(room, r)).sort((a, b) => rank(a) - rank(b));
+    for (const r of next) {
+      const door = doorBetween(out, room, r);
+      if (door) {
+        out = { ...out, openings: [...out.openings, door] };
+        break;
+      }
+    }
+  });
+  return out;
+}
+
+/** The room below that an outline covers the most of. */
+function mostUnder(poly: Point[], below: PlanRoom[]): PlanRoom | null {
+  let best: { r: PlanRoom; a: number } | null = null;
+  for (const r of below) {
+    if (areaKind(r) === "outdoor") continue;
+    let a = 0;
+    try {
+      a = polygonClipping.intersection([ring(poly)], [ring(r.polygon)]).reduce((s, piece) => s + polygonArea(fromRing(piece[0])), 0);
+    } catch {
+      continue;
+    }
+    if (a > 1 && (!best || a > best.a)) best = { r, a };
+  }
+  return best?.r ?? null;
 }
 
 /** The support outline's corners and walls, to snap to while drawing. */

@@ -152,6 +152,7 @@ export function estimate(
   line("foundation", "stem-wall", q.stemWallSqft);
   line("foundation", "basement-wall", q.basementWallSqft);
   line("foundation", "waterproofing", q.waterproofSqft);
+  line("foundation", "window-well", q.windowWells, "Window wells with ladders, outside basement escape windows");
 
   // Framing
   line("framing", "floor-framing", q.floorFramingSqft);

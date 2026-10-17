@@ -14,6 +14,7 @@ import { escapeCheck, glassSqft, openableSqft } from "./openings";
 import { alarmChecks, bathFanCheck, electricalChecks, mechanicalChecks } from "./systemsChecks";
 import { bracingChecks, floorFramingChecks, footingChecks, headerChecks, headroomChecks } from "./structureChecks";
 import { flatProject } from "@/lib/plan/flatten";
+import { windowWells } from "@/lib/plan/wells";
 
 /**
  * The code check: a list of rules from the codes Boise uses, each with its
@@ -100,6 +101,14 @@ export function clearWidthIn(r: PlanRoom): number {
     best = Math.min(best, Math.max(...ds) - Math.min(...ds));
   }
   return best - INTERIOR_WALL_IN;
+}
+
+/** Basement windows with a window well outside them (lib/plan/wells.ts). */
+const wellCache = new WeakMap<HouseFacts, Set<string>>();
+function wellIds(h: HouseFacts): Set<string> {
+  let ids = wellCache.get(h);
+  if (!ids) wellCache.set(h, (ids = new Set(windowWells(Object.fromEntries(h.levels.map((l) => [l.id, h.plan(l.id)])), h.levels, h.basics).map((w) => w.openingId))));
+  return ids;
 }
 
 const openingsOf = (plan: FloorPlan, r: PlanRoom) => plan.openings.filter((o) => openingRooms(plan, o).includes(r.id));
@@ -219,7 +228,8 @@ export const RULES: CodeRule[] = [
         const door = own.some((o) => o.kind === "door" && openingRooms(plan, o).includes(null));
         const below = level.kind === "basement";
         const windows = own.filter((o) => o.kind === "window").map((o) => ({ o, c: escapeCheck(o, below) }));
-        const good = windows.find((w) => w.c.ok);
+        // Below ground, only a window with a well dug outside it gets you out.
+        const good = windows.find((w) => w.c.ok && (!below || wellIds(h).has(w.o.id)));
         if (door) return room(level, r, { status: "pass", text: `${where(level, r)}: door straight outside` });
         if (good) return room(level, r, { status: "pass", text: `${where(level, r)}: ${h.tags.get(good.o.id) ?? "window"} opens about ${f1(good.c.clear.sqft)} sq ft` });
         if (!windows.length) return room(level, r, { status: "fail", text: `${where(level, r)} has no window.`, fix: "Add a window you can climb out of (about 36\" wide by 60\" tall works as a single-hung)." });
@@ -240,7 +250,7 @@ export const RULES: CodeRule[] = [
         .filter((l) => l.kind === "basement")
         .map((l) => {
           const plan = h.plan(l.id);
-          const ok = plan.openings.some((o) => (o.kind === "window" && escapeCheck(o, true).ok) || (o.kind === "door" && openingRooms(plan, o).includes(null)));
+          const ok = plan.openings.some((o) => (o.kind === "window" && escapeCheck(o, true).ok && wellIds(h).has(o.id)) || (o.kind === "door" && openingRooms(plan, o).includes(null)));
           return ok
             ? { status: "pass" as const, text: `${l.name}: has an escape window or door`, levelId: l.id }
             : { status: "fail" as const, text: `${l.name} has no emergency escape window or outside door.`, fix: "Add an escape window with a window well, or a door outside.", levelId: l.id, stage: "plan" as const };
