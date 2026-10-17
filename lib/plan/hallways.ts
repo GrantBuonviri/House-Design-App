@@ -2,6 +2,9 @@ import type { FloorPlan, PlanRoom, Point } from "@/lib/model/schema";
 import { isCirculation, neighbors, openingRooms, roleOf, sharedWall } from "./connect";
 import { keepOpeningsInPlace, makeRoom, moveMany } from "./edit";
 import { roomHasCurves } from "./arcs";
+import { overhangsOf } from "./support";
+import type { Region } from "@/lib/house3d/footprint";
+import { closeHallGaps, setHall } from "./anchor";
 import { add, boundsOf, collinearOverlap, edgesOf, isRectangle, polygonsOverlap, round1, roundPoint, type Bounds } from "./geometry";
 
 /** Suggest a plan: hallways where private rooms would only open off other rooms, and stair halls. */
@@ -9,6 +12,7 @@ import { add, boundsOf, collinearOverlap, edgesOf, isRectangle, polygonsOverlap,
 /** A hallway is 3' 6" from wall middle to wall middle, about 3' 2" clear. */
 export const HALL_IN = 42;
 export const DOOR_ROOM_IN = 36;
+const BRIDGE_MAX_IN = 72;
 
 // ---------- Hallways ----------
 
@@ -163,49 +167,99 @@ function dropDoorsToNowhere(before: FloorPlan, after: FloorPlan): FloorPlan {
 
 /** Room to step off the stairs at each end. */
 const LANDING_IN = 36;
-/** Rooms this close to the stairs get the stair hall reaching over to them. */
-const REACH_IN = 60;
+
+/** A stack's stair hall outline (its `hallLimit`) for one set of stairs, when the stairs belong to a stack. */
+export type StairFit = { outline: Point[]; stackId: string; floor: Point[] | null };
 
 /**
- * Stairs standing outside every room get a stair hall around them: space to
- * step off at each end, reaching across to rooms close by so it can have
- * doors. Skipped when it would run into a room or touch none.
+ * Stairs standing outside every room get a stair hall exactly as big as the
+ * stairs allow: the stairs plus 3' of standing room past each end (the
+ * stack's `hallLimit` when `fits` gives one). It never reaches toward
+ * neighbors: rooms a few inches off close the gap, and where none touches it
+ * the hallways step finds a way in. Skipped when it would run into a room.
  */
-export function addStairHalls(plan: FloorPlan, boxes: Bounds[]): { plan: FloorPlan; added: number } {
+export function addStairHalls(plan: FloorPlan, boxes: Bounds[], fits: (StairFit | null | undefined)[] = []): { plan: FloorPlan; added: number } {
   let p = plan;
   let added = 0;
-  for (const b of boxes) {
-    if (p.rooms.some((r) => polygonsOverlap(boxCorners(b), r.polygon))) continue;
-    const long = b.x1 - b.x0 >= b.y1 - b.y0 ? "x" : "y";
-    const rect = { ...b };
-    const sides = (long === "x" ? ["x0", "x1", "y0", "y1"] : ["y0", "y1", "x0", "x1"]) as (keyof Bounds)[];
-    for (const side of sides) {
-      const axis = side[0] as "x" | "y";
-      const low = side.endsWith("0");
-      const across = (r: Bounds) => (axis === "x" ? r.y0 < rect.y1 - 1 && r.y1 > rect.y0 + 1 : r.x0 < rect.x1 - 1 && r.x1 > rect.x0 + 1);
-      const gaps = p.rooms
-        .map((r) => boundsOf(r.polygon)!)
-        .filter(across)
-        .map((r) => (low ? rect[side] - (axis === "x" ? r.x1 : r.y1) : (axis === "x" ? r.x0 : r.y0) - rect[side]))
-        .filter((d) => d >= -0.5);
-      const nearest = Math.max(0, Math.min(Infinity, ...gaps));
-      const grow = nearest <= REACH_IN ? nearest : axis === long ? LANDING_IN : 0;
-      rect[side] = round1(low ? rect[side] - grow : rect[side] + grow);
+  boxes.forEach((b, i) => {
+    const fit = fits[i];
+    if (fit && p.rooms.some((r) => r.stairStack === fit.stackId)) return;
+    if (p.rooms.some((r) => polygonsOverlap(boxCorners(b), r.polygon))) return;
+    let outline = fit?.outline;
+    if (!outline) {
+      const long = b.x1 - b.x0 >= b.y1 - b.y0 ? "x" : "y";
+      outline = boxCorners(long === "x" ? { ...b, x0: round1(b.x0 - LANDING_IN), x1: round1(b.x1 + LANDING_IN) } : { ...b, y0: round1(b.y0 - LANDING_IN), y1: round1(b.y1 + LANDING_IN) });
     }
-    const poly = boxCorners(rect);
-    if (p.rooms.some((r) => polygonsOverlap(poly, r.polygon))) continue;
-    const hall = makeRoom(poly, "Stair hall", { type: "hall" });
-    if (!neighbors(p, hall, DOOR_ROOM_IN).length) continue;
-    p = { ...p, rooms: [...p.rooms, hall] };
+    // Rooms in the way of a stack's hall are trimmed back around it (the same as Anchor does).
+    if (fit && p.rooms.some((r) => polygonsOverlap(outline!, r.polygon))) {
+      const set = setHall(p, fit.stackId, outline, true, fit.floor ?? outline);
+      const next = closeHallGaps(set.plan, set.plan.rooms.find((r) => r.stairStack === fit.stackId)!.id);
+      const made = next.rooms.find((r) => r.stairStack === fit.stackId)!;
+      if (!neighbors(next, made, DOOR_ROOM_IN).length) return;
+      p = next;
+      added++;
+      return;
+    }
+    if (p.rooms.some((r) => polygonsOverlap(outline!, r.polygon))) return;
+    const base = makeRoom(outline, "Stair hall", { type: "hall" });
+    // The hall stays put while neighbors close up to it (an anchored room is never the one that moves).
+    const hall = { ...base, anchored: true, stairStack: fit?.stackId ?? "loose" };
+    let next = closeHallGaps({ ...p, rooms: [...p.rooms, hall] }, hall.id);
+    if (!fit) next = { ...next, rooms: next.rooms.map((r) => (r.id === hall.id ? { ...r, anchored: undefined, stairStack: undefined } : r)) };
+    if (!neighbors(next, hall, DOOR_ROOM_IN).length) return;
+    p = next;
     added++;
+  });
+  return { plan: p, added };
+}
+
+/**
+ * A stair hall is only as big as its stairs, so a room a few feet away has no
+ * wall on it. Where a room that still needs a way in faces an anchored stair
+ * hall across a gap of up to 6', a short ordinary hallway joins them (kept
+ * over the floor below when there is one).
+ */
+export function bridgeStairHalls(plan: FloorPlan, regions: Region[] = []): { plan: FloorPlan; added: number } {
+  let p = plan;
+  let added = 0;
+  for (const need of roomsNeedingHall(plan)) {
+    const nb = boundsOf(need.polygon)!;
+    for (const hall of p.rooms.filter((r) => r.stairStack)) {
+      const hb = boundsOf(hall.polygon)!;
+      const tries: Bounds[] = [];
+      for (const axis of ["x", "y"] as const) {
+        const [lo, hi] = axis === "x" ? (["x0", "x1"] as const) : (["y0", "y1"] as const);
+        const [plo, phi] = axis === "x" ? (["y0", "y1"] as const) : (["x0", "x1"] as const);
+        const a0 = Math.max(hb[plo], nb[plo]);
+        const a1 = Math.min(hb[phi], nb[phi]);
+        for (const [from, to] of [[hb[hi], nb[lo]], [nb[hi], hb[lo]]]) {
+          if (to - from < 1 || to - from > BRIDGE_MAX_IN || a1 - a0 < HALL_IN) continue;
+          for (let at = a0; at + HALL_IN <= a1 + 0.5; at += 6) {
+            const rect = axis === "x" ? { x0: from, x1: to, y0: at, y1: at + HALL_IN } : { x0: at, x1: at + HALL_IN, y0: from, y1: to };
+            tries.push(rect);
+          }
+        }
+      }
+      for (const rect of tries) {
+        const room = makeRoom(boxCorners(rect), "Hall", { type: "hall" });
+        if (p.rooms.some((r) => polygonsOverlap(room.polygon, r.polygon))) continue;
+        if (regions.length && overhangsOf([room], regions).length) continue;
+        p = { ...p, rooms: [...p.rooms, { ...room, name: p.rooms.some((r) => r.type === "hall" && r.name === "Hall") ? `Hall ${p.rooms.filter((r) => r.type === "hall").length + 1}` : "Hall" }] };
+        added++;
+        break;
+      }
+      if (!roomsNeedingHall(p).some((r) => r.id === need.id)) break;
+    }
   }
   return { plan: p, added };
 }
 
 /** Add hallways, one at a time, until every bedroom and bathroom opens onto one (or no cut helps). */
-export function addHallways(plan: FloorPlan, obstacles: Bounds[] = [], max = 3): { plan: FloorPlan; added: number } {
+export function addHallways(plan: FloorPlan, stairObstacles: Bounds[] = [], max = 3): { plan: FloorPlan; added: number } {
   let added = 0;
   for (let k = 0; k < max; k++) {
+    // An anchored stair hall never slides or stretches, so a hallway cut can't pass through or push it: it stays with the stairs.
+    const obstacles = [...stairObstacles, ...plan.rooms.filter((r) => r.stairStack && r.anchored).map((r) => boundsOf(r.polygon)!)];
     const needy = new Set(roomsNeedingHall(plan).map((r) => r.id));
     if (!needy.size) break;
     const name = plan.rooms.some((r) => r.type === "hall") ? `Hall ${plan.rooms.filter((r) => r.type === "hall").length + 1}` : "Hall";

@@ -5,7 +5,8 @@ import { emptyPlan, type Plans } from "./edit";
 import { plansFromSketch, type PlanContext } from "./fromSketch";
 import { boundsOf, type Bounds } from "./geometry";
 import { stairsDrawing } from "./stairs";
-import { addHallways, addStairHalls, roomsNeedingHall } from "./hallways";
+import { addHallways, addStairHalls, bridgeStairHalls, roomsNeedingHall, type StairFit } from "./hallways";
+import { anchor, floorsOf, hallFloor, hallLimit, hallOn, linkStacks, stackIds } from "./anchor";
 import { connectAll } from "./doors";
 import { addClosets } from "./closets";
 import { addWindows } from "./windows";
@@ -27,8 +28,8 @@ export { addWindows, outsideStretches, roomJustOutside, type Stretch } from "./w
 
 // ---------- All together ----------
 
-/** The outlines of the stairs on a level: going up from it, and coming up from below. */
-export function stairsFootprints(plans: Plans, ctx: Pick<PlanContext, "levels" | "basics">, level: Level): Point[][] {
+/** The stairs a level shows: going up from it, and coming up from below. */
+function stairsOnLevel(plans: Plans, ctx: Pick<PlanContext, "levels" | "basics">, level: Level) {
   const below = levelBelow(ctx.levels, level);
   const list = [
     ...(plans[level.id]?.stairs ?? []).map((s) => ({ s, from: level })),
@@ -36,8 +37,13 @@ export function stairsFootprints(plans: Plans, ctx: Pick<PlanContext, "levels" |
   ];
   return list.map(({ s, from }) => {
     const to = ctx.levels.find((l) => l.id === s.toLevelId);
-    return stairsDrawing(s, to ? riseBetween(ctx.basics, from, to) : 121).footprint;
+    return { s, footprint: stairsDrawing(s, to ? riseBetween(ctx.basics, from, to) : 121).footprint };
   });
+}
+
+/** The outlines of the stairs on a level: going up from it, and coming up from below. */
+export function stairsFootprints(plans: Plans, ctx: Pick<PlanContext, "levels" | "basics">, level: Level): Point[][] {
+  return stairsOnLevel(plans, ctx, level).map((x) => x.footprint);
 }
 
 /** The stairs' footprints on a level, as boxes. */
@@ -45,10 +51,20 @@ export function stairsBoxes(plans: Plans, ctx: Pick<PlanContext, "levels" | "bas
   return stairsFootprints(plans, ctx, level).map((f) => boundsOf(f)!);
 }
 
+/** For each set of stairs on a level (same order as `stairsBoxes`), the stair hall its stack allows. */
+function stairFits(plans: Plans, ctx: Pick<PlanContext, "levels" | "basics">, level: Level): (StairFit | null)[] {
+  return stairsOnLevel(plans, ctx, level).map(({ s }) => {
+    const outline = s.stackId ? hallLimit(plans, ctx, s.stackId) : null;
+    return outline && s.stackId ? { outline, stackId: s.stackId, floor: hallFloor(plans, ctx, s.stackId) } : null;
+  });
+}
+
 export type SuggestResult = { plans: Plans; notes: string[] };
 
 export function suggestPlans(diagrams: Record<string, BubbleDiagram>, ctx: PlanContext): SuggestResult {
-  const base = plansFromSketch(diagrams, ctx);
+  const sketched = plansFromSketch(diagrams, ctx);
+  // Stairs that stack share one anchored stack, so their stair halls can be fitted and lined up on every floor.
+  const base = { ...sketched, plans: linkStacks(sketched.plans, ctx) };
   const exteriorIn = exteriorWallIn(ctx.basics);
   const plans: Plans = {};
   let halls = 0;
@@ -61,13 +77,17 @@ export function suggestPlans(diagrams: Record<string, BubbleDiagram>, ctx: PlanC
     let plan = base.plans[level.id] ?? emptyPlan();
     if (plan.rooms.length) {
       const obstacles = stairsBoxes(base.plans, ctx, level);
-      const sh = addStairHalls(plan, obstacles);
+      const sh = addStairHalls(plan, obstacles, stairFits(base.plans, ctx, level));
       stairHalls += sh.added;
       const h = addHallways(sh.plan, obstacles);
       halls += h.added;
       plan = h.plan;
       const support = supportOf(plans, ctx.levels, level);
       if (support) plan = keepInside(plan, support.regions, support.arcs).plan;
+      // A room a few feet from a fitted stair hall gets a short hallway to it.
+      const bridge = bridgeStairHalls(plan, support?.regions);
+      halls += bridge.added;
+      plan = bridge.plan;
       plan = connectAll(plan, obstacles, ctx.brief?.openKitchen ?? false);
       const c = addClosets(plan, exteriorIn, ctx.brief);
       closets += c.added;
@@ -84,6 +104,21 @@ export function suggestPlans(diagrams: Record<string, BubbleDiagram>, ctx: PlanC
       }
     }
     plans[level.id] = plan;
+  }
+  // A floor whose stair hall couldn't fit as it was (a room in the way) gets one now, trimming rooms around it, and doors.
+  for (const stackId of stackIds(plans)) {
+    const floors = floorsOf(plans, ctx, stackId).filter((id) => plans[id]?.rooms.length);
+    const missing = floors.filter((id) => !hallOn(plans[id], stackId));
+    const start = Object.entries(plans).flatMap(([levelId, p]) => p.stairs.filter((s) => s.stackId === stackId).map((s) => ({ levelId, id: s.id })))[0];
+    if (!missing.length || !start) continue;
+    const res = anchor(plans, ctx, start.levelId, start.id);
+    if (!res) continue;
+    Object.assign(plans, res.plans);
+    stairHalls += missing.length;
+    for (const id of floors) {
+      const level = ctx.levels.find((l) => l.id === id)!;
+      plans[id] = connectAll(plans[id], stairsBoxes(plans, ctx, level), ctx.brief?.openKitchen ?? false);
+    }
   }
   const count = (n: number, one: string, many: string) => `${n} ${n === 1 ? one : many}`;
   const notes = [
