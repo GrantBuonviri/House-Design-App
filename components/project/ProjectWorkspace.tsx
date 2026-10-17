@@ -36,7 +36,7 @@ const SAVE_LABEL: Record<SaveState, string> = {
 };
 
 export default function ProjectWorkspace({ id }: { id: string }) {
-  const { project, loading, notFound, saveState, open, close, update, undo, redo, setStage } = useProjectStore();
+  const { project, loading, notFound, loadError, saveState, open, close, update, undo, redo, setStage } = useProjectStore();
   const [walk, setWalk] = useState<null | { window?: "interior" | "exterior" }>(null);
   const [costOpen, setCostOpen] = useState(false);
   const [plansOpen, setPlansOpen] = useState(false);
@@ -93,7 +93,10 @@ export default function ProjectWorkspace({ id }: { id: string }) {
     function onKey(e: KeyboardEvent) {
       if (!(e.metaKey || e.ctrlKey) || e.key.toLowerCase() !== "z") return;
       const t = e.target as HTMLElement;
-      if (t.closest("input, textarea, [contenteditable]")) return;
+      // Checkboxes, radios and sliders keep focus after a click, but have no undo of their own.
+      if (t.closest('input:not([type="checkbox"], [type="radio"], [type="range"], [type="button"]), textarea, [contenteditable]')) return;
+      // A window over the page (like the land designer) has its own undo.
+      if (document.querySelector('[aria-modal="true"]')) return;
       e.preventDefault();
       if (e.shiftKey) redo();
       else undo();
@@ -102,6 +105,16 @@ export default function ProjectWorkspace({ id }: { id: string }) {
     return () => window.removeEventListener("keydown", onKey);
   }, [undo, redo]);
 
+  if (loadError) {
+    return (
+      <main className="mx-auto max-w-6xl px-6 py-10">
+        <p className="text-sm">{loadError}</p>
+        <Link href="/" className="mt-4 inline-block text-sm text-accent underline">
+          Back to your houses
+        </Link>
+      </main>
+    );
+  }
   if (loading || (!project && !notFound)) {
     return <main className="mx-auto max-w-6xl px-6 py-10 text-sm text-muted">Loading…</main>;
   }

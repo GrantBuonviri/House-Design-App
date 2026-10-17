@@ -200,3 +200,49 @@ export function FeetInput({
     />
   );
 }
+
+/**
+ * A number box that applies on Enter or when you click away, kept within
+ * min and max, so typing "150" isn't applied as "1", then "15".
+ */
+export function CommitNumber({
+  value,
+  onCommit,
+  min,
+  max,
+  step = 1,
+  className = "",
+  ...rest
+}: {
+  value: number;
+  onCommit: (n: number) => void;
+  min: number;
+  max: number;
+  step?: number;
+  className?: string;
+} & Omit<React.InputHTMLAttributes<HTMLInputElement>, "value" | "onChange" | "min" | "max" | "step" | "className">) {
+  const shown = String(Math.round(value * 100) / 100);
+  const [text, setText] = useState(shown);
+  useEffect(() => setText(shown), [shown]);
+  const commit = () => {
+    const n = Number(text);
+    if (text.trim() === "" || !Number.isFinite(n) || n <= 0) return setText(shown);
+    const kept = Math.min(max, Math.max(min, n));
+    setText(String(kept));
+    if (kept !== value) onCommit(kept);
+  };
+  return (
+    <input
+      {...rest}
+      className={`input tabular-nums ${className}`}
+      type="number"
+      min={min}
+      max={max}
+      step={step}
+      value={text}
+      onChange={(e) => setText(e.target.value)}
+      onBlur={commit}
+      onKeyDown={(e) => e.key === "Enter" && commit()}
+    />
+  );
+}

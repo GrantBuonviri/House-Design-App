@@ -20,6 +20,8 @@ type State = {
   project: Project | null;
   loading: boolean;
   notFound: boolean;
+  /** Why the house couldn't be opened (a damaged save), or null. */
+  loadError: string | null;
   saveState: SaveState;
   /**
    * Every version of the project, oldest first. versions[at] is the one open
@@ -109,6 +111,7 @@ export const useProjectStore = create<State>((set, get) => {
     project: null,
     loading: false,
     notFound: false,
+    loadError: null,
     saveState: "saved",
     versions: [],
     at: 0,
@@ -117,9 +120,16 @@ export const useProjectStore = create<State>((set, get) => {
     notice: null,
 
     async open(id) {
-      set({ loading: true, notFound: false, project: null, versions: [], at: 0, canUndo: false, canRedo: false });
+      set({ loading: true, notFound: false, loadError: null, project: null, versions: [], at: 0, canUndo: false, canRedo: false });
       dirty = new Set();
-      const p = await loadProject(id);
+      let p: Project | null;
+      try {
+        p = await loadProject(id);
+      } catch (e) {
+        console.error("Couldn't open the house", e);
+        set({ loading: false, loadError: e instanceof Error && e.message.includes("newer version") ? e.message : "This house's saved data is damaged, so it can't be opened." });
+        return;
+      }
       if (!p) {
         set({ loading: false, notFound: true });
         return;
@@ -131,7 +141,9 @@ export const useProjectStore = create<State>((set, get) => {
         const i = saved ? saved.versions.findIndex((v) => v.n === saved.meta.current) : -1;
         if (saved && i >= 0) {
           // The saved project is the truth for the open version (it may have been renamed from the home screen).
-          versions = saved.versions.map((v, j) => ({ n: v.n, project: j === i ? p : v.project }));
+          // A rename from the home screen carries to the other versions too, so undo doesn't bring the old name back.
+          const oldName = saved.versions[i].project.name;
+          versions = saved.versions.map((v, j) => ({ n: v.n, project: j === i ? p : oldName !== p.name && v.project.name === oldName ? { ...v.project, name: p.name } : v.project }));
           at = i;
         }
       } catch (e) {

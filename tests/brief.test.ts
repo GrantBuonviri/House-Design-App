@@ -229,6 +229,15 @@ describe("levels", () => {
     const one = buildRuleBrief(ctx({ rooms: typical() }));
     expect(syncLevels(project.levels, one).map((l) => l.id)).toEqual(["floor-1"]);
   });
+
+  it("keeps a loft one story above the top floor when floors are added", () => {
+    const one = buildRuleBrief(ctx({ rooms: typical() }));
+    const loft = { id: "loft-a", name: "Loft", kind: "loft" as const, elevationIn: 126 };
+    const two = buildRuleBrief(ctx({ rooms: typical(), floorsAbove: 2 }));
+    const levels = syncLevels([...syncLevels(createProject("T").levels, one), loft], two);
+    expect(levels.map((l) => [l.id, l.elevationIn])).toEqual([["floor-1", 0], ["floor-2", 126], ["loft-a", 252]]);
+    expect(syncLevels(levels, one).find((l) => l.id === "loft-a")!.elevationIn).toBe(126);
+  });
 });
 
 describe("opening projects saved before the rooms page", () => {

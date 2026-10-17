@@ -76,8 +76,10 @@ export function nearestLevel(id: string | undefined, allowed: string[]): string 
  */
 export function syncLevels(current: Level[], brief: Pick<DesignBrief, "floors" | "floorsBelow">): Level[] {
   const wanted = levelIdsFor(brief.floors, brief.floorsBelow);
-  const extra = current.filter((l) => !parse(l.id));
   const levels = wanted.map((id) => current.find((c) => c.id === id) ?? levelFor(id));
+  // A loft stays one story above the top floor when floors are added or taken away.
+  const loftAt = Math.max(...levels.map((l) => l.elevationIn), 0) + STORY_IN;
+  const extra = current.filter((l) => !parse(l.id)).map((l) => (l.kind === "loft" && l.elevationIn !== loftAt ? { ...l, elevationIn: loftAt } : l));
   return [...levels, ...extra].sort((a, b) => a.elevationIn - b.elevationIn);
 }
 

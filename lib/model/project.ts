@@ -1,6 +1,6 @@
 import { LEGACY_LEVEL_IDS, MAIN_LEVEL_ID, levelFor } from "@/lib/brief/levels";
 import { cityById, placeFromCity } from "@/lib/location/cities";
-import { Project, SCHEMA_VERSION, type Profile } from "./schema";
+import { LOCATION_FIELDS, Location, Project, SCHEMA_VERSION, type LocationField, type Profile } from "./schema";
 
 export function newId(): string {
   return crypto.randomUUID();
@@ -92,12 +92,44 @@ export function migrateProject(raw: unknown): Project {
   // Version 30 to 31 added faucet changes on fixtures (`Fixture.faucet`, optional), so no change beyond the version.
   if (version < 32) migrated = migrateV31(migrated);
   // Version 32 to 33 added pinned tape measurements (`FloorPlan.pins`, optional; `house3d.walkPins`, default none), so no change beyond the version.
-  return Project.parse({ ...migrated, schemaVersion: SCHEMA_VERSION });
+  return Project.parse(repairProject({ ...migrated, schemaVersion: SCHEMA_VERSION }));
+}
+
+/** The longest house name the saved file allows. */
+export const NAME_MAX = 120;
+
+/** `name` with `suffix` added, shortened first so the whole stays within NAME_MAX. */
+export function withSuffix(name: string, suffix: string): string {
+  return `${name.slice(0, NAME_MAX - suffix.length).trimEnd()}${suffix}`;
 }
 
 export function duplicateProject(p: Project): Project {
   const now = new Date().toISOString();
-  return { ...structuredClone(p), id: newId(), name: `${p.name} (copy)`, createdAt: now, updatedAt: now };
+  return { ...structuredClone(p), id: newId(), name: withSuffix(p.name, " (copy)"), createdAt: now, updatedAt: now };
+}
+
+/**
+ * Fix the few values older versions of the app could save out of range, so
+ * the house still opens: a name over NAME_MAX letters, and a place number
+ * typed outside its range (it goes back to the place's own number).
+ */
+function repairProject(data: Raw): Raw {
+  const out = { ...data };
+  if (typeof out.name === "string" && out.name.length > NAME_MAX) out.name = out.name.slice(0, NAME_MAX);
+  const loc = out.location;
+  if (!loc || typeof loc !== "object") return out;
+  const check = Location.safeParse(loc);
+  if (check.success) return out;
+  const bad = new Set(check.error.issues.map((i) => i.path[0]).filter((k): k is LocationField => LOCATION_FIELDS.includes(k as LocationField)));
+  if (bad.size === 0) return out;
+  const raw = loc as Raw;
+  const city = typeof raw.cityId === "string" ? cityById(raw.cityId) : undefined;
+  const own: Raw = city ? placeFromCity(city) : placeFromCity(cityById("boise-id")!);
+  const fixed: Raw = { ...raw };
+  for (const k of bad) fixed[k] = own[k];
+  if (Array.isArray(raw.edited)) fixed.edited = raw.edited.filter((k) => !bad.has(k as LocationField));
+  out.location = fixed;
+  return out;
 }
 
 type Raw = Record<string, unknown>;

@@ -110,10 +110,19 @@ export default function LandDesigner({
     setPick(null);
   };
 
+  // Closing with Escape or a click outside asks first when there are changes to lose.
+  const cancel = () => {
+    if (past.length && !confirm("Discard your land changes?")) return;
+    onCancel();
+  };
+  // A click outside only counts when it starts outside too, not a drag let go there.
+  const downOnBackdrop = useRef(false);
+
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onCancel();
-      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "z" && !(e.target as HTMLElement).closest("input, textarea, select")) {
+      const typing = !!(e.target as HTMLElement).closest("input, textarea, select");
+      if (e.key === "Escape" && !typing) cancel();
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "z" && !typing) {
         e.preventDefault();
         if (e.shiftKey) redo();
         else undo();
@@ -132,7 +141,13 @@ export default function LandDesigner({
   const valid = land.outline.length >= 3 && f.size !== "0.00 acres";
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onClick={onCancel}>
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
+      onMouseDown={(e) => (downOnBackdrop.current = e.target === e.currentTarget)}
+      onClick={(e) => {
+        if (downOnBackdrop.current && e.target === e.currentTarget) cancel();
+      }}
+    >
       <div
         role="dialog"
         aria-modal="true"

@@ -40,6 +40,13 @@ describe("My land", () => {
 });
 
 describe("export and import", () => {
+  it("keeps a long name within the limit when importing a copy", () => {
+    const p = createProject("z".repeat(120));
+    const copy = importProjectJson(exportProjectJson(p), new Set([p.id]));
+    expect(copy.name.length).toBeLessThanOrEqual(120);
+    expect(copy.name.endsWith(" (imported)")).toBe(true);
+  });
+
   it("round-trips a project", () => {
     const p = createProject("Export me", { dislikes: ["carpet"] });
     expect(importProjectJson(exportProjectJson(p))).toEqual(p);

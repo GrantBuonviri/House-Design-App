@@ -4,7 +4,7 @@ import type { DesignBrief } from "@/lib/model/schema";
 import { BRIEF_ROOM_TYPES, isHeated, newRoomId, roomType, sqftFromDims } from "@/lib/brief/rooms";
 import { MAX_ABOVE, MAX_BELOW, levelIdsFor, levelName, levelsFor, nearestLevel } from "@/lib/brief/levels";
 import { briefTotals } from "@/lib/brief/rules";
-import { Choice, FeetInput, Field, Stepper, TagEditor } from "./controls";
+import { Choice, CommitNumber, FeetInput, Field, Stepper, TagEditor } from "./controls";
 import Connections from "./Connections";
 
 type Room = DesignBrief["rooms"][number];
@@ -178,9 +178,8 @@ export default function BriefEditor({
                                 </div>
                               </td>
                               <td className="py-1 pr-2">
-                                <input
-                                  className={`input py-1.5 tabular-nums ${fixed ? "bg-paper text-muted" : ""}`}
-                                  type="number"
+                                <CommitNumber
+                                  className={`py-1.5 ${fixed ? "bg-paper text-muted" : ""}`}
                                   min={5}
                                   max={5000}
                                   step={5}
@@ -188,9 +187,8 @@ export default function BriefEditor({
                                   title={fixed ? "Worked out from length × width" : undefined}
                                   aria-label={`${r.name} size in square feet`}
                                   value={r.targetSqFt}
-                                  onChange={(e) => {
-                                    const n = Number(e.target.value);
-                                    if (!fixed && n > 0) setRoom(r.id, { targetSqFt: Math.min(5000, n) }, "size");
+                                  onCommit={(n) => {
+                                    if (!fixed) setRoom(r.id, { targetSqFt: n }, "size");
                                   }}
                                 />
                               </td>

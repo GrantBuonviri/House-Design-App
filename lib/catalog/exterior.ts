@@ -63,7 +63,7 @@ export const ExteriorProduct = Product.extend({
 });
 export type ExteriorProduct = z.infer<typeof ExteriorProduct> & { file: ExteriorFile };
 
-/** The parts of the outside a product can be picked for, grouped as on the Exterior page. */
+/** The parts of the outside a product can be picked for, grouped as in the Exterior design window. */
 export type ExteriorCategoryId =
   | "roofing"
   | "siding"
