@@ -5,7 +5,7 @@ import { Circle, Group, Layer, Line, Stage, Text, Transformer } from "react-konv
 import Konva from "konva";
 import type { BubbleDiagram, FloorPlan, Level, Opening, OpeningHost, PlanBasics, PlanLabels, PlanStairs, Point, WallHeight } from "@/lib/model/schema";
 import { exteriorWallIn, riseBetween } from "@/lib/plan/basics";
-import { openingType } from "@/lib/plan/catalog";
+import { openingHeight, openingType } from "@/lib/plan/catalog";
 import { catalogEntry } from "@/lib/furnish/catalog";
 import { dragItem, ghostAt, placeGhost, stageItems, wallGaps, type Layouts } from "@/lib/furnish/stage";
 import { FurnishGhost, FurnishItems } from "@/components/furnish/FurnishLayers";
@@ -18,7 +18,7 @@ import { makeRoundRoom } from "@/lib/plan/shapes";
 import { splitWall } from "@/lib/plan/wallEdits";
 import { curveRun, isRun, runInfo, runOf, sharesOf, startBow, type Run } from "@/lib/plan/curveRun";
 import { lockedNote, unlocked } from "@/lib/plan/locks";
-import { addRoom, emptyPlan, insertGluedCorner, makeRoom, moveEdge, moveMany, moveOpeningTo, newPlanId, removeCorner, setCornerGlued, type Plans } from "@/lib/plan/edit";
+import { addRoom, emptyPlan, insertGluedCorner, makeRoom, moveEdge, moveMany, moveOpeningTo, newPlanId, removeCorner, rotateMany, setCornerGlued, type Plans } from "@/lib/plan/edit";
 import { railingsOn, type Railing, type RailingSlot } from "@/lib/plan/railings";
 import { faucetsOn, type Faucet } from "@/lib/furnish/faucets";
 import { add, boundsOf, dist, polygonArea, polygonsOverlap, project, rectangle, round1, roundPoint, scale as scaleV, sub, unit } from "@/lib/plan/geometry";
@@ -50,11 +50,11 @@ import { edgeId, isPicked, parseEdgeId, runTargets, type PlanItem, type PlanSele
 
 type Gesture =
   | { type: "move"; start: Point; ids: string[]; moved: boolean }
-  | { type: "corner"; roomId: string; i: number; base?: FloorPlan; born?: boolean; moved: boolean }
+  | { type: "corner"; roomId: string; i: number; start: Point; grab: Point; base?: FloorPlan; born?: boolean; moved: boolean }
   | { type: "edge"; roomId: string; edge: number; start: Point; moved: boolean }
   | { type: "bend"; target: BendTarget; alone: boolean; moved: boolean }
   | { type: "run"; run: Run; shares: number[]; alone: boolean; moved: boolean }
-  | { type: "opening"; id: string; moved: boolean }
+  | { type: "opening"; id: string; start: Point; grab: number; moved: boolean }
   | { type: "box"; start: Point; additive: boolean; base: PlanSelection }
   | { type: "lot"; start: Point }
   | { type: "rect"; start: Point; moved: boolean }
@@ -212,6 +212,8 @@ export default function PlanCanvas(props: Props) {
     setPreview(null);
     setSelCorner(null);
     setDragCorner(null);
+    setTapePts([]);
+    setTapeEnd(null);
   }, [tool, level.id]);
 
   // Leaving the measuring tape clears its line; Escape clears it while staying in tape mode.
@@ -441,7 +443,7 @@ export default function PlanCanvas(props: Props) {
       kind: t.kind,
       style: t.id,
       widthIn,
-      heightIn: t.id === "door-hinged" || t.id === "door-pocket" ? (basics?.doorHeightIn ?? t.heightIn) : t.heightIn,
+      heightIn: openingHeight(t.id, basics?.doorHeightIn),
       ...(t.sillIn !== undefined ? { sillIn: t.sillIn } : {}),
       side: near.side,
       hinge: "start",
@@ -730,13 +732,15 @@ export default function PlanCanvas(props: Props) {
       const a = room.polygon[el.mid];
       const b = room.polygon[(el.mid + 1) % room.polygon.length];
       const born = insertGluedCorner(plan, el.id, el.mid, pointOnEdge(a, b, leftBulge(room, el.mid), roomEdgeLength(room, el.mid) / 2));
-      gesture.current = { type: "corner", roomId: el.id, i: born.index, base: born.plan, born: true, moved: false };
+      const at = born.plan.rooms.find((r) => r.id === el.id)?.polygon[born.index] ?? p;
+      gesture.current = { type: "corner", roomId: el.id, i: born.index, start: p, grab: sub(at, p), base: born.plan, born: true, moved: false };
       setSelCorner({ roomId: el.id, i: born.index });
       setDragCorner({ roomId: el.id, i: born.index });
       return;
     }
     if (el.corner !== undefined) {
-      gesture.current = { type: "corner", roomId: el.id, i: el.corner, moved: false };
+      const at = plan.rooms.find((r) => r.id === el.id)?.polygon[el.corner] ?? p;
+      gesture.current = { type: "corner", roomId: el.id, i: el.corner, start: p, grab: sub(at, p), moved: false };
       setSelCorner({ roomId: el.id, i: el.corner });
       setDragCorner({ roomId: el.id, i: el.corner });
       return;
@@ -758,7 +762,11 @@ export default function PlanCanvas(props: Props) {
     const next = isPicked(selection, el.id) ? selection : [el];
     if (next !== selection) onSelect(next);
     if (el.kind === "opening") {
-      gesture.current = { type: "opening", id: el.id, moved: false };
+      // Where along its wall the door or window was grabbed, so it doesn't jump to center under the pointer.
+      const o = plan.openings.find((x) => x.id === el.id);
+      const seg = o && hostSegment(plan, o.host);
+      const grab = o && seg ? projectOnEdge(p, seg.a, seg.b, seg.bulge).t - o.offsetIn : 0;
+      gesture.current = { type: "opening", id: el.id, start: p, grab, moved: false };
     } else if (el.kind === "edge") {
       const { roomId, edge } = parseEdgeId(el.id);
       gesture.current = { type: "edge", roomId, edge, start: p, moved: false };
@@ -830,11 +838,12 @@ export default function PlanCanvas(props: Props) {
       if (!room) return;
       const n = room.polygon.length;
       const here = room.polygon[g.i];
+      if (!g.moved && dist(p, g.start) * s < 3) return;
       const glue = !e.evt.altKey;
       // Corners of other rooms sitting right here are glued to this one, so they aren't snap targets.
       const others = { ...mergeTargets(snapTargets(from, [g.roomId]), supportSnap) };
       others.points = [...others.points.filter((q) => !glue || dist(q, here) > 1), ...room.polygon.filter((_, k) => k !== g.i)];
-      const sp = snapNode(p, [room.polygon[(g.i - 1 + n) % n], room.polygon[(g.i + 1) % n]], others, tol, snap, shift);
+      const sp = snapNode(add(p, g.grab), [room.polygon[(g.i - 1 + n) % n], room.polygon[(g.i + 1) % n]], others, tol, snap, shift);
       g.moved = true;
       setGuides(sp.guides);
       setPreview(setCornerGlued(from, g.roomId, g.i, sp.p, glue));
@@ -850,8 +859,9 @@ export default function PlanCanvas(props: Props) {
       const { d, n } = snapPush(a, b, drag, still, tol, snap);
       setPreview(moveEdge(base, g.roomId, g.edge, scaleV(n, d), !e.evt.altKey));
     } else if (g.type === "opening") {
+      if (!g.moved && dist(p, g.start) * s < 3) return;
       g.moved = true;
-      const next = moveOpeningTo(base, g.id, p, Math.max(18, 14 / s));
+      const next = moveOpeningTo(base, g.id, p, Math.max(18, 14 / s), g.grab);
       setPreview(next);
       const moved = next.openings.find((x) => x.id === g.id);
       const seg = moved && hostSegment(next, moved.host);
@@ -1072,14 +1082,14 @@ export default function PlanCanvas(props: Props) {
     const id = node.id();
     const room = plan.rooms.find((r) => r.id === id);
     if (room) {
-      const dRot = Konva.Util.radToDeg(Math.atan2(m.getMatrix()[1], m.getMatrix()[0]));
-      const tf = (p: Point) => roundPoint(m.point(p));
-      onChange({
-        ...plan,
-        rooms: plan.rooms.map((r) => (r.id === id ? { ...r, polygon: r.polygon.map(tf) } : r)),
-        fixtures: plan.fixtures.map((f) => (f.roomId === id ? { ...f, ...tf(f), rotation: Math.round(f.rotation + dRot) } : f)),
-        furniture: plan.furniture.map((f) => (f.roomId === id ? { ...f, ...tf(f), rotation: Math.round(f.rotation + dRot) } : f)),
-      });
+      // The handle turns the room about a point; find that point (the one the turn leaves in place)
+      // and turn the room with everything in it: fixtures, furniture, cabinets, devices and open walls.
+      const [a, b, , , tx, ty] = m.getMatrix();
+      const dRot = Konva.Util.radToDeg(Math.atan2(b, a));
+      const det = (1 - a) * (1 - a) + b * b;
+      if (det < 1e-9) return;
+      const pivot = { x: ((1 - a) * tx - b * ty) / det, y: (b * tx + (1 - a) * ty) / det };
+      onChange(rotateMany(plan, [id], dRot, pivot));
       return;
     }
   }

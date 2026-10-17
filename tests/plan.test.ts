@@ -25,6 +25,7 @@ import {
   updateOpening,
 } from "@/lib/plan/edit";
 import { newOpening, sharedWall } from "@/lib/plan/connect";
+import { openingHeight, withDoorHeight } from "@/lib/plan/catalog";
 import { planWarnings } from "@/lib/plan/checks";
 import { addWindows, escapeWidth, makeEscapeWindow } from "@/lib/plan/windows";
 import { windowWells } from "@/lib/plan/wells";
@@ -161,6 +162,15 @@ describe("editing a floor plan", () => {
     expect(roomSqft(a)).toBe(140);
   });
 
+  it("takes the neighbor's shared wall along when a typed length moves the far side", () => {
+    const p = setEdgeLength(pair(), "a", 0, 14 * FT);
+    const [a, b] = p.rooms;
+    expect(roomSqft(a)).toBe(140);
+    expect(roomSqft(b)).toBe(60);
+    expect(polygonsOverlap(a.polygon, b.polygon)).toBe(false);
+    expect(wallPieces(p, 6.5).filter((w) => !w.exterior)).toHaveLength(1);
+  });
+
   it("pushes a shared wall for both rooms", () => {
     const p = moveEdge(pair(), "a", 1, { x: 24, y: 0 });
     const [a, b] = p.rooms;
@@ -213,6 +223,23 @@ describe("editing a floor plan", () => {
     expect(other.openings[0].host).toEqual({ roomId: "a", edge: 0 });
     const wide = updateOpening(p0, "d", { widthIn: 200 });
     expect(wide.openings[0].offsetIn).toBe(60);
+  });
+
+  it("keeps a door where it was grabbed instead of centering it under the pointer", () => {
+    const p0: FloorPlan = { ...pair(), openings: [{ id: "d", host: { roomId: "a", edge: 1 }, offsetIn: 60, kind: "door", style: "door-hinged", widthIn: 32, heightIn: 80, side: 1, hinge: "start" }] };
+    // Picked up 10" past its middle: the pointer still there leaves it put, and 20" on moves it 20".
+    expect(moveOpeningTo(p0, "d", { x: 121, y: 70 }, 12, 10).openings[0].offsetIn).toBe(60);
+    expect(moveOpeningTo(p0, "d", { x: 121, y: 90 }, 12, 10).openings[0].offsetIn).toBe(80);
+  });
+
+  it("gives only new interior doors the Plan basics door height", () => {
+    const door = (id: string, style: string) => ({ ...newOpening(style, { roomId: "a", edge: 1 }, 60, 1), id });
+    const before: FloorPlan = { ...pair(), openings: [door("old", "door-hinged")] };
+    const after = { ...before, openings: [...before.openings, door("new", "door-hinged"), door("barn", "door-barn"), door("win", "window")] };
+    const h = Object.fromEntries(withDoorHeight(after, 96, before).openings.map((o) => [o.id, o.heightIn]));
+    expect(h).toEqual({ old: 80, new: 96, barn: 84, win: 60 });
+    expect(openingHeight("door-pocket", 96)).toBe(96);
+    expect(openingHeight("door-garage", 96)).toBe(84);
   });
 
   it("deletes doors with their room, and lets fixtures stay", () => {
