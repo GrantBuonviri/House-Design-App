@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { LOCATION_FIELDS, type Location, type LocationField } from "@/lib/model/schema";
+import { LOCATION_FIELDS, Location, type LocationField } from "@/lib/model/schema";
 import { cityById, placeFromCity, placeLabel, searchCities, type City } from "@/lib/location/cities";
 import { DEFAULT_PLACE, cityValue, editPlace, resetPlaceField } from "@/lib/location/current";
 import { FIELD_INFO, placeSummary } from "@/lib/location/fields";
@@ -122,17 +122,33 @@ function PlaceCard({ location, editing, onToggleEdit, onChange }: { location: Lo
   );
 }
 
+/** The smallest and largest number the saved file allows for a place field. */
+function numberRange(field: LocationField): { min: number; max: number } {
+  const shape = Location.shape[field] as unknown as { minValue?: number | null; maxValue?: number | null };
+  return { min: shape.minValue ?? -Infinity, max: shape.maxValue ?? Infinity };
+}
+
 function PlaceField({ field, location, onChange }: { field: LocationField; location: Location; onChange: (loc: Location, coalesce?: string) => void }) {
   const info = FIELD_INFO[field];
   const value = location[field];
   const edited = location.edited.includes(field);
   const original = cityValue(location, field);
   const id = `place-${field}`;
+  const [text, setText] = useState(String(value));
+  // Undo, redo or "Back to" change the number from outside the box.
+  const [shown, setShown] = useState(value);
+  if (shown !== value) {
+    setShown(value);
+    setText(String(value));
+  }
   const set = (v: string) => {
     if (info.choices) return onChange(editPlace(location, field, v as never), `location.${field}`);
     const n = Number(v);
-    if (v.trim() === "" || !Number.isFinite(n)) return;
-    onChange(editPlace(location, field, n as never), `location.${field}`);
+    if (v.trim() === "" || !Number.isFinite(n)) return setText(String(value));
+    const { min, max } = numberRange(field);
+    const kept = Math.min(max, Math.max(min, n));
+    setText(String(kept));
+    if (kept !== value) onChange(editPlace(location, field, kept as never), `location.${field}`);
   };
   return (
     <div>
@@ -150,7 +166,18 @@ function PlaceField({ field, location, onChange }: { field: LocationField; locat
             ))}
           </select>
         ) : (
-          <input id={id} className="input" type="number" step={info.step} defaultValue={String(value)} key={`${location.cityId}-${String(value)}`} onChange={(e) => set(e.target.value)} />
+          <input
+            id={id}
+            className="input"
+            type="number"
+            step={info.step}
+            min={numberRange(field).min}
+            max={numberRange(field).max}
+            value={text}
+            onChange={(e) => setText(e.target.value)}
+            onBlur={(e) => set(e.target.value)}
+            onKeyDown={(e) => e.key === "Enter" && set(e.currentTarget.value)}
+          />
         )}
         {info.unit && <span className="text-sm text-muted">{info.unit}</span>}
       </div>

@@ -49,25 +49,35 @@ export default function HomeScreen() {
     router.push(`/project/${p.id}`);
   }
 
+  /** Load a house, or say why it can't be loaded. */
+  async function loadSafely(id: string) {
+    try {
+      return await loadProject(id);
+    } catch {
+      setMessage({ kind: "error", text: "That house's saved data is damaged, so it can't be opened." });
+      return null;
+    }
+  }
+
   async function handleRename(id: string) {
     const name = renameText.trim();
     setRenamingId(null);
     if (!name) return;
-    const p = await loadProject(id);
+    const p = await loadSafely(id);
     if (!p) return;
     await saveProject({ ...p, name, updatedAt: new Date().toISOString() });
     await refresh();
   }
 
   async function handleDuplicate(id: string) {
-    const p = await loadProject(id);
+    const p = await loadSafely(id);
     if (!p) return;
     await saveProject(duplicateProject(p));
     await refresh();
   }
 
   async function handleExport(id: string) {
-    const p = await loadProject(id);
+    const p = await loadSafely(id);
     if (p) downloadProject(p);
   }
 

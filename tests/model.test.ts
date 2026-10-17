@@ -1,8 +1,9 @@
 import { describe, expect, it } from "vitest";
 import { FLAT_PLOT_SEED, feedPlotSeed, generatePlot } from "@/lib/land/generate";
 import { buildCustomPlot, newCustomLand } from "@/lib/land/custom";
-import { createProject, duplicateProject, migrateProject } from "@/lib/model/project";
+import { NAME_MAX, createProject, duplicateProject, migrateProject } from "@/lib/model/project";
 import { Project, SCHEMA_VERSION } from "@/lib/model/schema";
+import { cityById, placeFromCity } from "@/lib/location/cities";
 
 describe("createProject", () => {
   it("makes a valid project with a main floor and the setup stage", () => {
@@ -112,5 +113,25 @@ describe("duplicateProject", () => {
     expect(d.profile).toEqual(p.profile);
     d.profile.mustHaves.push("x");
     expect(p.profile.mustHaves).toEqual([]);
+  });
+});
+
+describe("houses that would not open", () => {
+  it("keeps a long name within the limit when duplicating", () => {
+    const p = createProject("x".repeat(NAME_MAX));
+    const copy = duplicateProject(p);
+    expect(copy.name.length).toBeLessThanOrEqual(NAME_MAX);
+    expect(copy.name.endsWith(" (copy)")).toBe(true);
+    expect(() => Project.parse(copy)).not.toThrow();
+  });
+
+  it("puts a place number saved out of range back to the place's own number", () => {
+    const p = { ...createProject("T"), location: placeFromCity(cityById("denver-co")!) };
+    const bad = { ...p, name: "y".repeat(130), location: { ...p.location, costIndex: 0, windMph: 900, edited: ["costIndex", "windMph", "frostDepthIn"] } };
+    const fixed = migrateProject(bad);
+    expect(fixed.name.length).toBe(NAME_MAX);
+    expect(fixed.location!.costIndex).toBe(p.location.costIndex);
+    expect(fixed.location!.windMph).toBe(p.location.windMph);
+    expect(fixed.location!.edited).toEqual(["frostDepthIn"]);
   });
 });

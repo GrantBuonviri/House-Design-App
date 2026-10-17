@@ -8,6 +8,9 @@ export function downloadProject(project: Project) {
   const a = document.createElement("a");
   a.href = url;
   a.download = exportFileName(project);
+  // Some browsers only download from a link on the page, and drop it if the link is freed right away.
+  document.body.appendChild(a);
   a.click();
-  URL.revokeObjectURL(url);
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
 }

@@ -21,7 +21,7 @@ export const TOUR: TourStep[] = [
   },
   {
     target: "stages",
-    title: "Seven steps, left to right",
+    title: "Six steps, left to right",
     body: "Work through these in order. You can jump back to any step whenever you like, and later steps follow your changes.",
   },
   {
@@ -61,9 +61,10 @@ export const TOUR: TourStep[] = [
     body: "Real walls, doors, windows, stairs and fixtures. Pick a room and drag the + on a wall to reshape it, or the diamond to bend a wall into a curve (Shift-click walls that meet to bend them together). Press C for the Curve tool, pick Round room in the Room tool, or right-click a corner or an outside wall to round it or add a half-round bay. Start from your sketch or a blank page, then switch to 3D to see the whole house on the land.",
   },
   {
-    target: "walkthrough",
-    title: "6. Walk through and design",
-    body: "Walk through your house in first person. Press I for Interior design (style questions, a mood board, then real floors, paint and cabinets, room by room) and X for Exterior design (roof, siding, windows, doors and yard). The house changes as you pick, and E lets you click any surface to change it.",
+    target: "stage-furnish",
+    stage: "furnish",
+    title: "6. Furnish",
+    body: "Place furniture, cabinets, closets, fixtures, faucets, outlets and stair railings on each floor, or press Furnish for me to fill a room. Everything you place shows in 3D, the walkthrough and the cost.",
   },
   {
     target: "cost",
@@ -77,8 +78,8 @@ export const TOUR: TourStep[] = [
   },
   {
     target: "walkthrough",
-    title: "Walk through it",
-    body: "Once there's a floor plan, walk through the house in first person. Press E inside to paint walls and pick finishes, F to place furniture, fixtures, outlets, doors, windows and walls where you look, M to see the floor from above, L for room labels on the floor, T for a tape measure, and walk into doors to open them (click one to open or close it by hand, K to lock it).",
+    title: "Walk through and design",
+    body: "Once there's a floor plan, walk through the house in first person. Press I for Interior design (style questions, a mood board, then real floors, paint and cabinets, room by room) and X for Exterior design (roof, siding, windows, doors and yard); the house changes as you pick. Press E to click any surface to change it, F to place furniture, fixtures, outlets, doors, windows and walls where you look, M to see the floor from above, L for room labels on the floor, T for a tape measure, and walk into doors to open them (click one to open or close it by hand, K to lock it).",
   },
   {
     target: "undo",

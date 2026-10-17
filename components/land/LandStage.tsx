@@ -103,13 +103,13 @@ export default function LandStage({ onContinue }: { onContinue: () => void }) {
         if (e.key === "Escape") setOpen(null);
         return;
       }
-      if (!browsing || (e.target as HTMLElement).closest("input, textarea")) return;
+      if (!browsing || designing || (e.target as HTMLElement).closest("input, textarea")) return;
       if (e.key === "ArrowRight") goNext();
       if (e.key === "ArrowLeft") goPrev();
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [open, browsing, goNext, goPrev]);
+  }, [open, browsing, designing, goNext, goPrev]);
 
   const choose = useCallback(
     (plot: Plot) => {

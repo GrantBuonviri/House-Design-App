@@ -1,4 +1,4 @@
-import { migrateProject, newId } from "@/lib/model/project";
+import { migrateProject, newId, withSuffix } from "@/lib/model/project";
 import type { Project } from "@/lib/model/schema";
 
 /** Export/import file format. The wrapper lets us recognize our own files. */
@@ -41,7 +41,7 @@ export function importProjectJson(text: string, takenIds: Set<string> = new Set(
     throw new Error("That project file is damaged or incomplete.");
   }
   if (takenIds.has(project.id)) {
-    project = { ...project, id: newId(), name: `${project.name} (imported)` };
+    project = { ...project, id: newId(), name: withSuffix(project.name, " (imported)") };
   }
   return project;
 }

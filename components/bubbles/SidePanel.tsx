@@ -6,6 +6,7 @@ import { CATEGORY_COLOR, FREE_COLOR, MAX_SQFT, MIN_SQFT, bubbleSqft, isDrawn, re
 import { connected, removeMany, toggleFlow, updateBubble, updateNote } from "@/lib/bubbles/edit";
 import { roomType } from "@/lib/brief/rooms";
 import type { Selection } from "./types";
+import { CommitNumber } from "@/components/brief/controls";
 
 type Props = {
   diagram: BubbleDiagram;
@@ -156,18 +157,14 @@ export default function SidePanel(props: Props) {
           Size
         </label>
         <div className="flex items-center gap-2">
-          <input
+          <CommitNumber
             id="bubble-size"
-            type="number"
-            className="input w-28 tabular-nums"
+            className="w-28"
             min={MIN_SQFT}
             max={MAX_SQFT}
             step={5}
             value={bubbleSqft(bubble)}
-            onChange={(e) => {
-              const n = Number(e.target.value);
-              if (n > 0) onChange(updateBubble(diagram, bubble.id, resized(bubble, n)), `size.${bubble.id}`);
-            }}
+            onCommit={(n) => onChange(updateBubble(diagram, bubble.id, resized(bubble, n)), `size.${bubble.id}`)}
           />
           <span className="text-sm text-muted">sq ft</span>
         </div>

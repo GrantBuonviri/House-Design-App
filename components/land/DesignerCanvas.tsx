@@ -81,6 +81,17 @@ export default function DesignerCanvas({
     return () => window.removeEventListener("keydown", onKey);
   }, [selected, pick, land, onChange, onSelect, onPick]);
   useEffect(() => setMenu(null), [land, tool]);
+  // Escape closes the right-click menu before it would close the whole designer.
+  useEffect(() => {
+    if (!menu) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== "Escape") return;
+      e.stopImmediatePropagation();
+      setMenu(null);
+    };
+    window.addEventListener("keydown", onKey, true);
+    return () => window.removeEventListener("keydown", onKey, true);
+  }, [menu]);
 
   const centre = pts.reduce((a, p) => ({ x: a.x + p.x / n, y: a.y + p.y / n }), { x: 0, y: 0 });
 
