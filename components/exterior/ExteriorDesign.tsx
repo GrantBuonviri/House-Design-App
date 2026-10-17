@@ -21,22 +21,24 @@ const HINTS: Record<DesignStep, string> = {
 /**
  * Exterior design without a page around it: style questions, a mood board,
  * then products for each part of the outside and the yard. The walkthrough's
- * Exterior window (key X) shows it.
+ * Exterior window (key X) shows it; it opens on `startPart` (the part you
+ * were looking at) when that's one of this house's parts.
  */
-export default function ExteriorDesign() {
+export default function ExteriorDesign({ startPart }: { startPart?: ExteriorCategoryId | null }) {
   const project = useProjectStore((s) => s.project)!;
   const update = useProjectStore((s) => s.update);
   const exterior = project.exterior;
   const answered = Object.keys(exterior.answers).length > 0;
-  const [step, setStep] = useState<DesignStep>(exterior.selections.length ? "pick" : answered ? "board" : "style");
-  const [part, setPart] = useState<ExteriorCategoryId>("roofing");
+  const parts = useMemo(() => exteriorPartsFor(project), [project]);
+  const start = startPart && parts.some((c) => c.id === startPart) ? startPart : null;
+  const [step, setStep] = useState<DesignStep>(start || exterior.selections.length ? "pick" : answered ? "board" : "style");
+  const [part, setPart] = useState<ExteriorCategoryId>(start ?? "roofing");
   const top = useRef<HTMLDivElement>(null);
 
   const interiorAnswers = useMemo(() => effectiveAnswers(project.interior.answers, project.discovery.answers.feel ?? ""), [project.interior.answers, project.discovery.answers.feel]);
   const guessed = useMemo(() => exteriorGuesses(exterior.answers, interiorAnswers), [exterior.answers, interiorAnswers]);
   const answers = useMemo(() => effectiveExterior(exterior.answers, interiorAnswers), [exterior.answers, interiorAnswers]);
   const board = useMemo(() => exteriorBoard(answers, exterior.shuffle), [answers, exterior.shuffle]);
-  const parts = useMemo(() => exteriorPartsFor(project), [project]);
   const hasGables = project.house3d.roof.style === "gable" || project.house3d.roof.style === "shed";
 
   const setExterior = (patch: Partial<typeof exterior>, coalesce?: string) =>

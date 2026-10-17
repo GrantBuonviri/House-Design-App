@@ -34,6 +34,7 @@ export function Player({
   fastLook,
   onLook,
   doorsRef,
+  lookNow,
 }: {
   walker: React.RefObject<Walker>;
   locked: boolean;
@@ -46,17 +47,45 @@ export function Player({
   onLook: (look: Look) => void;
   /** The door leaves, drawn apart from the house, which can be aimed at too. */
   doorsRef?: React.RefObject<THREE.Object3D | null>;
+  /** Set to a function that says what the dot is on right now, even when not `looking` (the X key uses it). */
+  lookNow?: React.MutableRefObject<(() => Look) | null>;
 }) {
   const { camera } = useThree();
-  const keys = useRef(new Set<string>());
-  const eyeY = useRef<number | null>(null);
-  const sinceWhere = useRef(0);
-  const sinceLook = useRef(0);
   const ray = useMemo(() => {
     const r = new THREE.Raycaster();
     r.far = 60;
     return r;
   }, []);
+  /** What the dot in the middle is on. */
+  const castLook = (): Look => {
+    camera.updateMatrixWorld();
+    ray.setFromCamera(CENTER, camera);
+    const t = aimTarget.current;
+    let h: THREE.Intersection | undefined = t ? ray.intersectObject(t.mesh, false)[0] : undefined;
+    let owner = h && h.faceIndex != null ? t!.owners[h.faceIndex] : undefined;
+    // The side you're looking at, whichever way the triangle happens to be wound.
+    let normal = h?.face ? h.face.normal.clone() : undefined;
+    const doors = doorsRef?.current;
+    const dh = doors ? ray.intersectObjects(doors.children, true)[0] : undefined;
+    if (dh && (!h || dh.distance < h.distance) && dh.object.userData.part) {
+      h = dh;
+      owner = dh.object.userData.part;
+      normal = dh.face ? dh.face.normal.clone().transformDirection(dh.object.matrixWorld) : undefined;
+    }
+    if (normal && normal.dot(ray.ray.direction) > 0) normal.negate();
+    return {
+      origin: ray.ray.origin.clone(),
+      dir: ray.ray.direction.clone(),
+      hit: h && normal && owner ? { point: h.point.clone(), normal, owner } : null,
+    };
+  };
+  useEffect(() => {
+    if (lookNow) lookNow.current = castLook;
+  });
+  const keys = useRef(new Set<string>());
+  const eyeY = useRef<number | null>(null);
+  const sinceWhere = useRef(0);
+  const sinceLook = useRef(0);
 
   useEffect(() => {
     camera.rotation.order = "YXZ";
@@ -116,26 +145,7 @@ export function Player({
     sinceLook.current += dt;
     if (looking && sinceLook.current > (fastLook ? 0.04 : 0.1)) {
       sinceLook.current = 0;
-      camera.updateMatrixWorld();
-      ray.setFromCamera(CENTER, camera);
-      const t = aimTarget.current;
-      let h: THREE.Intersection | undefined = t ? ray.intersectObject(t.mesh, false)[0] : undefined;
-      let owner = h && h.faceIndex != null ? t!.owners[h.faceIndex] : undefined;
-      // The side you're looking at, whichever way the triangle happens to be wound.
-      let normal = h?.face ? h.face.normal.clone() : undefined;
-      const doors = doorsRef?.current;
-      const dh = doors ? ray.intersectObjects(doors.children, true)[0] : undefined;
-      if (dh && (!h || dh.distance < h.distance) && dh.object.userData.part) {
-        h = dh;
-        owner = dh.object.userData.part;
-        normal = dh.face ? dh.face.normal.clone().transformDirection(dh.object.matrixWorld) : undefined;
-      }
-      if (normal && normal.dot(ray.ray.direction) > 0) normal.negate();
-      onLook({
-        origin: ray.ray.origin.clone(),
-        dir: ray.ray.direction.clone(),
-        hit: h && normal && owner ? { point: h.point.clone(), normal, owner } : null,
-      });
+      onLook(castLook());
     }
   });
   return null;

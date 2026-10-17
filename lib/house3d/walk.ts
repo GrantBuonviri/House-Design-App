@@ -408,6 +408,25 @@ export function sightBlocked(world: WalkWorld, a: Point, b: Point, z: number): b
   });
 }
 
+/**
+ * Number keys: where you land on the `n`th floor from the bottom (1 is the
+ * lowest one with rooms). You stay where you are when that floor has a room
+ * over or under you and its floor is there to stand on; otherwise you go to
+ * the nearest room on it.
+ */
+export function floorSpot(world: WalkWorld, plans: Plans, n: number, w: Pick<Walker, "p" | "yaw">): { spot: Spot; levelName: string } | null {
+  const lv = world.levels[n - 1];
+  if (!lv) return null;
+  const plan = planOf(flatPlans(plans), lv.id);
+  const room = plan.rooms.find((r) => areaKind(r) !== "outdoor" && pointInPolygon(w.p, r.polygon));
+  if (room) {
+    const s = settle(world, { p: w.p, feet: lv.floorIn, yaw: w.yaw });
+    if (Math.abs(s.feet - lv.floorIn) < 1 && dist(s.p, w.p) < 24) return { spot: s, levelName: lv.name };
+  }
+  const near = world.rooms.filter((r) => r.levelId === lv.id).sort((a, b) => dist(a.spot.p, w.p) - dist(b.spot.p, w.p))[0];
+  return near ? { spot: near.spot, levelName: lv.name } : null;
+}
+
 /** The floor and room you're in, for the label on screen. */
 export function whereAmI(world: WalkWorld, plans: Plans, w: Walker): { levelName: string; roomName: string } {
   plans = flatPlans(plans);

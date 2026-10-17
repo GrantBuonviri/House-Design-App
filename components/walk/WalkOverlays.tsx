@@ -182,8 +182,9 @@ export function WalkHelp({ onStart }: { onStart: () => void }) {
           <li>W A S D or the arrow keys to walk</li>
           <li>Hold Shift to walk faster</li>
           <li>E turns Design on. Finishes: aim at a floor, wall, counter, or outside at the siding, roof, doors and yard, and click to pick its finish</li>
-          <li>F opens Place: furniture, fixtures, cabinets, outlets, hookups, built-ins, doors, windows and walls. Aim at anything placed and click to move, turn, size, swap or delete it. Stair railings are there too: aim at one and click to change its kind or look, or press Delete to remove it. Tab switches between Finishes and Place</li>
-          <li>I opens Interior design (style, mood board, finishes room by room) and X opens Exterior design (roof, siding, windows, doors, yard). The house changes as you pick; Esc closes it</li>
+          <li>F opens Place: furniture, fixtures, cabinets, outlets, hookups, built-ins, doors, windows and walls. Aim at anything placed and click to move, turn, size, swap or delete it. Stair railings are there too: aim at one and click to change its kind or look, or press Delete to remove it. Tab switches between Finishes and Place. To move something to another floor, carry it up or down the stairs (or press that floor&apos;s number) and click to put it down</li>
+          <li>I opens Interior design (style, mood board, finishes room by room) and X opens Exterior design (roof, siding, windows, doors, yard) on the part you&apos;re looking at. The house changes as you pick; Esc closes it</li>
+          <li>1, 2, 3... jump between floors (1 is the lowest)</li>
           <li>M shows this floor from above with the Furnish tools; M or Esc comes back</li>
           <li>Walk into a door to open it, or click it to open and close it by hand. K locks the door you aim at (a locked door only opens when clicked). O changes the Doors setting</li>
           <li>L shows room labels on the floor (the ⚙ button sets what they say). Shift+L locks them to the floor plan&apos;s direction instead of turning with you</li>

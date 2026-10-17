@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import type { FloorPlan } from "@/lib/model/schema";
 import { catalogEntry } from "@/lib/furnish/catalog";
 import { layerItems, placeItem } from "@/lib/furnish/layer";
-import { addWall, clampLift, itemAt, liftable, openingInTheWay, openingOnWall, slideOpening, walkGhost, walkMove, wallPoint, withOpening } from "@/lib/furnish/walk";
+import { addWall, carryToFloor, clampLift, itemAt, liftable, openingInTheWay, openingOnWall, slideOpening, walkGhost, walkMove, wallPoint, withOpening } from "@/lib/furnish/walk";
 import { aimAt } from "@/lib/interior/surfaces";
 import { emptyPlan, makeRoom } from "@/lib/plan/edit";
 import { defaultBasics } from "@/lib/plan/basics";
@@ -172,5 +172,46 @@ describe("doors, windows and walls in the walkthrough", () => {
     expect(split.split).toBe(true);
     expect(split.plan.rooms).toHaveLength(3);
     expect(addWall(plan, { x: 150, y: 40 }, { x: 155, y: 40 }, "full")).toBeNull();
+  });
+});
+
+describe("carrying an item to another floor", () => {
+  it("takes it off the old floor and puts it down on the new one in the same step, keeping its faucet and color", () => {
+    const { plan, bath } = twoRooms();
+    const below = placeItem(plan, "fixture:sink", { x: 60, y: 12 }, { rotation: 0 }).plan;
+    const sink = { ...below.fixtures[0], faucet: { shape: "gooseneck" } };
+    const from: FloorPlan = { ...below, fixtures: [sink] };
+    const upstairs = twoRooms();
+    const item = layerItems(from)[0];
+    const g = walkMove(upstairs.plan, item, { floor: { x: 200, y: 60 }, wall: { p: { x: 264, y: 60 }, n: { x: -1, y: 0 } } }, 0, layerItems(upstairs.plan));
+    expect(g.check.ok).toBe(true);
+    const out = carryToFloor(from, upstairs.plan, item, g);
+    expect(out.id).toBe(sink.id);
+    expect(out.from.fixtures).toHaveLength(0);
+    expect(out.to.fixtures).toHaveLength(1);
+    expect(out.to.fixtures[0]).toMatchObject({ faucet: { shape: "gooseneck" }, x: g.x, y: g.y, roomId: upstairs.bed });
+    expect(out.to.fixtures[0].roomId).not.toBe(bath);
+
+    const chair = placeItem(plan, "furniture:armchair", { x: 60, y: 48 }, { rotation: 0, color: "#123456" }).plan;
+    const ci = layerItems(chair)[0];
+    const cg = walkMove(upstairs.plan, ci, { floor: { x: 190, y: 70 } }, 0, []);
+    const moved = carryToFloor(chair, upstairs.plan, ci, cg);
+    expect(moved.from.furniture).toHaveLength(0);
+    expect(moved.to.furniture[0]).toMatchObject({ color: "#123456", roomId: upstairs.bed });
+  });
+
+  it("hangs a ceiling built-in from the new floor's ceiling, and leaves both floors alone when it doesn't fit", () => {
+    const { plan } = twoRooms();
+    expect(catalogEntry("addon:ceiling-fan")?.mount).toBe("ceiling");
+    const fan = placeItem(plan, "addon:ceiling-fan", { x: 190, y: 70 }, { ceilingIn: 96 }).plan;
+    const fi = layerItems(fan)[0];
+    const fg = walkMove(twoRooms().plan, fi, { floor: { x: 200, y: 60 } }, 0, []);
+    expect(carryToFloor(fan, twoRooms().plan, fi, fg, 108).to.addOns![0].bottomIn).toBe(108 - fi.heightIn);
+    const from = placeItem(plan, "furniture:armchair", { x: 60, y: 48 }, { rotation: 0 }).plan;
+    const it = layerItems(from)[0];
+    const bad = { ...walkMove(plan, it, { floor: { x: 60, y: 48 } }, 0, []), check: { ok: false, blocksDoors: [] } };
+    const out = carryToFloor(from, plan, it, bad);
+    expect(out.id).toBeNull();
+    expect(out.from).toBe(from);
   });
 });
