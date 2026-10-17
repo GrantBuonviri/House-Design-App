@@ -10,7 +10,7 @@ import { planOf, planHasContent } from "@/lib/plan/edit";
 import { dismissWarning, planWarnings, restoreWarning, splitDismissed, type PlanWarning } from "@/lib/plan/checks";
 import { cabinetsEdited, resetCabinets } from "@/lib/plan/cabinets";
 import { devicesEdited, resetDevices } from "@/lib/plan/devices";
-import { layerItems, moveInside } from "@/lib/furnish/layer";
+import { layerItems, moveInside, placeCheck } from "@/lib/furnish/layer";
 import { OPENING_TYPES } from "@/lib/plan/catalog";
 import { catalogEntry, type CatalogEntry } from "@/lib/furnish/catalog";
 import { furnishLayouts, deleteItem, patchItem, stageItems } from "@/lib/furnish/stage";
@@ -110,7 +110,7 @@ export default function FurnishStage({
   const plan = planOf(plans, level.id);
   const ceilingIn = ceilingFor(basics, level);
   const layouts = useMemo(() => furnishLayouts(project, level), [project, level]);
-  const items = useMemo(() => stageItems(plan, layouts), [plan, layouts]);
+  const items = useMemo(() => stageItems(plan, layouts, ceilingIn), [plan, layouts, ceilingIn]);
   const stairRails = useMemo(() => stageRailings(plans, levels, basics, level.id), [plans, levels, basics, level.id]);
   const selections = project.interior.selections;
   const exteriorIn = exteriorWallIn(basics);
@@ -212,6 +212,9 @@ export default function FurnishStage({
       const t = e.target as HTMLElement;
       if (t.closest("input, textarea, select, [contenteditable]")) return;
       if (e.metaKey || e.ctrlKey || e.altKey) return;
+      const nudge = { ArrowLeft: [-1, 0], ArrowRight: [1, 0], ArrowUp: [0, -1], ArrowDown: [0, 1] }[e.key];
+      // A held key repeats: only the arrows keep nudging.
+      if (e.repeat && !nudge) return;
       const k = e.key.toLowerCase();
       if (e.key === "Escape") {
         if (drafting) return;
@@ -241,7 +244,6 @@ export default function FurnishStage({
         } else if (single.kind === "opening") setFlash("Doors and windows can't be deleted from Furnish. Delete them on the floor plan.");
         return;
       }
-      const nudge = { ArrowLeft: [-1, 0], ArrowRight: [1, 0], ArrowUp: [0, -1], ArrowDown: [0, 1] }[e.key];
       if (nudge && item) {
         e.preventDefault();
         const step = e.shiftKey ? 12 : 1;
@@ -251,7 +253,12 @@ export default function FurnishStage({
       if (k === "r") {
         e.preventDefault();
         if (tool === "place") setTurn((d) => (d + 90) % 360);
-        else if (item) apply(patchItem(plan, item, { rotation: item.rotation + 90 }));
+        else if (item) {
+          // Only if it fits turned, as in the walkthrough.
+          const check = placeCheck(plan, { ...item, rotation: item.rotation + 90 }, items.filter((x) => x.id !== item.id));
+          if (!check.ok) setFlash(`It can't turn there: ${check.problem?.toLowerCase() ?? "it doesn't fit."}`);
+          else apply(patchItem(plan, item, { rotation: item.rotation + 90 }));
+        }
         return;
       }
       if (k === "m") {
@@ -272,7 +279,7 @@ export default function FurnishStage({
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [single, item, plan, tool, tape, drafting, sel.length, walk]);
+  }, [single, item, items, plan, tool, tape, drafting, sel.length, walk]);
 
   // Things to check: the ones about furnishings (the floor plan lists the rest). Picking one jumps to its floor.
   const warnings = useMemo(() => (basics ? planWarnings(plans, { levels, brief: project.brief, basics }).filter((w) => w.furnish || w.closetWalls || w.noFaucet) : []), [plans, levels, project.brief, basics]);
