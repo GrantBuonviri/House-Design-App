@@ -24,6 +24,7 @@ Read this file first, then open only the files for the feature you're changing. 
 - Every edit goes through `useProjectStore().update(...)` in `lib/store/projectStore.ts` (undo history + autosave). Undo labels come from `lib/store/describe.ts`.
 - Logic lives in `lib/` as plain functions with tests in `tests/`; `components/` is UI. 3D and Konva components load with `dynamic(..., { ssr: false })`.
 - Kept answers: `planWarnings` reuses each floor's warnings while what `levelDeps` (in `lib/plan/checks.ts`) lists is unchanged, so a check that starts reading another floor must add it there; `measureHouse` keeps its last 8 answers; the Plans page preview draws only the shown sheet (`buildSet`'s `draw`).
+- Taking a floor away asks first (`BriefStage` `editBrief`/`buildBrief`, `BubbleStage` `removeLevel`): `lib/brief/levels.ts` `removedLevelIds`, `roomsOnLevels`, `dropLevelRooms` (clears that floor's sketch and floor plan in the same undo step), `removeRoomsQuestion`. No answer keeps the floor.
 - Page shortcuts: every page's key listener starts with `keyIsForPage(e, { here })` from `lib/keys.ts` (not typing in a box, no `aria-modal` dialog or `data-over-page` view like the walkthrough or Plans page over it, unless `here`, the listener's own element, is inside it).
 - Everything is worked out by code. No Claude/AI calls and no API keys in the app.
 - Each change: its own branch and PR. The user (Grant, on a Mac, new to dev tools) tests locally; his steps always include `git pull` and `npm install`.

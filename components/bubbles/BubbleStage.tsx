@@ -11,7 +11,7 @@ import { WINTER_RING, defaultLotOffset, houseCenter, houseReach, landDrawing } f
 import { blankSketch, hasContent } from "@/lib/bubbles/start";
 import { suggestAlternatives, suggestSketch } from "@/lib/bubbles/suggest";
 import { siteOf } from "@/lib/bubbles/site";
-import { MAIN_LEVEL_ID, isExtraLevel } from "@/lib/brief/levels";
+import { MAIN_LEVEL_ID, dropLevelRooms, isExtraLevel, removeRoomsQuestion, roomsOnLevels } from "@/lib/brief/levels";
 import { nearestSide } from "@/lib/land/generate";
 import { Note } from "@/components/brief/bits";
 import AlternativesView from "./AlternativesView";
@@ -229,12 +229,9 @@ export default function BubbleStage({ onContinue, onGoToRooms }: { onContinue: (
 
   function removeLevel(id: string) {
     const l = levels.find((x) => x.id === id);
-    if (hasContent({ [id]: diagramOf(diagrams, id) }) && !window.confirm(`Remove the ${l?.name ?? "level"} and everything drawn on it?`)) return;
-    update((p) => {
-      const bubbles = { ...p.bubbles };
-      delete bubbles[id];
-      return { ...p, levels: p.levels.filter((x) => x.id !== id), bubbles };
-    });
+    const n = roomsOnLevels(project, [id]);
+    if (n > 0 ? !window.confirm(removeRoomsQuestion(n, [l?.name ?? "level"])) : hasContent({ [id]: diagramOf(diagrams, id) }) && !window.confirm(`Remove the ${l?.name ?? "level"} and everything drawn on it?`)) return;
+    update((p) => dropLevelRooms({ ...p, levels: p.levels.filter((x) => x.id !== id) }, [id]));
     if (levelId === id) setLevelId(MAIN_LEVEL_ID);
   }
 

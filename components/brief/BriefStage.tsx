@@ -3,7 +3,8 @@
 import { useState } from "react";
 import type { DesignBrief, DiscoveryAnswers, Profile } from "@/lib/model/schema";
 import { houseSpot } from "@/lib/house3d/site";
-import { syncLevels } from "@/lib/brief/levels";
+import { dropLevelRooms, removeRoomsQuestion, removedLevelIds, roomsOnLevels, syncLevels } from "@/lib/brief/levels";
+import type { Project } from "@/lib/model/schema";
 import { buildRuleBrief, sizingNote } from "@/lib/brief/rules";
 import { plotFacts } from "@/components/land/plotText";
 import { useProjectStore } from "@/lib/store/projectStore";
@@ -37,20 +38,34 @@ export default function BriefStage({ onContinue, onPickLand }: { onContinue: () 
 
   const setProfile = (patch: Partial<Profile>, key: string) => update((p) => ({ ...p, profile: { ...p.profile, ...patch } }), { coalesce: `profile.${key}` });
 
+  /** Asks about the rooms on floors this brief drops. Returns the floors to clear, or null if the change is cancelled. */
+  const askDropped = (p: Project, brief: DesignBrief): string[] | null => {
+    const gone = removedLevelIds(p, brief);
+    const n = roomsOnLevels(p, gone);
+    if (n === 0) return gone;
+    return window.confirm(removeRoomsQuestion(n, gone.map((id) => p.levels.find((l) => l.id === id)?.name ?? "floor"))) ? gone : null;
+  };
+
+  const withBrief = (p: Project, brief: DesignBrief, gone: string[]): Project => dropLevelRooms({ ...p, brief, levels: syncLevels(p.levels, brief) }, gone);
+
   const buildBrief = () => {
     if (project.brief && !window.confirm("Replace your current brief, including any edits you made to it?")) return;
+    const next = buildRuleBrief({ answers: project.discovery.answers, profile: project.profile, costIndex: locationOf(project).costIndex, plot: project.plot, spot: houseSpot(project) });
+    const gone = askDropped(project, next);
+    if (!gone) return;
     update((p) => {
       const brief = buildRuleBrief({ answers: p.discovery.answers, profile: p.profile, costIndex: locationOf(p).costIndex, plot: p.plot, spot: houseSpot(p) });
-      return { ...p, brief, levels: syncLevels(p.levels, brief) };
+      return withBrief(p, brief, gone);
     });
     setView("brief");
     window.scrollTo({ top: 0 });
   };
 
-  const editBrief = (brief: DesignBrief, key: string) =>
-    update((p) => ({ ...p, brief, levels: syncLevels(p.levels, brief) }), {
-      coalesce: `brief.${key}`,
-    });
+  const editBrief = (brief: DesignBrief, key: string) => {
+    const gone = askDropped(project, brief);
+    if (!gone) return;
+    update((p) => withBrief(p, brief, gone), gone.length ? undefined : { coalesce: `brief.${key}` });
+  };
 
   if (view === "brief" && project.brief) {
     return (

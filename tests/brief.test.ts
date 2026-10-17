@@ -3,7 +3,7 @@ import { DiscoveryAnswers, SCHEMA_VERSION, type ChosenRoom, type DesignBrief, ty
 import { createProject, migrateProject } from "@/lib/model/project";
 import { FLAT_PLOT_SEED, generatePlot } from "@/lib/land/generate";
 import { buildRuleBrief, briefTotals, householdFactor, householdSizing, missingEssentials, sizingNote, type BriefContext } from "@/lib/brief/rules";
-import { levelIdsFor, levelsFor, nearestLevel, syncLevels } from "@/lib/brief/levels";
+import { dropLevelRooms, levelIdsFor, levelsFor, nearestLevel, removeRoomsQuestion, removedLevelIds, roomsOnLevels, syncLevels } from "@/lib/brief/levels";
 import { GARAGE_SQFT, roomType, setTypeCount, sqftFromDims } from "@/lib/brief/rooms";
 
 const profile: Profile = { mustHaves: [], dislikes: [] };
@@ -228,6 +228,21 @@ describe("levels", () => {
     expect(syncLevels(project.levels, brief).map((l) => l.id)).toEqual(["basement-1", "floor-1", "floor-2"]);
     const one = buildRuleBrief(ctx({ rooms: typical() }));
     expect(syncLevels(project.levels, one).map((l) => l.id)).toEqual(["floor-1"]);
+  });
+
+  it("finds, counts and clears rooms on a floor the brief drops", () => {
+    const project = createProject("Test");
+    const two = buildRuleBrief(ctx({ rooms: typical(), floorsAbove: 2 }));
+    const one = buildRuleBrief(ctx({ rooms: typical() }));
+    const withTwo = { ...project, levels: syncLevels(project.levels, two) };
+    const planned = { ...withTwo, floorPlans: { "floor-2": { rooms: [{}, {}, {}] } as never, "floor-1": { rooms: [{}] } as never } };
+    expect(removedLevelIds(planned, two)).toEqual([]);
+    const gone = removedLevelIds(planned, one);
+    expect(gone).toEqual(["floor-2"]);
+    expect(roomsOnLevels(planned, gone)).toBe(3);
+    const cleared = dropLevelRooms(planned, gone);
+    expect(Object.keys(cleared.floorPlans)).toEqual(["floor-1"]);
+    expect(removeRoomsQuestion(3, ["Second floor"])).toBe("The second floor has 3 rooms. Remove them?");
   });
 
   it("keeps a loft one story above the top floor when floors are added", () => {
