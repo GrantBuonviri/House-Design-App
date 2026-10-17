@@ -3,8 +3,9 @@ import raw from "./data/cost-rates.json";
 
 /**
  * The cost rates file, checked when the app loads so a typo in it shows a
- * clear message instead of a broken page. Every rate has material and labor
- * separately, each as [low, likely, high], with where the number came from.
+ * clear message instead of a broken page. Every rate is a materials price,
+ * as [low, likely, high], with where the number came from. Jobs usually hired
+ * out as a whole (digging, well, septic) are marked `hired` and keep their full price.
  */
 
 const Range = z.tuple([z.number().min(0), z.number().min(0), z.number().min(0)]).refine(([lo, mid, hi]) => lo <= mid && mid <= hi, {
@@ -23,7 +24,7 @@ export const Rate = z.object({
   label: z.string(),
   unit: z.enum(["sqft", "linft", "each", "cuyd"]),
   material: Range,
-  labor: Range,
+  hired: z.boolean().optional(),
   ...Source,
   /** How the price was brought to the US average. */
   normalized: z.string().optional(),
@@ -45,6 +46,7 @@ export type Permit = z.infer<typeof Permit>;
 
 export const RatesFile = z.object({
   region: z.string(),
+  note: z.string().optional(),
   checked: z.string(),
   /** The cost level the rates were divided by to reach the US average. */
   costLevelBase: z.object({ cityId: z.string(), index: z.number(), source: z.string() }),
@@ -164,7 +166,7 @@ export const RATE_IDS = [
 ] as const;
 export type RateId = (typeof RATE_IDS)[number];
 
-export const PERCENT_IDS = ["overhead-profit", "contingency", "plan-review"] as const;
+export const PERCENT_IDS = ["plan-review"] as const;
 export type PercentId = (typeof PERCENT_IDS)[number];
 
 /** Check a rates file: the shape, and that every rate the estimate needs is there. */
@@ -190,7 +192,7 @@ export function scaleRates(file: RatesFile, costIndex: number): RatesFile {
   if (costIndex === 1) return file;
   return {
     ...file,
-    rates: Object.fromEntries(Object.entries(file.rates).map(([id, r]) => [id, { ...r, material: scaled(r.material, costIndex), labor: scaled(r.labor, costIndex) }])),
+    rates: Object.fromEntries(Object.entries(file.rates).map(([id, r]) => [id, { ...r, material: scaled(r.material, costIndex) }])),
     calibration: { ...file.calibration, costPerSqft: scaled(file.calibration.costPerSqft, costIndex) },
   };
 }

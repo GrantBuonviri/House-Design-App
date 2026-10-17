@@ -42,7 +42,7 @@ export function labelLines(info: RoomInfo, s: WalkLabels): LabelLine[] {
     if (paint) out.push({ text: `Paint: ${paint.name}`, small: true });
   }
   if (s.costShare && info.cost && info.cost.total > 0) {
-    out.push({ text: `About ${shortMoney(info.cost.total * info.cost.share)} of the estimate`, small: true });
+    out.push({ text: `About ${shortMoney(info.cost.total * info.cost.share)} of the materials`, small: true });
   }
   return out;
 }

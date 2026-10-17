@@ -160,11 +160,11 @@ describe("cost with picks", () => {
   it("prices a whole-house pick everywhere, and a room's own pick wins there", () => {
     const base = line(estimate(project(twoRooms()))!, "flooring");
     const house = line(estimate(project(twoRooms(), setPick([], WHOLE_HOUSE, "flooring", oak)))!, "flooring");
-    expect(house.cost.likely).toBeCloseTo(base.qty * (12 + floorRate.labor[1]), 0);
+    expect(house.cost.likely).toBeCloseTo(base.qty * 12, 0);
     expect(house.product).toBe("Test oak");
     const cheap = toProduct(product({ id: "cheap", category: "flooring", price: 2 }));
     const both = line(estimate(project(twoRooms(), setPick(setPick([], WHOLE_HOUSE, "flooring", oak), "bed", "flooring", cheap)))!, "flooring");
-    expect(both.cost.likely).toBeCloseTo((base.qty / 2) * (12 + 2 + 2 * floorRate.labor[1]), 0);
+    expect(both.cost.likely).toBeCloseTo((base.qty / 2) * (12 + 2), 0);
   });
 
   it("turns paint per gallon into the per sq ft line, keeping primer and ceilings", () => {
@@ -172,7 +172,7 @@ describe("cost with picks", () => {
     const base = line(estimate(project(twoRooms()))!, "interior-paint");
     const picked = line(estimate(project(twoRooms(), setPick([], WHOLE_HOUSE, "paint", paint)))!, "interior-paint");
     const r = rates().rates["interior-paint"];
-    const perSqft = r.material[1] * 0.4 + 80 * 0.02 + r.labor[1];
+    const perSqft = r.material[1] * 0.4 + 80 * 0.02;
     expect(picked.cost.likely).toBeCloseTo(base.qty * perSqft, 0);
   });
 

@@ -45,8 +45,8 @@ export function WalkTopBar(props: {
       </div>
       <div className="flex flex-wrap items-center justify-end gap-2">
         {cost && (
-          <span className="rounded-md bg-black/55 px-3 py-1.5 text-sm text-white tabular-nums" data-testid="walk-cost" title="The cost estimate, with your picks">
-            {cost.source === "rough" ? "Rough cost" : "Cost"} about {shortMoney(cost.total.likely)}
+          <span className="rounded-md bg-black/55 px-3 py-1.5 text-sm text-white tabular-nums" data-testid="walk-cost" title="The materials estimate, with your picks">
+            {cost.source === "rough" ? "Rough materials" : "Materials"} about {shortMoney(cost.total.likely)}
           </span>
         )}
         <button

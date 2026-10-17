@@ -73,9 +73,9 @@ The app was built in 11 milestones:
 
 ### Cost estimate tips
 
-- The cost total is at the top right of every project once you've added rooms: **About $585k ($520k to $670k)**. Click it to open the cost panel on the right. It stays open while you work, and the numbers change as you edit.
+- The cost total is at the top right of every project once you've added rooms: **Materials about $270k ($240k to $340k)**. Click it to open the cost panel on the right. It stays open while you work, and the numbers change as you edit.
 - Before there's a floor plan, the estimate is **rough**: it uses the room sizes from the Rooms page. Once you draw the floor plan, it's measured from the plan itself: floor areas, walls, the roof shape and pitch, doors and windows, fixtures, and the land's slope and drainage.
-- Click a category to see what was measured, the material and labor rates, and where each rate came from.
+- Click a category to see what was measured, the rates, and where each rate came from. The estimate is **materials only**: labor, builder profit and contingency aren't included. Jobs usually hired out as a whole (site prep, digging, grading, drainage, rock removal, trenching, water service, well and septic) are full price, and permits and fees are included. The cost panel says so.
 - **Water and sewer** switches between city hookups and a well and septic system.
 - Cabinets are priced from the cabinets actually in your kitchen (and laundry or anywhere else you put them); a kitchen with none gets a typical one. Built-ins and extras and hookups placed in Furnish get their own lines; furniture isn't priced.
 - Finishes (flooring, cabinets, fixtures and so on) are priced as mid-range until products are picked in the interior and exterior stages.
@@ -172,17 +172,17 @@ All the prices live in one file: `lib/cost/data/cost-rates.json`. Each rate look
   "label": "Fiber cement siding (painted)",
   "unit": "sqft",
   "material": [3.8, 4.8, 6.8],
-  "labor": [4, 5.2, 7.2],
   "source": "HomeGuide Hardie board siding cost",
   "url": "https://...",
   "checked": "2026-10-14"
 }
 ```
 
-- `material` and `labor` are each **[low, likely, high]** in dollars per unit. Keep them in that order (low ≤ likely ≤ high).
+- `material` is **[low, likely, high]** in dollars per unit. Keep them in that order (low ≤ likely ≤ high).
+- `hired: true` marks a job usually hired out as a whole, whose `material` is its full price (material plus work).
 - `unit` is `sqft`, `linft`, `each` or `cuyd` (cubic yards).
 - Update `source`, `url` and `checked` when you change a number, so you know where it came from.
-- `percents` holds builder overhead and profit, contingency and the plan review fee. `permit` holds Boise's building permit table.
+- `percents` holds the plan review fee. `permit` holds Boise's building permit table.
 - Save the file and the app picks it up (restart `npm run dev` if it doesn't). If a number is mistyped, the app shows an error naming the rate, and `npm test` checks the file too.
 
 ## How to add or change a product
@@ -211,6 +211,7 @@ The interior products live in `data/catalog/`, one file per kind (`flooring.json
 ```
 
 - To add one, copy an entry in the right file, give it a new `id` (any unique name with dashes), and change the rest.
+- `hired: true` marks a job usually hired out as a whole, whose `material` is its full price (material plus work).
 - `unit` is `sqft`, `each`, `linft`, `gallon` or `set`. `priceSource` is `listed` when the page shows the price, or `estimated` when you worked it out (say how in `priceNote`).
 - `styles` are from: `modern-farmhouse`, `mountain-modern`, `scandinavian`, `craftsman`, `transitional`, `industrial`, `modern`. `tags` are from: `warm`, `cool`, `neutral`, `bold`, `light-wood`, `medium-wood`, `dark-wood`, `matte-black`, `brushed-nickel`, `brass`, `chrome`, `stainless`, `white`, `black`, `quartz`, `granite`, `butcher-block`, `concrete-look`. These decide which products show first for your style answers.
 - `color` is the color used for the swatch and in 3D, and `pattern` is `plank`, `tile`, `stone`, `carpet`, `solid` or `metal`. Add `"imageUrl": "https://..."` to show a photo instead of the drawn swatch (many brand sites block their photos from showing elsewhere, so check it loads).
