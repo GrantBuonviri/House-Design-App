@@ -4,7 +4,7 @@ import { areaKind } from "@/lib/plan/measure";
 import { openingType } from "@/lib/plan/catalog";
 import { openingGeometries } from "@/lib/plan/walls";
 import { COVERED, floorFootprint, offsetRing, roofFootprint, subtractRegions, type Region } from "@/lib/house3d/footprint";
-import { levelHeights, type LevelHeights } from "@/lib/house3d/levels";
+import { isBelowGround, levelHeights, type LevelHeights } from "@/lib/house3d/levels";
 import { roofShape, ROOF_THICK_IN, type RoofShape } from "@/lib/house3d/roof";
 import { lotOffsetFor, siteFor, type Site } from "@/lib/house3d/site";
 import { lookOutside } from "@/lib/house3d/build";
@@ -234,17 +234,17 @@ export function houseScene(project: Project): HouseScene {
   const roofs: HouseScene["roofs"] = [];
   let topIn = Math.max(0, ...ordered.map((l) => heights[l.id].floorIn + heights[l.id].ceilingIn));
   ordered.forEach((level, i) => {
+    if (isBelowGround(level, heights)) return;
     const regions = roofFootprint(h.plan(level.id));
     const next = ordered.slice(i + 1).find((l) => h.plan(l.id).rooms.length > 0);
     const above = next ? floorFootprint(h.plan(next.id)) : [];
     const exposed = subtractRegions(regions, above);
     const { floorIn, ceilingIn } = heights[level.id];
-    const flat = level.kind === "basement" || floorIn < 0;
     for (const found of exposed) {
       const r: Region = { ...found, holes: found.holes.filter((hole) => polygonArea(hole) > 150 * 144) };
-      const shape = roofShape(r, floorIn + ceilingIn, t, project.house3d.roof, flat, next && { regions: above, topIn: heights[next.id].floorIn + heights[next.id].ceilingIn });
-      const eave = offsetRing(offsetRing(r.outline, t / 2), project.house3d.roof.style === "flat" || flat || shape.fellBack ? Math.min(project.house3d.roof.overhangIn, 6) : project.house3d.roof.overhangIn);
-      roofs.push({ levelId: level.id, shape, flat: flat || shape.fellBack || project.house3d.roof.style === "flat", eave });
+      const shape = roofShape(r, floorIn + ceilingIn, t, project.house3d.roof, false, next && { regions: above, topIn: heights[next.id].floorIn + heights[next.id].ceilingIn });
+      const eave = offsetRing(offsetRing(r.outline, t / 2), project.house3d.roof.style === "flat" || shape.fellBack ? Math.min(project.house3d.roof.overhangIn, 6) : project.house3d.roof.overhangIn);
+      roofs.push({ levelId: level.id, shape, flat: shape.fellBack || project.house3d.roof.style === "flat", eave });
       for (const tri of shape.tris) topIn = Math.max(topIn, ...tri.h);
       roofFaces(shape, look, level.id, face);
     }
