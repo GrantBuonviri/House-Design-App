@@ -95,6 +95,23 @@ export function measurePlan(p: Ctx): Quantities | null {
     joinRooms(groundLevels.flatMap((l) => planOf(plans, l.id).rooms.filter((r) => areaKind(r) !== "outdoor").map((r) => r.polygon))),
     basementRegions,
   );
+  // Set to a basement on the Plans page with no basement floor drawn: the sheets put one under the
+  // living part of the main floor (structure/foundation.ts zonesOf), so price one there: 8 ft walls,
+  // dug in all the way, with a slab, waterproofing and digging. The main floor over it is framed.
+  if (q.foundation === "basement" && !basementRegions.length) {
+    const living = joinRooms(groundLevels.flatMap((l) => planOf(plans, l.id).rooms.filter((r) => areaKind(r) === "living").map((r) => r.polygon)));
+    const wallH = 96 + FLOOR_STRUCTURE_IN;
+    for (const r of living) {
+      basementRegions.push(r);
+      const outer = offsetRing(r.outline, exteriorIn / 2);
+      const per = ringLength(outer);
+      q.basementSlabSqft += sqft(regionArea(r));
+      q.basementWallSqft += sqft(per * (wallH + 8));
+      q.footingLf += ft(per);
+      q.waterproofSqft += sqft(per * wallH);
+      q.excavationCuyd += (polygonArea(offsetRing(outer, OVERDIG_IN)) * (wallH + 12)) / 46656;
+    }
+  }
   const basementOuter = basementRegions.map((r) => offsetRing(r.outline, exteriorIn / 2 + 6));
   const garagePolys = groundLevels.flatMap((l) => planOf(plans, l.id).rooms.filter((r) => areaKind(r) === "garage").map((r) => r.polygon));
   const garageSqft = sqft(garagePolys.reduce((s, poly) => s + polygonArea(poly), 0));
@@ -145,14 +162,16 @@ export function measurePlan(p: Ctx): Quantities | null {
     const extras = furnishExtras(plan);
     for (const k of Object.keys(extras) as (keyof typeof extras)[]) q.furnish[k] += extras[k];
     const potFillers = potFillersByRoom(plan);
+    // A porch on an upper floor is a balcony: framed like a deck, not a slab on the ground.
+    const upper = !isBelow && !groundLevels.includes(l);
     for (const r of plan.rooms) {
       const a = sqft(roomArea(savedRoom(r)));
       const kind = areaKind(r);
       if (kind === "living") q.livingSqft += a;
       else if (kind === "garage") q.garageSqft += a;
-      else if (r.type === "deck") q.deckSqft += a;
+      else if (r.type === "deck" || upper) q.deckSqft += a;
       else q.porchSqft += a;
-      if (r.type === "patio") q.patioSqft += a;
+      if (r.type === "patio" && !upper) q.patioSqft += a;
       // Wall length on each side of the room, less any stretch where the wall was taken out.
       const edgesIn = edgesOf(r.polygon).map((e) => dist(e.a, e.b) - openSpans(plan, e.a, e.b).reduce((t, [t0, t1]) => t + t1 - t0, 0));
       allRooms.push({ id: r.id, name: r.name, type: r.type ?? "other", sqft: a, fixtures: plan.fixtures.filter((f) => f.roomId === r.id), edgesIn, cabinets: cabinets.get(r.id), potFillers: potFillers.get(r.id) });
@@ -177,8 +196,10 @@ export function measurePlan(p: Ctx): Quantities | null {
       if (w.exterior) extLen += L;
       // A half wall takes framing and drywall for its 42" only, plus a counter cap when it has one.
       const share = w.height ? wallTopIn(w, ceilingIn) / ceilingIn : 1;
-      if (w.exterior && groundLevels.includes(l)) q.baseWallLf += ft(L);
-      else q.intWallLf += ft(L) * share;
+      // Outside walls are priced by area (extWallSqft, or basement walls); only inside walls count here.
+      if (w.exterior) {
+        if (groundLevels.includes(l)) q.baseWallLf += ft(L);
+      } else q.intWallLf += ft(L) * share;
       if (!w.exterior) q.intWallSqft += sqft(L * ceilingIn * share);
       if (w.height === "half-cap") {
         const top = sqft(L * (w.thicknessIn + WALL_CAP_OVERHANG_IN * 2));
@@ -230,7 +251,7 @@ export function measurePlan(p: Ctx): Quantities | null {
   // Driveway from the garage (or the house) to the road, and service lines to the road.
   const garageCenter = garagePolys.length ? centerOf(garagePolys.flat()) : centerOf(groundRegions.flatMap((r) => r.outline));
   const toStreet = ft(toRoad(p, garageCenter, offset));
-  const garageWidth = garagePolys.length ? Math.min(30, Math.max(12, q.garageDoorLf + 4 || 20)) : 12;
+  const garageWidth = garagePolys.length ? Math.min(30, Math.max(12, q.garageDoorLf ? q.garageDoorLf + 4 : 20)) : 12;
   q.driveSqft = toStreet * garageWidth;
   q.trenchLf = toStreet;
 

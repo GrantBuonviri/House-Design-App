@@ -30,7 +30,10 @@ const ROOF = House3D.parse({}).roof;
 
 function project(plans: Record<string, FloorPlan>, extra: Partial<Project> = {}): Project {
   const levels = extra.levels ?? [levelFor(MAIN_LEVEL_ID)];
-  return { ...createProject("Test"), plot: flat, levels, floorPlans: plans, plan: { basics: defaultBasics(), showSketch: false, labels: DEFAULT_LABELS, dismissed: [] }, ...extra };
+  const p = createProject("Test");
+  // On a slab, as the flat land suggests (the Plans page's foundation decides; its default is a crawlspace).
+  const plans_ = { ...p.plans, systems: { ...p.plans.systems, foundation: "slab" as const } };
+  return { ...p, plot: flat, levels, floorPlans: plans, plan: { basics: defaultBasics(), showSketch: false, labels: DEFAULT_LABELS, dismissed: [] }, plans: plans_, ...extra };
 }
 
 const cat = (e: Estimate, id: string) => e.categories.find((c) => c.id === id)!.cost.likely;
@@ -134,6 +137,43 @@ describe("measuring the house", () => {
     // The main floor sits on the basement: framed, not a slab.
     expect(q.slabSqft).toBe(0);
     expect(q.floorFramingSqft).toBeCloseTo(1200, -1);
+  });
+
+  it("never counts outside walls of an upper floor or basement as inside walls", () => {
+    const levels = levelsFor(2, 1);
+    const q = measurePlan(project({ "floor-1": plan([room("a", 0, 0, 40 * FT, 30 * FT)]), "floor-2": plan([room("b", 0, 0, 40 * FT, 30 * FT)]), "basement-1": plan([room("c", 0, 0, 40 * FT, 30 * FT)]) }, { levels }))!;
+    // One room per floor: no inside walls at all.
+    expect(q.intWallLf).toBe(0);
+    expect(q.baseWallLf).toBeCloseTo(140, -1);
+  });
+
+  it("follows the Plans page's foundation: crawlspace, slab or a basement under the main floor", () => {
+    const withFoundation = (foundation: "crawlspace" | "slab" | "basement") => {
+      const p = project(box());
+      return { ...p, plans: { ...p.plans, systems: { ...p.plans.systems, foundation } } };
+    };
+    const crawl = measurePlan(withFoundation("crawlspace"))!;
+    expect(crawl.foundation).toBe("crawlspace");
+    expect(crawl.slabSqft).toBe(0);
+    expect(crawl.floorFramingSqft).toBeCloseTo(2000, 0);
+    expect(measurePlan(withFoundation("slab"))!.slabSqft).toBeCloseTo(2000, 0);
+    const bsmt = measurePlan(withFoundation("basement"))!;
+    expect(bsmt.basementSlabSqft).toBeCloseTo(2000, 0);
+    expect(bsmt.basementWallSqft).toBeGreaterThan(180 * 8);
+    expect(bsmt.waterproofSqft).toBeGreaterThan(180 * 7);
+    expect(bsmt.stemWallSqft).toBe(0);
+    // The estimate follows a change made on the Plans page (it isn't served from the last measure).
+    const e1 = estimate(withFoundation("slab"))!;
+    const e2 = estimate(withFoundation("basement"))!;
+    expect(line(e2, "basement-wall").length).toBe(1);
+    expect(line(e1, "basement-wall").length).toBe(0);
+  });
+
+  it("prices a porch on an upper floor as a deck, not a slab", () => {
+    const levels = levelsFor(2, 0);
+    const q = measurePlan(project({ "floor-1": plan([room("a", 0, 0, 40 * FT, 30 * FT)]), "floor-2": plan([room("b", 0, 0, 30 * FT, 30 * FT), room("p", 30 * FT, 0, 10 * FT, 12 * FT, "porch")]) }, { levels }))!;
+    expect(q.porchSqft).toBe(0);
+    expect(q.deckSqft).toBeCloseTo(120, 0);
   });
 
   it("measures a hip roof with hips, and a gable with none on a plain box", () => {
@@ -312,6 +352,8 @@ describe("costs at the place's cost level", () => {
         if (id === "__total") continue;
         // Window wells were already a US figure, so they now follow the cost level.
         if (id === "window-well") continue;
+        // Outside walls of the upper floor and basement no longer count as inside walls.
+        if (name === "two" && id === "int-wall-framing") continue;
         expect(now[id], id).toBeTruthy();
         // Faucets in Furnish split the tub/shower line in two (70% tub and valve body, 30% trim); together they cost what the one line did.
         const nowCost = id === "shower-tub" ? { low: now[id].low + now["tub-shower-trim"].low, likely: now[id].likely + now["tub-shower-trim"].likely, high: now[id].high + now["tub-shower-trim"].high } : now[id];
