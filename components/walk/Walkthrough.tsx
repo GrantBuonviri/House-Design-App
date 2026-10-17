@@ -42,6 +42,7 @@ import TopDown from "./TopDown";
 import FurnishItemPanel from "@/components/furnish/FurnishItemPanel";
 import PlanSidePanel from "@/components/plan/PlanSidePanel";
 import { AimDot, WalkControls, WalkHelp, WalkTopBar } from "./WalkOverlays";
+import { DesignWindow, ViewShift, type DesignWindowKind } from "./DesignWindow";
 import { FloorLabels } from "./FloorLabels";
 import LabelSettingsPanel from "./LabelSettingsPanel";
 import { TapeMeasure } from "./TapeMeasure";
@@ -135,7 +136,7 @@ const isDesignPanel = (p: Panel | null) => Boolean(p && p.kind !== "labels" && p
  * counter, fixture or door to pick its finish in the panel on the right, or
  * add, move and turn furniture.
  */
-export default function Walkthrough({ project, cost, onClose }: { project: Project; cost?: Estimate | null; onClose: () => void }) {
+export default function Walkthrough({ project, cost, onClose, startWindow }: { project: Project; cost?: Estimate | null; onClose: () => void; startWindow?: DesignWindowKind }) {
   const quality = useGraphics((g) => g.quality);
   const update = useProjectStore((s) => s.update);
 
@@ -168,6 +169,8 @@ export default function Walkthrough({ project, cost, onClose }: { project: Proje
   const [pinAim, setPinAim] = useState<string | null>(null);
   const [aim, setAim] = useState<Aim | null>(null);
   const [panel, setPanel] = useState<Panel | null>(null);
+  // The Interior (I) or Exterior (X) design window, and the room you stood in when it opened.
+  const [win, setWin] = useState<{ kind: DesignWindowKind; roomId: string | null } | null>(null);
   const [carry, setCarry] = useState<Carry | null>(null);
   const [toast, setToast] = useState<string | null>(null);
   const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -259,8 +262,8 @@ export default function Walkthrough({ project, cost, onClose }: { project: Proje
 
   // The latest of everything, for the mouse and key handlers.
   const snapPoints = useMemo(() => tapeCandidates(project.floorPlans, heights, levels.map((l) => l.id)), [project.floorPlans, heights, levels]);
-  const latest = useRef({ aim, carry, panel, design, tab, topDown, locked, plans: project.floorPlans, itemsOn, tapeOn, tape, snapPoints, pinAim });
-  latest.current = { aim, carry, panel, design, tab, topDown, locked, plans: project.floorPlans, itemsOn, tapeOn, tape, snapPoints, pinAim };
+  const latest = useRef({ aim, carry, panel, design, tab, topDown, locked, plans: project.floorPlans, itemsOn, tapeOn, tape, snapPoints, pinAim, win });
+  latest.current = { aim, carry, panel, design, tab, topDown, locked, plans: project.floorPlans, itemsOn, tapeOn, tape, snapPoints, pinAim, win };
 
   /** The door under the dot, if you're close enough and no wall is in between. */
   const doorUnderDot = useCallback((): DoorInfo | null => {
@@ -472,6 +475,26 @@ export default function Walkthrough({ project, cost, onClose }: { project: Proje
     stopWalking();
   };
 
+  /** I or X: the Interior or Exterior design window. Walking stops; Design, the tape and anything being placed turn off. */
+  const openWindow = (kind: DesignWindowKind) => {
+    setCarry(null);
+    setDesign(false);
+    setTapeOn(false);
+    setPanel(null);
+    setTopDown(null);
+    stopWalking();
+    setWin({ kind, roomId: roomHere()?.room.id ?? null });
+  };
+  /** I or X again (or its top-bar button): open that window, or close it when it's the one showing. */
+  const toggleWindow = (kind: DesignWindowKind) => {
+    if (latest.current.win?.kind === kind) setWin(null);
+    else openWindow(kind);
+  };
+  const keepWalking = () => {
+    setWin(null);
+    start();
+  };
+
   /** M: the top-down view of this floor, with you marked on it. */
   const openTopDown = () => {
     const levelId = levelHere();
@@ -570,6 +593,7 @@ export default function Walkthrough({ project, cost, onClose }: { project: Proje
     const onChange = () => {
       const on = document.pointerLockElement === canvasRef.current;
       setLocked(on);
+      if (on) setWin(null);
       if (!on) {
         unlockedAt.current = performance.now();
         setAim(null);
@@ -588,6 +612,14 @@ export default function Walkthrough({ project, cost, onClose }: { project: Proje
       const t = e.target as HTMLElement | null;
       if (t?.closest("input, textarea, select")) return;
       if (e.key === "Shift") shiftDown.current = true;
+      // While a design window is open walking is paused: only I, X and Esc do anything.
+      if (latest.current.win) {
+        if (e.key === "Escape") {
+          setWin(null);
+          unlockedAt.current = performance.now();
+        } else if ((e.code === "KeyI" || e.code === "KeyX") && !e.metaKey && !e.ctrlKey && !e.altKey) toggleWindow(e.code === "KeyI" ? "interior" : "exterior");
+        return;
+      }
       if (e.key === "Escape" && !document.pointerLockElement) {
         if (latest.current.panel) setPanel(null);
         else if (performance.now() - unlockedAt.current > 400) onClose();
@@ -595,6 +627,10 @@ export default function Walkthrough({ project, cost, onClose }: { project: Proje
       }
       if (e.metaKey || e.ctrlKey || e.altKey) return;
       const { aim: a, carry: c, locked: on, design: d } = latest.current;
+      if ((e.code === "KeyI" || e.code === "KeyX") && !c) {
+        openWindow(e.code === "KeyI" ? "interior" : "exterior");
+        return;
+      }
       if (e.code === "KeyE") {
         setDesignOn(!d);
         return;
@@ -738,6 +774,11 @@ export default function Walkthrough({ project, cost, onClose }: { project: Proje
     [],
   );
 
+  // Opened straight into a design window (Furnish's Next button, the Plans page).
+  useEffect(() => {
+    if (startWindow) setWin({ kind: startWindow, roomId: null });
+  }, [startWindow]);
+
   // Nothing behind the walkthrough scrolls while it's open.
   useEffect(() => {
     const prev = document.body.style.overflow;
@@ -788,6 +829,7 @@ export default function Walkthrough({ project, cost, onClose }: { project: Proje
         }}
       >
         <PerspectiveCamera makeDefault fov={70} near={0.3} far={6000} />
+        <ViewShift open={!!win && !locked} />
         <Sky day={seasonInfo.day} hour={shownHour} span={span} version={model} center={model.bounds ? [(model.bounds.min[0] + model.bounds.max[0]) / 2, 0, (model.bounds.min[2] + model.bounds.max[2]) / 2] : [0, 0, 0]} />
         <Ground site={site} frame={frame} plans={plans} ctx={ctx} heights={heights} yard={false} />
         <HouseMeshes parts={model.parts} aimRef={aimTarget} doorsApart />
@@ -852,12 +894,14 @@ export default function Walkthrough({ project, cost, onClose }: { project: Proje
         hasTape={tape.done.length > 0}
         onPlace={() => openDesign("place")}
         onTopDown={openTopDown}
+        win={win?.kind ?? null}
+        onWindow={toggleWindow}
         onClose={onClose}
       />
 
       {locked ? (
         <AimDot design={design} aimText={aimText} aimable={!!aim && aim.kind !== "none"} carry={carryLabel} />
-      ) : showPanel ? (
+      ) : win ? null : showPanel ? (
         <button className="absolute inset-0 cursor-pointer" onClick={start} aria-label="Keep walking" />
       ) : (
         <WalkHelp onStart={start} />
@@ -890,7 +934,7 @@ export default function Walkthrough({ project, cost, onClose }: { project: Proje
       )}
 
       {showPanel && (
-        <aside className="absolute top-16 right-4 bottom-4 z-10 flex w-[min(420px,calc(100vw-2rem))] flex-col overflow-hidden rounded-xl bg-white shadow-xl">
+        <aside className="absolute top-[var(--walk-bar,4rem)] right-4 bottom-4 z-10 flex w-[min(420px,calc(100vw-2rem))] flex-col overflow-hidden rounded-xl bg-white shadow-xl">
           <div className="flex items-center justify-between gap-2 border-b border-line px-4 py-2">
             <button className="btn-primary px-3 py-1 text-sm" onClick={start}>
               Keep walking
@@ -913,7 +957,7 @@ export default function Walkthrough({ project, cost, onClose }: { project: Proje
             )}
             {panel.kind === "finish" && <FinishPanel key={panel.aim.label} aim={panel.aim} selections={project.interior.selections} answers={answers} onChange={setSelections} />}
             {panel.kind === "outside" && <OutsidePanel key={panel.aim.label} aim={panel.aim} selections={project.exterior.selections} answers={outsideAnswers} onChange={setOutside} />}
-            {panel.kind === "design" && tab === "finishes" && <FinishesHelp />}
+            {panel.kind === "design" && tab === "finishes" && <FinishesHelp onOpenWindow={openWindow} />}
             {panel.kind === "design" && tab === "place" && (
               <PlaceTab picked={null} onPick={pickEntry} roomName={here?.room.name ?? null} canFurnish={Boolean(here && canAutoFurnish(here.room))} onFurnishForMe={furnishHere} notes={autoNotes} onAddRailing={addRailingMode} />
             )}
@@ -1024,6 +1068,8 @@ export default function Walkthrough({ project, cost, onClose }: { project: Proje
         </aside>
       )}
 
+      {win && !locked && <DesignWindow key={win.kind} kind={win.kind} roomId={win.roomId} onWalk={keepWalking} onClose={() => setWin(null)} />}
+
       {topDown && (
         <TopDown
           here={topDown}
@@ -1035,7 +1081,7 @@ export default function Walkthrough({ project, cost, onClose }: { project: Proje
       )}
 
       {/* Time of day, season, and jumping around. Hidden while walking so the mouse stays in the view. */}
-      {!locked && !showPanel && !topDown && (
+      {!locked && !showPanel && !topDown && !win && (
         <WalkControls
           hour={shownHour}
           sunrise={sunrise}

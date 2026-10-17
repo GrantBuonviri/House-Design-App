@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useRef } from "react";
 import type { Estimate } from "@/lib/cost/estimate";
 import { shortMoney } from "@/lib/cost/estimate";
 import { SEASONS, clockTime, type SeasonId } from "@/lib/house3d/sun";
@@ -24,6 +25,9 @@ export function WalkTopBar(props: {
   onDesign: () => void;
   onPlace: () => void;
   onTopDown: () => void;
+  /** The design window that's open (I or X), if any. */
+  win: "interior" | "exterior" | null;
+  onWindow: (kind: "interior" | "exterior") => void;
   onClose: () => void;
   labelsOn: boolean;
   tapeOn: boolean;
@@ -33,9 +37,19 @@ export function WalkTopBar(props: {
   onTape: () => void;
   onClearTape: () => void;
 }) {
-  const { name, where, cost, design, tab, locked, onDesign, onPlace, onTopDown, onClose, labelsOn, tapeOn, hasTape, onLabels, onLabelSettings, onTape, onClearTape } = props;
+  const { name, where, cost, design, tab, locked, onDesign, onPlace, onTopDown, win, onWindow, onClose, labelsOn, tapeOn, hasTape, onLabels, onLabelSettings, onTape, onClearTape } = props;
+  // The bar wraps to two rows on narrow screens: panels and windows start below it (--walk-bar on the walkthrough).
+  const bar = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const el = bar.current;
+    const host = el?.parentElement;
+    if (!el || !host) return;
+    const ro = new ResizeObserver(() => host.style.setProperty("--walk-bar", `${Math.ceil(el.getBoundingClientRect().height)}px`));
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
   return (
-    <div className="pointer-events-none absolute top-0 right-0 left-0 z-20 flex items-start justify-between gap-3 p-4">
+    <div ref={bar} className="pointer-events-none absolute top-0 right-0 left-0 z-20 flex items-start justify-between gap-3 p-4">
       <div className="rounded-lg bg-black/55 px-3 py-2 text-white">
         <p className="text-xs text-white/70">{name}</p>
         <p className="text-sm font-medium" data-testid="walk-where">
@@ -49,6 +63,7 @@ export function WalkTopBar(props: {
             {cost.source === "rough" ? "Rough materials" : "Materials"} about {shortMoney(cost.total.likely)}
           </span>
         )}
+        {!win && (
         <button
           className={`pointer-events-auto rounded-md px-3 py-1.5 text-sm font-medium shadow ${design ? "bg-accent text-white" : "bg-white/90 text-ink hover:bg-white"}`}
           onClick={onDesign}
@@ -58,6 +73,8 @@ export function WalkTopBar(props: {
         >
           Design {design ? (tab === "place" ? "on · Place" : "on · Finishes") : "off"}
         </button>
+        )}
+        {!win && (
         <button
           className={`pointer-events-auto rounded-md px-3 py-1.5 text-sm font-medium shadow ${labelsOn ? "bg-accent text-white" : "bg-white/90 text-ink hover:bg-white"}`}
           onClick={onLabels}
@@ -67,11 +84,13 @@ export function WalkTopBar(props: {
         >
           Labels {labelsOn ? "on" : "off"}
         </button>
-        {!locked && (
+        )}
+        {!locked && !win && (
           <button className="pointer-events-auto rounded-md bg-white/90 px-2.5 py-1.5 text-sm text-ink shadow hover:bg-white" onClick={onLabelSettings} aria-label="Label settings" title="Label settings" data-testid="label-settings-button">
             ⚙
           </button>
         )}
+        {!win && (
         <button
           className={`pointer-events-auto rounded-md px-3 py-1.5 text-sm font-medium shadow ${tapeOn ? "bg-accent text-white" : "bg-white/90 text-ink hover:bg-white"}`}
           onClick={onTape}
@@ -81,17 +100,31 @@ export function WalkTopBar(props: {
         >
           Tape {tapeOn ? "on" : "off"}
         </button>
-        {!locked && hasTape && (
+        )}
+        {!locked && !win && hasTape && (
           <button className="pointer-events-auto rounded-md bg-white/90 px-3 py-1.5 text-sm text-ink shadow hover:bg-white" onClick={onClearTape}>
             Clear tape
           </button>
         )}
-        {!locked && (
+        {!locked &&
+          (["interior", "exterior"] as const).map((k) => (
+            <button
+              key={k}
+              className={`pointer-events-auto rounded-md px-3 py-1.5 text-sm shadow ${win === k ? "bg-accent font-medium text-white" : "bg-white/90 text-ink hover:bg-white"}`}
+              onClick={() => onWindow(k)}
+              aria-pressed={win === k}
+              title={k === "interior" ? "Interior design: style, mood board, finishes by room (I)" : "Exterior design: roof, siding, windows, doors and yard (X)"}
+              data-testid={`${k}-button`}
+            >
+              {k === "interior" ? "Interior" : "Exterior"}
+            </button>
+          ))}
+        {!locked && !win && (
           <button className="pointer-events-auto rounded-md bg-white/90 px-3 py-1.5 text-sm text-ink shadow hover:bg-white" onClick={onPlace} title="Furniture, fixtures, cabinets, outlets, doors, windows and walls (F)" data-testid="place-button">
             Place
           </button>
         )}
-        {!locked && (
+        {!locked && !win && (
           <button className="pointer-events-auto rounded-md bg-white/90 px-3 py-1.5 text-sm text-ink shadow hover:bg-white" onClick={onTopDown} title="See this floor from above, with the Furnish tools (M)" data-testid="top-down-button">
             Top-down
           </button>
@@ -150,6 +183,7 @@ export function WalkHelp({ onStart }: { onStart: () => void }) {
           <li>Hold Shift to walk faster</li>
           <li>E turns Design on. Finishes: aim at a floor, wall, counter, or outside at the siding, roof, doors and yard, and click to pick its finish</li>
           <li>F opens Place: furniture, fixtures, cabinets, outlets, hookups, built-ins, doors, windows and walls. Aim at anything placed and click to move, turn, size, swap or delete it. Stair railings are there too: aim at one and click to change its kind or look, or press Delete to remove it. Tab switches between Finishes and Place</li>
+          <li>I opens Interior design (style, mood board, finishes room by room) and X opens Exterior design (roof, siding, windows, doors, yard). The house changes as you pick; Esc closes it</li>
           <li>M shows this floor from above with the Furnish tools; M or Esc comes back</li>
           <li>Walk into a door to open it, or click it to open and close it by hand. K locks the door you aim at (a locked door only opens when clicked). O changes the Doors setting</li>
           <li>L shows room labels on the floor (the ⚙ button sets what they say). Shift+L locks them to the floor plan&apos;s direction instead of turning with you</li>
