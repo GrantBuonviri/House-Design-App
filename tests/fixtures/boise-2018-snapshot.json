@@ -1,0 +1,3707 @@
+{
+  "meta": {
+    "jurisdiction": "Boise, Idaho",
+    "checked": "2026-10-15",
+    "editions": [
+      {
+        "code": "IRC",
+        "edition": "2018",
+        "amendments": "Idaho amendments (IDAPA 24.39.30) and Boise City Code Title 9; Parts I-IV, IX plus mechanical/gas Parts V-VI for 1-2 family",
+        "source": "https://regulations.justia.com/states/idaho/24/24-39-30/section-24-39-30-600"
+      },
+      {
+        "code": "IECC",
+        "edition": "2018",
+        "amendments": "Idaho residential amendments incl. Table R402.1.2 zone 5 (ceiling R-38), log home table, 20% air leakage testing",
+        "source": "https://regulations.justia.com/states/idaho/24/24-39-30/section-24-39-30-600"
+      },
+      {
+        "code": "NEC",
+        "edition": "2023",
+        "amendments": "IDAPA 24.39.10.600 (temporary rule effective 4/19/2024): 210.8, 210.12, 210.52 changes",
+        "source": "https://regulations.justia.com/states/idaho/24/24-39-10/section-24-39-10-600"
+      },
+      {
+        "code": "ISPC",
+        "edition": "2017",
+        "amendments": "Idaho State Plumbing Code, based on 2015 UPC",
+        "source": "https://www.cityofboise.org/media/18749/currently-adopted-building-codes-4-26-24.pdf"
+      },
+      {
+        "code": "Boise design criteria",
+        "edition": "IRC Table R301.2(1), rev 4/2024",
+        "amendments": "Boise local: 24 in frost depth; roof snow 25 psf",
+        "source": "https://www.cityofboise.org/media/18749/currently-adopted-building-codes-4-26-24.pdf"
+      }
+    ]
+  },
+  "values": {
+    "design.groundSnowLoad": {
+      "value": 20,
+      "unit": "psf",
+      "code": "Boise design criteria",
+      "section": "Table R301.2(1)",
+      "amendment": null
+    },
+    "design.roofSnowLoadMin": {
+      "value": 25,
+      "unit": "psf",
+      "code": "Boise design criteria",
+      "section": "Table R301.2(1)",
+      "amendment": null
+    },
+    "design.windSpeed": {
+      "value": 90,
+      "unit": "mph",
+      "code": "Boise design criteria",
+      "section": "Table R301.2(1)",
+      "amendment": null
+    },
+    "design.seismicCategory": {
+      "value": "C",
+      "unit": "",
+      "code": "Boise design criteria",
+      "section": "Table R301.2(1)",
+      "amendment": null
+    },
+    "design.frostDepth": {
+      "value": 24,
+      "unit": "in",
+      "code": "Boise design criteria",
+      "section": "Table R301.2(1)",
+      "amendment": "Boise local amendment: 24 in minimum frost depth"
+    },
+    "design.weathering": {
+      "value": "Severe",
+      "unit": "",
+      "code": "Boise design criteria",
+      "section": "Table R301.2(1)",
+      "amendment": null
+    },
+    "design.termite": {
+      "value": "Slight to moderate",
+      "unit": "",
+      "code": "Boise design criteria",
+      "section": "Table R301.2(1)",
+      "amendment": null
+    },
+    "design.winterDesignTemp": {
+      "value": 10,
+      "unit": "°F",
+      "code": "Boise design criteria",
+      "section": "Table R301.2(1)",
+      "amendment": null
+    },
+    "design.iceBarrierRequired": {
+      "value": false,
+      "unit": "",
+      "code": "Boise design criteria",
+      "section": "Table R301.2(1)",
+      "amendment": null
+    },
+    "design.floodHazard": {
+      "value": "Floodplain ordinance 12/12/1983; FIS dated 6/19/2020 (panels per Boise sheet)",
+      "unit": "",
+      "code": "Boise design criteria",
+      "section": "Table R301.2(1)",
+      "amendment": null
+    },
+    "design.climateZone": {
+      "value": "5B",
+      "unit": "",
+      "code": "IECC 2018",
+      "section": "IECC Table R301.1 (IRC Table N1101.7)",
+      "amendment": null
+    },
+    "design.manualJWinter": {
+      "value": 11,
+      "unit": "°F",
+      "code": "Boise design criteria",
+      "section": "Manual J criteria",
+      "amendment": null
+    },
+    "design.manualJSummer": {
+      "value": 95,
+      "unit": "°F",
+      "code": "Boise design criteria",
+      "section": "Manual J criteria",
+      "amendment": null
+    },
+    "design.elevation": {
+      "value": 2867,
+      "unit": "ft",
+      "code": "Boise design criteria",
+      "section": "Manual J criteria",
+      "amendment": null
+    },
+    "rooms.minHabitableArea": {
+      "value": 70,
+      "unit": "sq ft",
+      "code": "IRC 2018",
+      "section": "R304.1",
+      "amendment": null
+    },
+    "rooms.minHabitableDimension": {
+      "value": 84,
+      "unit": "in",
+      "code": "IRC 2018",
+      "section": "R304.2",
+      "amendment": null
+    },
+    "rooms.minCeilingHabitable": {
+      "value": 84,
+      "unit": "in",
+      "code": "IRC 2018",
+      "section": "R305.1",
+      "amendment": null
+    },
+    "rooms.minCeilingBathroom": {
+      "value": 80,
+      "unit": "in",
+      "code": "IRC 2018",
+      "section": "R305.1",
+      "amendment": null
+    },
+    "rooms.basementCeilingNonHabitable": {
+      "value": 80,
+      "unit": "in",
+      "code": "IRC 2018",
+      "section": "R305.1.1",
+      "amendment": null
+    },
+    "light.glazingPctOfFloor": {
+      "value": 8,
+      "unit": "%",
+      "code": "IRC 2018",
+      "section": "R303.1",
+      "amendment": null
+    },
+    "light.ventOpenablePctOfFloor": {
+      "value": 4,
+      "unit": "%",
+      "code": "IRC 2018",
+      "section": "R303.1",
+      "amendment": null
+    },
+    "light.bathroomGlazingArea": {
+      "value": 3,
+      "unit": "sq ft",
+      "code": "IRC 2018",
+      "section": "R303.3",
+      "amendment": null
+    },
+    "egress.netClearOpening": {
+      "value": 5.7,
+      "unit": "sq ft",
+      "code": "IRC 2018",
+      "section": "R310.2.1",
+      "amendment": null
+    },
+    "egress.netClearOpeningGradeFloor": {
+      "value": 5.0,
+      "unit": "sq ft",
+      "code": "IRC 2018",
+      "section": "R310.2.1 exc.",
+      "amendment": null
+    },
+    "egress.minClearHeight": {
+      "value": 24,
+      "unit": "in",
+      "code": "IRC 2018",
+      "section": "R310.2.1",
+      "amendment": null
+    },
+    "egress.minClearWidth": {
+      "value": 20,
+      "unit": "in",
+      "code": "IRC 2018",
+      "section": "R310.2.1",
+      "amendment": null
+    },
+    "egress.maxSillHeight": {
+      "value": 44,
+      "unit": "in",
+      "code": "IRC 2018",
+      "section": "R310.2.2",
+      "amendment": null
+    },
+    "egress.windowWellArea": {
+      "value": 9,
+      "unit": "sq ft",
+      "code": "IRC 2018",
+      "section": "R310.2.3",
+      "amendment": null
+    },
+    "egress.windowWellProjection": {
+      "value": 36,
+      "unit": "in",
+      "code": "IRC 2018",
+      "section": "R310.2.3",
+      "amendment": null
+    },
+    "egress.windowWellLadderDepth": {
+      "value": 44,
+      "unit": "in",
+      "code": "IRC 2018",
+      "section": "R310.2.3.1",
+      "amendment": null
+    },
+    "exit.doorClearWidth": {
+      "value": 32,
+      "unit": "in",
+      "code": "IRC 2018",
+      "section": "R311.2",
+      "amendment": null
+    },
+    "exit.doorClearHeight": {
+      "value": 78,
+      "unit": "in",
+      "code": "IRC 2018",
+      "section": "R311.2",
+      "amendment": null
+    },
+    "exit.hallwayMinWidth": {
+      "value": 36,
+      "unit": "in",
+      "code": "IRC 2018",
+      "section": "R311.6",
+      "amendment": null
+    },
+    "exit.landingDepth": {
+      "value": 36,
+      "unit": "in",
+      "code": "IRC 2018",
+      "section": "R311.3",
+      "amendment": null
+    },
+    "stairs.minWidth": {
+      "value": 36,
+      "unit": "in",
+      "code": "IRC 2018",
+      "section": "R311.7.1",
+      "amendment": null
+    },
+    "stairs.minHeadroom": {
+      "value": 80,
+      "unit": "in",
+      "code": "IRC 2018",
+      "section": "R311.7.2",
+      "amendment": null
+    },
+    "stairs.maxRiser": {
+      "value": 7.75,
+      "unit": "in",
+      "code": "IRC 2018",
+      "section": "R311.7.5.1",
+      "amendment": null
+    },
+    "stairs.minTread": {
+      "value": 10,
+      "unit": "in",
+      "code": "IRC 2018",
+      "section": "R311.7.5.2",
+      "amendment": null
+    },
+    "stairs.maxRiserVariation": {
+      "value": 0.375,
+      "unit": "in",
+      "code": "IRC 2018",
+      "section": "R311.7.5.1",
+      "amendment": null
+    },
+    "stairs.nosingMin": {
+      "value": 0.75,
+      "unit": "in",
+      "code": "IRC 2018",
+      "section": "R311.7.5.3",
+      "amendment": null
+    },
+    "stairs.nosingMax": {
+      "value": 1.25,
+      "unit": "in",
+      "code": "IRC 2018",
+      "section": "R311.7.5.3",
+      "amendment": null
+    },
+    "stairs.maxRiseBetweenLandings": {
+      "value": 151,
+      "unit": "in",
+      "code": "IRC 2018",
+      "section": "R311.7.3",
+      "amendment": null
+    },
+    "stairs.landingMinDepth": {
+      "value": 36,
+      "unit": "in",
+      "code": "IRC 2018",
+      "section": "R311.7.6",
+      "amendment": null
+    },
+    "stairs.handrailMinHeight": {
+      "value": 34,
+      "unit": "in",
+      "code": "IRC 2018",
+      "section": "R311.7.8.1",
+      "amendment": null
+    },
+    "stairs.handrailMaxHeight": {
+      "value": 38,
+      "unit": "in",
+      "code": "IRC 2018",
+      "section": "R311.7.8.1",
+      "amendment": null
+    },
+    "stairs.handrailRequiredRisers": {
+      "value": 4,
+      "unit": "count",
+      "code": "IRC 2018",
+      "section": "R311.7.8",
+      "amendment": null
+    },
+    "guards.requiredDrop": {
+      "value": 30,
+      "unit": "in",
+      "code": "IRC 2018",
+      "section": "R312.1.1",
+      "amendment": null
+    },
+    "guards.minHeight": {
+      "value": 36,
+      "unit": "in",
+      "code": "IRC 2018",
+      "section": "R312.1.2",
+      "amendment": null
+    },
+    "guards.minHeightStairSides": {
+      "value": 34,
+      "unit": "in",
+      "code": "IRC 2018",
+      "section": "R312.1.2",
+      "amendment": null
+    },
+    "guards.maxOpening": {
+      "value": 4,
+      "unit": "in",
+      "code": "IRC 2018",
+      "section": "R312.1.3",
+      "amendment": null
+    },
+    "windowFall.heightAboveGrade": {
+      "value": 72,
+      "unit": "in",
+      "code": "IRC 2018",
+      "section": "R312.2.1",
+      "amendment": null
+    },
+    "windowFall.minSillHeight": {
+      "value": 24,
+      "unit": "in",
+      "code": "IRC 2018",
+      "section": "R312.2.1",
+      "amendment": null
+    },
+    "glazing.doorAdjacentArc": {
+      "value": 24,
+      "unit": "in",
+      "code": "IRC 2018",
+      "section": "R308.4.2",
+      "amendment": null
+    },
+    "glazing.doorAdjacentMaxBottom": {
+      "value": 60,
+      "unit": "in",
+      "code": "IRC 2018",
+      "section": "R308.4.2",
+      "amendment": null
+    },
+    "glazing.largePaneArea": {
+      "value": 9,
+      "unit": "sq ft",
+      "code": "IRC 2018",
+      "section": "R308.4.3",
+      "amendment": null
+    },
+    "glazing.largePaneMaxBottom": {
+      "value": 18,
+      "unit": "in",
+      "code": "IRC 2018",
+      "section": "R308.4.3",
+      "amendment": null
+    },
+    "glazing.largePaneMinTop": {
+      "value": 36,
+      "unit": "in",
+      "code": "IRC 2018",
+      "section": "R308.4.3",
+      "amendment": null
+    },
+    "glazing.largePaneWalkway": {
+      "value": 36,
+      "unit": "in",
+      "code": "IRC 2018",
+      "section": "R308.4.3",
+      "amendment": null
+    },
+    "glazing.wetSurfaceMaxBottom": {
+      "value": 60,
+      "unit": "in",
+      "code": "IRC 2018",
+      "section": "R308.4.5",
+      "amendment": null
+    },
+    "glazing.stairMaxBottom": {
+      "value": 36,
+      "unit": "in",
+      "code": "IRC 2018",
+      "section": "R308.4.6/R308.4.7",
+      "amendment": null
+    },
+    "garage.doorSolidWoodThickness": {
+      "value": 1.375,
+      "unit": "in",
+      "code": "IRC 2018",
+      "section": "R302.5.1",
+      "amendment": null
+    },
+    "garage.doorFireRatingMinutes": {
+      "value": 20,
+      "unit": "min",
+      "code": "IRC 2018",
+      "section": "R302.5.1",
+      "amendment": null
+    },
+    "garage.gypsumGarageSide": {
+      "value": 0.625,
+      "unit": "in",
+      "code": "IRC 2018",
+      "section": "Table R302.6",
+      "amendment": "Idaho replaced Table R302.6 with 5/8 in Type X on garage side (base 2018 is 1/2 in)"
+    },
+    "garage.gypsumCeilingUnderHabitable": {
+      "value": 0.625,
+      "unit": "in",
+      "code": "IRC 2018",
+      "section": "Table R302.6",
+      "amendment": "Idaho Table R302.6 replacement: 5/8 in Type X"
+    },
+    "smoke.inEachBedroom": {
+      "value": true,
+      "unit": "",
+      "code": "IRC 2018",
+      "section": "R314.3",
+      "amendment": null
+    },
+    "smoke.outsideSleepingAreas": {
+      "value": true,
+      "unit": "",
+      "code": "IRC 2018",
+      "section": "R314.3",
+      "amendment": null
+    },
+    "smoke.eachStory": {
+      "value": true,
+      "unit": "",
+      "code": "IRC 2018",
+      "section": "R314.3",
+      "amendment": null
+    },
+    "smoke.minDistanceFromBathroom": {
+      "value": 36,
+      "unit": "in",
+      "code": "IRC 2018",
+      "section": "R314.3 item 4",
+      "amendment": null
+    },
+    "smoke.minDistanceFromCookingAppliance": {
+      "value": 240,
+      "unit": "in",
+      "code": "IRC 2018",
+      "section": "R314.3.1",
+      "amendment": null
+    },
+    "smoke.minDistanceFromCookingPhotoelectric": {
+      "value": 72,
+      "unit": "in",
+      "code": "IRC 2018",
+      "section": "R314.3.1",
+      "amendment": null
+    },
+    "co.requiredWithFuelOrAttachedGarage": {
+      "value": true,
+      "unit": "",
+      "code": "IRC 2018",
+      "section": "R315.2.1",
+      "amendment": "Idaho deleted R315.2.2 exception 2 (alteration exemption)"
+    },
+    "attic.accessMinWidth": {
+      "value": 22,
+      "unit": "in",
+      "code": "IRC 2018",
+      "section": "R807.1",
+      "amendment": null
+    },
+    "attic.accessMinLength": {
+      "value": 30,
+      "unit": "in",
+      "code": "IRC 2018",
+      "section": "R807.1",
+      "amendment": null
+    },
+    "attic.accessRequiredArea": {
+      "value": 30,
+      "unit": "sq ft",
+      "code": "IRC 2018",
+      "section": "R807.1",
+      "amendment": null
+    },
+    "attic.accessRequiredHeight": {
+      "value": 30,
+      "unit": "in",
+      "code": "IRC 2018",
+      "section": "R807.1",
+      "amendment": null
+    },
+    "attic.ventRatio": {
+      "value": 150,
+      "unit": "",
+      "code": "IRC 2018",
+      "section": "R806.2",
+      "amendment": null
+    },
+    "attic.ventRatioReduced": {
+      "value": 300,
+      "unit": "",
+      "code": "IRC 2018",
+      "section": "R806.2 exc.",
+      "amendment": null
+    },
+    "crawl.accessFloorWidth": {
+      "value": 18,
+      "unit": "in",
+      "code": "IRC 2018",
+      "section": "R408.4",
+      "amendment": null
+    },
+    "crawl.accessFloorLength": {
+      "value": 24,
+      "unit": "in",
+      "code": "IRC 2018",
+      "section": "R408.4",
+      "amendment": null
+    },
+    "crawl.accessWallWidth": {
+      "value": 16,
+      "unit": "in",
+      "code": "IRC 2018",
+      "section": "R408.4",
+      "amendment": null
+    },
+    "crawl.accessWallLength": {
+      "value": 24,
+      "unit": "in",
+      "code": "IRC 2018",
+      "section": "R408.4",
+      "amendment": null
+    },
+    "crawl.ventAreaPer": {
+      "value": 150,
+      "unit": "sq ft",
+      "code": "IRC 2018",
+      "section": "R408.1",
+      "amendment": null
+    },
+    "crawl.ventWithinCorner": {
+      "value": 3,
+      "unit": "ft",
+      "code": "IRC 2018",
+      "section": "R408.1",
+      "amendment": null
+    },
+    "footing.minDepthBelowGrade": {
+      "value": 12,
+      "unit": "in",
+      "code": "IRC 2018",
+      "section": "R403.1.4",
+      "amendment": "Idaho replaced Table R403.1 footing widths and R403.1.1 sizes"
+    },
+    "footing.minDepthFrost": {
+      "value": 24,
+      "unit": "in",
+      "code": "IRC 2018",
+      "section": "R403.1.4.1",
+      "amendment": null
+    },
+    "vent.wholeHouseCfmPerSqFt": {
+      "value": 0.01,
+      "unit": "cfm",
+      "code": "IRC 2018",
+      "section": "M1505.4.3, Equation 15-1",
+      "amendment": "Idaho R303.4 requires whole-house mechanical ventilation per M1505.4"
+    },
+    "vent.wholeHouseCfmPerBedroomPlusOne": {
+      "value": 7.5,
+      "unit": "cfm",
+      "code": "IRC 2018",
+      "section": "M1505.4.3",
+      "amendment": null
+    },
+    "vent.bathIntermittent": {
+      "value": 50,
+      "unit": "cfm",
+      "code": "IRC 2018",
+      "section": "Table M1505.4.4",
+      "amendment": null
+    },
+    "vent.bathContinuous": {
+      "value": 20,
+      "unit": "cfm",
+      "code": "IRC 2018",
+      "section": "Table M1505.4.4",
+      "amendment": null
+    },
+    "vent.kitchenIntermittent": {
+      "value": 100,
+      "unit": "cfm",
+      "code": "IRC 2018",
+      "section": "Table M1505.4.4",
+      "amendment": null
+    },
+    "vent.kitchenContinuous": {
+      "value": 25,
+      "unit": "cfm",
+      "code": "IRC 2018",
+      "section": "Table M1505.4.4",
+      "amendment": null
+    },
+    "plumbing.wcSideClearance": {
+      "value": 15,
+      "unit": "in",
+      "code": "ISPC 2017",
+      "section": "UPC 402.5",
+      "amendment": null
+    },
+    "plumbing.wcFrontClearance": {
+      "value": 24,
+      "unit": "in",
+      "code": "ISPC 2017",
+      "section": "UPC 402.5",
+      "amendment": null
+    },
+    "plumbing.showerMinArea": {
+      "value": 1024,
+      "unit": "sq in",
+      "code": "ISPC 2017",
+      "section": "UPC 408.6",
+      "amendment": null
+    },
+    "plumbing.showerMinCircle": {
+      "value": 30,
+      "unit": "in",
+      "code": "ISPC 2017",
+      "section": "UPC 408.6",
+      "amendment": null
+    },
+    "plumbing.lavatorySideClearance": {
+      "value": 15,
+      "unit": "in",
+      "code": "ISPC 2017",
+      "section": "UPC 402.5",
+      "amendment": null
+    },
+    "plumbing.waterHeaterTPRDischarge": {
+      "value": "Discharge pipe to a safe visible spot; no valve in the line",
+      "unit": "",
+      "code": "ISPC 2017",
+      "section": "UPC 608.5",
+      "amendment": null
+    },
+    "elec.wallReceptacleMaxDistance": {
+      "value": 6,
+      "unit": "ft",
+      "code": "NEC 2023",
+      "section": "210.52(A)(1)",
+      "amendment": null
+    },
+    "elec.wallSpaceMinWidth": {
+      "value": 2,
+      "unit": "ft",
+      "code": "NEC 2023",
+      "section": "210.52(A)(2)",
+      "amendment": null
+    },
+    "elec.counterReceptacleMaxDistance": {
+      "value": 24,
+      "unit": "in",
+      "code": "NEC 2023",
+      "section": "210.52(C)(1)",
+      "amendment": "Idaho added 210.52(C)(4) for island/peninsula receptacle mounting"
+    },
+    "elec.counterSpaceMinWidth": {
+      "value": 12,
+      "unit": "in",
+      "code": "NEC 2023",
+      "section": "210.52(C)(1)",
+      "amendment": null
+    },
+    "elec.counterReceptacleMaxAbove": {
+      "value": 20,
+      "unit": "in",
+      "code": "NEC 2023",
+      "section": "210.52(C)(3)",
+      "amendment": null
+    },
+    "elec.smallApplianceCircuits": {
+      "value": 2,
+      "unit": "count",
+      "code": "NEC 2023",
+      "section": "210.11(C)(1)",
+      "amendment": null
+    },
+    "elec.smallApplianceAmps": {
+      "value": 20,
+      "unit": "A",
+      "code": "NEC 2023",
+      "section": "210.11(C)(1)",
+      "amendment": null
+    },
+    "elec.laundryCircuits": {
+      "value": 1,
+      "unit": "count",
+      "code": "NEC 2023",
+      "section": "210.11(C)(2)",
+      "amendment": null
+    },
+    "elec.bathroomCircuitAmps": {
+      "value": 20,
+      "unit": "A",
+      "code": "NEC 2023",
+      "section": "210.11(C)(3)",
+      "amendment": null
+    },
+    "elec.outdoorReceptaclesFrontBack": {
+      "value": true,
+      "unit": "",
+      "code": "NEC 2023",
+      "section": "210.52(E)",
+      "amendment": "Idaho replaced 210.52(E)(3) (decks/balconies/porches)"
+    },
+    "elec.outdoorReceptacleMaxHeight": {
+      "value": 78,
+      "unit": "in",
+      "code": "NEC 2023",
+      "section": "210.52(E)",
+      "amendment": null
+    },
+    "elec.hallwayReceptacleLength": {
+      "value": 10,
+      "unit": "ft",
+      "code": "NEC 2023",
+      "section": "210.52(H)",
+      "amendment": null
+    },
+    "elec.gfciLocations": {
+      "value": [
+        "bathrooms",
+        "garages and accessory buildings",
+        "outdoors",
+        "crawl spaces (at/below grade)",
+        "unfinished basements",
+        "kitchens (all receptacles)",
+        "sinks outside kitchens (within 6 ft)",
+        "tub/shower areas (within 6 ft)",
+        "boathouses",
+        "indoor damp/wet locations"
+      ],
+      "unit": "",
+      "code": "NEC 2023",
+      "section": "210.8(A)",
+      "amendment": "IDAPA 24.39.10.600 amends 210.8(A): deletes (7) food-prep sinks and (11) laundry, limits basements to unfinished, drops 250 V"
+    },
+    "elec.afciLocations": {
+      "value": [
+        "bedrooms only (one- and two-family dwellings)"
+      ],
+      "unit": "",
+      "code": "NEC 2023",
+      "section": "210.12(B)",
+      "amendment": "IDAPA 24.39.10.600: AFCI only for bedroom circuits/outlets in 1- and 2-family dwellings"
+    },
+    "elec.tamperResistant": {
+      "value": true,
+      "unit": "",
+      "code": "NEC 2023",
+      "section": "406.12",
+      "amendment": null
+    },
+    "elec.garageReceptaclePerBay": {
+      "value": 1,
+      "unit": "count",
+      "code": "NEC 2023",
+      "section": "210.52(G)",
+      "amendment": null
+    },
+    "energy.fenestrationU": {
+      "value": 0.32,
+      "unit": "",
+      "code": "IECC 2018",
+      "section": "Table R402.1.2",
+      "amendment": null
+    },
+    "energy.skylightU": {
+      "value": 0.55,
+      "unit": "",
+      "code": "IECC 2018",
+      "section": "Table R402.1.2",
+      "amendment": null
+    },
+    "energy.glazedSHGC": {
+      "value": "NR",
+      "unit": "",
+      "code": "IECC 2018",
+      "section": "Table R402.1.2",
+      "amendment": "Idaho table: SHGC not required in zones 5-6"
+    },
+    "energy.ceilingR": {
+      "value": 38,
+      "unit": "",
+      "code": "IECC 2018",
+      "section": "Table R402.1.2",
+      "amendment": "Idaho replaced zone 5 ceiling R-49 (base 2018 IECC) with R-38"
+    },
+    "energy.woodWallR": {
+      "value": "20 or 13+5",
+      "unit": "",
+      "code": "IECC 2018",
+      "section": "Table R402.1.2",
+      "amendment": null
+    },
+    "energy.massWallR": {
+      "value": "13/17",
+      "unit": "",
+      "code": "IECC 2018",
+      "section": "Table R402.1.2",
+      "amendment": null
+    },
+    "energy.floorR": {
+      "value": 30,
+      "unit": "",
+      "code": "IECC 2018",
+      "section": "Table R402.1.2",
+      "amendment": null
+    },
+    "energy.basementWallR": {
+      "value": "15/19",
+      "unit": "",
+      "code": "IECC 2018",
+      "section": "Table R402.1.2",
+      "amendment": null
+    },
+    "energy.slabR": {
+      "value": "R-10, 2 ft",
+      "unit": "",
+      "code": "IECC 2018",
+      "section": "Table R402.1.2",
+      "amendment": null
+    },
+    "energy.crawlWallR": {
+      "value": "15/19",
+      "unit": "",
+      "code": "IECC 2018",
+      "section": "Table R402.1.2",
+      "amendment": null
+    },
+    "energy.airLeakageACH50": {
+      "value": 5,
+      "unit": "",
+      "code": "IECC 2018",
+      "section": "R402.4.1.2",
+      "amendment": "Idaho: at least 20% of a builder's homes must be tested from 7/1/2021; visual inspection option added"
+    },
+    "energy.ductTestRequired": {
+      "value": "Total duct leakage at most 4 cfm25 per 100 sq ft, tested at rough-in (3 without the air handler) or after construction",
+      "unit": "",
+      "code": "IECC 2018",
+      "section": "R403.3.3, R403.3.4",
+      "amendment": null
+    },
+    "site.gradeFall": {
+      "value": 6,
+      "unit": "in",
+      "code": "IRC 2018",
+      "section": "R401.3",
+      "amendment": null
+    },
+    "site.gradeFallDistance": {
+      "value": 10,
+      "unit": "ft",
+      "code": "IRC 2018",
+      "section": "R401.3",
+      "amendment": null
+    },
+    "fire.ratedWallDistance": {
+      "value": 3,
+      "unit": "ft",
+      "code": "IRC 2018",
+      "section": "Table R302.1(1)",
+      "amendment": "Idaho replaced Table R302.1(1) (IDAPA 24.39.30.600); Boise City Code 9-1B-35 repeats it"
+    },
+    "fire.noOpeningsDistance": {
+      "value": 3,
+      "unit": "ft",
+      "code": "IRC 2018",
+      "section": "Table R302.1(1)",
+      "amendment": "Idaho replaced Table R302.1(1) (IDAPA 24.39.30.600); Boise City Code 9-1B-35 repeats it"
+    },
+    "fire.projectionMinDistance": {
+      "value": 2,
+      "unit": "ft",
+      "code": "IRC 2018",
+      "section": "Table R302.1(1)",
+      "amendment": "Idaho replaced Table R302.1(1) (IDAPA 24.39.30.600); Boise City Code 9-1B-35 repeats it"
+    },
+    "address.minHeight": {
+      "value": 4,
+      "unit": "in",
+      "code": "IRC 2018",
+      "section": "R319.1",
+      "amendment": null
+    },
+    "address.minStroke": {
+      "value": 0.5,
+      "unit": "in",
+      "code": "IRC 2018",
+      "section": "R319.1",
+      "amendment": null
+    },
+    "foundation.exposedAboveGrade": {
+      "value": 6,
+      "unit": "in",
+      "code": "IRC 2018",
+      "section": "R404.1.6",
+      "amendment": null
+    },
+    "foundation.exposedAboveGradeVeneer": {
+      "value": 4,
+      "unit": "in",
+      "code": "IRC 2018",
+      "section": "R404.1.6",
+      "amendment": null
+    },
+    "siding.woodClearanceToGrade": {
+      "value": 6,
+      "unit": "in",
+      "code": "IRC 2018",
+      "section": "R317.1",
+      "amendment": null
+    },
+    "roof.shingleMinSlope": {
+      "value": 2,
+      "unit": "in per 12",
+      "code": "IRC 2018",
+      "section": "R905.2.2",
+      "amendment": null
+    },
+    "roof.shingleDoubleUnderlaymentBelow": {
+      "value": 4,
+      "unit": "in per 12",
+      "code": "IRC 2018",
+      "section": "R905.2.2 / Table R905.1.1(2)",
+      "amendment": null
+    },
+    "roof.metalLappedMinSlope": {
+      "value": 3,
+      "unit": "in per 12",
+      "code": "IRC 2018",
+      "section": "R905.10.2",
+      "amendment": null
+    },
+    "roof.drainageNote": {
+      "value": false,
+      "unit": "boolean",
+      "code": "IRC 2018",
+      "section": "R801.3",
+      "amendment": null
+    },
+    "kitchen.rangeClearanceAbove": {
+      "value": 30,
+      "unit": "in",
+      "code": "IRC 2018",
+      "section": "G2447.5",
+      "amendment": null
+    },
+    "kitchen.rangeClearanceAboveProtected": {
+      "value": 24,
+      "unit": "in",
+      "code": "IRC 2018",
+      "section": "G2447.5",
+      "amendment": null
+    },
+    "vent.makeupAirHoodCfm": {
+      "value": 400,
+      "unit": "cfm",
+      "code": "IRC 2018",
+      "section": "M1503.6",
+      "amendment": null
+    },
+    "bath.nonabsorbentWallHeight": {
+      "value": 72,
+      "unit": "in",
+      "code": "IRC 2018",
+      "section": "R307.2",
+      "amendment": null
+    },
+    "plumbing.wcMaxFlush": {
+      "value": 1.6,
+      "unit": "gal/flush",
+      "code": "ISPC 2017",
+      "section": "UPC 411.2",
+      "amendment": null
+    },
+    "plumbing.showerheadMaxFlow": {
+      "value": 2.5,
+      "unit": "gpm",
+      "code": "ISPC 2017",
+      "section": "UPC 408.2",
+      "amendment": null
+    },
+    "plumbing.lavatoryFaucetMaxFlow": {
+      "value": 2.2,
+      "unit": "gpm",
+      "code": "ISPC 2017",
+      "section": "UPC 407.2",
+      "amendment": null
+    },
+    "plumbing.kitchenFaucetMaxFlow": {
+      "value": 2.2,
+      "unit": "gpm",
+      "code": "ISPC 2017",
+      "section": "UPC 420.2",
+      "amendment": null
+    },
+    "plumbing.showerValveMaxTemp": {
+      "value": 120,
+      "unit": "degF",
+      "code": "ISPC 2017",
+      "section": "UPC 408.3",
+      "amendment": null
+    },
+    "energy.opaqueDoorExemptArea": {
+      "value": 24,
+      "unit": "sq ft",
+      "code": "IECC 2018",
+      "section": "R402.3.4",
+      "amendment": null
+    },
+    "energy.glazedExemptArea": {
+      "value": 15,
+      "unit": "sq ft",
+      "code": "IECC 2018",
+      "section": "R402.3.3",
+      "amendment": null
+    },
+    "elec.receptacleMaxHeight": {
+      "value": 5.5,
+      "unit": "ft",
+      "code": "NEC 2023",
+      "section": "210.52",
+      "amendment": "None to 210.52(A); Idaho amends only 210.52(E)(3) (balcony/deck/porch receptacle max 6.5 ft above surface)."
+    },
+    "elec.bathroomReceptacleFromBasin": {
+      "value": 36,
+      "unit": "in",
+      "code": "NEC 2023",
+      "section": "210.52(D)",
+      "amendment": "None found (210.52(D) not amended)."
+    },
+    "elec.laundryReceptacleFromAppliance": {
+      "value": 6,
+      "unit": "ft",
+      "code": "NEC 2023",
+      "section": "210.50(C)",
+      "amendment": "None (210.50 not amended)."
+    },
+    "elec.islandReceptacleRequired": {
+      "value": false,
+      "unit": "",
+      "code": "NEC 2023",
+      "section": "210.52(C)(2)",
+      "amendment": "Idaho adds 210.52(C) list item (4): receptacles may be mounted up to 12 in below the countertop, but not where the counter extends more than 6 in beyond its support base. Does not restore the island requirement."
+    },
+    "elec.stairSwitchRisers": {
+      "value": 6,
+      "unit": "risers",
+      "code": "NEC 2023",
+      "section": "210.70(A)(2)(3)",
+      "amendment": "None (210.70 not amended)."
+    },
+    "elec.switchedLightEveryRoom": {
+      "value": true,
+      "unit": "",
+      "code": "NEC 2023",
+      "section": "210.70(A)(1)",
+      "amendment": "None."
+    },
+    "elec.outdoorLightAtDoors": {
+      "value": true,
+      "unit": "",
+      "code": "NEC 2023",
+      "section": "210.70(A)(2)(2)",
+      "amendment": "None."
+    },
+    "elec.panelWorkingDepth": {
+      "value": 36,
+      "unit": "in",
+      "code": "NEC 2023",
+      "section": "110.26(A)(1)",
+      "amendment": "None (110.26 not amended)."
+    },
+    "elec.panelWorkingWidth": {
+      "value": 30,
+      "unit": "in",
+      "code": "NEC 2023",
+      "section": "110.26(A)(2)",
+      "amendment": "None."
+    },
+    "elec.panelWorkingHeight": {
+      "value": 6.5,
+      "unit": "ft",
+      "code": "NEC 2023",
+      "section": "110.26(A)(3)",
+      "amendment": "None."
+    },
+    "elec.panelNotIn": {
+      "value": [
+        "clothes closets",
+        "bathrooms",
+        "over stair steps"
+      ],
+      "unit": "",
+      "code": "NEC 2023",
+      "section": "240.24(D)-(F)",
+      "amendment": "None (240.24 not amended)."
+    },
+    "smoke.interconnected": {
+      "value": true,
+      "unit": "",
+      "code": "IRC 2018",
+      "section": "R314.4",
+      "amendment": "Idaho/Boise only delete Exception #2 of R314.2.2 (alterations/additions); R314.4 itself unchanged."
+    },
+    "smoke.garageHeatAlarm": {
+      "value": true,
+      "unit": "",
+      "code": "IRC 2018",
+      "section": "R314.7.5",
+      "amendment": "Boise City Code 9-1B-42 adds R314.7.5: a listed heat detector, wired to the smoke alarms, in attached garages (and detached ones with power that lack fire separation distance)."
+    },
+    "co.outsideSleepingAreas": {
+      "value": true,
+      "unit": "",
+      "code": "IRC 2018",
+      "section": "R315.3",
+      "amendment": "Idaho/Boise delete only Exception #2 of R315.2.2; IDAPA 24.39.70 also adds M1203.1 CO alarms where permitted work occurs in existing dwellings."
+    },
+    "mech.dryerExhaustMaxLength": {
+      "value": 35,
+      "unit": "ft",
+      "code": "IRC 2018",
+      "section": "M1502.4.5.1",
+      "amendment": "None to this section. Idaho amends M1502.4.2 only (duct support at 4 ft intervals etc.)."
+    },
+    "mech.dryerElbow90Deduct": {
+      "value": 5,
+      "unit": "ft",
+      "code": "IRC 2018",
+      "section": "Table M1502.4.5.1",
+      "amendment": "None."
+    },
+    "mech.exhaustTerminationFromOpenings": {
+      "value": 3,
+      "unit": "ft",
+      "code": "IRC 2018",
+      "section": "M1502.3, M1506.3",
+      "amendment": "None."
+    },
+    "mech.exhaustTerminationFromLotLine": {
+      "value": 3,
+      "unit": "ft",
+      "code": "IRC 2018",
+      "section": "M1506.3",
+      "amendment": "None."
+    },
+    "mech.applianceWorkingSpace": {
+      "value": 30,
+      "unit": "in",
+      "code": "IRC 2018",
+      "section": "M1305.1",
+      "amendment": "None."
+    },
+    "mech.garageIgnitionHeight": {
+      "value": 18,
+      "unit": "in",
+      "code": "IRC 2018",
+      "section": "M1307.3",
+      "amendment": "Idaho ISPC (24.39.20) replaces UPC 507.13: ignition sources in residential garages at least 18 in above floor unless listed flammable-vapor-ignition-resistant (same number)."
+    },
+    "mech.atticApplianceMaxPassage": {
+      "value": 20,
+      "unit": "ft",
+      "code": "IRC 2018",
+      "section": "M1305.1.3",
+      "amendment": "None."
+    },
+    "plumbing.dfu.lavatory": {
+      "value": 1,
+      "unit": "DFU",
+      "code": "ISPC 2017",
+      "section": "UPC Table 702.1",
+      "amendment": null
+    },
+    "plumbing.dfu.kitchenSink": {
+      "value": 2,
+      "unit": "DFU",
+      "code": "ISPC 2017",
+      "section": "UPC Table 702.1",
+      "amendment": null
+    },
+    "plumbing.dfu.dishwasher": {
+      "value": 2,
+      "unit": "DFU",
+      "code": "ISPC 2017",
+      "section": "UPC Table 702.1",
+      "amendment": null
+    },
+    "plumbing.dfu.clothesWasher": {
+      "value": 2,
+      "unit": "DFU",
+      "code": "ISPC 2017",
+      "section": "UPC Table 702.1",
+      "amendment": "Idaho amends Table 702.1: clothes washer, domestic, private = 2 DFU (base UPC 3)."
+    },
+    "plumbing.dfu.shower": {
+      "value": 2,
+      "unit": "DFU",
+      "code": "ISPC 2017",
+      "section": "UPC Table 702.1",
+      "amendment": null
+    },
+    "plumbing.dfu.bathtub": {
+      "value": 2,
+      "unit": "DFU",
+      "code": "ISPC 2017",
+      "section": "UPC Table 702.1",
+      "amendment": null
+    },
+    "plumbing.dfu.waterCloset": {
+      "value": 3,
+      "unit": "DFU",
+      "code": "ISPC 2017",
+      "section": "UPC Table 702.1",
+      "amendment": null
+    },
+    "plumbing.dfu.laundrySink": {
+      "value": 2,
+      "unit": "DFU",
+      "code": "ISPC 2017",
+      "section": "UPC Table 702.1",
+      "amendment": null
+    },
+    "plumbing.wsfu.lavatory": {
+      "value": 1.0,
+      "unit": "WSFU",
+      "code": "ISPC 2017",
+      "section": "UPC Table 610.3",
+      "amendment": null
+    },
+    "plumbing.wsfu.kitchenSink": {
+      "value": 1.5,
+      "unit": "WSFU",
+      "code": "ISPC 2017",
+      "section": "UPC Table 610.3",
+      "amendment": null
+    },
+    "plumbing.wsfu.dishwasher": {
+      "value": 1.5,
+      "unit": "WSFU",
+      "code": "ISPC 2017",
+      "section": "UPC Table 610.3",
+      "amendment": null
+    },
+    "plumbing.wsfu.clothesWasher": {
+      "value": 2,
+      "unit": "WSFU",
+      "code": "ISPC 2017",
+      "section": "UPC Table 610.3",
+      "amendment": "Idaho amends Table 610.3 (and App. A Table A103.1): clothes washer = 2 WSFU public and private (base 2015 UPC private 4.0)."
+    },
+    "plumbing.wsfu.shower": {
+      "value": 2.0,
+      "unit": "WSFU",
+      "code": "ISPC 2017",
+      "section": "UPC Table 610.3",
+      "amendment": null
+    },
+    "plumbing.wsfu.bathtub": {
+      "value": 2,
+      "unit": "WSFU",
+      "code": "ISPC 2017",
+      "section": "UPC Table 610.3",
+      "amendment": "Idaho amends Table 610.3: bathtub or combination bath/shower = 2 WSFU public and private (base 2015 UPC private 4.0)."
+    },
+    "plumbing.wsfu.waterCloset": {
+      "value": 2.5,
+      "unit": "WSFU",
+      "code": "ISPC 2017",
+      "section": "UPC Table 610.3",
+      "amendment": null
+    },
+    "plumbing.wsfu.laundrySink": {
+      "value": 1.5,
+      "unit": "WSFU",
+      "code": "ISPC 2017",
+      "section": "UPC Table 610.3",
+      "amendment": null
+    },
+    "plumbing.wsfu.hoseBib": {
+      "value": 2.5,
+      "unit": "WSFU",
+      "code": "ISPC 2017",
+      "section": "UPC Table 610.3",
+      "amendment": null
+    },
+    "plumbing.whStrapRequired": {
+      "value": false,
+      "unit": "",
+      "code": "ISPC 2017",
+      "section": "UPC 507.2",
+      "amendment": "Idaho deletes UPC 507.2 (seismic strapping)"
+    },
+    "plumbing.hoseBibBackflow": {
+      "value": "Frost-free, self-draining hose bib with built-in backflow protection (vacuum breaker)",
+      "unit": "",
+      "code": "ISPC 2017",
+      "section": "UPC 603.5.7",
+      "amendment": "Idaho replaces UPC 603.5.7 (adds frost-proof self-draining requirement for freezing climates)."
+    },
+    "energy.ductRAttic": {
+      "value": 8,
+      "unit": "R",
+      "code": "IECC 2018",
+      "section": "R403.3.1",
+      "amendment": "None found."
+    },
+    "energy.ductROther": {
+      "value": 6,
+      "unit": "R",
+      "code": "IECC 2018",
+      "section": "R403.3.1",
+      "amendment": "None found."
+    },
+    "energy.programmableThermostat": {
+      "value": true,
+      "unit": "",
+      "code": "IECC 2018",
+      "section": "R403.1.1",
+      "amendment": "None. (Idaho 03.p amends IRC R403.1.1 footing size, a different section.)"
+    },
+    "energy.highEfficacyLampsPct": {
+      "value": 90,
+      "unit": "percent",
+      "code": "IECC 2018",
+      "section": "R404.1",
+      "amendment": "None found (R404.1 only referenced in new R402.6 log homes)."
+    },
+    "energy.hotWaterPipeR": {
+      "value": 3,
+      "unit": "R",
+      "code": "IECC 2018",
+      "section": "R403.5.3",
+      "amendment": "None found."
+    },
+    "struct.windSpeedBasis": {
+      "value": 115,
+      "unit": "mph (Vult)",
+      "code": "Boise design criteria",
+      "section": "R301.2.1.3; Table R602.10.3(1)",
+      "amendment": null
+    },
+    "struct.windExposureDefault": {
+      "value": "B",
+      "unit": "category",
+      "code": "IRC 2018",
+      "section": "R301.2.1.4",
+      "amendment": null
+    },
+    "struct.seismicBracingExempt": {
+      "value": true,
+      "unit": "boolean",
+      "code": "IRC 2018",
+      "section": "R301.2.2; Table R602.10.1.3",
+      "amendment": "Idaho amends R602.10 to allow R602.12 or APA SR-102 as alternatives."
+    },
+    "struct.liveLoads": {
+      "value": {
+        "floorLiving": 40,
+        "floorSleeping": 30,
+        "atticNoStorage": 10,
+        "atticLimitedStorage": 20,
+        "stairs": 40,
+        "balcony": 40
+      },
+      "unit": "psf",
+      "code": "IRC 2018",
+      "section": "Table R301.5",
+      "amendment": null
+    },
+    "struct.floorDeadLoad": {
+      "value": 10,
+      "unit": "psf",
+      "code": "IRC 2018",
+      "section": "Table R502.3.1(2)",
+      "amendment": null
+    },
+    "struct.joistSpans40": {
+      "value": {
+        "Douglas fir-larch #2": {
+          "2x8": {
+            "12": "14-2",
+            "16": "12-9",
+            "19.2": "11-8",
+            "24": "10-5"
+          },
+          "2x10": {
+            "12": "18-0",
+            "16": "15-7",
+            "19.2": "14-3",
+            "24": "12-9"
+          },
+          "2x12": {
+            "12": "20-11",
+            "16": "18-1",
+            "19.2": "16-6",
+            "24": "14-9"
+          }
+        },
+        "Hem-fir #2": {
+          "2x8": {
+            "12": "13-2",
+            "16": "12-0",
+            "19.2": "11-3",
+            "24": "10-2"
+          },
+          "2x10": {
+            "12": "16-10",
+            "16": "15-2",
+            "19.2": "13-10",
+            "24": "12-5"
+          },
+          "2x12": {
+            "12": "20-4",
+            "16": "17-7",
+            "19.2": "16-1",
+            "24": "14-4"
+          }
+        }
+      },
+      "unit": "ft-in",
+      "code": "IRC 2018",
+      "section": "Table R502.3.1(2)",
+      "amendment": null
+    },
+    "struct.joistBearingWood": {
+      "value": 1.5,
+      "unit": "in",
+      "code": "IRC 2018",
+      "section": "R502.6",
+      "amendment": null
+    },
+    "struct.joistBearingConcrete": {
+      "value": 3,
+      "unit": "in",
+      "code": "IRC 2018",
+      "section": "R502.6",
+      "amendment": null
+    },
+    "struct.joistLapOverSupport": {
+      "value": 3,
+      "unit": "in",
+      "code": "IRC 2018",
+      "section": "R502.6.1",
+      "amendment": null
+    },
+    "struct.headersExterior": {
+      "value": {
+        "roof-ceiling": {
+          "1-2x6": {
+            "12": {
+              "span": "4-0",
+              "jacks": 1
+            },
+            "24": {
+              "span": "3-1",
+              "jacks": 2
+            },
+            "36": {
+              "span": "2-7",
+              "jacks": 2
+            }
+          },
+          "1-2x8": {
+            "12": {
+              "span": "5-1",
+              "jacks": 2
+            },
+            "24": {
+              "span": "3-11",
+              "jacks": 2
+            },
+            "36": {
+              "span": "3-3",
+              "jacks": 2
+            }
+          },
+          "1-2x10": {
+            "12": {
+              "span": "6-0",
+              "jacks": 2
+            },
+            "24": {
+              "span": "4-8",
+              "jacks": 2
+            },
+            "36": {
+              "span": "3-11",
+              "jacks": 2
+            }
+          },
+          "1-2x12": {
+            "12": {
+              "span": "7-1",
+              "jacks": 2
+            },
+            "24": {
+              "span": "5-5",
+              "jacks": 2
+            },
+            "36": {
+              "span": "4-7",
+              "jacks": 3
+            }
+          },
+          "2-2x4": {
+            "12": {
+              "span": "4-0",
+              "jacks": 1
+            },
+            "24": {
+              "span": "3-1",
+              "jacks": 1
+            },
+            "36": {
+              "span": "2-7",
+              "jacks": 1
+            }
+          },
+          "2-2x6": {
+            "12": {
+              "span": "6-0",
+              "jacks": 1
+            },
+            "24": {
+              "span": "4-7",
+              "jacks": 1
+            },
+            "36": {
+              "span": "3-10",
+              "jacks": 1
+            }
+          },
+          "2-2x8": {
+            "12": {
+              "span": "7-7",
+              "jacks": 1
+            },
+            "24": {
+              "span": "5-9",
+              "jacks": 1
+            },
+            "36": {
+              "span": "4-10",
+              "jacks": 2
+            }
+          },
+          "2-2x10": {
+            "12": {
+              "span": "9-0",
+              "jacks": 1
+            },
+            "24": {
+              "span": "6-10",
+              "jacks": 2
+            },
+            "36": {
+              "span": "5-9",
+              "jacks": 2
+            }
+          },
+          "2-2x12": {
+            "12": {
+              "span": "10-7",
+              "jacks": 2
+            },
+            "24": {
+              "span": "8-1",
+              "jacks": 2
+            },
+            "36": {
+              "span": "6-10",
+              "jacks": 2
+            }
+          },
+          "3-2x8": {
+            "12": {
+              "span": "9-5",
+              "jacks": 1
+            },
+            "24": {
+              "span": "7-3",
+              "jacks": 1
+            },
+            "36": {
+              "span": "6-1",
+              "jacks": 1
+            }
+          },
+          "3-2x10": {
+            "12": {
+              "span": "11-3",
+              "jacks": 1
+            },
+            "24": {
+              "span": "8-7",
+              "jacks": 1
+            },
+            "36": {
+              "span": "7-3",
+              "jacks": 2
+            }
+          },
+          "3-2x12": {
+            "12": {
+              "span": "13-2",
+              "jacks": 1
+            },
+            "24": {
+              "span": "10-1",
+              "jacks": 2
+            },
+            "36": {
+              "span": "8-6",
+              "jacks": 2
+            }
+          },
+          "4-2x8": {
+            "12": {
+              "span": "10-11",
+              "jacks": 1
+            },
+            "24": {
+              "span": "8-4",
+              "jacks": 1
+            },
+            "36": {
+              "span": "7-0",
+              "jacks": 1
+            }
+          },
+          "4-2x10": {
+            "12": {
+              "span": "12-11",
+              "jacks": 1
+            },
+            "24": {
+              "span": "9-11",
+              "jacks": 1
+            },
+            "36": {
+              "span": "8-4",
+              "jacks": 1
+            }
+          },
+          "4-2x12": {
+            "12": {
+              "span": "15-3",
+              "jacks": 1
+            },
+            "24": {
+              "span": "11-8",
+              "jacks": 1
+            },
+            "36": {
+              "span": "9-10",
+              "jacks": 2
+            }
+          }
+        },
+        "roof-ceiling-1-center-bearing-floor": {
+          "1-2x6": {
+            "12": {
+              "span": "3-3",
+              "jacks": 1
+            },
+            "24": {
+              "span": "2-7",
+              "jacks": 2
+            },
+            "36": {
+              "span": "2-2",
+              "jacks": 2
+            }
+          },
+          "1-2x8": {
+            "12": {
+              "span": "4-1",
+              "jacks": 2
+            },
+            "24": {
+              "span": "3-3",
+              "jacks": 2
+            },
+            "36": {
+              "span": "2-9",
+              "jacks": 2
+            }
+          },
+          "1-2x10": {
+            "12": {
+              "span": "4-11",
+              "jacks": 2
+            },
+            "24": {
+              "span": "3-10",
+              "jacks": 2
+            },
+            "36": {
+              "span": "3-3",
+              "jacks": 3
+            }
+          },
+          "1-2x12": {
+            "12": {
+              "span": "5-9",
+              "jacks": 2
+            },
+            "24": {
+              "span": "4-6",
+              "jacks": 3
+            },
+            "36": {
+              "span": "3-10",
+              "jacks": 3
+            }
+          },
+          "2-2x4": {
+            "12": {
+              "span": "3-3",
+              "jacks": 1
+            },
+            "24": {
+              "span": "2-6",
+              "jacks": 1
+            },
+            "36": {
+              "span": "2-2",
+              "jacks": 1
+            }
+          },
+          "2-2x6": {
+            "12": {
+              "span": "4-10",
+              "jacks": 1
+            },
+            "24": {
+              "span": "3-9",
+              "jacks": 1
+            },
+            "36": {
+              "span": "3-3",
+              "jacks": 2
+            }
+          },
+          "2-2x8": {
+            "12": {
+              "span": "6-1",
+              "jacks": 1
+            },
+            "24": {
+              "span": "4-10",
+              "jacks": 2
+            },
+            "36": {
+              "span": "4-1",
+              "jacks": 2
+            }
+          },
+          "2-2x10": {
+            "12": {
+              "span": "7-3",
+              "jacks": 2
+            },
+            "24": {
+              "span": "5-8",
+              "jacks": 2
+            },
+            "36": {
+              "span": "4-10",
+              "jacks": 2
+            }
+          },
+          "2-2x12": {
+            "12": {
+              "span": "8-6",
+              "jacks": 2
+            },
+            "24": {
+              "span": "6-8",
+              "jacks": 2
+            },
+            "36": {
+              "span": "5-8",
+              "jacks": 2
+            }
+          },
+          "3-2x8": {
+            "12": {
+              "span": "7-8",
+              "jacks": 1
+            },
+            "24": {
+              "span": "6-0",
+              "jacks": 1
+            },
+            "36": {
+              "span": "5-1",
+              "jacks": 2
+            }
+          },
+          "3-2x10": {
+            "12": {
+              "span": "9-1",
+              "jacks": 1
+            },
+            "24": {
+              "span": "7-2",
+              "jacks": 2
+            },
+            "36": {
+              "span": "6-1",
+              "jacks": 2
+            }
+          },
+          "3-2x12": {
+            "12": {
+              "span": "10-8",
+              "jacks": 2
+            },
+            "24": {
+              "span": "8-5",
+              "jacks": 2
+            },
+            "36": {
+              "span": "7-2",
+              "jacks": 2
+            }
+          },
+          "4-2x8": {
+            "12": {
+              "span": "8-10",
+              "jacks": 1
+            },
+            "24": {
+              "span": "6-11",
+              "jacks": 1
+            },
+            "36": {
+              "span": "5-11",
+              "jacks": 1
+            }
+          },
+          "4-2x10": {
+            "12": {
+              "span": "10-6",
+              "jacks": 1
+            },
+            "24": {
+              "span": "8-3",
+              "jacks": 2
+            },
+            "36": {
+              "span": "7-0",
+              "jacks": 2
+            }
+          },
+          "4-2x12": {
+            "12": {
+              "span": "12-4",
+              "jacks": 1
+            },
+            "24": {
+              "span": "9-8",
+              "jacks": 2
+            },
+            "36": {
+              "span": "8-3",
+              "jacks": 2
+            }
+          }
+        },
+        "roof-ceiling-1-clear-span-floor": {
+          "1-2x6": {
+            "12": {
+              "span": "2-11",
+              "jacks": 2
+            },
+            "24": {
+              "span": "2-3",
+              "jacks": 2
+            },
+            "36": {
+              "span": "1-11",
+              "jacks": 2
+            }
+          },
+          "1-2x8": {
+            "12": {
+              "span": "3-9",
+              "jacks": 2
+            },
+            "24": {
+              "span": "2-10",
+              "jacks": 2
+            },
+            "36": {
+              "span": "2-5",
+              "jacks": 3
+            }
+          },
+          "1-2x10": {
+            "12": {
+              "span": "4-5",
+              "jacks": 2
+            },
+            "24": {
+              "span": "3-5",
+              "jacks": 3
+            },
+            "36": {
+              "span": "2-10",
+              "jacks": 3
+            }
+          },
+          "1-2x12": {
+            "12": {
+              "span": "5-2",
+              "jacks": 2
+            },
+            "24": {
+              "span": "4-0",
+              "jacks": 3
+            },
+            "36": {
+              "span": "3-4",
+              "jacks": 3
+            }
+          },
+          "2-2x4": {
+            "12": {
+              "span": "2-11",
+              "jacks": 1
+            },
+            "24": {
+              "span": "2-3",
+              "jacks": 1
+            },
+            "36": {
+              "span": "1-10",
+              "jacks": 1
+            }
+          },
+          "2-2x6": {
+            "12": {
+              "span": "4-4",
+              "jacks": 1
+            },
+            "24": {
+              "span": "3-4",
+              "jacks": 2
+            },
+            "36": {
+              "span": "2-10",
+              "jacks": 2
+            }
+          },
+          "2-2x8": {
+            "12": {
+              "span": "5-6",
+              "jacks": 2
+            },
+            "24": {
+              "span": "4-3",
+              "jacks": 2
+            },
+            "36": {
+              "span": "3-7",
+              "jacks": 2
+            }
+          },
+          "2-2x10": {
+            "12": {
+              "span": "6-7",
+              "jacks": 2
+            },
+            "24": {
+              "span": "5-0",
+              "jacks": 2
+            },
+            "36": {
+              "span": "4-2",
+              "jacks": 2
+            }
+          },
+          "2-2x12": {
+            "12": {
+              "span": "7-9",
+              "jacks": 2
+            },
+            "24": {
+              "span": "5-11",
+              "jacks": 2
+            },
+            "36": {
+              "span": "4-11",
+              "jacks": 3
+            }
+          },
+          "3-2x8": {
+            "12": {
+              "span": "6-11",
+              "jacks": 1
+            },
+            "24": {
+              "span": "5-3",
+              "jacks": 2
+            },
+            "36": {
+              "span": "4-5",
+              "jacks": 2
+            }
+          },
+          "3-2x10": {
+            "12": {
+              "span": "8-3",
+              "jacks": 2
+            },
+            "24": {
+              "span": "6-3",
+              "jacks": 2
+            },
+            "36": {
+              "span": "5-3",
+              "jacks": 2
+            }
+          },
+          "3-2x12": {
+            "12": {
+              "span": "9-8",
+              "jacks": 2
+            },
+            "24": {
+              "span": "7-5",
+              "jacks": 2
+            },
+            "36": {
+              "span": "6-2",
+              "jacks": 2
+            }
+          },
+          "4-2x8": {
+            "12": {
+              "span": "8-0",
+              "jacks": 1
+            },
+            "24": {
+              "span": "6-1",
+              "jacks": 1
+            },
+            "36": {
+              "span": "5-1",
+              "jacks": 2
+            }
+          },
+          "4-2x10": {
+            "12": {
+              "span": "9-6",
+              "jacks": 1
+            },
+            "24": {
+              "span": "7-3",
+              "jacks": 2
+            },
+            "36": {
+              "span": "6-1",
+              "jacks": 2
+            }
+          },
+          "4-2x12": {
+            "12": {
+              "span": "11-2",
+              "jacks": 2
+            },
+            "24": {
+              "span": "8-6",
+              "jacks": 2
+            },
+            "36": {
+              "span": "7-2",
+              "jacks": 2
+            }
+          }
+        },
+        "roof-ceiling-2-center-bearing-floors": {
+          "1-2x6": {
+            "12": {
+              "span": "2-8",
+              "jacks": 2
+            },
+            "24": {
+              "span": "2-1",
+              "jacks": 2
+            },
+            "36": {
+              "span": "1-10",
+              "jacks": 2
+            }
+          },
+          "1-2x8": {
+            "12": {
+              "span": "3-5",
+              "jacks": 2
+            },
+            "24": {
+              "span": "2-8",
+              "jacks": 2
+            },
+            "36": {
+              "span": "2-4",
+              "jacks": 3
+            }
+          },
+          "1-2x10": {
+            "12": {
+              "span": "4-0",
+              "jacks": 2
+            },
+            "24": {
+              "span": "3-2",
+              "jacks": 3
+            },
+            "36": {
+              "span": "2-9",
+              "jacks": 3
+            }
+          },
+          "1-2x12": {
+            "12": {
+              "span": "4-9",
+              "jacks": 3
+            },
+            "24": {
+              "span": "3-9",
+              "jacks": 3
+            },
+            "36": {
+              "span": "3-2",
+              "jacks": 4
+            }
+          },
+          "2-2x4": {
+            "12": {
+              "span": "2-8",
+              "jacks": 1
+            },
+            "24": {
+              "span": "2-1",
+              "jacks": 1
+            },
+            "36": {
+              "span": "1-9",
+              "jacks": 1
+            }
+          },
+          "2-2x6": {
+            "12": {
+              "span": "4-0",
+              "jacks": 1
+            },
+            "24": {
+              "span": "3-2",
+              "jacks": 2
+            },
+            "36": {
+              "span": "2-8",
+              "jacks": 2
+            }
+          },
+          "2-2x8": {
+            "12": {
+              "span": "5-0",
+              "jacks": 2
+            },
+            "24": {
+              "span": "4-0",
+              "jacks": 2
+            },
+            "36": {
+              "span": "3-5",
+              "jacks": 2
+            }
+          },
+          "2-2x10": {
+            "12": {
+              "span": "6-0",
+              "jacks": 2
+            },
+            "24": {
+              "span": "4-9",
+              "jacks": 2
+            },
+            "36": {
+              "span": "4-0",
+              "jacks": 2
+            }
+          },
+          "2-2x12": {
+            "12": {
+              "span": "7-0",
+              "jacks": 2
+            },
+            "24": {
+              "span": "5-7",
+              "jacks": 2
+            },
+            "36": {
+              "span": "4-9",
+              "jacks": 3
+            }
+          },
+          "3-2x8": {
+            "12": {
+              "span": "6-4",
+              "jacks": 1
+            },
+            "24": {
+              "span": "5-0",
+              "jacks": 2
+            },
+            "36": {
+              "span": "4-3",
+              "jacks": 2
+            }
+          },
+          "3-2x10": {
+            "12": {
+              "span": "7-6",
+              "jacks": 2
+            },
+            "24": {
+              "span": "5-11",
+              "jacks": 2
+            },
+            "36": {
+              "span": "5-1",
+              "jacks": 2
+            }
+          },
+          "3-2x12": {
+            "12": {
+              "span": "8-10",
+              "jacks": 2
+            },
+            "24": {
+              "span": "7-0",
+              "jacks": 2
+            },
+            "36": {
+              "span": "5-11",
+              "jacks": 2
+            }
+          },
+          "4-2x8": {
+            "12": {
+              "span": "7-3",
+              "jacks": 1
+            },
+            "24": {
+              "span": "5-9",
+              "jacks": 1
+            },
+            "36": {
+              "span": "4-11",
+              "jacks": 2
+            }
+          },
+          "4-2x10": {
+            "12": {
+              "span": "8-8",
+              "jacks": 1
+            },
+            "24": {
+              "span": "6-10",
+              "jacks": 2
+            },
+            "36": {
+              "span": "5-10",
+              "jacks": 2
+            }
+          },
+          "4-2x12": {
+            "12": {
+              "span": "10-2",
+              "jacks": 2
+            },
+            "24": {
+              "span": "8-1",
+              "jacks": 2
+            },
+            "36": {
+              "span": "6-10",
+              "jacks": 2
+            }
+          }
+        }
+      },
+      "unit": "ft-in; jacks = NJ",
+      "code": "IRC 2018",
+      "section": "Table R602.7(1)",
+      "amendment": null
+    },
+    "struct.headersInterior": {
+      "value": {
+        "one-floor-only": {
+          "2-2x4": {
+            "12": {
+              "span": "4-1",
+              "jacks": 1
+            },
+            "24": {
+              "span": "2-10",
+              "jacks": 1
+            },
+            "36": {
+              "span": "2-4",
+              "jacks": 1
+            }
+          },
+          "2-2x6": {
+            "12": {
+              "span": "6-1",
+              "jacks": 1
+            },
+            "24": {
+              "span": "4-4",
+              "jacks": 1
+            },
+            "36": {
+              "span": "3-6",
+              "jacks": 1
+            }
+          },
+          "2-2x8": {
+            "12": {
+              "span": "7-9",
+              "jacks": 1
+            },
+            "24": {
+              "span": "5-5",
+              "jacks": 1
+            },
+            "36": {
+              "span": "4-5",
+              "jacks": 2
+            }
+          },
+          "2-2x10": {
+            "12": {
+              "span": "9-2",
+              "jacks": 1
+            },
+            "24": {
+              "span": "6-6",
+              "jacks": 2
+            },
+            "36": {
+              "span": "5-3",
+              "jacks": 2
+            }
+          },
+          "2-2x12": {
+            "12": {
+              "span": "10-9",
+              "jacks": 1
+            },
+            "24": {
+              "span": "7-7",
+              "jacks": 2
+            },
+            "36": {
+              "span": "6-3",
+              "jacks": 2
+            }
+          },
+          "3-2x8": {
+            "12": {
+              "span": "9-8",
+              "jacks": 1
+            },
+            "24": {
+              "span": "6-10",
+              "jacks": 1
+            },
+            "36": {
+              "span": "5-7",
+              "jacks": 1
+            }
+          },
+          "3-2x10": {
+            "12": {
+              "span": "11-5",
+              "jacks": 1
+            },
+            "24": {
+              "span": "8-1",
+              "jacks": 1
+            },
+            "36": {
+              "span": "6-7",
+              "jacks": 2
+            }
+          },
+          "3-2x12": {
+            "12": {
+              "span": "13-6",
+              "jacks": 1
+            },
+            "24": {
+              "span": "9-6",
+              "jacks": 2
+            },
+            "36": {
+              "span": "7-9",
+              "jacks": 2
+            }
+          },
+          "4-2x8": {
+            "12": {
+              "span": "11-2",
+              "jacks": 1
+            },
+            "24": {
+              "span": "7-11",
+              "jacks": 1
+            },
+            "36": {
+              "span": "6-5",
+              "jacks": 1
+            }
+          },
+          "4-2x10": {
+            "12": {
+              "span": "13-3",
+              "jacks": 1
+            },
+            "24": {
+              "span": "9-4",
+              "jacks": 1
+            },
+            "36": {
+              "span": "7-8",
+              "jacks": 1
+            }
+          },
+          "4-2x12": {
+            "12": {
+              "span": "15-7",
+              "jacks": 1
+            },
+            "24": {
+              "span": "11-0",
+              "jacks": 1
+            },
+            "36": {
+              "span": "9-0",
+              "jacks": 2
+            }
+          }
+        },
+        "two-floors": {
+          "2-2x4": {
+            "12": {
+              "span": "2-7",
+              "jacks": 1
+            },
+            "24": {
+              "span": "1-11",
+              "jacks": 1
+            },
+            "36": {
+              "span": "1-7",
+              "jacks": 1
+            }
+          },
+          "2-2x6": {
+            "12": {
+              "span": "3-11",
+              "jacks": 1
+            },
+            "24": {
+              "span": "2-11",
+              "jacks": 2
+            },
+            "36": {
+              "span": "2-5",
+              "jacks": 2
+            }
+          },
+          "2-2x8": {
+            "12": {
+              "span": "5-0",
+              "jacks": 1
+            },
+            "24": {
+              "span": "3-8",
+              "jacks": 2
+            },
+            "36": {
+              "span": "3-1",
+              "jacks": 2
+            }
+          },
+          "2-2x10": {
+            "12": {
+              "span": "5-11",
+              "jacks": 2
+            },
+            "24": {
+              "span": "4-4",
+              "jacks": 2
+            },
+            "36": {
+              "span": "3-7",
+              "jacks": 2
+            }
+          },
+          "2-2x12": {
+            "12": {
+              "span": "6-11",
+              "jacks": 2
+            },
+            "24": {
+              "span": "5-2",
+              "jacks": 2
+            },
+            "36": {
+              "span": "4-3",
+              "jacks": 3
+            }
+          },
+          "3-2x8": {
+            "12": {
+              "span": "6-3",
+              "jacks": 1
+            },
+            "24": {
+              "span": "4-7",
+              "jacks": 2
+            },
+            "36": {
+              "span": "3-10",
+              "jacks": 2
+            }
+          },
+          "3-2x10": {
+            "12": {
+              "span": "7-5",
+              "jacks": 1
+            },
+            "24": {
+              "span": "5-6",
+              "jacks": 2
+            },
+            "36": {
+              "span": "4-6",
+              "jacks": 2
+            }
+          },
+          "3-2x12": {
+            "12": {
+              "span": "8-8",
+              "jacks": 2
+            },
+            "24": {
+              "span": "6-5",
+              "jacks": 2
+            },
+            "36": {
+              "span": "5-4",
+              "jacks": 2
+            }
+          },
+          "4-2x8": {
+            "12": {
+              "span": "7-2",
+              "jacks": 1
+            },
+            "24": {
+              "span": "5-4",
+              "jacks": 1
+            },
+            "36": {
+              "span": "4-5",
+              "jacks": 2
+            }
+          },
+          "4-2x10": {
+            "12": {
+              "span": "8-6",
+              "jacks": 1
+            },
+            "24": {
+              "span": "6-4",
+              "jacks": 2
+            },
+            "36": {
+              "span": "5-3",
+              "jacks": 2
+            }
+          },
+          "4-2x12": {
+            "12": {
+              "span": "10-1",
+              "jacks": 1
+            },
+            "24": {
+              "span": "7-5",
+              "jacks": 2
+            },
+            "36": {
+              "span": "6-2",
+              "jacks": 2
+            }
+          }
+        }
+      },
+      "unit": "ft-in; jacks = NJ",
+      "code": "IRC 2018",
+      "section": "Table R602.7(2)",
+      "amendment": null
+    },
+    "struct.headerTableSpecies": {
+      "value": "No. 2 grade Douglas fir-larch, hem-fir, southern pine or spruce-pine-fir (minimum properties)",
+      "unit": "text",
+      "code": "IRC 2018",
+      "section": "Table R602.7(1)/(2) footnote b",
+      "amendment": null
+    },
+    "struct.headerKingStuds": {
+      "value": {
+        "4": 1,
+        "6": 1,
+        "8": 1,
+        "10": 2,
+        "12": 2,
+        "14": 2,
+        "16": 2,
+        "18": 2
+      },
+      "unit": "full-height studs each end, by max header span ft",
+      "code": "IRC 2018",
+      "section": "Table R602.7.5",
+      "amendment": null
+    },
+    "struct.studSpacing": {
+      "value": {
+        "2x4": {
+          "roofCeilingOnly": 24,
+          "oneFloorRoofCeiling": 16,
+          "twoFloorsRoofCeiling": null
+        },
+        "2x6": {
+          "roofCeilingOnly": 24,
+          "oneFloorRoofCeiling": 24,
+          "twoFloorsRoofCeiling": 16
+        }
+      },
+      "unit": "in",
+      "code": "IRC 2018",
+      "section": "Table R602.3(5)",
+      "amendment": null
+    },
+    "struct.studMaxHeight": {
+      "value": 10,
+      "unit": "ft",
+      "code": "IRC 2018",
+      "section": "Table R602.3(5)",
+      "amendment": null
+    },
+    "struct.soilBearing": {
+      "value": {
+        "crystallineBedrock": 12000,
+        "sedimentaryRock": 4000,
+        "sandyGravel": 3000,
+        "sandSiltyClayeyGravel": 2000,
+        "clayEtc": 1500
+      },
+      "unit": "psf",
+      "code": "IRC 2018",
+      "section": "Table R401.4.1",
+      "amendment": null
+    },
+    "struct.soilBearingDefault": {
+      "value": 1500,
+      "unit": "psf",
+      "code": "IRC 2018",
+      "section": "R401.4; Table R401.4.1",
+      "amendment": null
+    },
+    "struct.footingsLightFrame": {
+      "value": {
+        "1500": {
+          "1": {
+            "slab": {
+              "width": 12,
+              "thickness": 6
+            },
+            "crawl": {
+              "width": 12,
+              "thickness": 6
+            },
+            "basement": {
+              "width": 12,
+              "thickness": 6
+            }
+          },
+          "2": {
+            "slab": {
+              "width": 15,
+              "thickness": 6
+            },
+            "crawl": {
+              "width": 15,
+              "thickness": 6
+            },
+            "basement": {
+              "width": 15,
+              "thickness": 6
+            }
+          },
+          "3": {
+            "slab": {
+              "width": 23,
+              "thickness": 6
+            },
+            "crawl": {
+              "width": 23,
+              "thickness": 6
+            },
+            "basement": {
+              "width": 23,
+              "thickness": 6
+            }
+          }
+        },
+        "2000": {
+          "1": {
+            "slab": {
+              "width": 12,
+              "thickness": 6
+            },
+            "crawl": {
+              "width": 12,
+              "thickness": 6
+            },
+            "basement": {
+              "width": 12,
+              "thickness": 6
+            }
+          },
+          "2": {
+            "slab": {
+              "width": 12,
+              "thickness": 6
+            },
+            "crawl": {
+              "width": 12,
+              "thickness": 6
+            },
+            "basement": {
+              "width": 12,
+              "thickness": 6
+            }
+          },
+          "3": {
+            "slab": {
+              "width": 17,
+              "thickness": 6
+            },
+            "crawl": {
+              "width": 17,
+              "thickness": 6
+            },
+            "basement": {
+              "width": 17,
+              "thickness": 6
+            }
+          }
+        },
+        "3000": {
+          "1": {
+            "slab": {
+              "width": 12,
+              "thickness": 6
+            },
+            "crawl": {
+              "width": 12,
+              "thickness": 6
+            },
+            "basement": {
+              "width": 12,
+              "thickness": 6
+            }
+          },
+          "2": {
+            "slab": {
+              "width": 12,
+              "thickness": 6
+            },
+            "crawl": {
+              "width": 12,
+              "thickness": 6
+            },
+            "basement": {
+              "width": 12,
+              "thickness": 6
+            }
+          },
+          "3": {
+            "slab": {
+              "width": 12,
+              "thickness": 6
+            },
+            "crawl": {
+              "width": 12,
+              "thickness": 6
+            },
+            "basement": {
+              "width": 12,
+              "thickness": 6
+            }
+          }
+        },
+        "4000": {
+          "1": {
+            "slab": {
+              "width": 12,
+              "thickness": 6
+            },
+            "crawl": {
+              "width": 12,
+              "thickness": 6
+            },
+            "basement": {
+              "width": 12,
+              "thickness": 6
+            }
+          },
+          "2": {
+            "slab": {
+              "width": 12,
+              "thickness": 6
+            },
+            "crawl": {
+              "width": 12,
+              "thickness": 6
+            },
+            "basement": {
+              "width": 12,
+              "thickness": 6
+            }
+          },
+          "3": {
+            "slab": {
+              "width": 12,
+              "thickness": 6
+            },
+            "crawl": {
+              "width": 12,
+              "thickness": 6
+            },
+            "basement": {
+              "width": 12,
+              "thickness": 6
+            }
+          }
+        }
+      },
+      "unit": "in",
+      "code": "IRC 2018",
+      "section": "Idaho Table R403.1 (replaces IRC Table R403.1(1)-(3))",
+      "amendment": "IDAPA 24.39.30.600: R403.1(1)-(3) deleted, Table R403.1 added"
+    },
+    "struct.footingMinWidth": {
+      "value": 12,
+      "unit": "in",
+      "code": "IRC 2018",
+      "section": "Idaho Table R403.1",
+      "amendment": "Idaho Table R403.1"
+    },
+    "struct.footingMinThickness": {
+      "value": 6,
+      "unit": "in",
+      "code": "IRC 2018",
+      "section": "R403.1.1",
+      "amendment": "Idaho R403.1.1 rewrite"
+    },
+    "struct.footingProjectionMin": {
+      "value": 2,
+      "unit": "in",
+      "code": "IRC 2018",
+      "section": "R403.1.1",
+      "amendment": "Idaho R403.1.1 rewrite"
+    },
+    "struct.anchorBoltDiameter": {
+      "value": 0.5,
+      "unit": "in",
+      "code": "IRC 2018",
+      "section": "R403.1.6",
+      "amendment": null
+    },
+    "struct.anchorBoltEmbed": {
+      "value": 7,
+      "unit": "in",
+      "code": "IRC 2018",
+      "section": "R403.1.6",
+      "amendment": null
+    },
+    "struct.anchorBoltSpacing": {
+      "value": 6,
+      "unit": "ft",
+      "code": "IRC 2018",
+      "section": "R403.1.6",
+      "amendment": null
+    },
+    "struct.anchorBoltFromEnd": {
+      "value": 12,
+      "unit": "in",
+      "code": "IRC 2018",
+      "section": "R403.1.6",
+      "amendment": null
+    },
+    "struct.anchorBoltMinPerPiece": {
+      "value": 2,
+      "unit": "count",
+      "code": "IRC 2018",
+      "section": "R403.1.6",
+      "amendment": null
+    },
+    "struct.plainConcreteWall": {
+      "value": {
+        "8": {
+          "4": {
+            "GW-GP-SW-SP": "PC",
+            "GM-GC-SM-SMSC-ML": "PC",
+            "SC-MH-MLCL-CL": "PC"
+          },
+          "5": {
+            "GW-GP-SW-SP": "PC",
+            "GM-GC-SM-SMSC-ML": "PC",
+            "SC-MH-MLCL-CL": "PC"
+          },
+          "6": {
+            "GW-GP-SW-SP": "PC",
+            "GM-GC-SM-SMSC-ML": "PC",
+            "SC-MH-MLCL-CL": "#6 @ 37"
+          },
+          "7": {
+            "GW-GP-SW-SP": "PC",
+            "GM-GC-SM-SMSC-ML": "#6 @ 36",
+            "SC-MH-MLCL-CL": "#6 @ 35"
+          },
+          "8": {
+            "GW-GP-SW-SP": "#6 @ 41",
+            "GM-GC-SM-SMSC-ML": "#6 @ 35",
+            "SC-MH-MLCL-CL": "#6 @ 26"
+          }
+        },
+        "9": {
+          "4": {
+            "GW-GP-SW-SP": "PC",
+            "GM-GC-SM-SMSC-ML": "PC",
+            "SC-MH-MLCL-CL": "PC"
+          },
+          "5": {
+            "GW-GP-SW-SP": "PC",
+            "GM-GC-SM-SMSC-ML": "PC",
+            "SC-MH-MLCL-CL": "PC"
+          },
+          "6": {
+            "GW-GP-SW-SP": "PC",
+            "GM-GC-SM-SMSC-ML": "PC",
+            "SC-MH-MLCL-CL": "#6 @ 35"
+          },
+          "7": {
+            "GW-GP-SW-SP": "PC",
+            "GM-GC-SM-SMSC-ML": "#6 @ 35",
+            "SC-MH-MLCL-CL": "#6 @ 32"
+          },
+          "8": {
+            "GW-GP-SW-SP": "#6 @ 36",
+            "GM-GC-SM-SMSC-ML": "#6 @ 32",
+            "SC-MH-MLCL-CL": "#6 @ 23"
+          },
+          "9": {
+            "GW-GP-SW-SP": "#6 @ 35",
+            "GM-GC-SM-SMSC-ML": "#6 @ 25",
+            "SC-MH-MLCL-CL": "#6 @ 18"
+          }
+        },
+        "10": {
+          "4": {
+            "GW-GP-SW-SP": "PC",
+            "GM-GC-SM-SMSC-ML": "PC",
+            "SC-MH-MLCL-CL": "PC"
+          },
+          "5": {
+            "GW-GP-SW-SP": "PC",
+            "GM-GC-SM-SMSC-ML": "PC",
+            "SC-MH-MLCL-CL": "PC"
+          },
+          "6": {
+            "GW-GP-SW-SP": "PC",
+            "GM-GC-SM-SMSC-ML": "PC",
+            "SC-MH-MLCL-CL": "#6 @ 35"
+          },
+          "7": {
+            "GW-GP-SW-SP": "PC",
+            "GM-GC-SM-SMSC-ML": "#6 @ 35",
+            "SC-MH-MLCL-CL": "#6 @ 29"
+          },
+          "8": {
+            "GW-GP-SW-SP": "#6 @ 35",
+            "GM-GC-SM-SMSC-ML": "#6 @ 29",
+            "SC-MH-MLCL-CL": "#6 @ 21"
+          },
+          "9": {
+            "GW-GP-SW-SP": "#6 @ 34",
+            "GM-GC-SM-SMSC-ML": "#6 @ 22",
+            "SC-MH-MLCL-CL": "#6 @ 16"
+          },
+          "10": {
+            "GW-GP-SW-SP": "#6 @ 27",
+            "GM-GC-SM-SMSC-ML": "#6 @ 17",
+            "SC-MH-MLCL-CL": "#6 @ 13"
+          }
+        }
+      },
+      "unit": "text per cell",
+      "code": "IRC 2018",
+      "section": "Table R404.1.2(3) (8-inch flat basement wall, vertical reinforcement)",
+      "amendment": null
+    },
+    "struct.foundationWallMinThickness": {
+      "value": 6,
+      "unit": "in",
+      "code": "IRC 2018",
+      "section": "R404.1.2 tables",
+      "amendment": null
+    },
+    "struct.unbalancedBackfillNoDesign": {
+      "value": 4,
+      "unit": "ft",
+      "code": "IRC 2018",
+      "section": "Table R404.1.2(3)",
+      "amendment": null
+    },
+    "struct.concreteStrength": {
+      "value": {
+        "foundationsNotExposed": 2500,
+        "foundationsExposed": 3000,
+        "garageSlab": 3500
+      },
+      "unit": "psi at 28 days",
+      "code": "IRC 2018",
+      "section": "Table R402.2",
+      "amendment": null
+    },
+    "struct.slabMinThickness": {
+      "value": 3.5,
+      "unit": "in",
+      "code": "IRC 2018",
+      "section": "R506.1",
+      "amendment": null
+    },
+    "struct.slabBaseCourse": {
+      "value": 4,
+      "unit": "in",
+      "code": "IRC 2018",
+      "section": "R506.2.2",
+      "amendment": null
+    },
+    "struct.slabVaporRetarder": {
+      "value": 6,
+      "unit": "mil",
+      "code": "IRC 2018",
+      "section": "R506.2.3",
+      "amendment": null
+    },
+    "struct.woodClearanceJoists": {
+      "value": 18,
+      "unit": "in",
+      "code": "IRC 2018",
+      "section": "R317.1",
+      "amendment": null
+    },
+    "struct.woodClearanceGirders": {
+      "value": 12,
+      "unit": "in",
+      "code": "IRC 2018",
+      "section": "R317.1",
+      "amendment": null
+    },
+    "struct.crawlMinClearance": {
+      "value": "none",
+      "unit": "text",
+      "code": "IRC 2018",
+      "section": "R408",
+      "amendment": null
+    },
+    "struct.columnMinWood": {
+      "value": "4x4",
+      "unit": "text",
+      "code": "IRC 2018",
+      "section": "R407.3",
+      "amendment": null
+    },
+    "struct.columnSteel": {
+      "value": "3 in diameter Schedule 40 steel pipe",
+      "unit": "text",
+      "code": "IRC 2018",
+      "section": "R407.3",
+      "amendment": null
+    },
+    "struct.floorSheathing": {
+      "value": {
+        "16": "24/16 span rating, 7/16 in (15/32 in 32/16 also common)",
+        "19.2": "40/20 span rating, 19/32 in",
+        "24": "48/24 span rating, 23/32 in"
+      },
+      "unit": "span rating, nominal thickness",
+      "code": "IRC 2018",
+      "section": "Table R503.2.1.1(1)",
+      "amendment": null
+    },
+    "struct.roofSheathing": {
+      "value": {
+        "16": "24/0 span rating, 3/8 in (24/16, 7/16 in is the common choice)",
+        "24": "24/0 span rating, 3/8 in with edge support (24/16, 7/16 in common)"
+      },
+      "unit": "span rating, nominal thickness",
+      "code": "IRC 2018",
+      "section": "Table R503.2.1.1(1)",
+      "amendment": null
+    },
+    "struct.trussDesign": {
+      "value": "R802.10.1 trusses designed per ANSI/TPI 1; R802.10.2 truss design drawings delivered with trusses to the job site and approved",
+      "unit": "text",
+      "code": "IRC 2018",
+      "section": "R802.10.1, R802.10.2",
+      "amendment": null
+    },
+    "struct.trussBracing": {
+      "value": "R802.10.3 (truss member bracing per the design drawings / BCSI)",
+      "unit": "text",
+      "code": "IRC 2018",
+      "section": "R802.10.3",
+      "amendment": null
+    },
+    "struct.roofUplift": {
+      "value": "R802.11: roof assemblies need uplift connections (hurricane ties or equivalent) from rafter/truss to wall; required uplift comes from Table R802.11 by wind speed, exposure, roof span, pitch and overhang, or from truss design drawings; deduct 0.60 dead load; plus continuous load path to foundation (R606/R403).",
+      "unit": "text",
+      "code": "IRC 2018",
+      "section": "R802.11, Table R802.11",
+      "amendment": null
+    },
+    "struct.bracingWind": {
+      "value": {
+        "one-story-or-top": {
+          "10": {
+            "LIB": 3.5,
+            "GB": 3.5,
+            "WSP": 2.0,
+            "CS-WSP": 2.0
+          },
+          "20": {
+            "LIB": 6.5,
+            "GB": 6.5,
+            "WSP": 3.5,
+            "CS-WSP": 3.5
+          },
+          "30": {
+            "LIB": 9.5,
+            "GB": 9.5,
+            "WSP": 5.5,
+            "CS-WSP": 4.5
+          },
+          "40": {
+            "LIB": 12.5,
+            "GB": 12.5,
+            "WSP": 7.0,
+            "CS-WSP": 6.0
+          },
+          "50": {
+            "LIB": 15.0,
+            "GB": 15.0,
+            "WSP": 9.0,
+            "CS-WSP": 7.5
+          },
+          "60": {
+            "LIB": 18.0,
+            "GB": 18.0,
+            "WSP": 10.5,
+            "CS-WSP": 9.0
+          }
+        },
+        "first-of-two": {
+          "10": {
+            "LIB": 7.0,
+            "GB": 7.0,
+            "WSP": 4.0,
+            "CS-WSP": 3.5
+          },
+          "20": {
+            "LIB": 12.5,
+            "GB": 12.5,
+            "WSP": 7.5,
+            "CS-WSP": 6.5
+          },
+          "30": {
+            "LIB": 18.0,
+            "GB": 18.0,
+            "WSP": 10.5,
+            "CS-WSP": 9.0
+          },
+          "40": {
+            "LIB": 23.5,
+            "GB": 23.5,
+            "WSP": 13.5,
+            "CS-WSP": 11.5
+          },
+          "50": {
+            "LIB": 29.0,
+            "GB": 29.0,
+            "WSP": 16.5,
+            "CS-WSP": 14.0
+          },
+          "60": {
+            "LIB": 34.5,
+            "GB": 34.5,
+            "WSP": 20.0,
+            "CS-WSP": 17.0
+          }
+        },
+        "first-of-three": {
+          "10": {
+            "LIB": null,
+            "GB": 10.0,
+            "WSP": 6.0,
+            "CS-WSP": 5.0
+          },
+          "20": {
+            "LIB": null,
+            "GB": 18.5,
+            "WSP": 11.0,
+            "CS-WSP": 9.0
+          },
+          "30": {
+            "LIB": null,
+            "GB": 27.0,
+            "WSP": 15.5,
+            "CS-WSP": 13.0
+          },
+          "40": {
+            "LIB": null,
+            "GB": 35.0,
+            "WSP": 20.0,
+            "CS-WSP": 17.0
+          },
+          "50": {
+            "LIB": null,
+            "GB": 43.0,
+            "WSP": 24.5,
+            "CS-WSP": 21.0
+          },
+          "60": {
+            "LIB": null,
+            "GB": 51.0,
+            "WSP": 29.0,
+            "CS-WSP": 25.0
+          }
+        }
+      },
+      "unit": "ft of braced panel per braced wall line",
+      "code": "IRC 2018",
+      "section": "Table R602.10.3(1), band up to 115 mph Vult",
+      "amendment": "Idaho allows R602.12 or APA SR-102 in place of R602.10 (IDAPA 24.39.30.600)"
+    },
+    "struct.bracingAdjust": {
+      "value": {
+        "exposure": {
+          "B": {
+            "1": 1.0,
+            "2": 1.0,
+            "3": 1.0
+          },
+          "C": {
+            "1": 1.2,
+            "2": 1.3,
+            "3": 1.4
+          },
+          "D": {
+            "1": 1.5,
+            "2": 1.6,
+            "3": 1.7
+          }
+        },
+        "eaveToRidge": {
+          "5": {
+            "roofOnly": 0.7,
+            "roofPlusFloor": 0.85,
+            "roofPlus2Floors": 0.9
+          },
+          "10": {
+            "roofOnly": 1.0,
+            "roofPlusFloor": 1.0,
+            "roofPlus2Floors": 1.0
+          },
+          "15": {
+            "roofOnly": 1.3,
+            "roofPlusFloor": 1.15,
+            "roofPlus2Floors": 1.1
+          },
+          "20": {
+            "roofOnly": 1.6,
+            "roofPlusFloor": 1.3,
+            "roofPlus2Floors": null
+          }
+        },
+        "wallHeight": {
+          "8": 0.9,
+          "9": 0.95,
+          "10": 1.0,
+          "11": 1.05,
+          "12": 1.1
+        },
+        "bracedWallLines": {
+          "2": 1.0,
+          "3": 1.3,
+          "4": 1.45,
+          "5": 1.6
+        },
+        "noGypsum": 1.4
+      },
+      "unit": "factor",
+      "code": "IRC 2018",
+      "section": "Table R602.10.3(2)",
+      "amendment": null
+    },
+    "struct.bwlMaxSpacing": {
+      "value": 60,
+      "unit": "ft",
+      "code": "IRC 2018",
+      "section": "R602.10.1.3; Table R602.10.1.3",
+      "amendment": null
+    },
+    "struct.bwlOffset": {
+      "value": 4,
+      "unit": "ft",
+      "code": "IRC 2018",
+      "section": "R602.10.1.2",
+      "amendment": null
+    },
+    "struct.panelFromEnd": {
+      "value": 10,
+      "unit": "ft",
+      "code": "IRC 2018",
+      "section": "R602.10.2.2",
+      "amendment": null
+    },
+    "struct.panelMaxSpacing": {
+      "value": 20,
+      "unit": "ft",
+      "code": "IRC 2018",
+      "section": "R602.10.2.2",
+      "amendment": null
+    },
+    "struct.panelMinLength": {
+      "value": {
+        "WSP": {
+          "8": 48,
+          "9": 48,
+          "10": 48
+        },
+        "CS-WSP": {
+          "64": {
+            "8": 24,
+            "9": 27,
+            "10": 30
+          },
+          "68": {
+            "8": 26,
+            "9": 27,
+            "10": 30
+          },
+          "72": {
+            "8": 27,
+            "9": 27,
+            "10": 30
+          },
+          "76": {
+            "8": 30,
+            "9": 29,
+            "10": 30
+          },
+          "80": {
+            "8": 32,
+            "9": 30,
+            "10": 30
+          },
+          "84": {
+            "8": 35,
+            "9": 32,
+            "10": 32
+          },
+          "88": {
+            "8": 38,
+            "9": 35,
+            "10": 33
+          },
+          "92": {
+            "8": 43,
+            "9": 37,
+            "10": 35
+          },
+          "96": {
+            "8": 48,
+            "9": 41,
+            "10": 38
+          },
+          "100": {
+            "8": null,
+            "9": 44,
+            "10": 40
+          },
+          "104": {
+            "8": null,
+            "9": 49,
+            "10": 43
+          },
+          "108": {
+            "8": null,
+            "9": 54,
+            "10": 46
+          },
+          "112": {
+            "8": null,
+            "9": null,
+            "10": 50
+          },
+          "116": {
+            "8": null,
+            "9": null,
+            "10": 55
+          },
+          "120": {
+            "8": null,
+            "9": null,
+            "10": 60
+          }
+        },
+        "PFH": {
+          "oneStory": 16,
+          "twoStory": 24
+        }
+      },
+      "unit": "in",
+      "code": "IRC 2018",
+      "section": "Table R602.10.5",
+      "amendment": null
+    },
+    "struct.csCornerReturn": {
+      "value": 24,
+      "unit": "in",
+      "code": "IRC 2018",
+      "section": "R602.10.7",
+      "amendment": null
+    },
+    "struct.csRequiresFullSheathing": {
+      "value": true,
+      "unit": "boolean",
+      "code": "IRC 2018",
+      "section": "R602.10.4.2",
+      "amendment": null
+    },
+    "struct.portalFrameNote": {
+      "value": "PFH (R602.10.6.2): panel at least 16 in (roof only) or 24 in (one story plus roof) wide, header span 6 to 18 ft, 3/8 in WSP nailed 3 in o.c., a 5/8 in anchor bolt plus 3500 lb hold-down at one side and a 1000 lb strap opposite; for walls up to 12 ft, portal height up to 10 ft, pony wall up to 4 ft with tension straps. CS-PF (R602.10.6.4): continuous-sheathing portal, tension strap capacity from Table R602.10.6.4 (example 1200 lbf at 115 mph Exp B).",
+      "unit": "text",
+      "code": "IRC 2018",
+      "section": "R602.10.6.2, R602.10.6.4",
+      "amendment": null
+    },
+    "struct.panelCredit": {
+      "value": {
+        "WSP": "actual length",
+        "CS-WSP": "actual length",
+        "PFH": 48,
+        "CS-PF": "actual length"
+      },
+      "unit": "in or text",
+      "code": "IRC 2018",
+      "section": "Table R602.10.5 contributing length column",
+      "amendment": null
+    },
+    "struct.headerNonBearing": {
+      "value": "R602.7.4: load-bearing headers are not required in interior or exterior nonbearing walls; a single flat 2x4 may serve as the header for openings up to 8 ft wide when the distance to the nailing surface above is 24 in or less, and no cripples or blocking are needed above it.",
+      "unit": "text",
+      "code": "IRC 2018",
+      "section": "R602.7.4",
+      "amendment": null
+    },
+    "struct.cantilevers": {
+      "value": {
+        "2x8@12": {
+          "20": {
+            "24": 20,
+            "32": 15,
+            "40": null
+          },
+          "30": {
+            "24": 18,
+            "32": null,
+            "40": null
+          },
+          "50": {
+            "24": null,
+            "32": null,
+            "40": null
+          },
+          "70": {
+            "24": null,
+            "32": null,
+            "40": null
+          }
+        },
+        "2x10@16": {
+          "20": {
+            "24": 29,
+            "32": 21,
+            "40": 16
+          },
+          "30": {
+            "24": 26,
+            "32": 18,
+            "40": null
+          },
+          "50": {
+            "24": 20,
+            "32": null,
+            "40": null
+          },
+          "70": {
+            "24": null,
+            "32": null,
+            "40": null
+          }
+        },
+        "2x10@12": {
+          "20": {
+            "24": 36,
+            "32": 26,
+            "40": 20
+          },
+          "30": {
+            "24": 34,
+            "32": 22,
+            "40": 16
+          },
+          "50": {
+            "24": 26,
+            "32": null,
+            "40": null
+          },
+          "70": {
+            "24": 19,
+            "32": null,
+            "40": null
+          }
+        },
+        "2x12@16": {
+          "20": {
+            "24": null,
+            "32": 32,
+            "40": 25
+          },
+          "30": {
+            "24": 36,
+            "32": 29,
+            "40": 21
+          },
+          "50": {
+            "24": 29,
+            "32": 20,
+            "40": null
+          },
+          "70": {
+            "24": 23,
+            "32": null,
+            "40": null
+          }
+        },
+        "2x12@12": {
+          "20": {
+            "24": null,
+            "32": 42,
+            "40": 31
+          },
+          "30": {
+            "24": null,
+            "32": 37,
+            "40": 27
+          },
+          "50": {
+            "24": 36,
+            "32": 27,
+            "40": 17
+          },
+          "70": {
+            "24": 31,
+            "32": 19,
+            "40": null
+          }
+        }
+      },
+      "unit": "in",
+      "code": "IRC 2018",
+      "section": "Table R502.3.3(1)",
+      "amendment": null
+    }
+  }
+}

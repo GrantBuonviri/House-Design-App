@@ -1,0 +1,33 @@
+{
+  "jurisdiction": "City of Boise, Ada County, Idaho",
+  "values": {
+    "struct.windSpeedBasis": {
+      "value": 115,
+      "unit": "mph (Vult)",
+      "code": "Design criteria",
+      "section": "R301.2.1.3; Table R602.10.3(1)",
+      "amendment": "Boise lists 90 mph from the older wind map (allowable-stress style); the app braces for about 116 mph ultimate, the up-to-115 band",
+      "source": "https://www.cityofboise.org/media/18749/currently-adopted-building-codes-4-26-24.pdf",
+      "checked": "2026-10-15",
+      "note": "Boise lists 90 mph from the older IRC wind figure, which is an allowable-stress (Vasd) style speed; the page does not label Vult/Vasd. 90 Vasd is about 116 Vult, so the table row for up to 115 mph Vult applies. 2018 table rows are banded (up to 110, up to 115, ...). Conversion reasoning is mine, not printed on the Boise sheet.",
+      "secondCheck": {
+        "verdict": "agree",
+        "source": "https://fema.gov/sites/default/files/2020-08/2018_IRC_Compliation_of_wind_resist_provisions_20191211.pdf ; https://www.cityofboise.org/media/18749/currently-adopted-building-codes-4-26-24.pdf"
+      }
+    },
+    "smoke.garageHeatAlarm": {
+      "value": true,
+      "unit": "",
+      "code": "IRC 2018",
+      "section": "R314.7.5",
+      "amendment": "Boise City Code 9-1B-42 adds R314.7.5: a listed heat detector, wired to the smoke alarms, in attached garages (and detached ones with power that lack fire separation distance).",
+      "source": "https://cityofboise.org/media/19198/amendments_city_code_1-2_family_dwelling_building_code_articleb_9-20-24.pdf",
+      "checked": "2026-10-15",
+      "note": "Read the Boise PDF 'amendments city code 1-2 family dwelling building code article B', which is marked DRAFT 9/20/24. Confirm against adopted codelibrary.amlegal.com Title 9 (9-1B-42) before relying. Confidence medium. Idaho state rule has no heat alarm amendment (searched IDAPA 24.39.30.600).",
+      "secondCheck": {
+        "verdict": "agree",
+        "source": "https://cityofboise.org/media/19198/amendments_city_code_1-2_family_dwelling_building_code_articleb_9-20-24.pdf"
+      }
+    }
+  }
+}

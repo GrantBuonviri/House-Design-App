@@ -458,7 +458,7 @@ export function structuralNotesSheets(project: Project): Item[][] {
   const studs = codeTable<Record<string, number | null>>("struct.studSpacing");
   const wall = project.plan.basics?.exteriorWall ?? "2x6";
   const notes = [
-    "These sheets size the structure from the 2018 IRC's prescriptive (ready-made) tables as Idaho adopted them. Anything past those tables is marked ENGINEER REQUIRED and is left for an Idaho-licensed engineer; nothing is guessed.",
+    "These sheets size the structure from the IRC's prescriptive (ready-made) tables in force here. Anything past those tables is marked ENGINEER REQUIRED and is left for a licensed engineer; nothing is guessed.",
     `Framing lumber: ${lumber} or better for joists; headers and girders per ${codeRef("struct.headersExterior")} (${codeText("struct.headerTableSpecies")}).`,
     `Studs: ${wall} at ${studs[wall]?.oneFloorRoofCeiling ?? 16}" on center where a floor is above, ${studs[wall]?.roofCeilingOnly ?? 24}" under the roof only, no taller than ${codeNum("struct.studMaxHeight")} ft (${codeRef("struct.studSpacing")}).`,
     `Headers: from the schedule. Nonbearing walls need no structural header (${codeRef("struct.headerNonBearing")}).`,

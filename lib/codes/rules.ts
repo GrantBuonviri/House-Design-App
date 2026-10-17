@@ -553,14 +553,14 @@ export const RULES: CodeRule[] = [
   {
     id: "footings",
     group: "Structure",
-    title: "Footings are sized from Idaho's footing table",
+    title: "Footings are sized from the footing table",
     ref: "struct.footingsLightFrame",
     check: footingChecks,
   },
   {
     id: "wall-bracing",
     group: "Structure",
-    title: "Outside walls have enough braced wall for Boise's wind",
+    title: "Outside walls have enough braced wall for the wind and earthquakes here",
     ref: "struct.bracingWind",
     check: bracingChecks,
   },

@@ -1,5 +1,5 @@
 import type { Project } from "@/lib/model/schema";
-import { CODE_EDITIONS } from "@/lib/codes/data";
+import { codeEditions } from "@/lib/codes/data";
 import { reportCounts } from "@/lib/codes/rules";
 import { readiness } from "./catalog";
 import { issueDate } from "./build";
@@ -35,7 +35,7 @@ export function codeReportPages(project: Project, date = new Date()): Sheet[] {
       let b = textBlock(`${counts.pass} pass, ${counts.fail} fail, ${counts.manual} to check by hand. ${preparedNote(project)}`, M, y, width, 8);
       items.push(...b.items);
       y += b.height + 0.08;
-      b = textBlock(CODE_EDITIONS.map((e) => e.label.replace(/^[^:]+: /, "")).join(" · "), M, y, width, 7);
+      b = textBlock(codeEditions().map((e) => e.label.replace(/^[^:]+: /, "")).join(" · "), M, y, width, 7);
       items.push(...b.items);
       y += b.height + 0.08;
       b = textBlock("Plan review by the City of Boise is the real check. Verify all dimensions and code requirements with the City of Boise before construction.", M, y, width, 7);

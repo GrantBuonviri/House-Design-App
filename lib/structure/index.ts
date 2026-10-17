@@ -14,7 +14,9 @@ import { foundationOf, zonesOf, type Foundation } from "./foundation";
 import { roofFraming, type RoofFraming } from "./roof";
 import { headersFor, type HeaderResult, type LevelWalls } from "./headers";
 import { bracingFor, type BracedLine } from "./bracing";
+import { placeLimits, type PlaceLimit } from "./limits";
 import { flatProject } from "@/lib/plan/flatten";
+import { codeSetKey } from "@/lib/codes/data";
 
 /**
  * The house's structure, worked out once from the plans: floor framing,
@@ -33,15 +35,19 @@ export type Structure = {
   roof: RoofFraming;
   headers: HeaderResult[];
   bracing: BracedLine[];
+  /** The place's wind, snow or earthquakes past the IRC's prescriptive rules. */
+  limits: PlaceLimit[];
   engineer: Engineer[];
 };
 
-const cache = new WeakMap<Project, Structure>();
+/** Keyed by project, then by the code set (the place), so a new place works it out again. */
+const cache = new WeakMap<Project, { key: string; s: Structure }>();
 
 export function structureOf(project: Project): Structure {
   project = flatProject(project);
+  const key = codeSetKey();
   const hit = cache.get(project);
-  if (hit) return hit;
+  if (hit && hit.key === key) return hit.s;
   const h = houseFacts(project);
   const sc = houseScene(project);
   const settings = project.plans.structure;
@@ -51,9 +57,9 @@ export function structureOf(project: Project): Structure {
   const main = above[0] ?? null;
   const upper = above.slice(1);
   const roof = roofFraming(project);
-  const out: Structure = { main, basement, upper, floors: [], foundation: null, roof, headers: [], bracing: [], engineer: [] };
+  const out: Structure = { main, basement, upper, floors: [], foundation: null, roof, headers: [], bracing: [], limits: placeLimits(), engineer: [] };
   if (!main) {
-    cache.set(project, out);
+    cache.set(project, { key, s: out });
     return out;
   }
 
@@ -107,8 +113,8 @@ export function structureOf(project: Project): Structure {
   const aboveAt = (level: Level) => (p: Point) => upperRegions.filter((u) => sc.heights[u.level.id].floorIn > sc.heights[level.id].floorIn && insideRegions(u.regions, p)).length;
   out.bracing = above.flatMap((level) => bracingFor({ level, plan: h.plan(level.id), exteriorIn: h.exteriorIn, ceilingIn: sc.heights[level.id].ceilingIn, above: aboveAt(level), exposure: settings.windExposure, eaveToRidgeIn }));
 
-  out.engineer = [...out.foundation.engineer, ...out.floors.flatMap((f) => f.engineer), ...hd.engineer];
-  cache.set(project, out);
+  out.engineer = [...out.limits.map((l) => ({ levelId: main.id, text: l.text })), ...out.foundation.engineer, ...out.floors.flatMap((f) => f.engineer), ...hd.engineer];
+  cache.set(project, { key, s: out });
   return out;
 }
 

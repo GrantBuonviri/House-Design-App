@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { writeFileSync } from "node:fs";
 import { HouseStructure, HouseSystems, type Opening, type Project } from "@/lib/model/schema";
 import { createProject, migrateProject } from "@/lib/model/project";
-import { CODE_DATA, codeNum } from "@/lib/codes/data";
+import { codeNum, codeSet } from "@/lib/codes/data";
 import { clearOpening, escapeCheck, safetyGlazing } from "@/lib/codes/openings";
 import { codeReport, RULES } from "@/lib/codes/rules";
 import { canDraw, LABEL_PRELIMINARY, readiness } from "@/lib/plans/catalog";
@@ -37,17 +37,18 @@ const ALLOWED = "Not reviewed or stamped by a licensed architect or engineer";
 
 describe("code numbers", () => {
   it("has every number a rule uses, with its section, source and date", () => {
-    for (const [key, e] of Object.entries(CODE_DATA.values)) {
+    for (const [key, e] of Object.entries(codeSet().values)) {
       expect(e.section, key).toBeTruthy();
-      expect(e.source, key).toMatch(/^https?:\/\//);
+      // The place's own numbers come from its place card; everything else from a code source.
+      expect(e.source, key).toMatch(e.layer === "location" && e.code === "Design criteria" ? /^Place card: / : /^https?:\/\//);
       expect(e.checked, key).toMatch(/^\d{4}-\d{2}-\d{2}$/);
     }
     for (const r of RULES) {
-      expect(CODE_DATA.values[r.ref], r.id).toBeDefined();
-      expect(CODE_DATA.values[r.ref].unverified, r.id).toBeFalsy();
+      expect(codeSet().values[r.ref], r.id).toBeDefined();
+      expect(codeSet().values[r.ref].unverified, r.id).toBeFalsy();
     }
     // Every number was checked a second time.
-    for (const [key, e] of Object.entries(CODE_DATA.values)) expect(e.secondCheck?.verdict, key).toBeTruthy();
+    for (const [key, e] of Object.entries(codeSet().values)) expect(e.secondCheck?.verdict, key).toBeTruthy();
   });
 
   it("works out a window's clear opening and whether you could escape through it", () => {

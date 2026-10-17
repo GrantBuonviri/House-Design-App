@@ -1,6 +1,6 @@
 import type { Project, RealLot } from "@/lib/model/schema";
 import { houseSpot } from "@/lib/house3d/site";
-import { CODE_DATA, CODE_EDITIONS, codeEntry, codeNum, codeText } from "@/lib/codes/data";
+import { codeEditions, codeEntry, codeNum, codeSet, codeText } from "@/lib/codes/data";
 import { reportCounts, type RuleReport } from "@/lib/codes/rules";
 import { inchText } from "@/lib/codes/rules";
 import { planTotals } from "@/lib/plan/measure";
@@ -139,7 +139,7 @@ export function coverSheet(project: Project, ctx: { sheets: SheetEntry[]; report
   y2 += tb.height + 0.35;
   items.push(...heading("Codes used", c2.x, y2, c2.w));
   y2 += HEADING_H + 0.08;
-  for (const e of CODE_EDITIONS) {
+  for (const e of codeEditions()) {
     let b = textBlock(e.label, c2.x, y2, c2.w, 7.5, { bold: true });
     items.push(...b.items);
     y2 += b.height;
@@ -148,7 +148,7 @@ export function coverSheet(project: Project, ctx: { sheets: SheetEntry[]; report
     y2 += b.height + 0.08;
   }
   y2 += 0.05;
-  items.push(...textBlock(`Code numbers checked ${CODE_DATA.meta.checked}. Only numbers and section references are used; the code books are the authority.`, c2.x, y2, c2.w, 6.5).items);
+  items.push(...textBlock(`Code numbers checked ${codeSet().meta.checked}. Only numbers and section references are used; the code books are the authority.`, c2.x, y2, c2.w, 6.5).items);
 
   // Column 3: general notes.
   let y3 = top;
@@ -273,7 +273,7 @@ export function codeSheets(project: Project, report: RuleReport[]): Item[][] {
       let y = DRAW_AREA.y0;
       items.push(...heading("Code summary", DRAW_AREA.x0, y, s1));
       y += HEADING_H + 0.08;
-      for (const e of CODE_EDITIONS) {
+      for (const e of codeEditions()) {
         let b = textBlock(e.label, DRAW_AREA.x0, y, s1, 7.5, { bold: true });
         items.push(...b.items);
         y += b.height;
@@ -282,9 +282,9 @@ export function codeSheets(project: Project, report: RuleReport[]): Item[][] {
         y += b.height + 0.08;
       }
       y += 0.2;
-      items.push(...heading("Idaho and Boise changes used here", DRAW_AREA.x0, y, s1));
+      items.push(...heading("Local changes used here", DRAW_AREA.x0, y, s1));
       y += HEADING_H + 0.08;
-      const amended = Object.entries(CODE_DATA.values).filter(([, e]) => e.amendment);
+      const amended = Object.entries(codeSet().values).filter(([, e]) => e.amendment && (e.layer === "state" || e.layer === "city"));
       for (const [, e] of amended) {
         const b = textBlock(`${e.code.replace(/ \d{4}$/, "")} ${e.section}: ${e.amendment}`, DRAW_AREA.x0, y, s1, 6.5);
         if (y + b.height > DRAW_AREA.y1 - 4.2) break;
