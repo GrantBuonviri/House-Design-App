@@ -634,7 +634,7 @@ describe("label settings in saved data", () => {
 import { dismissWarning, restoreWarning, splitDismissed, type PlanWarning } from "@/lib/plan/checks";
 
 describe("dismissing things to check", () => {
-  const w = (id: string): PlanWarning => ({ id, levelId: "floor-1", text: id, roomIds: [], at: null });
+  const w = (id: string): PlanWarning => ({ id, levelId: "floor-1", tag: "comfort", text: id, roomIds: [], at: null });
   const all = [w("a"), w("b"), w("c")];
 
   it("splits active from dismissed by id", () => {

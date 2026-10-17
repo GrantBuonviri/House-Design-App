@@ -41,7 +41,7 @@ describe("re-checking after a fix", () => {
   });
 
   it("spells out three and counts the rest", () => {
-    const ws = [1, 2, 3, 4, 5].map((i) => ({ id: `w${i}`, levelId: main.id, text: `Thing ${i}`, roomIds: [], at: null }));
+    const ws = [1, 2, 3, 4, 5].map((i) => ({ id: `w${i}`, levelId: main.id, tag: "comfort" as const, text: `Thing ${i}`, roomIds: [], at: null }));
     expect(newSummary(ws)).toBe("5 new things to check: Thing 1. Thing 2. Thing 3. And 2 more in Things to check.");
     expect(newSummary(ws.slice(0, 1))).toBe("1 new thing to check: Thing 1.");
   });
