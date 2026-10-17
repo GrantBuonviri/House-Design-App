@@ -272,7 +272,8 @@ export function removeCorner(plan: FloorPlan, roomId: string, i: number): FloorP
 /**
  * Make one edge of a room a given length. Its end corner slides along the
  * edge, and so does the next corner when the next edge turns a corner, so a
- * rectangle stays a rectangle (its far side moves).
+ * rectangle stays a rectangle (its far side moves, with any neighbor's
+ * wall that shares it).
  */
 export function setEdgeLength(plan: FloorPlan, roomId: string, edge: number, lengthIn: number): FloorPlan {
   const room = plan.rooms.find((r) => r.id === roomId);
@@ -285,17 +286,18 @@ export function setEdgeLength(plan: FloorPlan, roomId: string, edge: number, len
   const along = roomEdgeLength(room, edge);
   const chord = roomEdgeArc(room, edge) ? (dist(a, b) * lengthIn) / along : lengthIn;
   const delta = scale(u, chord - dist(a, b));
-  const poly = [...room.polygon];
-  const j = (edge + 1) % n;
-  poly[j] = roundPoint(add(b, delta));
-  const k = (edge + 2) % n;
-  if (n >= 4 && k !== edge) {
-    const next = unit(sub(room.polygon[k], b));
-    // Only when the next edge turns (isn't straight on), or the room would fold.
-    if (Math.abs(dot(next, u)) < 0.98) poly[k] = roundPoint(add(room.polygon[k], delta));
-  }
   const bulges = room.bulges?.map((bg, k) => (k === edge ? scaledBulge(bg, dist(a, b), chord) : bg));
-  return keepOpeningsInPlace(plan, { ...plan, rooms: plan.rooms.map((r) => (r.id === roomId ? withBulges({ ...r, polygon: poly }, bulges ?? r.bulges) : r)) });
+  const withMine = (p: FloorPlan) => (bulges ? { ...p, rooms: p.rooms.map((r) => (r.id === roomId ? withBulges(r, bulges) : r)) } : p);
+  const j = (edge + 1) % n;
+  const k = (edge + 2) % n;
+  // Only when the next edge turns (isn't straight on), or the room would fold.
+  if (n >= 4 && k !== edge && Math.abs(dot(unit(sub(room.polygon[k], b)), u)) < 0.98) {
+    // The far side moves like a dragged edge, taking a neighbor's shared wall with it (no overlap or gap).
+    return withMine(moveEdge(plan, roomId, j, delta, true));
+  }
+  const poly = [...room.polygon];
+  poly[j] = roundPoint(add(b, delta));
+  return keepOpeningsInPlace(plan, withMine({ ...plan, rooms: plan.rooms.map((r) => (r.id === roomId ? { ...r, polygon: poly } : r)) }));
 }
 
 /**
@@ -351,9 +353,10 @@ export function updateOpening(plan: FloorPlan, id: string, patch: Partial<Openin
 
 /**
  * Slide a door or window to the wall nearest a point (within `reach`
- * inches), or along its own wall when no other wall is close.
+ * inches), or along its own wall when no other wall is close. `grab` is
+ * how far past the opening's center it was picked up, along its wall.
  */
-export function moveOpeningTo(plan: FloorPlan, id: string, p: Point, reach: number): FloorPlan {
+export function moveOpeningTo(plan: FloorPlan, id: string, p: Point, reach: number, grab = 0): FloorPlan {
   const o = plan.openings.find((x) => x.id === id);
   if (!o) return plan;
   const near = nearestHost(plan, p, reach);
@@ -362,5 +365,5 @@ export function moveOpeningTo(plan: FloorPlan, id: string, p: Point, reach: numb
   }
   const seg = hostSegment(plan, o.host);
   if (!seg) return plan;
-  return updateOpening(plan, id, { offsetIn: projectOnEdge(p, seg.a, seg.b, seg.bulge).t });
+  return updateOpening(plan, id, { offsetIn: projectOnEdge(p, seg.a, seg.b, seg.bulge).t - grab });
 }

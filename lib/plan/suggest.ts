@@ -11,6 +11,7 @@ import { linkStacks } from "./anchor";
 import { connectAll } from "./doors";
 import { addClosets } from "./closets";
 import { addWindows } from "./windows";
+import { withDoorHeight } from "./catalog";
 import { coveredAbove } from "./wells";
 import { keepInside, supportOf } from "./support";
 export { HALL_IN, addHallways, coverStairs, isWayIn, roomsNeedingHall } from "./hallways";
@@ -104,7 +105,7 @@ export function suggestPlans(diagrams: Record<string, BubbleDiagram>, ctx: PlanC
         stuck.push(through.length ? `${r.name} opens only through ${through.join(" or ")}` : `${r.name} has no door yet`);
       }
     }
-    plans[level.id] = plan;
+    plans[level.id] = withDoorHeight(plan, ctx.basics?.doorHeightIn);
   }
   const count = (n: number, one: string, many: string) => `${n} ${n === 1 ? one : many}`;
   const notes = [

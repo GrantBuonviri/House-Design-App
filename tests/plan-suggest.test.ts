@@ -275,6 +275,17 @@ describe("stairs in a room", () => {
     expect(p).toEqual(living);
   });
 
+  it("Suggest a plan gives interior doors the Plan basics door height, and keeps garage and front doors' own", () => {
+    const { ctx, sketch } = house(RANCH);
+    const res = suggestPlans(sketch, { ...ctx, basics: { ...ctx.basics, doorHeightIn: 96 } });
+    const doors = Object.values(res.plans).flatMap((p) => p.openings);
+    const inner = doors.filter((o) => o.style === "door-hinged" || o.style === "door-pocket");
+    expect(inner.length).toBeGreaterThan(0);
+    expect(inner.every((o) => o.heightIn === 96)).toBe(true);
+    expect(doors.filter((o) => o.style === "door-garage").every((o) => o.heightIn === 84)).toBe(true);
+    expect(doors.filter((o) => o.kind === "window").every((o) => o.heightIn !== 96)).toBe(true);
+  });
+
   it("Suggest a plan makes no stair halls, keeps stairs linked and anchored, and puts them inside rooms", () => {
     for (const stairs of ["straight", "u"] as const) {
       const { ctx, sketch } = house(TWO_STORY, 2);

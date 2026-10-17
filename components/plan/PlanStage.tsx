@@ -12,9 +12,10 @@ import { WINTER_RING, defaultLotOffset, houseCenter, landDrawing, lotCenter } fr
 import { siteOf } from "@/lib/bubbles/site";
 import { MAIN_LEVEL_ID } from "@/lib/brief/levels";
 import { nearestSide } from "@/lib/land/generate";
-import { blankPlans, moveMany, planHasContent, planOf, removeMany, type Plans } from "@/lib/plan/edit";
+import { blankPlans, moveMany, planHasContent, planOf, removeMany, updateOpening, type Plans } from "@/lib/plan/edit";
 import { estimate } from "@/lib/cost/estimate";
-import { removeWall } from "@/lib/plan/openWalls";
+import { removeWall, whyWallStays } from "@/lib/plan/openWalls";
+import { hostSegment } from "@/lib/plan/walls";
 import { plansFromSketch } from "@/lib/plan/fromSketch";
 import { suggestPlanAlternatives, type PlanAlternative } from "@/lib/plan/alternatives";
 import { dismissWarning, makeStairsU, planWarnings, restoreWarning, splitDismissed, swingExtras, type PlanWarning } from "@/lib/plan/checks";
@@ -22,7 +23,7 @@ import { flipSwing, toPocketDoor } from "@/lib/plan/swing";
 import { makeEscapeWindow, suggestPlans } from "@/lib/plan/suggest";
 import { fixMessage, recheck } from "@/lib/plan/recheck";
 import { coveredAbove } from "@/lib/plan/wells";
-import { boundsOf, dist } from "@/lib/plan/geometry";
+import { boundsOf, dist, dot, sub, unit } from "@/lib/plan/geometry";
 import { houseTotals, totalsText } from "@/lib/plan/measure";
 import { lotOffsetFor } from "@/lib/house3d/site";
 import { lotAsPlot, realLotOk, siteLayout } from "@/lib/plans/lot";
@@ -335,11 +336,10 @@ export default function PlanStage({ onContinue, onGoToSketch, onGoToFurnish }: {
       if ((e.key === "Delete" || e.key === "Backspace") && !locked && sel.length === 1 && sel[0].kind === "edge") {
         const { roomId, edge } = parseEdgeId(sel[0].id);
         const out = removeWall(plan, roomId, edge);
-        if (out) {
-          e.preventDefault();
-          setLevelPlan(out.plan);
-          return;
-        }
+        e.preventDefault();
+        if (out) setLevelPlan(out.plan);
+        else setFlash(whyWallStays(plan, roomId, edge) ?? "This wall can't be taken out.");
+        return;
       }
       const nudge = { ArrowLeft: [-1, 0], ArrowRight: [1, 0], ArrowUp: [0, -1], ArrowDown: [0, 1] }[e.key];
       const movable = locked ? [] : sel.filter((s) => s.kind === "room" || s.kind === "wall" || s.kind === "stairs" || s.kind === "fixture");
@@ -349,6 +349,15 @@ export default function PlanStage({ onContinue, onGoToSketch, onGoToFurnish }: {
         const note = lockedNote(plan, movable.map((s) => s.id));
         if (note) setFlash(note);
         setLevelPlan(moveMany(plan, movable.map((s) => s.id), nudge[0] * step, nudge[1] * step), "nudge");
+        return;
+      }
+      // A door or window slides along its wall: the arrows that point along the wall move it.
+      const opening = !locked && sel.length === 1 && sel[0].kind === "opening" ? plan.openings.find((o) => o.id === sel[0].id) : undefined;
+      const seg = opening && hostSegment(plan, opening.host);
+      if (nudge && opening && seg) {
+        e.preventDefault();
+        const along = Math.round(dot({ x: nudge[0], y: nudge[1] }, unit(sub(seg.b, seg.a))) * 100) / 100;
+        if (along) setLevelPlan(updateOpening(plan, opening.id, { offsetIn: opening.offsetIn + along * (e.shiftKey ? 12 : 1) }), "nudge");
         return;
       }
       if (display !== "plan" && (e.key === "l" || e.key === "L")) {
@@ -856,13 +865,13 @@ export default function PlanStage({ onContinue, onGoToSketch, onGoToFurnish }: {
             {canFill && sup && (
               <button
                 className="btn absolute top-2 right-3 px-2 py-1 text-xs"
-                title={`Make a room over everything the ${sup.below.name.toLowerCase()} covers. Cut it up with the Split tool.`}
+                title={`Make a room over everything the ${sup.below.name.toLowerCase()} covers. Draw walls across it with the Wall tool (W) to split it into rooms.`}
                 onClick={() => {
                   const filled = fillBelow(plan, sup.regions, sup.arcs, planOf(plans, sup.below.id).rooms);
                   const r = recheck(plans, { ...plans, [level.id]: filled }, checkCtx);
                   setLevelPlan(filled);
                   markFresh(r.added);
-                  setFlash(fixMessage(`Filled the space over the ${sup.below.name.toLowerCase()}, named for the rooms below. Use Split to cut it into rooms.`, r));
+                  setFlash(fixMessage(`Filled the space over the ${sup.below.name.toLowerCase()}, named for the rooms below. Draw walls across it with the Wall tool (W) to split it into rooms.`, r));
                 }}
               >
                 Fill the floor below
