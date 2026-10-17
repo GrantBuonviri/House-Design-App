@@ -1,6 +1,6 @@
 import type { FloorPlan, Opening, Point, WallHeight } from "@/lib/model/schema";
 import { add, round1, scale, sub } from "@/lib/plan/geometry";
-import { openingType } from "@/lib/plan/catalog";
+import { openingHeight, openingType } from "@/lib/plan/catalog";
 import { clampOffset, HALF_WALL_IN, nearestHost, openingGeometry, type OpeningGeometry } from "@/lib/plan/walls";
 import { newPlanId } from "@/lib/plan/edit";
 import { snapPoint, snapTargets } from "@/lib/plan/snap";
@@ -116,7 +116,7 @@ export function openingOnWall(plan: FloorPlan, p: Point, style: string, doorHeig
     kind: t.kind,
     style: t.id,
     widthIn,
-    heightIn: t.id === "door-hinged" || t.id === "door-pocket" ? (doorHeightIn ?? t.heightIn) : t.heightIn,
+    heightIn: openingHeight(t.id, doorHeightIn),
     ...(t.sillIn !== undefined ? { sillIn: t.sillIn } : {}),
     side: near.side,
     hinge: "start",

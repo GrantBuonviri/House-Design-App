@@ -10,6 +10,7 @@ import { regionArea, subtractRegions, type Region } from "@/lib/house3d/footprin
 import { add, boundsOf, type Bounds, clockwise, pointInPolygon, dist, dot, leftNormal, polygonArea, rectangle, rotate, roundPoint, sub, unit } from "./geometry";
 import { DEFAULT_STAIRS_WIDTH_IN, stairsDrawing } from "./stairs";
 import { sameHost, wallPieces } from "./walls";
+import { withDoorHeight } from "./catalog";
 
 /**
  * Turn the flow sketch into a starting floor plan. Each bubble becomes a
@@ -556,5 +557,6 @@ export function plansFromSketch(diagrams: Record<string, BubbleDiagram>, ctx: Pl
     }
     plans[level.id] = plan;
   }
+  for (const id of Object.keys(plans)) plans[id] = withDoorHeight(plans[id], ctx.basics?.doorHeightIn);
   return { plans, needHall, notes };
 }

@@ -1,4 +1,4 @@
-import type { Opening } from "@/lib/model/schema";
+import type { FloorPlan, Opening } from "@/lib/model/schema";
 
 /**
  * What can go in a wall (doors, windows, openings) and what can go in a
@@ -36,6 +36,23 @@ export const OPENING_TYPES: OpeningType[] = [
 
 export function openingType(id: string): OpeningType {
   return OPENING_TYPES.find((t) => t.id === id) ?? OPENING_TYPES[0];
+}
+
+/** Interior doors that take the Plan basics door height; the others (front, garage, barn, sliding glass) keep the catalog's. */
+const BASICS_HEIGHT_DOORS = new Set(["door-hinged", "door-pocket", "door-bifold"]);
+
+/** How tall a new opening of this style is, given the Plan basics door height (if any). */
+export function openingHeight(styleId: string, doorHeightIn?: number): number {
+  const t = openingType(styleId);
+  return BASICS_HEIGHT_DOORS.has(t.id) && doorHeightIn ? doorHeightIn : t.heightIn;
+}
+
+/** Give interior doors added since `before` (all of them, with no `before`) the Plan basics door height. */
+export function withDoorHeight(plan: FloorPlan, doorHeightIn: number | undefined, before?: FloorPlan): FloorPlan {
+  if (!doorHeightIn) return plan;
+  const old = new Set(before?.openings.map((o) => o.id) ?? []);
+  const fix = (o: Opening) => !old.has(o.id) && BASICS_HEIGHT_DOORS.has(o.style) && o.heightIn !== doorHeightIn;
+  return plan.openings.some(fix) ? { ...plan, openings: plan.openings.map((o) => (fix(o) ? { ...o, heightIn: doorHeightIn } : o)) } : plan;
 }
 
 export type FixtureGroup = "Kitchen" | "Bath" | "Laundry" | "Other";

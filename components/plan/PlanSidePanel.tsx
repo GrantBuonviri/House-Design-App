@@ -11,7 +11,7 @@ import { defaultOperation, operationOf, OPERATION_HINT, OPERATION_LABEL } from "
 import type { DesignBrief, FloorPlan, Level, PlanBasics, PlanStairs, WallHeight } from "@/lib/model/schema";
 import { formatFeetInches, parseFeetInches } from "@/lib/model/units";
 import { ceilingFor, riseBetween, STAIRS_LABEL } from "@/lib/plan/basics";
-import { OPENING_TYPES, fixtureType, openingType } from "@/lib/plan/catalog";
+import { OPENING_TYPES, fixtureType, openingHeight, openingType } from "@/lib/plan/catalog";
 import { centerOfMany, insertCorner, removeMany, rotateMany, setEdgeLength, setWallLength, updateOpening, updateRoom } from "@/lib/plan/edit";
 import { roomHasCurves, wallLength } from "@/lib/plan/arcs";
 import { dist, isRectangle, lerp, polygonCenter } from "@/lib/plan/geometry";
@@ -71,12 +71,18 @@ export default function PlanSidePanel(props: Props) {
   const [combined, setCombined] = useState<string | null>(null);
 
   // A new room arrives as "New room" (or "Room 2" when split off another), and a combined room wants a new name: put the cursor in its name.
+  // Only once per room (and once more after combining), so typing a name like "Room 1" doesn't select it again.
   const askName = !!room && (room.name === "New room" || /^Room \d+$/.test(room.name) || combined === room.id);
+  const askedFor = useRef<string | null>(null);
+  const askKey = room ? `${room.id}${combined === room.id ? ":combined" : ""}` : null;
   useEffect(() => {
-    if (!askName) return;
-    const t = setTimeout(() => nameRef.current?.select(), 0);
+    if (!askName || !askKey || askedFor.current === askKey) return;
+    const t = setTimeout(() => {
+      askedFor.current = askKey;
+      nameRef.current?.select();
+    }, 0);
     return () => clearTimeout(t);
-  }, [room?.id, askName]);
+  }, [askKey, askName]);
 
   useEffect(() => {
     if (combined && only?.id !== combined) setCombined(null);
@@ -251,7 +257,7 @@ export default function PlanSidePanel(props: Props) {
     if (!r || !seg) return <FloorSummary {...props} />;
     const addHere = (style: string) => {
       const t = openingType(style);
-      const o = newOpening(style, { roomId, edge }, clampOffset(seg.length / 2, t.widths[0], seg.length), -1);
+      const o = { ...newOpening(style, { roomId, edge }, clampOffset(seg.length / 2, t.widths[0], seg.length), -1), heightIn: openingHeight(style, basics?.doorHeightIn) };
       onChange({ ...plan, openings: [...plan.openings, o] });
       onSelect([{ kind: "opening", id: o.id }]);
     };
@@ -360,7 +366,7 @@ export default function PlanSidePanel(props: Props) {
           value={o.style}
           onChange={(e) => {
             const nt = openingType(e.target.value);
-            set({ style: nt.id, kind: nt.kind, widthIn: nt.widths.includes(o.widthIn) ? o.widthIn : nt.widths[0], heightIn: nt.heightIn, sillIn: nt.sillIn });
+            set({ style: nt.id, kind: nt.kind, widthIn: nt.widths.includes(o.widthIn) ? o.widthIn : nt.widths[0], heightIn: openingHeight(nt.id, basics?.doorHeightIn), sillIn: nt.sillIn });
           }}
         >
           {OPENING_TYPES.map((x) => (

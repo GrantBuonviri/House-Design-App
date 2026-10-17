@@ -11,6 +11,7 @@ import { areaKind, roomSqft } from "./measure";
 import { outsideStretches, roomJustOutside, stairsBoxes, wayInRooms } from "./suggest";
 import { openingGeometry } from "./walls";
 import { isCurved } from "./arcs";
+import { withDoorHeight } from "./catalog";
 
 /**
  * Small changes to a floor plan, as the built-in alternatives describe
@@ -447,7 +448,8 @@ export function applyChanges(plans: Plans, changes: PlanChange[], ctx: PlanConte
     const seeds = (p: FloorPlan) => wayInRooms(p, stairsBoxes({ ...out, [levelId]: p }, ctx, level));
     const res = applyChange(planOf(out, levelId), c, { exteriorIn, seeds });
     if (!res) continue;
-    const next = { ...out, [levelId]: res.plan };
+    // Doors an idea adds take the Plan basics door height.
+    const next = { ...out, [levelId]: withDoorHeight(res.plan, ctx.basics?.doorHeightIn, planOf(out, levelId)) };
     if (hangsMore(out, next, ctx.levels, level)) continue;
     out = next;
     applied.push(c);
