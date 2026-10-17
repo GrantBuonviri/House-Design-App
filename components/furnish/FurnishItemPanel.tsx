@@ -6,6 +6,9 @@ import { swapChoices } from "@/lib/furnish/catalog";
 import type { LayerItem } from "@/lib/furnish/layer";
 import { copyToRooms, deleteItem, duplicateItem, patchItem, sameTypeRooms, setWallGap, swapTo, wallGaps } from "@/lib/furnish/stage";
 import { FURNITURE_COLORS } from "@/lib/plan/furniture";
+import type { Product } from "@/lib/model/schema";
+import type { CatalogProduct } from "@/lib/catalog/catalog";
+import ProductList from "./ProductList";
 import { LengthField, Panel, TurnButtons } from "@/components/plan/PlanSidePanel";
 
 const SIDE = { up: "To the wall above", down: "To the wall below", left: "To the wall on the left", right: "To the wall on the right" } as const;
@@ -28,6 +31,7 @@ export default function FurnishItemPanel({
   faucet,
   onFaucet,
   onPotFiller,
+  productPick,
 }: {
   plan: FloorPlan;
   item: LayerItem;
@@ -42,6 +46,8 @@ export default function FurnishItemPanel({
   onFaucet?: (action: "edit" | "restore") => void;
   /** A range: "Add a pot filler above". */
   onPotFiller?: () => void;
+  /** A pot filler: the room's Interior design product list. */
+  productPick?: { label: string; usedFor: string; products: CatalogProduct[]; picked: Product | null; onPick: (p: Product | null) => void };
 }) {
   const [swapKey, setSwapKey] = useState(0);
   const patch = (p: Parameters<typeof patchItem>[2], coalesce?: string) => onApply(patchItem(plan, item, p), coalesce);
@@ -115,6 +121,13 @@ export default function FurnishItemPanel({
           <button className="btn px-2 py-0.5 text-xs" onClick={() => onFaucet(faucet.removed ? "restore" : "edit")} data-testid={faucet.removed ? "furnish-faucet-restore" : "furnish-faucet-edit"}>
             {faucet.removed ? "Put the faucet back" : "Edit faucet"}
           </button>
+        </div>
+      )}
+      {productPick && (
+        <div className="mt-4" data-testid="furnish-product-pick">
+          <p className="field-label">{productPick.label}</p>
+          <p className="mb-2 text-xs text-muted">{productPick.usedFor}</p>
+          <ProductList products={productPick.products} picked={productPick.picked} onPick={productPick.onPick} idPrefix="potfiller" />
         </div>
       )}
       {onPotFiller && (

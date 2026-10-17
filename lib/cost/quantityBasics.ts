@@ -107,6 +107,10 @@ export type Quantities = {
   toilets: number;
   bathSinks: number;
   showers: number;
+  /** Tub and shower faucet sets (a removed faucet drops its set). */
+  trimSets: number;
+  potFillers: number;
+  prepSinks: number;
   kitchenSinks: number;
   kitchens: number;
   laundries: number;
@@ -243,6 +247,9 @@ export function empty(source: Quantities["source"]): Quantities {
     toilets: 0,
     bathSinks: 0,
     showers: 0,
+    trimSets: 0,
+    potFillers: 0,
+    prepSinks: 0,
     kitchenSinks: 0,
     kitchens: 0,
     laundries: 0,
@@ -273,7 +280,7 @@ export function toRoad(p: Ctx, pt: Point, offset: Point): number {
   return Math.max(20 * 12, dist(at, nearestAccess(p.plot, at).at));
 }
 
-export type MeasuredRoom = { id: string; name: string; type: string; sqft: number; fixtures: { kind: string; widthIn: number; depthIn: number }[]; edgesIn?: number[]; cabinets?: RoomCabinets };
+export type MeasuredRoom = { id: string; name: string; type: string; sqft: number; fixtures: { kind: string; widthIn: number; depthIn: number; faucet?: { removed?: boolean } }[]; potFillers?: number; edgesIn?: number[]; cabinets?: RoomCabinets };
 
 /**
  * Plumbing, cabinets, tile, lights and finishes for rooms, using what's
@@ -306,6 +313,10 @@ export function roomFixtures(q: Quantities, rooms: MeasuredRoom[]) {
       add("vanity", vanities);
       add("bath-sink-faucet", sinks);
       add("shower-tub", showers);
+      // A tub or shower whose faucet was removed in Furnish has no trim to buy.
+      const trims = placed ? [...f("tub"), ...f("shower")].filter((x) => !x.faucet?.removed).length : showers;
+      q.trimSets += trims;
+      add("tub-shower-trim", trims);
       add("tile", showers * SHOWER_TILE_SQFT);
       add("countertops", vanities * 4);
       add("cabinet-hardware", vanities * 4);
@@ -350,6 +361,17 @@ export function roomFixtures(q: Quantities, rooms: MeasuredRoom[]) {
       q.plumbingFixtures += placed ? f("washer").length + f("laundry-sink").length : 1;
     }
     if (r.type === "outdoor-kitchen") q.plumbingFixtures += 1;
+    // Extras from Furnish: a bar or prep sink with its faucet, and pot fillers over the range.
+    const preps = f("prep-sink").length;
+    if (preps) {
+      q.prepSinks += preps;
+      q.plumbingFixtures += preps;
+      add("prep-sink-faucet", preps);
+    }
+    if (r.potFillers) {
+      q.potFillers += r.potFillers;
+      add("pot-filler", r.potFillers);
+    }
     if (TILE_ROOMS.has(r.type)) {
       q.tileSqft += r.sqft;
       add("tile", r.sqft);

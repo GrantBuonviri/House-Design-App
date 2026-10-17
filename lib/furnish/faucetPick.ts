@@ -1,8 +1,9 @@
 import { WHOLE_HOUSE, type FloorPlan, type Fixture, type Product, type Selection } from "@/lib/model/schema";
 import { INTERIOR_CATEGORIES } from "@/lib/catalog/categories";
 import { productsIn } from "@/lib/catalog/catalog";
-import { setPick } from "@/lib/interior/picks";
+import { roomFinishes, setPick } from "@/lib/interior/picks";
 import { add, rotate } from "@/lib/plan/geometry";
+import { potFillerRoomId } from "@/lib/cost/furnishQuantities";
 import { placeItem, roomAt, snapToWall, type LayerItem } from "./layer";
 import { FAUCET_CATEGORY, changeFaucet, faucetOf, removeFaucet, restoreFaucet, type Faucet, type FaucetKind, type FaucetShape } from "./faucets";
 
@@ -12,7 +13,7 @@ import { FAUCET_CATEGORY, changeFaucet, faucetOf, removeFaucet, restoreFaucet, t
  * fixture isn't in a room), so it covers every faucet of that kind there.
  */
 
-const WORD: Record<FaucetKind, string> = { kitchen: "kitchen faucet", prep: "kitchen faucet", laundry: "kitchen faucet", bath: "bath faucet", tub: "tub and shower trim", shower: "tub and shower trim" };
+const WORD: Record<FaucetKind, string> = { kitchen: "kitchen faucet", prep: "bar faucet", laundry: "kitchen faucet", bath: "bath faucet", tub: "tub and shower trim", shower: "tub and shower trim" };
 
 /** The room whose pick a fixture's faucet uses (null: the whole house). */
 export function faucetRoom(plan: FloorPlan, fx: Fixture): { id: string; name: string } | null {
@@ -63,4 +64,22 @@ export function potFillerAbove(plan: FloorPlan, range: Pick<LayerItem, "x" | "y"
   if (!spot) return null;
   const out = placeItem(plan, "addon:pot-filler", spot, { rotation: spot.rotation });
   return out.id ? { plan: out.plan, id: out.id } : null;
+}
+
+/** The pot filler's product: the room's Interior design pick for `pot-fillers`. */
+export function potFillerPick(plan: FloorPlan, addOn: { x: number; y: number }, selections: Selection[]) {
+  const roomId = potFillerRoomId(plan, addOn);
+  const room = plan.rooms.find((r) => r.id === roomId);
+  const picked = room ? roomFinishes(selections, room.id).get("pot-fillers") ?? null : null;
+  return {
+    roomId,
+    picked,
+    products: productsIn("pot-fillers"),
+    label: INTERIOR_CATEGORIES.find((c) => c.id === "pot-fillers")?.label ?? "Pot filler",
+    usedFor: `Used for every pot filler ${room ? `in ${room.name}` : "in the house"}. Interior design shows the same pick.`,
+  };
+}
+
+export function pickPotFiller(plan: FloorPlan, addOn: { x: number; y: number }, selections: Selection[], product: Product | null): Selection[] {
+  return setPick(selections, potFillerRoomId(plan, addOn) ?? WHOLE_HOUSE, "pot-fillers", product);
 }

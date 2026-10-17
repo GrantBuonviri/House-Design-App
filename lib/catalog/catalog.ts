@@ -11,6 +11,8 @@ import counters from "@/data/catalog/counters.json";
 import hardware from "@/data/catalog/hardware.json";
 import kitchenSinks from "@/data/catalog/kitchen-sinks.json";
 import kitchenFaucets from "@/data/catalog/kitchen-faucets.json";
+import potFillers from "@/data/catalog/pot-fillers.json";
+import barFaucets from "@/data/catalog/bar-faucets.json";
 import fridges from "@/data/catalog/fridges.json";
 import ranges from "@/data/catalog/ranges.json";
 import dishwashers from "@/data/catalog/dishwashers.json";
@@ -82,6 +84,8 @@ const FILES: Record<InteriorCategoryId, unknown> = {
   hardware,
   "kitchen-sinks": kitchenSinks,
   "kitchen-faucets": kitchenFaucets,
+  "pot-fillers": potFillers,
+  "bar-faucets": barFaucets,
   fridges,
   ranges,
   dishwashers,

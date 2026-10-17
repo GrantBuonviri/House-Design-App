@@ -17,6 +17,8 @@ import { DRAW_AREA } from "../frame";
 import { archFeet, capHeight, heading, HEADING_H, table, textBlock, type Item } from "../draw";
 import { houseFacts, type HouseFacts } from "../house";
 import { addOnType } from "@/lib/furnish/catalog";
+import { FAUCET_SHAPES, faucetOf } from "@/lib/furnish/faucets";
+import { potFillerRoomId } from "@/lib/cost/furnishQuantities";
 import { ADDON_TAG } from "./symbols";
 import { curveBehind, doorWindowOnCurve, radiusLabel } from "../curves";
 
@@ -339,7 +341,8 @@ export function finishSheets(project: Project): Item[][] {
 
 /** Which interior pick goes with each fixture kind. */
 const FIXTURE_PICKS: Record<string, string[]> = {
-  sink: ["kitchen-sinks", "kitchen-faucets"],
+  sink: ["kitchen-sinks"],
+  "prep-sink": [],
   vanity: ["vanities", "bath-faucets"],
   toilet: ["toilets"],
   shower: ["showers"],
@@ -349,7 +352,7 @@ const FIXTURE_PICKS: Record<string, string[]> = {
   dishwasher: ["dishwashers"],
 };
 
-const PLUMBING = ["sink", "vanity", "toilet", "tub", "shower", "laundry-sink", "water-heater"];
+const PLUMBING = ["sink", "prep-sink", "pot-filler", "vanity", "toilet", "tub", "shower", "laundry-sink", "water-heater"];
 const APPLIANCES = ["range", "hood", "fridge", "dishwasher", "washer", "dryer"];
 
 export type FixtureLine = { tag: string; kind: string; label: string; rooms: string[]; count: number; size: string; product: string; notes: string; ids: string[] };
@@ -373,12 +376,33 @@ export function fixtureLines(project: Project): { plumbing: FixtureLine[]; appli
       if (!PLUMBING.includes(f.kind) && !APPLIANCES.includes(f.kind)) continue;
       const room = plan.rooms.find((r) => r.id === f.roomId)?.name ?? level.name;
       const picks = (FIXTURE_PICKS[f.kind] ?? []).map((c) => (f.roomId ? effectivePick(sel, f.roomId, c) : effectivePick(sel, WHOLE_HOUSE, c))?.pick.product).filter((p): p is Product => Boolean(p));
-      const product = picks.length ? picks.map((p) => productTitle(p)).join(" + ") : "Owner's pick";
-      add(f.kind, fixtureType(f.kind).label, room, `${archFeet(f.widthIn)} x ${archFeet(f.depthIn)}`, product, fixtureNotes(f.kind), f.id);
+      let product = picks.length ? picks.map((p) => productTitle(p)).join(" + ") : "Owner's pick";
+      // Each faucet's shape next to the picked product ("Kitchen faucet, pull-down").
+      const fc = faucetOf(plan, level.id, f, sel);
+      if (fc) {
+        const shape = FAUCET_SHAPES[fc.shape].label.split(" (")[0].toLowerCase();
+        const what = fc.kind === "tub" || fc.kind === "shower" ? "Tub and shower trim" : fc.kind === "bath" ? "Bath faucet" : fc.kind === "prep" ? "Bar faucet" : fc.kind === "laundry" ? "Laundry faucet" : "Kitchen faucet";
+        const text = fc.removed ? `${what}: none (taken off)` : `${what}, ${shape}: ${fc.product ? productTitle(fc.product) : "Owner's pick"}`;
+        product = picks.length ? `${product}; ${text}` : text;
+      }
+      // A tub with no separate shower in its room is a tub/shower.
+      const combo = f.kind === "tub" && !plan.fixtures.some((x) => x.kind === "shower" && x.roomId === f.roomId);
+      add(f.kind, combo ? "Tub/shower" : fixtureType(f.kind).label, room, `${archFeet(f.widthIn)} x ${archFeet(f.depthIn)}`, product, fixtureNotes(f.kind), f.id);
       if (f.kind === "range") {
         const hood = (f.roomId ? effectivePick(sel, f.roomId, "hoods") : null)?.pick.product;
         add("hood", "Range hood", room, archFeet(f.widthIn), hood ? productTitle(hood) : "Owner's pick", fixtureNotes("hood"), `hood:${f.id}`);
       }
+    }
+  }
+  // Pot fillers over a range: cold water on the wall, with the room's pot filler pick.
+  for (const level of h.levels) {
+    const plan = h.plan(level.id);
+    for (const a of plan.addOns ?? []) {
+      if (a.kind !== "pot-filler") continue;
+      const roomId = potFillerRoomId(plan, a);
+      const room = plan.rooms.find((r) => r.id === roomId)?.name ?? level.name;
+      const pick = (roomId ? effectivePick(sel, roomId, "pot-fillers") : effectivePick(sel, WHOLE_HOUSE, "pot-fillers"))?.pick.product;
+      add("pot-filler", "Pot filler", room, `${a.widthIn}" wide, ${a.bottomIn}" above the floor`, pick ? productTitle(pick) : "Owner's pick", fixtureNotes("pot-filler"), a.id);
     }
   }
   const all = [...groups.values()];
@@ -412,6 +436,10 @@ function fixtureNotes(kind: string): string {
       return "Vented outside to the maker's instructions (IRC M1502).";
     case "dishwasher":
       return "Air gap or high loop on the drain, to the plumbing code.";
+    case "pot-filler":
+      return "Cold water only, with a shutoff valve behind the wall (access panel or valve in the cabinet below). Mount on blocking.";
+    case "prep-sink":
+      return `Faucet ${codeNum("plumbing.kitchenFaucetMaxFlow")} gpm max (${codeRef("plumbing.kitchenFaucetMaxFlow")}). Water and drain on the plumbing plan.`;
     default:
       return "";
   }
@@ -432,6 +460,8 @@ export function builtInLines(project: Project): BuiltInLine[] {
   for (const l of h.levels) {
     const plan = h.plan(l.id);
     for (const a of plan.addOns ?? []) {
+      // Pot fillers are on the plumbing fixture schedule.
+      if (a.kind === "pot-filler") continue;
       const type = addOnType(a.kind);
       const size = `${archFeet(a.widthIn)} x ${archFeet(a.heightIn)} x ${archFeet(a.depthIn)}`;
       const key = `${a.kind}|${size}`;

@@ -27,7 +27,7 @@ import FurnishItemPanel from "./FurnishItemPanel";
 import RailingPanel from "./RailingPanel";
 import FaucetPanel from "./FaucetPanel";
 import { faucetsOn } from "@/lib/furnish/faucets";
-import { applyFaucetChange, isRange, pickFaucetProduct, potFillerAbove, usedFor } from "@/lib/furnish/faucetPick";
+import { applyFaucetChange, isRange, pickFaucetProduct, pickPotFiller, potFillerAbove, potFillerPick, usedFor } from "@/lib/furnish/faucetPick";
 import { fixtureType } from "@/lib/plan/catalog";
 import { changeRailingIn, railingTarget, stageRailings, type RailingChange } from "@/lib/furnish/railings";
 
@@ -148,6 +148,12 @@ export default function FurnishStage({
     const f = it.entryId.startsWith("fixture:") ? faucets.find((x) => x.fixtureId === it.id) : undefined;
     return {
       ...(f ? { faucet: { removed: Boolean(f.removed) }, onFaucet: (a: "edit" | "restore") => (a === "edit" ? setSelection([{ kind: "faucet", id: it.id }]) : changeFaucetHere("restore", it.id)) } : {}),
+      ...(it.entryId === "addon:pot-filler"
+        ? (() => {
+            const pk = potFillerPick(plan, it, project.interior.selections);
+            return { productPick: { label: pk.label, usedFor: pk.usedFor, products: pk.products, picked: pk.picked, onPick: (prod: Product | null) => update((p) => ({ ...p, interior: { ...p.interior, selections: pickPotFiller(plan, it, p.interior.selections, prod) } })) } };
+          })()
+        : {}),
       ...(isRange(it.entryId)
         ? {
             onPotFiller: () => {

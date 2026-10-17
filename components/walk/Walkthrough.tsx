@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Canvas } from "@react-three/fiber";
 import { PerspectiveCamera } from "@react-three/drei";
 import * as THREE from "three";
-import type { FloorPlan, Opening, Point, Project, Selection, WallHeight } from "@/lib/model/schema";
+import type { FloorPlan, Opening, Point, Product, Project, Selection, WallHeight } from "@/lib/model/schema";
 import { useProjectStore } from "@/lib/store/projectStore";
 import type { Estimate } from "@/lib/cost/estimate";
 import { buildHouse, type HouseContext } from "@/lib/house3d/build";
@@ -35,7 +35,7 @@ import { DesignTabs, FinishesHelp, PlaceTab, type DesignTab } from "./PlaceTab";
 import { DevicePlates, ItemGhost, ItemHighlight, OpeningGhost, RailingHighlight, WallGhost } from "./WalkGhosts";
 import RailingPanel from "@/components/furnish/RailingPanel";
 import FaucetPanel, { type FaucetChangeIn } from "@/components/furnish/FaucetPanel";
-import { applyFaucetChange, faucetById, pickFaucetProduct, usedFor } from "@/lib/furnish/faucetPick";
+import { applyFaucetChange, faucetById, pickFaucetProduct, pickPotFiller, potFillerPick, usedFor } from "@/lib/furnish/faucetPick";
 import { addRailingIn, changeRailingIn, railingTarget, stageRailings, type RailingChange, type RailingTarget } from "@/lib/furnish/railings";
 import { project as projectOnto } from "@/lib/plan/geometry";
 import TopDown from "./TopDown";
@@ -882,6 +882,12 @@ export default function Walkthrough({ project, cost, onClose }: { project: Proje
                     say(isClosetRod(openItem.id) ? "Took out the closet's rod and shelf. Its walls and door stay." : "Deleted. Undo brings it back.");
                   }}
                   onMessage={say}
+                  {...(openItem.entryId === "addon:pot-filler"
+                    ? (() => {
+                        const pk = potFillerPick(panelPlan, openItem, project.interior.selections);
+                        return { productPick: { label: pk.label, usedFor: pk.usedFor, products: pk.products, picked: pk.picked, onPick: (prod: Product | null) => setSelections(pickPotFiller(panelPlan, openItem, project.interior.selections, prod)) } };
+                      })()
+                    : {})}
                 />
                 <p className="text-xs text-muted">While walking: aim at it and press R to turn it, or Delete to remove it.</p>
               </div>

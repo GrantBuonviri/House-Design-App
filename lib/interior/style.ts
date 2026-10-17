@@ -130,7 +130,7 @@ export function effectiveAnswers(answers: Answers, feel: string): Answers {
   return { ...guessAnswers(feel), ...answers };
 }
 
-const METAL_CATS = new Set<InteriorCategoryId>(["kitchen-faucets", "bath-faucets", "showers", "hardware", "lighting"]);
+const METAL_CATS = new Set<InteriorCategoryId>(["kitchen-faucets", "pot-fillers", "bar-faucets", "bath-faucets", "showers", "hardware", "lighting"]);
 const WOOD_CATS = new Set<InteriorCategoryId>(["flooring", "cabinets", "vanities", "interior-doors", "counters"]);
 const SLEEP = /bedroom|guest-suite/;
 

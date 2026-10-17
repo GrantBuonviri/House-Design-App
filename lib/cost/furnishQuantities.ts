@@ -102,3 +102,29 @@ export function cabinetsByRoom(plan: FloorPlan, ceilingIn: number): Map<string, 
   }
   return out;
 }
+
+/**
+ * The room a pot filler belongs to. It sits on the wall behind the range, so
+ * that's the room of the nearest range, else the room it stands in, else the
+ * first kitchen (or room) on the floor.
+ */
+export function potFillerRoomId(plan: FloorPlan, a: { x: number; y: number }): string | undefined {
+  let best: { roomId?: string; d: number } | undefined;
+  for (const rg of plan.fixtures) {
+    if (rg.kind !== "range") continue;
+    const d = Math.hypot(rg.x - a.x, rg.y - a.y);
+    if (d < 72 && (!best || d < best.d)) best = { roomId: rg.roomId, d };
+  }
+  return best?.roomId ?? plan.rooms.find((r) => pointInPolygon({ x: a.x, y: a.y }, r.polygon))?.id ?? plan.rooms.find((r) => r.type === "kitchen")?.id ?? plan.rooms[0]?.id;
+}
+
+/** Pot fillers placed over a range, counted by room. */
+export function potFillersByRoom(plan: FloorPlan): Map<string, number> {
+  const out = new Map<string, number>();
+  for (const a of plan.addOns ?? []) {
+    if (a.kind !== "pot-filler") continue;
+    const id = potFillerRoomId(plan, a);
+    if (id) out.set(id, (out.get(id) ?? 0) + 1);
+  }
+  return out;
+}

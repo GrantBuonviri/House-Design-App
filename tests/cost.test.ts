@@ -313,9 +313,11 @@ describe("costs at the place's cost level", () => {
         // Window wells were already a US figure, so they now follow the cost level.
         if (id === "window-well") continue;
         expect(now[id], id).toBeTruthy();
-        expect(Math.abs(now[id].low - low), `${name} ${id} low`).toBeLessThan(1);
-        expect(Math.abs(now[id].likely - likely), `${name} ${id} likely`).toBeLessThan(1);
-        expect(Math.abs(now[id].high - high), `${name} ${id} high`).toBeLessThan(1);
+        // Faucets in Furnish split the tub/shower line in two (70% tub and valve body, 30% trim); together they cost what the one line did.
+        const nowCost = id === "shower-tub" ? { low: now[id].low + now["tub-shower-trim"].low, likely: now[id].likely + now["tub-shower-trim"].likely, high: now[id].high + now["tub-shower-trim"].high } : now[id];
+        expect(Math.abs(nowCost.low - low), `${name} ${id} low`).toBeLessThan(1);
+        expect(Math.abs(nowCost.likely - likely), `${name} ${id} likely`).toBeLessThan(1);
+        expect(Math.abs(nowCost.high - high), `${name} ${id} high`).toBeLessThan(1);
       }
     }
   });

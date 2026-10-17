@@ -23,6 +23,8 @@ export type InteriorCategoryId =
   | "hardware"
   | "kitchen-sinks"
   | "kitchen-faucets"
+  | "pot-fillers"
+  | "bar-faucets"
   | "fridges"
   | "ranges"
   | "dishwashers"
@@ -72,6 +74,8 @@ export const INTERIOR_CATEGORIES: InteriorCategory[] = [
   { id: "hardware", label: "Cabinet hardware", one: "pull or knob", group: "Kitchen", line: "cabinet-hardware", share: 1, perUnit: 1, unit: "each", perRoom: true, fits: (t) => KITCHEN.has(t) || BATHS.has(t) },
   { id: "kitchen-sinks", label: "Kitchen sink", one: "sink", group: "Kitchen", line: "kitchen-sink-faucet", share: 0.35, perUnit: 1, unit: "each", perRoom: true, fits: (t) => KITCHEN.has(t) },
   { id: "kitchen-faucets", label: "Kitchen faucet", one: "faucet", group: "Kitchen", line: "kitchen-sink-faucet", share: 0.45, perUnit: 1, unit: "each", perRoom: true, fits: (t) => KITCHEN.has(t) },
+  { id: "pot-fillers", label: "Pot filler", one: "pot filler", group: "Kitchen", line: "pot-filler", share: 0.6, perUnit: 1, unit: "each", perRoom: true, fits: (t) => KITCHEN.has(t) },
+  { id: "bar-faucets", label: "Bar or prep faucet", one: "bar faucet", group: "Kitchen", line: "prep-sink-faucet", share: 0.45, perUnit: 1, unit: "each", perRoom: true, fits: (t) => KITCHEN.has(t) },
   { id: "fridges", label: "Refrigerator", one: "refrigerator", group: "Kitchen", line: "appliance-package", share: 0.38, perUnit: 1, unit: "each", perRoom: true, fits: (t) => KITCHEN.has(t) },
   { id: "ranges", label: "Range", one: "range", group: "Kitchen", line: "appliance-package", share: 0.32, perUnit: 1, unit: "each", perRoom: true, fits: (t) => KITCHEN.has(t) },
   { id: "dishwashers", label: "Dishwasher", one: "dishwasher", group: "Kitchen", line: "appliance-package", share: 0.15, perUnit: 1, unit: "each", perRoom: true, fits: (t) => KITCHEN.has(t) },
@@ -80,7 +84,7 @@ export const INTERIOR_CATEGORIES: InteriorCategory[] = [
   { id: "bath-faucets", label: "Bath faucet", one: "faucet", group: "Bath", line: "bath-sink-faucet", share: 0.75, perUnit: 1, unit: "each", perRoom: true, fits: (t) => BATHS.has(t) },
   { id: "toilets", label: "Toilet", one: "toilet", group: "Bath", line: "toilet", share: 1, perUnit: 1, unit: "each", perRoom: true, fits: (t) => BATHS.has(t) },
   // The valve trim and shower head; the tub or pan, valve body and glass (70%) stay.
-  { id: "showers", label: "Shower trim", one: "shower set", group: "Bath", line: "shower-tub", share: 0.3, perUnit: 1, unit: "set", perRoom: true, fits: (t) => FULL_BATHS.has(t) },
+  { id: "showers", label: "Shower trim", one: "shower set", group: "Bath", line: "tub-shower-trim", share: 1, perUnit: 1, unit: "set", perRoom: true, fits: (t) => FULL_BATHS.has(t) },
   { id: "lighting", label: "Lighting", one: "light", group: "Lighting", line: "lighting-fixtures", share: 1, perUnit: 1, unit: "each", perRoom: true, fits: (t) => heated(t) && t !== "mechanical" },
 ];
 

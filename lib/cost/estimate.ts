@@ -231,7 +231,10 @@ export function estimate(
   line("fixtures", "toilet", q.toilets);
   line("fixtures", "bath-sink-faucet", q.bathSinks);
   line("fixtures", "shower-tub", q.showers);
+  line("fixtures", "tub-shower-trim", q.trimSets);
   line("fixtures", "kitchen-sink-faucet", q.kitchenSinks);
+  line("fixtures", "prep-sink-faucet", q.prepSinks);
+  line("fixtures", "pot-filler", q.potFillers);
   line("fixtures", "appliance-package", q.kitchens);
   line("fixtures", "laundry-hookup", q.laundries);
 
