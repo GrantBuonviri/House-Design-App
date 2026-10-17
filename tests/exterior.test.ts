@@ -173,7 +173,7 @@ describe("exterior picks in the cost", () => {
     const r = line(e, "roof-shingle")!;
     expect(r.cost.likely).toBeGreaterThan(line(base, "roof-shingle")!.cost.likely * 1.5);
     expect(r.rate).toBe("roof-metal");
-    expect(r.labor).toBe(rates().rates["roof-metal"].labor[1]);
+    expect(r.material).toBeCloseTo(r.cost.likely / r.qty, 5);
     expect(r.product).toContain(first("roofing", "metal").name);
   });
 
@@ -213,7 +213,7 @@ describe("exterior picks in the cost", () => {
     const e = estimate(withPicks(house, [["windows", win.id], ["driveway", first("driveway", "gravel").id]]))!;
     const w = line(e, "window")!;
     const r = rates().rates.window;
-    const expected = w.qty * (r.labor[1] + r.material[1] * 0.15) + win.price! * (w.qty / 15);
+    const expected = w.qty * (r.material[1] * 0.15) + win.price! * (w.qty / 15);
     expect(w.cost.likely).toBeCloseTo(expected, 0);
     expect(line(e, "driveway")!.cost.likely).toBeLessThan(line(base, "driveway")!.cost.likely);
   });

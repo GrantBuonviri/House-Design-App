@@ -336,14 +336,14 @@ describe("sizes that fit the household", () => {
   it("fits the rooms to the size the budget pays for, never below 110 sq ft for a bedroom", () => {
     const rooms = typical();
     const plain = buildRuleBrief(ctx({ rooms }));
-    const tight = buildRuleBrief(ctx({ rooms }, { profile: { ...profile, budget: { high: 300_000 } } }));
-    const roomy = buildRuleBrief(ctx({ rooms }, { profile: { ...profile, budget: { high: 1_500_000 } } }));
-    const target = householdSizing({ rooms }, { ...profile, budget: { high: 300_000 } }).targetSqft!;
+    const tight = buildRuleBrief(ctx({ rooms }, { profile: { ...profile, budget: { high: 150_000 } } }));
+    const roomy = buildRuleBrief(ctx({ rooms }, { profile: { ...profile, budget: { high: 750_000 } } }));
+    const target = householdSizing({ rooms }, { ...profile, budget: { high: 150_000 } }).targetSqft!;
     expect(target).toBeGreaterThan(800);
     expect(briefTotals(tight).heated).toBeLessThan(briefTotals(plain).heated);
     expect(briefTotals(roomy).heated).toBeGreaterThan(briefTotals(plain).heated);
     for (const r of tight.rooms.filter((x) => x.type === "bedroom")) expect(r.targetSqFt).toBeGreaterThanOrEqual(110);
-    expect(sizingNote({ rooms }, { ...profile, adults: 2, kids: 3, budget: { high: 300_000 } })).toBe(`Sizes fit 5 people and about ${target.toLocaleString("en-US")} sq ft. Rooms you gave a size keep it.`);
+    expect(sizingNote({ rooms }, { ...profile, adults: 2, kids: 3, budget: { high: 150_000 } })).toBe(`Sizes fit 5 people and about ${target.toLocaleString("en-US")} sq ft. Rooms you gave a size keep it.`);
   });
 
   it("never changes a size the user typed", () => {

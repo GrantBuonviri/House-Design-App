@@ -25,11 +25,11 @@ export function CostBadge({ estimate, error, open, onToggle }: { estimate: Estim
     <button
       className={`btn tabular-nums ${open ? "border-accent bg-accent-soft" : ""}`}
       onClick={onToggle}
-      title={`Likely ${fullMoney(t.likely)}, from ${fullMoney(t.low)} to ${fullMoney(t.high)}. Click for the breakdown.`}
+      title={`Likely materials cost ${fullMoney(t.likely)}, from ${fullMoney(t.low)} to ${fullMoney(t.high)}. Click for the breakdown.`}
       data-testid="cost-badge"
     >
-      <span className="text-muted">{estimate.source === "rough" ? "Rough cost" : "Cost"}</span>
-      <span>About {shortMoney(t.likely)}</span>
+      <span className="text-muted">{estimate.source === "rough" ? "Rough materials" : "Materials"}</span>
+      <span>about {shortMoney(t.likely)}</span>
       <span className="text-xs text-muted">
         ({shortMoney(t.low)} to {shortMoney(t.high)})
       </span>
@@ -47,14 +47,34 @@ function amount(l: CostLine): string {
 }
 
 function rate(l: CostLine): string | null {
-  if (l.material === null && l.labor === null) return null;
+  if (l.material === null) return null;
   const per = l.unit === "each" ? "each" : `per ${UNIT[l.unit]}`;
-  const m = l.material ?? 0;
-  const lab = l.labor ?? 0;
   const f = (n: number) => (n >= 100 ? fullMoney(n) : `$${n.toFixed(2).replace(/\.00$/, "")}`);
-  if (!lab) return `${f(m)} ${per}`;
-  if (!m) return `${f(lab)} labor ${per}`;
-  return `${f(m)} material + ${f(lab)} labor ${per}`;
+  return `${f(l.material)} ${per}${l.hired ? ", hired out, full price" : ""}`;
+}
+
+/** Which jobs in this estimate are priced in full, in plain words for the disclaimer. */
+const HIRED_NAMES: Record<string, string> = {
+  "site-prep": "site prep",
+  excavation: "digging",
+  "backfill-grade": "grading",
+  "rock-removal": "rock removal",
+  "utility-trench": "trenching",
+  "drainage-some": "drainage",
+  "drainage-major": "drainage",
+  "water-service": "water service",
+  well: "well",
+  septic: "septic",
+};
+
+function hiredJobs(estimate: Estimate): string[] {
+  const names = new Set<string>();
+  for (const c of estimate.categories) for (const l of c.lines) if (l.hired && l.rate && l.cost.likely > 0) names.add(HIRED_NAMES[l.rate] ?? l.label.toLowerCase());
+  return [...names];
+}
+
+function joinList(a: string[]): string {
+  return a.length < 2 ? a.join("") : `${a.slice(0, -1).join(", ")} and ${a[a.length - 1]}`;
 }
 
 function Line({ l }: { l: CostLine }) {
@@ -175,7 +195,7 @@ export default function CostPanel({
   return (
     <aside className="fixed top-0 right-0 bottom-0 z-30 flex w-[380px] flex-col border-l border-line bg-white shadow-xl" data-testid="cost-panel">
       <div className="flex items-center justify-between border-b border-line px-5 py-3">
-        <h2 className="font-semibold">Cost estimate</h2>
+        <h2 className="font-semibold">Materials estimate</h2>
         <button className="rounded px-2 py-1 text-muted hover:bg-stone-100 hover:text-ink" onClick={onClose} aria-label="Close cost panel">
           ✕
         </button>
@@ -183,12 +203,19 @@ export default function CostPanel({
       <div className="flex-1 overflow-y-auto px-5 py-4">
         <div className="text-3xl font-semibold tabular-nums">{fullMoney(t.likely)}</div>
         <div className="mt-1 text-sm text-muted tabular-nums">
-          Likely cost. Range {fullMoney(t.low)} to {fullMoney(t.high)}.
+          Likely materials cost. Range {fullMoney(t.low)} to {fullMoney(t.high)}.
         </div>
         <div className="mt-1 text-sm text-muted tabular-nums">
           About {fullMoney(estimate.perSqft.likely)} per sq ft for {Math.round(q.livingSqft).toLocaleString("en-US")} sq ft of living space
           {q.garageSqft > 1 ? ` (plus ${Math.round(q.garageSqft).toLocaleString("en-US")} sq ft of garage)` : ""}.
         </div>
+        <p className="mt-3 rounded-md bg-stone-100 px-3 py-2 text-sm text-ink" data-testid="cost-disclaimer">
+          Materials only. Labor isn&apos;t included
+          {hiredJobs(estimate).length
+            ? `, except for jobs usually hired out as a whole (${joinList(hiredJobs(estimate))}), which are full price`
+            : ""}
+          . Permits and fees are included.
+        </p>
         {estimate.source === "rough" && (
           <p className="mt-3 rounded-md bg-amber-50 px-3 py-2 text-sm text-amber-900">
             Rough: based on your room list. Draw the floor plan for a closer number.
@@ -240,7 +267,7 @@ export default function CostPanel({
           where each rate came from.
         </p>
         <p className="mt-2 text-xs text-muted">
-          This is an estimate for {estimate.place.name}, {estimate.place.state} in 2026 (cost level {estimate.place.costIndex.toFixed(2)}), not a bid. Real prices vary by builder and change over time.
+          This is a materials estimate for {estimate.place.name}, {estimate.place.state} in 2026 (cost level {estimate.place.costIndex.toFixed(2)}), not a bid. Real prices vary by store and change over time.
         </p>
       </div>
     </aside>

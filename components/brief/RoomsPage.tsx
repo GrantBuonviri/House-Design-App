@@ -90,12 +90,12 @@ export default function RoomsPage({
           <Field label="Kids">
             <Stepper label="kids" max={20} value={profile.kids ?? 0} onChange={(kids) => setProfile({ kids: kids || undefined }, "kids")} />
           </Field>
-          <Field label="Building budget ($)" hint="Not counting the land.">
+          <Field label="Materials budget ($)" hint="Materials only, as in the cost panel. Not counting the land or labor.">
             <input
               className="input"
               inputMode="numeric"
-              aria-label="Building budget in dollars"
-              placeholder="For example 650,000"
+              aria-label="Materials budget in dollars"
+              placeholder="For example 300,000"
               value={profile.budget?.high ? profile.budget.high.toLocaleString("en-US") : ""}
               onChange={(e) => {
                 const n = Number(e.target.value.replace(/[^0-9]/g, ""));

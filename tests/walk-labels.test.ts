@@ -34,7 +34,7 @@ describe("floor label text", () => {
     const t = labelLines({ ...base, selections, cost: { share: 0.5, total: 200_000 } }, on({ finishes: true, costShare: true })).map((l) => l.text);
     expect(t).toContain("Floor: Oak");
     expect(t).toContain("Paint: Sage");
-    expect(t).toContain("About $100k of the estimate");
+    expect(t).toContain("About $100k of the materials");
   });
   it("splits cost by living floor area and skips garages", () => {
     const g: PlanRoom = { ...room("g"), type: "garage" };

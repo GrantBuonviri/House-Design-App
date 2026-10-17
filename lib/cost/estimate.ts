@@ -32,8 +32,6 @@ export const CATEGORIES = [
   { id: "builtins", label: "Built-ins and extras" },
   { id: "hookups", label: "Extra hookups" },
   { id: "permits", label: "Permits and fees" },
-  { id: "overhead", label: "Builder overhead and profit" },
-  { id: "contingency", label: "Contingency" },
 ] as const;
 export type CategoryId = (typeof CATEGORIES)[number]["id"];
 
@@ -48,7 +46,8 @@ export type CostLine = {
   unit: "sqft" | "linft" | "each" | "cuyd" | "percent" | "value";
   /** Per unit, likely. Null for lines worked out another way (permit, percentages, products). */
   material: number | null;
-  labor: number | null;
+  /** Usually hired out as a whole job, so priced in full (material and work). */
+  hired?: boolean;
   cost: Money;
   source: string;
   url?: string | null;
@@ -123,8 +122,8 @@ export function estimate(
       qty,
       unit: r.unit,
       material: r.material[1],
-      labor: r.labor[1],
-      cost: addMoney(times(r.material, qty), times(r.labor, qty)),
+      hired: r.hired,
+      cost: times(r.material, qty),
       source: r.source,
       url: r.url,
       checked: r.checked,
@@ -269,7 +268,6 @@ export function estimate(
     qty: value,
     unit: "value",
     material: null,
-    labor: null,
     cost: { low: fee, likely: fee, high: fee },
     source: permitBasis === "typed" ? "The permit fee you typed" : permit.source,
     url: permitBasis === "typed" ? null : permit.url,
@@ -284,7 +282,6 @@ export function estimate(
     qty: review.value[1],
     unit: "percent",
     material: null,
-    labor: null,
     cost: times(review.value, fee / 100),
     source: review.source,
     url: review.url,
@@ -300,16 +297,6 @@ export function estimate(
     line("site", "well", 1);
     line("site", "septic", 1);
   }
-
-  // Builder overhead and profit on the construction, then contingency on everything.
-  const hard = sumMoney(lines.filter((l) => l.category !== "permits").map((l) => l.cost));
-  const op = file.percents["overhead-profit"];
-  const opCost: Money = { low: (hard.low * op.value[0]) / 100, likely: (hard.likely * op.value[1]) / 100, high: (hard.high * op.value[2]) / 100 };
-  lines.push({ id: "overhead-profit", category: "overhead", label: op.label, qty: op.value[1], unit: "percent", material: null, labor: null, cost: opCost, source: op.source, url: op.url, checked: op.checked, note: op.note });
-  const before = sumMoney(lines.map((l) => l.cost));
-  const ct = file.percents["contingency"];
-  const ctCost: Money = { low: (before.low * ct.value[0]) / 100, likely: (before.likely * ct.value[1]) / 100, high: (before.high * ct.value[2]) / 100 };
-  lines.push({ id: "contingency", category: "contingency", label: ct.label, qty: ct.value[1], unit: "percent", material: null, labor: null, cost: ctCost, source: ct.source, url: ct.url, checked: ct.checked, note: ct.note });
 
   // The Furnish categories only show up once something is placed for them.
   const categories: CostCategory[] = CATEGORIES.filter((c) => (c.id !== "builtins" && c.id !== "hookups") || lines.some((l) => l.category === c.id)).map((c) => {
@@ -342,7 +329,7 @@ export function spread(costs: Money[]): Money {
  * picks work room by room: each room uses its own pick, or the whole-house
  * pick, or the allowance, for its share of the line. A pick that is only
  * part of a line (a faucet in "kitchen sink + faucet") replaces that part of
- * the allowance. Labor stays at the line's rate.
+ * the allowance.
  */
 export function applySelections(lines: CostLine[], selections: Selection[], q?: Quantities, file: RatesFile = loadRates()) {
   const byLine = new Map<string, Selection[]>();
@@ -386,7 +373,7 @@ export function applySelections(lines: CostLine[], selections: Selection[], q?: 
       for (const s of accents) price(s, walls![s.wall!]);
       replaced = Math.min(1, replaced);
       if (cats.size || accents.length) pickedAmount += part.amount;
-      const allowance = r ? addMoney(times(r.material, part.amount * (1 - replaced)), times(r.labor, part.amount)) : ZERO;
+      const allowance = r ? times(r.material, part.amount * (1 - replaced)) : ZERO;
       const product: Money = { low: productCost * 0.95, likely: productCost, high: productCost * 1.1 };
       cost = addMoney(cost, addMoney(allowance, product));
     }
@@ -401,7 +388,7 @@ export function applySelections(lines: CostLine[], selections: Selection[], q?: 
     l.product = partial ? `${l.label} with ${what}` : what;
     if (!everywhere) l.product += ", mid-range elsewhere";
     // The per-unit material shown is what it averages out to.
-    l.material = l.qty > 0 ? Math.max(0, cost.likely / l.qty - (l.labor ?? 0)) : l.material;
+    l.material = l.qty > 0 ? Math.max(0, cost.likely / l.qty) : l.material;
     l.note = `Picked: ${names.join(", ")}.${everywhere ? "" : " Rooms without a pick use the mid-range allowance."} ${l.note ?? ""}`.trim();
   }
 }
@@ -409,7 +396,7 @@ export function applySelections(lines: CostLine[], selections: Selection[], q?: 
 /**
  * Exterior picks replace the mid-range allowance on their line for the whole
  * house. Some change what it costs to put up too (a metal roof, brick,
- * pavers): the line then uses that kind's rate for labor and for the parts
+ * pavers): the line then uses that kind's rate for the parts
  * the product doesn't cover. Siding paint only counts on paintable siding.
  */
 export function applyExterior(lines: CostLine[], selections: Selection[], file: RatesFile = loadRates()) {
@@ -447,10 +434,9 @@ export function applyExterior(lines: CostLine[], selections: Selection[], file: 
       names.push(productTitle(s.product));
     }
     replaced = Math.min(1, replaced);
-    const allowance = addMoney(times(r.material, l.qty * (1 - replaced)), times(r.labor, l.qty));
+    const allowance = times(r.material, l.qty * (1 - replaced));
     l.cost = addMoney(allowance, { low: productCost * 0.95, likely: productCost, high: productCost * 1.1 });
-    l.labor = r.labor[1];
-    l.material = l.qty > 0 ? Math.max(0, l.cost.likely / l.qty - r.labor[1]) : l.material;
+    l.material = l.qty > 0 ? Math.max(0, l.cost.likely / l.qty) : l.material;
     if (rateId !== l.rate) {
       l.label = lineId === "accent" ? `Accent: ${r.label.charAt(0).toLowerCase()}${r.label.slice(1)}` : r.label;
       l.rate = rateId;
@@ -479,7 +465,7 @@ function drivers(q: Quantities, lines: CostLine[], file: RatesFile, utilities: C
     const r = file.rates["stem-wall"];
     const footLf = q.footingLf;
     // Compared to the short stem walls on flat ground (about 2.5 ft).
-    const extra = Math.max(0, q.stemWallSqft - footLf * 2.5) * (r.material[1] + r.labor[1]);
+    const extra = Math.max(0, q.stemWallSqft - footLf * 2.5) * r.material[1];
     if (extra > 2000) out.push({ text: `Taller foundation walls for the ${Math.round(q.slopePercent)}% slope: about ${money(extra)}`, amount: extra });
   }
   const ret = likely(["retaining-wall"]);

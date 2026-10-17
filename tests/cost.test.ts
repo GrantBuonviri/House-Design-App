@@ -207,18 +207,18 @@ describe("the estimate", () => {
       expect(c.cost.low, c.id).toBeLessThanOrEqual(c.cost.likely + 0.01);
       expect(c.cost.likely, c.id).toBeLessThanOrEqual(c.cost.high + 0.01);
     }
-    expect(e.categories).toHaveLength(16);
+    expect(e.categories).toHaveLength(14);
   });
 
   it("lands near published Boise cost per square foot for a typical one-story house", () => {
-    // The published figures leave out contingency and landscaping, so compare without them.
+    // The published figures leave out landscaping, so compare without them.
     const target = scaleRates(rates(), rates().costLevelBase.index).calibration.costPerSqft;
     const LANDSCAPING = ["front-walk", "lawn", "planting-beds", "shrubs", "trees"];
     for (const types of [TYPICAL, [...TYPICAL, "office", "bedroom", "family", "half-bath"]]) {
       const e = estimate(suggestedHouse(flat, types))!;
       const yard = e.categories.flatMap((c) => c.lines).filter((l) => LANDSCAPING.includes(l.id)).reduce((s, l) => s + l.cost.likely, 0);
       expect(yard).toBeGreaterThan(0);
-      const perSqft = (e.total.likely - cat(e, "contingency") - yard) / e.quantities.livingSqft;
+      const perSqft = (e.total.likely - yard) / e.quantities.livingSqft;
       expect(perSqft).toBeGreaterThan(target[0]);
       expect(perSqft).toBeLessThan(target[2]);
     }
@@ -270,6 +270,25 @@ describe("the estimate", () => {
   });
 });
 
+describe("materials only", () => {
+  const lines = (e: Estimate) => e.categories.flatMap((c) => c.lines);
+
+  it("prices a normal line as material x quantity, keeps hired jobs at full price, and never mentions labor", () => {
+    const e = estimate(house(RANCH, 1, 0))!;
+    const base = scaleRates(rates(), rates().costLevelBase.index);
+    for (const l of lines(e)) {
+      if (l.rate && l.material !== null && l.unit !== "percent") expect(l.cost.likely, l.id).toBeCloseTo(base.rates[l.rate].material[1] * l.qty, 3);
+    }
+    const prep = lines(e).find((l) => l.id === "site-prep")!;
+    expect(prep.hired).toBe(true);
+    expect(prep.cost.likely).toBeCloseTo(6500, 0);
+    const well = estimate({ ...project(box()), cost: { utilities: "well-septic" } } as Project)!;
+    expect(lines(well).find((l) => l.id === "well")!.cost.likely).toBeCloseTo(28000, -2);
+    expect(JSON.stringify(e, (k, v) => (k === "note" || k === "source" ? undefined : v))).not.toMatch(/labor|overhead|contingency/i);
+    expect(JSON.stringify(raw)).not.toMatch(/"labor"/);
+  });
+});
+
 describe("saving", () => {
   it("opens older projects with city water and sewer", () => {
     const older = { ...createProject("Old"), schemaVersion: 5 } as Record<string, unknown>;
@@ -306,7 +325,7 @@ describe("costs at the place's cost level", () => {
     const one = lineCosts(estimate(atLevel(base, 1))!);
     const high = lineCosts(estimate(atLevel(base, 1.2))!);
     for (const [id, c] of Object.entries(one)) {
-      if (["overhead-profit", "contingency", "plan-review", "building-permit"].includes(id)) continue;
+      if (["plan-review", "building-permit"].includes(id)) continue;
       expect(high[id].likely / c.likely, id).toBeCloseTo(1.2, 5);
     }
   });
