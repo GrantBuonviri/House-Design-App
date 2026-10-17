@@ -23,6 +23,8 @@ import FurnishStage from "@/components/furnish/FurnishStage";
 import ExteriorStage from "@/components/exterior/ExteriorStage";
 import CostPanel, { CostBadge } from "@/components/cost/CostPanel";
 import { estimate as estimateCost } from "@/lib/cost/estimate";
+import { locationOf } from "@/lib/location/current";
+import { placeLabel } from "@/lib/location/cities";
 
 const Walkthrough = dynamic(() => import("@/components/walk/Walkthrough"), { ssr: false });
 const PlansPage = dynamic(() => import("@/components/plans/PlansPage"), { ssr: false });
@@ -141,7 +143,7 @@ export default function ProjectWorkspace({ id }: { id: string }) {
           {cost || costError ? (
             <CostBadge estimate={cost} error={costError} open={costOpen} onToggle={() => setCostOpen(!costOpen)} />
           ) : (
-            <NeedsFirst message="Pick your rooms first, and a rough cost for building in Boise shows up here." action="Go to Rooms" onAction={() => setStage("brief")} testId="cost-needs">
+            <NeedsFirst message={`Pick your rooms first, and a rough cost for building in ${placeLabel(locationOf(project))} shows up here.`} action="Go to Rooms" onAction={() => setStage("brief")} testId="cost-needs">
               Cost
             </NeedsFirst>
           )}
@@ -172,7 +174,7 @@ export default function ProjectWorkspace({ id }: { id: string }) {
       </div>
 
       <div className="mb-8 flex items-center justify-between gap-4 border-b border-line pb-3">
-        <StageBar current={project.stage} onSelect={setStage} />
+        <StageBar current={project.stage} onSelect={setStage} nudges={project.location ? {} : { setup: "Pick where you’ll build" }} />
         <div className="flex shrink-0 items-center gap-3">
           <button className="text-xs text-muted underline-offset-2 hover:text-ink hover:underline" onClick={startTour} data-tour="tour" data-testid="tour-start">
             Take the tour

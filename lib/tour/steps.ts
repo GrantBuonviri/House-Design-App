@@ -28,7 +28,13 @@ export const TOUR: TourStep[] = [
     target: "stage-setup",
     stage: "setup",
     title: "1. Project setup",
-    body: "Your name and a name for the house. That's all.",
+    body: "Your name, a name for the house, and where you'll build it.",
+  },
+  {
+    target: "place-picker",
+    stage: "setup",
+    title: "Where you'll build",
+    body: "Type a city or a state and pick it. The place sets the sun and clock times, the weather the house is built for (snow, wind, frost, earthquakes) and the cost level. Every number can be edited.",
   },
   {
     target: "stage-land",
@@ -69,12 +75,12 @@ export const TOUR: TourStep[] = [
   {
     target: "cost",
     title: "Running cost",
-    body: "Once you pick rooms, a cost estimate for building in Boise shows here and updates with every change. Click it for the breakdown.",
+    body: "Once you pick rooms, a cost estimate for building where you picked on step one shows here and updates with every change. Click it for the breakdown.",
   },
   {
     target: "plans",
     title: "Building plans",
-    body: "Plans makes PDF sheets for a building permit: floor plans, a cover sheet and a code check against the codes Boise uses. Each sheet says what it still needs.",
+    body: "Plans makes PDF sheets for a building permit: floor plans, a cover sheet and a code check against the building codes. Each sheet says what it still needs.",
   },
   {
     target: "walkthrough",

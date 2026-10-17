@@ -1,7 +1,9 @@
 import { swingRoom } from "@/lib/plan/swing";
 import { openingGeometry } from "@/lib/plan/walls";
 import { describeRailingEdit } from "@/lib/plan/railings";
-import type { BubbleDiagram, DesignChoices, FloorPlan, Project } from "@/lib/model/schema";
+import { LOCATION_FIELDS, type BubbleDiagram, type DesignChoices, type FloorPlan, type Project } from "@/lib/model/schema";
+import { placeLabel } from "@/lib/location/cities";
+import { FIELD_INFO } from "@/lib/location/fields";
 import { openingType, fixtureType } from "@/lib/plan/catalog";
 import { furnitureType } from "@/lib/plan/furniture";
 import { layerItems } from "@/lib/furnish/layer";
@@ -18,6 +20,7 @@ export function describeChange(before: Project, after: Project): string {
   const same = (k: keyof Project) => before[k] === after[k] || json(before[k]) === json(after[k]);
 
   if (!same("name")) return "rename the house";
+  if (!same("location")) return describeLocation(before, after);
   if (!same("profile")) {
     const [b, a] = [before.profile, after.profile];
     if (b.adults !== a.adults || b.kids !== a.kids) return "change who the house is for";
@@ -50,6 +53,18 @@ export function describeChange(before: Project, after: Project): string {
   if (!same("exterior")) return describeDesign(before.exterior, after.exterior, "outside");
   if (!same("levels")) return "change the floors";
   return "last change";
+}
+
+/** "set the place to Denver, CO", "change the frost depth", "put back the wind". */
+function describeLocation(before: Project, after: Project): string {
+  const [b, a] = [before.location, after.location];
+  if (!a) return "clear the place";
+  if (!b || b.cityId !== a.cityId) return `set the place to ${placeLabel(a)}`;
+  if (b.permitFee !== a.permitFee) return "change the permit fee";
+  const changed = LOCATION_FIELDS.find((f) => b[f] !== a[f]);
+  if (!changed) return "change the place";
+  const label = FIELD_INFO[changed].label.toLowerCase();
+  return a.edited.includes(changed) ? `change the ${label}` : `put back the ${label}`;
 }
 
 /** Names the one room whose 3D label was hidden, shown, renamed or moved, else the general "change the 3D labels". */

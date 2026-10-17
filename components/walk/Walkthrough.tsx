@@ -48,6 +48,7 @@ import type { WalkLabels } from "@/lib/model/schema";
 import { effectiveExterior } from "@/lib/exterior/style";
 import { canvasSettings, useGraphics } from "@/lib/graphics";
 import { useFrame } from "@react-three/fiber";
+import { usePlace } from "@/lib/location/usePlace";
 
 /** Moves the doors every frame: opens the ones you walk into, shuts the ones you left, and keeps the world's blockers in step. */
 function DoorDriver({ world, walker, states, modeRef }: { world: ReturnType<typeof walkWorld>; walker: React.RefObject<Walker>; states: React.MutableRefObject<DoorStates>; modeRef: React.RefObject<DoorMode> }) {
@@ -205,7 +206,8 @@ export default function Walkthrough({ project, cost, onClose }: { project: Proje
 
   const [season, setSeason] = useState<SeasonId>("summer");
   const seasonInfo = SEASONS.find((s) => s.id === season)!;
-  const { sunrise, sunset } = daylight(seasonInfo.day);
+  const place = usePlace();
+  const { sunrise, sunset } = daylight(seasonInfo.day, place.latitudeDeg);
   const [hour, setHour] = useState(14);
   const shownHour = Math.min(sunset, Math.max(sunrise, hour));
 

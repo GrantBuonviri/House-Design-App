@@ -36,5 +36,5 @@ export type LandView = {
   offset: Point;
   show: { property: boolean; land: boolean; arrow: boolean; sun: boolean };
   /** The sun dial's middle and outer radius, in sketch coordinates. */
-  sun: { center: Point; radius: number };
+  sun: { center: Point; radius: number; latitudeDeg: number };
 };

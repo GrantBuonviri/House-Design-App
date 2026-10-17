@@ -16,6 +16,7 @@ import type { Plans } from "@/lib/plan/edit";
 import { Ground } from "./House3DView";
 import { HouseMeshes, Sky } from "./Scene";
 import { canvasSettings, useGraphics } from "@/lib/graphics";
+import { usePlace } from "@/lib/location/usePlace";
 
 type Props = {
   plans: Plans;
@@ -102,7 +103,8 @@ export default function WindowPreview(props: Props) {
   // ---- Time of day ----
   const [season, setSeason] = useState<SeasonId>("summer");
   const seasonInfo = SEASONS.find((s) => s.id === season)!;
-  const { sunrise, sunset } = daylight(seasonInfo.day);
+  const place = usePlace();
+  const { sunrise, sunset } = daylight(seasonInfo.day, place.latitudeDeg);
   const [hour, setHour] = useState(14);
   const shownHour = Math.min(sunset, Math.max(sunrise, hour));
   const [playing, setPlaying] = useState(false);
@@ -129,9 +131,9 @@ export default function WindowPreview(props: Props) {
   const [note, setNote] = useState<string | null>(null);
   useEffect(() => {
     if (!views) return;
-    const t = setTimeout(() => setNote(sunNote(sunThroughWindow(views, blockersOf([...allParts, ...buildLandFeatures(site, frame)]), site, frame))), 250);
+    const t = setTimeout(() => setNote(sunNote(sunThroughWindow(views, blockersOf([...allParts, ...buildLandFeatures(site, frame)]), site, frame, place))), 250);
     return () => clearTimeout(t);
-  }, [views, allParts, site, frame]);
+  }, [views, allParts, site, frame, place]);
 
   // ---- Dragging the pictures to look around ----
   const looks = useRef<Looks>(structuredClone(STILL));
@@ -286,7 +288,7 @@ export default function WindowPreview(props: Props) {
               <span className="flex justify-between text-xs text-muted">
                 <span>Time of day</span>
                 <span className="font-medium text-ink" data-testid="preview-time">
-                  {clockTime(shownHour, seasonInfo.daylightSaving)}
+                  {clockTime(shownHour, seasonInfo.daylightSaving, place)}
                 </span>
               </span>
               <input
@@ -303,8 +305,8 @@ export default function WindowPreview(props: Props) {
                 aria-label="Time of day"
               />
               <span className="flex justify-between text-[11px] text-muted">
-                <span>Sunrise {clockTime(sunrise, seasonInfo.daylightSaving)}</span>
-                <span>Sunset {clockTime(sunset, seasonInfo.daylightSaving)}</span>
+                <span>Sunrise {clockTime(sunrise, seasonInfo.daylightSaving, place)}</span>
+                <span>Sunset {clockTime(sunset, seasonInfo.daylightSaving, place)}</span>
               </span>
             </label>
             <div className="text-sm">

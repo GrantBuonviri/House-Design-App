@@ -9,7 +9,7 @@ import { z } from "zod";
  * Angles are degrees clockwise from north (0 = N, 90 = E).
  */
 
-export const SCHEMA_VERSION = 29;
+export const SCHEMA_VERSION = 30;
 
 export const Point = z.object({ x: z.number(), y: z.number() });
 export type Point = z.infer<typeof Point>;
@@ -899,6 +899,63 @@ export type DesignChoices = z.infer<typeof DesignChoices>;
 
 // ---------- The project ----------
 
+/** Fields of a place a person can change with "Edit numbers". */
+export const LOCATION_FIELDS = [
+  "climateZone",
+  "frostDepthIn",
+  "groundSnowPsf",
+  "windMph",
+  "seismicCategory",
+  "winterDesignF",
+  "summerDesignF",
+  "elevationFt",
+  "prevailingWind",
+  "costIndex",
+  "latitudeDeg",
+  "longitudeDeg",
+] as const;
+export type LocationField = (typeof LOCATION_FIELDS)[number];
+
+/**
+ * Where the house will be built: a full copy of the place's numbers (from
+ * `lib/location/data/cities.json`), so later data updates never move an old
+ * project's numbers. `edited` lists the fields the person changed.
+ */
+export const Location = z.object({
+  /** "boise-id", or "elsewhere-id" for "Elsewhere in Idaho". */
+  cityId: z.string().min(1),
+  name: z.string().min(1),
+  /** Two-letter state, e.g. "ID". */
+  state: z.string().length(2),
+  latitudeDeg: z.number().min(-90).max(90),
+  longitudeDeg: z.number().min(-180).max(180),
+  /** Standard time, e.g. -7. */
+  utcOffsetHours: z.number().min(-12).max(14),
+  daylightSaving: z.boolean(),
+  /** IECC 2021 climate zone, e.g. "5B". */
+  climateZone: z.string().min(1).max(3),
+  frostDepthIn: z.number().min(0).max(120),
+  groundSnowPsf: z.number().min(0).max(1000),
+  /** Ultimate design wind speed, mph. */
+  windMph: z.number().min(0).max(300),
+  /** IRC seismic design category: A, B, C, D0, D1, D2 or E. */
+  seismicCategory: z.string().min(1).max(2),
+  winterDesignF: z.number().min(-80).max(90),
+  summerDesignF: z.number().min(40).max(130),
+  elevationFt: z.number().min(-300).max(15000),
+  /** Compass direction the wind mostly comes from, e.g. "NW". */
+  prevailingWind: z.enum(["N", "NE", "E", "SE", "S", "SW", "W", "NW"]),
+  weathering: z.string().default("Moderate"),
+  termite: z.string().default("Slight to moderate"),
+  iceBarrier: z.boolean().default(false),
+  /** Building cost level, 1.00 = US average. */
+  costIndex: z.number().min(0.3).max(3),
+  /** The person's own permit fee in dollars; null = the typical fee table. */
+  permitFee: z.number().min(0).nullable().default(null),
+  edited: z.array(z.enum(LOCATION_FIELDS)).default([]),
+});
+export type Location = z.infer<typeof Location>;
+
 export const Project = z.object({
   schemaVersion: z.literal(SCHEMA_VERSION),
   id: z.string().min(1),
@@ -907,6 +964,8 @@ export const Project = z.object({
   updatedAt: z.string(),
   stage: Stage,
   profile: Profile,
+  /** Where it will be built; null until picked on step one (the app then uses Boise's numbers). */
+  location: Location.nullable().default(null),
   plot: Plot.nullable().default(null),
   discovery: Discovery.prefault({}),
   brief: DesignBrief.nullable().default(null),

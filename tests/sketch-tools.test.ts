@@ -27,6 +27,7 @@ import {
 import { addFlow, cleanDiagram, connected, moveBubblesToLevel, moveMany, removeMany, toggleFlow } from "@/lib/bubbles/edit";
 import { blankSketch, hasContent } from "@/lib/bubbles/start";
 import { contours, defaultLotOffset, houseCenter, landDrawing, lotCenter, sunPaths } from "@/lib/bubbles/land";
+import { DEFAULT_PLACE } from "@/lib/location/current";
 
 const FT = 12;
 const flat = generatePlot(FLAT_PLOT_SEED, { flat: true });
@@ -270,14 +271,14 @@ describe("the land under the sketch", () => {
 
   it("draws Boise's sun paths around the house, summer outside winter", () => {
     const center = { x: 50, y: -40 };
-    const { paths, noon } = sunPaths(center, 30 * FT);
+    const { paths, noon } = sunPaths(center, 30 * FT, DEFAULT_PLACE.latitudeDeg);
     const summer = paths.find((p) => p.season === "summer")!;
     const winter = paths.find((p) => p.season === "winter")!;
     const dist = (p: Point) => Math.hypot(p.x - center.x, p.y - center.y);
     expect(dist(summer.sunrise)).toBeCloseTo(30 * FT, 5);
     expect(dist(winter.sunrise)).toBeLessThan(dist(summer.sunrise));
     // June sunrise is north of east; noon is due south.
-    const rise = bearingVector(dayArc(SUMMER_SOLSTICE).sunrise.azimuthDeg);
+    const rise = bearingVector(dayArc(SUMMER_SOLSTICE, DEFAULT_PLACE.latitudeDeg).sunrise.azimuthDeg);
     expect(summer.sunrise.x - center.x).toBeCloseTo(rise.x * 30 * FT, 5);
     expect(summer.sunrise.y).toBeLessThan(center.y);
     expect(noon.x).toBeCloseTo(center.x, 5);

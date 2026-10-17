@@ -1,4 +1,5 @@
 import { LEGACY_LEVEL_IDS, MAIN_LEVEL_ID, levelFor } from "@/lib/brief/levels";
+import { cityById, placeFromCity } from "@/lib/location/cities";
 import { Project, SCHEMA_VERSION, type Profile } from "./schema";
 
 export function newId(): string {
@@ -87,6 +88,7 @@ export function migrateProject(raw: unknown): Project {
   // `PlanStairs.anchored`, `PlanRoom.stairStack`, `PlanRoom.anchored`, all optional), so no change
   // beyond the version.
   // Version 28 to 29 added `house3d.walkLabels.locked` (default off), so no change beyond the version.
+  if (version < 30) migrated = migrateV29(migrated);
   return Project.parse({ ...migrated, schemaVersion: SCHEMA_VERSION });
 }
 
@@ -96,6 +98,11 @@ export function duplicateProject(p: Project): Project {
 }
 
 type Raw = Record<string, unknown>;
+
+/** Version 29 to 30: projects got a place to build. Older ones were all Boise, so they are set to Boise and nothing changes. */
+function migrateV29(data: Raw): Raw {
+  return data.location ? data : { ...data, location: placeFromCity(cityById("boise-id")!) };
+}
 
 /**
  * Version 1 to 2: the rooms page replaced the old questions, and levels are

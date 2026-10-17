@@ -27,6 +27,7 @@ import { DoorLeaves } from "./DoorLeaves";
 import type { DoorMode } from "@/lib/house3d/doors";
 import { withPatterns } from "./patternMaterial";
 import { canvasSettings, useGraphics } from "@/lib/graphics";
+import { usePlace } from "@/lib/location/usePlace";
 
 /** Which walls the 3D view shows. Hidden walls leave a strip on the floor where they stood. */
 export type WallsShown = "all" | "outside" | "none";
@@ -327,7 +328,8 @@ function CameraRig({ topRequest, goal, onLookingDown }: { topRequest: number; go
 }
 
 function Lights({ span, day, hour }: { span: number; day: number; hour: number }) {
-  const sun = useMemo(() => sunDirection(day, hour), [day, hour]);
+  const lat = usePlace().latitudeDeg;
+  const sun = useMemo(() => sunDirection(day, hour, lat), [day, hour, lat]);
   const reach = span * 1.3 + 30;
   const d = reach * 2;
   return (

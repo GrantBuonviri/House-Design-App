@@ -8,6 +8,7 @@ import type { Plot } from "@/lib/model/schema";
 import { SCENE_SIZE, buildTerrainMesh, drapeLine, featureSpots, landScene, ribbonMesh, roadStrips, waterSurfaces, type RibbonMesh } from "@/lib/land/mesh";
 import { dayArc, sunPosition, SUMMER_SOLSTICE, WINTER_SOLSTICE } from "@/lib/land/sun";
 import { useGraphics } from "@/lib/graphics";
+import { usePlace } from "@/lib/location/usePlace";
 
 const SKY_RADIUS = 6.5;
 
@@ -18,12 +19,12 @@ function skyPoint(azimuthDeg: number, altitudeDeg: number, r = SKY_RADIUS): [num
   return [Math.sin(az) * Math.cos(alt) * r, Math.sin(alt) * r, -Math.cos(az) * Math.cos(alt) * r];
 }
 
-function sunArc(day: number): [number, number, number][] {
-  const arc = dayArc(day);
+function sunArc(day: number, latitudeDeg: number): [number, number, number][] {
+  const arc = dayArc(day, latitudeDeg);
   const start = 12 - arc.daylightHours / 2;
   const pts: [number, number, number][] = [];
   for (let i = 0; i <= 32; i++) {
-    const s = sunPosition(day, start + (arc.daylightHours * i) / 32);
+    const s = sunPosition(day, start + (arc.daylightHours * i) / 32, latitudeDeg);
     pts.push(skyPoint(s.azimuthDeg, Math.max(0, s.altitudeDeg)));
   }
   return pts;
@@ -94,12 +95,13 @@ function Land({ plot }: { plot: Plot }) {
         .filter((s) => s.points.length > 1),
     [plot, scene],
   );
-  const summer = useMemo(() => sunArc(SUMMER_SOLSTICE), []);
-  const winter = useMemo(() => sunArc(WINTER_SOLSTICE), []);
+  const lat = usePlace().latitudeDeg;
+  const summer = useMemo(() => sunArc(SUMMER_SOLSTICE, lat), [lat]);
+  const winter = useMemo(() => sunArc(WINTER_SOLSTICE, lat), [lat]);
   const sun = useMemo(() => {
-    const s = sunPosition(SUMMER_SOLSTICE, 15);
+    const s = sunPosition(SUMMER_SOLSTICE, 15, lat);
     return skyPoint(s.azimuthDeg, s.altitudeDeg);
-  }, []);
+  }, [lat]);
 
   return (
     <>
@@ -187,7 +189,7 @@ function NorthMarker({ y }: { y: number }) {
 
 /**
  * A 3D model of a plot: the ground with its slope, water, property line,
- * road, and Boise's summer and winter sun paths across the sky. Drag to
+ * road, and the place's summer and winter sun paths across the sky. Drag to
  * turn it around.
  */
 export default function PlotTerrain3D({

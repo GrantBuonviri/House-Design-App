@@ -17,6 +17,7 @@ import { plotImplications } from "@/lib/land/implications";
 import { createRng } from "@/lib/land/random";
 import { compassName, dayArc, sunPosition, SUMMER_SOLSTICE, WINTER_SOLSTICE } from "@/lib/land/sun";
 import { pointInPolygon } from "@/lib/land/geometry";
+import { DEFAULT_PLACE } from "@/lib/location/current";
 
 const seeds = Array.from({ length: 300 }, (_, i) => feedPlotSeed(12345, i));
 
@@ -142,18 +143,18 @@ describe("terrain", () => {
 
 describe("sun in Boise", () => {
   it("is due south and high at summer solar noon", () => {
-    const s = sunPosition(SUMMER_SOLSTICE, 12);
+    const s = sunPosition(SUMMER_SOLSTICE, 12, DEFAULT_PLACE.latitudeDeg);
     expect(s.azimuthDeg).toBeCloseTo(180, 0);
     expect(s.altitudeDeg).toBeCloseTo(69.8, 0);
   });
 
   it("is low at winter solar noon", () => {
-    expect(sunPosition(WINTER_SOLSTICE, 12).altitudeDeg).toBeCloseTo(23, 0);
+    expect(sunPosition(WINTER_SOLSTICE, 12, DEFAULT_PLACE.latitudeDeg).altitudeDeg).toBeCloseTo(23, 0);
   });
 
   it("rises in the north-east in summer and south-east in winter", () => {
-    const summer = dayArc(SUMMER_SOLSTICE);
-    const winter = dayArc(WINTER_SOLSTICE);
+    const summer = dayArc(SUMMER_SOLSTICE, DEFAULT_PLACE.latitudeDeg);
+    const winter = dayArc(WINTER_SOLSTICE, DEFAULT_PLACE.latitudeDeg);
     expect(summer.sunrise.azimuthDeg).toBeGreaterThan(50);
     expect(summer.sunrise.azimuthDeg).toBeLessThan(60);
     expect(winter.sunrise.azimuthDeg).toBeGreaterThan(120);

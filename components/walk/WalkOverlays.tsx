@@ -8,6 +8,7 @@ import type { DoorMode } from "@/lib/house3d/doors";
 import DoorsPicker from "@/components/house3d/DoorsPicker";
 import UndoButtons from "@/components/project/UndoButtons";
 import GraphicsToggle from "@/components/project/GraphicsToggle";
+import { usePlace } from "@/lib/location/usePlace";
 
 /** The parts of the walkthrough drawn over the 3D view (Walkthrough.tsx keeps the state). */
 
@@ -175,17 +176,18 @@ export function WalkControls(props: {
   onJump: (spot: Spot, keepYaw?: boolean) => void;
 }) {
   const { hour, sunrise, sunset, daylightSaving, season, world, doorMode, onDoorMode, onHour, onSeason, onJump } = props;
+  const place = usePlace();
   return (
     <div className="absolute right-0 bottom-0 left-0 flex flex-wrap items-end gap-x-6 gap-y-3 bg-black/60 px-4 py-3 text-white">
       <label className="min-w-[240px] flex-1 text-sm">
         <span className="flex justify-between text-xs text-white/75">
           <span>Time of day</span>
-          <span data-testid="walk-time">{clockTime(hour, daylightSaving)}</span>
+          <span data-testid="walk-time">{clockTime(hour, daylightSaving, place)}</span>
         </span>
         <input type="range" className="mt-1 w-full accent-white" min={sunrise} max={sunset} step={0.25} value={hour} onChange={(e) => onHour(Number(e.target.value))} aria-label="Time of day" />
         <span className="flex justify-between text-[11px] text-white/60">
-          <span>Sunrise {clockTime(sunrise, daylightSaving)}</span>
-          <span>Sunset {clockTime(sunset, daylightSaving)}</span>
+          <span>Sunrise {clockTime(sunrise, daylightSaving, place)}</span>
+          <span>Sunset {clockTime(sunset, daylightSaving, place)}</span>
         </span>
       </label>
       <div className="text-sm">

@@ -10,7 +10,7 @@ import type { Bubble } from "./shapes";
 
 /**
  * The land drawn under the flow sketch: the lot line, water, contours, a
- * downhill arrow and Boise's sun paths. Plot and sketch coordinates are both
+ * downhill arrow and the place's sun paths. Plot and sketch coordinates are both
  * inches with x east and y south, so placing the house on the lot is just an
  * offset: a plot point is the sketch point plus the offset.
  */
@@ -278,11 +278,11 @@ export type SunPath = {
 };
 
 /**
- * Boise's summer and winter sun paths as a dial around the house, like the
+ * The place's summer and winter sun paths as a dial around the house, like the
  * one on the land page: each arc runs from the sunrise direction through
  * south to the sunset direction, winter inside, summer outside.
  */
-export function sunPaths(center: Point, radius: number): { paths: SunPath[]; noon: Point } {
+export function sunPaths(center: Point, radius: number, latitudeDeg: number): { paths: SunPath[]; noon: Point } {
   const at = (azimuthDeg: number, r: number): Point => {
     const v = bearingVector(azimuthDeg);
     return { x: center.x + v.x * r, y: center.y + v.y * r };
@@ -291,7 +291,7 @@ export function sunPaths(center: Point, radius: number): { paths: SunPath[]; noo
     ["summer", SUMMER_SOLSTICE, radius],
     ["winter", WINTER_SOLSTICE, radius * WINTER_RING],
   ] as const).map(([season, day, r]) => {
-    const arc = dayArc(day);
+    const arc = dayArc(day, latitudeDeg);
     const steps = 48;
     const from = arc.sunrise.azimuthDeg;
     const to = arc.sunset.azimuthDeg;

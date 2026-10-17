@@ -2,11 +2,17 @@ import { PlanBasics, type Level } from "@/lib/model/schema";
 
 /**
  * The plan basics: ceiling heights, wall thickness, garage, stairs and doors.
- * Every answer has a sensible default for a new house in Boise.
+ * Every answer has a sensible default for a new house.
  */
 
-export function defaultBasics(): PlanBasics {
-  return PlanBasics.parse({});
+/**
+ * The basics every answer starts at. Outside walls are 2x6 in climate zone 5
+ * and colder (room for the insulation the energy code wants there) and 2x4
+ * in warmer zones. Without a zone, 2x6.
+ */
+export function defaultBasics(climateZone?: string): PlanBasics {
+  const zone = climateZone ? parseInt(climateZone, 10) : NaN;
+  return PlanBasics.parse(zone < 5 ? { exteriorWall: "2x4" } : {});
 }
 
 /** Ceiling height for a level when the basics don't name one: 9 ft on the main floor, 8 ft elsewhere. */
