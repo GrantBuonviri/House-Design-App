@@ -52,6 +52,7 @@ import { lockedNote } from "@/lib/plan/locks";
 import PlanSidePanel from "./PlanSidePanel";
 import { pruneTopLabels } from "@/lib/house3d/topLabels";
 import House3DPanel from "@/components/house3d/House3DPanel";
+import { shedWarning, tallShedRise } from "@/lib/plans/lotLimits";
 import type { WallsShown } from "@/components/house3d/House3DView";
 import type { DoorMode } from "@/lib/house3d/doors";
 import { PLAN_TOOLS, parseEdgeId, type PlanSelection, type PlanTool } from "./types";
@@ -513,6 +514,11 @@ export default function PlanStage({ onContinue, onGoToSketch, onGoToFurnish }: {
     setEditingBasics(false);
   }
 
+  const shedNote = useMemo(() => {
+    if (project.house3d.roof.style !== "shed" || !showRoof) return null;
+    const rise = tallShedRise(project);
+    return rise === null ? null : shedWarning(rise);
+  }, [project, showRoof]);
   const warnings = useMemo(() => (basics && !choosing ? planWarnings(plans, checkCtx) : []), [plans, checkCtx, basics, choosing]);
 
   const split = useMemo(() => splitDismissed(warnings, project.plan.dismissed), [warnings, project.plan.dismissed]);
@@ -768,6 +774,7 @@ export default function PlanStage({ onContinue, onGoToSketch, onGoToFurnish }: {
               onShowRoof={setShowRoof}
               onWalls={setWalls3d}
               onRoof={setRoof}
+              shedNote={shedNote}
             />
             {sel.length > 0 && (
               <PlanSidePanel

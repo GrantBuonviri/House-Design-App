@@ -9,6 +9,7 @@ import { stairsDrawing, TREAD_IN } from "@/lib/plan/stairs";
 import { formatFeetInches } from "@/lib/model/units";
 import { houseFacts, type HouseFacts } from "@/lib/plans/house";
 import { siteLayout } from "@/lib/plans/lot";
+import { limitText, lotLimits, shedWarning, tallShedRise } from "@/lib/plans/lotLimits";
 import { changedBy, codeEntry, codeNum, codeRef, codeSet } from "./data";
 import { escapeCheck, glassSqft, openableSqft } from "./openings";
 import { alarmChecks, bathFanCheck, electricalChecks, mechanicalChecks } from "./systemsChecks";
@@ -561,6 +562,26 @@ export const RULES: CodeRule[] = [
     },
   },
   {
+    id: "lot-limits",
+    group: "Site",
+    title: "The house is within the lot's coverage and height limits",
+    ref: "design.frostDepth",
+    check: (h) => {
+      const limits = lotLimits(h.project);
+      if (!limits.length) return [{ status: "manual", text: "Fill in \"My real lot\" on the Plans page with your zoning lot coverage and height limits to check them." }];
+      const out: RuleResult[] = limits.map((c) => {
+        if (c.ok === null) return { status: "manual", text: `${c.name}: no limit entered. The house is ${limitText(c.actual, c.unit)}.` };
+        const line = `${c.name}: ${limitText(c.actual, c.unit)}, ${limitText(c.limit!, c.unit)} allowed.`;
+        return c.ok
+          ? { status: "pass", text: line }
+          : { status: "fail", text: line, fix: c.id === "coverage" ? "Make the footprint smaller (fewer or smaller rooms on the main floor, or build up instead of out)." : "Lower the roof pitch or ceiling heights, or use a roof shape that sits lower." };
+      });
+      const rise = tallShedRise(h.project);
+      if (rise !== null) out.push({ status: "manual", text: shedWarning(rise) });
+      return out;
+    },
+  },
+  {
     id: "lot-fire",
     group: "Site",
     get title() {
@@ -648,7 +669,7 @@ function localSection(id: string): string | undefined {
     const who = changedBy(key);
     return who ? `${ref} as amended by ${who}` : ref;
   };
-  if (id === "setbacks") return codeSet().local.zoningCode ?? "Local zoning code";
+  if (id === "setbacks" || id === "lot-limits") return codeSet().local.zoningCode ?? "Local zoning code";
   if (id === "lot-fire") return amended("IRC Table R302.1(1)", "fire.ratedWallDistance");
   if (id === "footings") return amended("IRC R403.1", "struct.footingsLightFrame");
   // A state plumbing code (the UPC) puts toilet and shower rooms in its own sections.

@@ -42,6 +42,7 @@ export default function House3DPanel({
   onShowRoof,
   onWalls,
   onRoof,
+  shedNote,
 }: {
   editing: boolean;
   roof: Roof;
@@ -56,6 +57,8 @@ export default function House3DPanel({
   onShowRoof: (on: boolean) => void;
   onWalls: (w: WallsShown) => void;
   onRoof: (patch: Partial<Roof>) => void;
+  /** Shown under the shed roof choices when the roof climbs very high. */
+  shedNote?: string | null;
 }) {
   return (
     <div className="card space-y-4 p-4">
@@ -169,6 +172,7 @@ export default function House3DPanel({
           </select>
         </label>
       )}
+      {roof.style === "shed" && shedNote && <p className="rounded-md bg-amber-50 p-2 text-xs text-amber-900" data-testid="shed-tall-warning">{shedNote}</p>}
     </div>
   );
 }

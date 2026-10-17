@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import { LOT_SIDES, RealLot, type Easement, type LotSide, type PlansSettings, type Project } from "@/lib/model/schema";
 import { lotFromCustomLand, siteLayout } from "@/lib/plans/lot";
+import { limitText, lotLimits, shedWarning, tallShedRise } from "@/lib/plans/lotLimits";
 
 /**
  * "My real lot": the owner's lot from the recorded plat, so the site plan
@@ -26,6 +27,7 @@ type Draft = {
   houseFrontFt: string;
   houseLeftFt: string;
   heightLimitFt: string;
+  coverageLimitPct: string;
 };
 
 const str = (n: number | null | undefined) => (n === null || n === undefined || n === 0 ? "" : String(n));
@@ -51,6 +53,7 @@ function toDraft(lot: RealLot | null, fallbackStreet: RealLot["streetSide"]): Dr
     houseFrontFt: str(lot?.houseFrontFt),
     houseLeftFt: str(lot?.houseLeftFt),
     heightLimitFt: str(lot?.heightLimitFt),
+    coverageLimitPct: str(lot?.coverageLimitPct),
   };
 }
 
@@ -71,6 +74,7 @@ function toLot(d: Draft): RealLot {
     houseFrontFt: num(d.houseFrontFt),
     houseLeftFt: num(d.houseLeftFt),
     heightLimitFt: num(d.heightLimitFt),
+    coverageLimitPct: num(d.coverageLimitPct),
   });
 }
 
@@ -89,6 +93,8 @@ export default function RealLotForm({ project, onSave, onClose }: { project: Pro
   const lot = useMemo(() => toLot(d), [d]);
   const trial = useMemo(() => ({ ...project, plans: { ...project.plans, lot } }), [project, lot]);
   const site = useMemo(() => siteLayout(trial), [trial]);
+  const limits = useMemo(() => (site?.real ? lotLimits(trial) : []), [site, trial]);
+  const shedRise = useMemo(() => (site?.real ? tallShedRise(trial) : null), [site, trial]);
   const rect = d.shape === "rectangle";
   const custom = project.plot?.source === "custom";
   const [copyNote, setCopyNote] = useState<string | null>(null);
@@ -216,10 +222,11 @@ export default function RealLotForm({ project, onSave, onClose }: { project: Pro
             </fieldset>
             <fieldset>
               <legend className="field-label">Where the house sits (leave empty to center it behind the front setback)</legend>
-              <div className="grid grid-cols-3 gap-3">
+              <div className="grid grid-cols-2 gap-3">
                 {field("houseFrontFt", "From the front line")}
                 {field("houseLeftFt", "From the left line")}
                 {field("heightLimitFt", "Height limit", "Zoning, if known")}
+                {field("coverageLimitPct", "Lot coverage limit", "Percent, if known")}
               </div>
             </fieldset>
           </div>
@@ -249,6 +256,30 @@ export default function RealLotForm({ project, onSave, onClose }: { project: Pro
             ) : (
               <p className="rounded-md bg-amber-50 p-2 text-xs text-amber-900">{site?.problems[0] ?? "Enter the lot's sides to see it here."}</p>
             )}
+            {site?.real && (
+              <table className="w-full text-xs" data-testid="lot-limits">
+                <thead>
+                  <tr className="text-left text-muted">
+                    <th>Limit</th>
+                    <th>Allowed</th>
+                    <th>House</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {limits.map((c) => (
+                    <tr key={c.id} className={c.ok === false ? "text-red-700" : ""} data-testid={`lot-limit-${c.id}`}>
+                      <td>{c.name}</td>
+                      <td>{c.limit ? limitText(c.limit, c.unit) : "–"}</td>
+                      <td>
+                        {limitText(c.actual, c.unit)}
+                        {c.ok === false ? (c.id === "coverage" ? " (covers too much)" : " (too tall)") : ""}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
+            {shedRise !== null && <p className="rounded-md bg-amber-50 p-2 text-xs text-amber-900" data-testid="lot-shed-warning">{shedWarning(shedRise)}</p>}
             {site?.real && <p className="text-xs text-muted">Lot area {Math.round(site.areaSqft).toLocaleString("en-US")} sq ft ({(site.areaSqft / 43560).toFixed(2)} acres).</p>}
           </div>
         </div>
@@ -280,6 +311,19 @@ export default function RealLotForm({ project, onSave, onClose }: { project: Pro
 
 /** The lot, setback line and house, north up. */
 function LotSketch({ site }: { site: ReturnType<typeof siteLayout> }) {
+  // Each setback line is green when the house stays inside it and red when it reaches over.
+  const mid = site?.real ? { x: site.outline.reduce((t, q) => t + q.x, 0) / site.outline.length, y: site.outline.reduce((t, q) => t + q.y, 0) / site.outline.length } : null;
+  const setbackLines = !site?.real || !mid
+    ? []
+    : site.lines.flatMap((l) => {
+        if (l.setbackFt === null) return [];
+        const len = Math.hypot(l.b.x - l.a.x, l.b.y - l.a.y) || 1;
+        let n = { x: -(l.b.y - l.a.y) / len, y: (l.b.x - l.a.x) / len };
+        if ((mid.x - l.a.x) * n.x + (mid.y - l.a.y) * n.y < 0) n = { x: -n.x, y: -n.y };
+        const d = l.setbackFt * 12;
+        const ok = site.checks.find((c) => c.side === l.side)?.ok;
+        return [{ side: l.side, x1: l.a.x + n.x * d, y1: l.a.y + n.y * d, x2: l.b.x + n.x * d, y2: l.b.y + n.y * d, ok }];
+      });
   if (!site?.real) return <div className="flex aspect-square items-center justify-center rounded-md border border-line text-xs text-muted">No lot yet</div>;
   const pts = [...site.outline, ...site.house.flat()];
   const xs = pts.map((p) => p.x);
@@ -297,6 +341,9 @@ function LotSketch({ site }: { site: ReturnType<typeof siteLayout> }) {
         <polygon key={i} points={path(e.pts)} fill="#fde68a" fillOpacity={0.5} stroke="none" />
       ))}
       <polygon points={path(site.outline)} fill="none" stroke="#111" strokeWidth={sw * 1.5} strokeDasharray={`${sw * 8} ${sw * 3}`} />
+      {setbackLines.map((l) => (
+        <line key={l.side} x1={l.x1} y1={l.y1} x2={l.x2} y2={l.y2} stroke={l.ok === false ? "#dc2626" : "#16a34a"} strokeWidth={sw * 1.5} data-testid={`setback-${l.side}-${l.ok === false ? "red" : "green"}`} />
+      ))}
       {site.house.map((r, i) => (
         <polygon key={i} points={path(r)} fill={site.checks.some((c) => c.ok === false) ? "#fecaca" : "#d6e4d0"} stroke="#111" strokeWidth={sw} />
       ))}
