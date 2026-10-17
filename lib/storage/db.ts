@@ -1,5 +1,6 @@
 import Dexie, { type EntityTable, type Table } from "dexie";
 import { migrateProject, newId, withSuffix } from "@/lib/model/project";
+import { repairProjectData, type RepairResult } from "@/lib/model/repair";
 import { CustomLand, type Project } from "@/lib/model/schema";
 
 /** Projects are saved in the browser's IndexedDB under the name "house-design-app". */
@@ -67,6 +68,28 @@ export async function listProjects(): Promise<ProjectSummary[]> {
 export async function loadProject(id: string): Promise<Project | null> {
   const raw = await getDb().projects.get(id);
   return raw ? migrateProject(raw) : null;
+}
+
+/** A house's saved data exactly as stored, for "Download its saved data" when it can't be opened. */
+export async function loadRawProject(id: string): Promise<unknown> {
+  return (await getDb().projects.get(id)) ?? null;
+}
+
+/**
+ * "Try to repair": reset what doesn't read in a house that can't be opened,
+ * and save it. Its undo history is dropped (it holds the same damage).
+ */
+export async function repairSavedProject(id: string, now = new Date()): Promise<RepairResult | null> {
+  const d = getDb();
+  const raw = await d.projects.get(id);
+  if (!raw) return null;
+  const result = repairProjectData(raw, now);
+  await d.transaction("rw", [d.projects, d.history, d.historyMeta], async () => {
+    await d.projects.put(result.project);
+    await d.history.where("projectId").equals(id).delete();
+    await d.historyMeta.delete(id);
+  });
+  return result;
 }
 
 export async function saveProject(project: Project): Promise<void> {

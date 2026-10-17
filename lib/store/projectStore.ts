@@ -24,6 +24,8 @@ type State = {
   notFound: boolean;
   /** Why the house couldn't be opened (a damaged save), or null. */
   loadError: string | null;
+  /** The house can't be opened because its saved data is damaged (not from a newer app), so it can be repaired. */
+  damaged: boolean;
   saveState: SaveState;
   /**
    * Every version of the project, oldest first. versions[at] is the one open
@@ -129,6 +131,7 @@ export const useProjectStore = create<State>((set, get) => {
     loading: false,
     notFound: false,
     loadError: null,
+    damaged: false,
     saveState: "saved",
     versions: [],
     at: 0,
@@ -137,7 +140,7 @@ export const useProjectStore = create<State>((set, get) => {
     notice: null,
 
     async open(id) {
-      set({ loading: true, notFound: false, loadError: null, project: null, versions: [], at: 0, canUndo: false, canRedo: false });
+      set({ loading: true, notFound: false, loadError: null, damaged: false, project: null, versions: [], at: 0, canUndo: false, canRedo: false });
       dirty = new Set();
       lastBackupAt = Date.now();
       editedSinceBackup = false;
@@ -146,7 +149,8 @@ export const useProjectStore = create<State>((set, get) => {
         p = await loadProject(id);
       } catch (e) {
         console.error("Couldn't open the house", e);
-        set({ loading: false, loadError: e instanceof Error && e.message.includes("newer version") ? e.message : "This house's saved data is damaged, so it can't be opened." });
+        const newer = e instanceof Error && e.message.includes("newer version");
+        set({ loading: false, damaged: !newer, loadError: newer ? (e as Error).message : "This house's saved data is damaged, so it can't be opened." });
         return;
       }
       if (!p) {

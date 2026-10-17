@@ -15,6 +15,9 @@ import { TOUR_SEEN_KEY } from "@/lib/tour/steps";
 import { readStorage, writeStorage } from "@/lib/browserStorage";
 import UndoButtons, { UndoNotice } from "./UndoButtons";
 import SetupForm from "./SetupForm";
+import CantOpen from "./CantOpen";
+import OtherTabBar from "./OtherTabBar";
+import type { RepairResult } from "@/lib/model/repair";
 import LandStage from "@/components/land/LandStage";
 import BriefStage from "@/components/brief/BriefStage";
 import BubbleStage from "@/components/bubbles/BubbleStage";
@@ -37,11 +40,12 @@ const SAVE_LABEL: Record<SaveState, string> = {
 };
 
 export default function ProjectWorkspace({ id }: { id: string }) {
-  const { project, loading, notFound, loadError, saveState, open, close, update, undo, redo, setStage } = useProjectStore();
+  const { project, loading, notFound, loadError, damaged, saveState, open, close, update, undo, redo, setStage } = useProjectStore();
   const [walk, setWalk] = useState<null | { window?: "interior" | "exterior" }>(null);
   const [costOpen, setCostOpen] = useState(false);
   const [plansOpen, setPlansOpen] = useState(false);
   const [furnishLevel, setFurnishLevel] = useState<string>();
+  const [repaired, setRepaired] = useState<RepairResult | null>(null);
   // Worked out a moment behind edits, so dragging in the plan stays smooth.
   const deferred = useDeferredValue(project);
   const { cost, costError } = useMemo(() => {
@@ -106,12 +110,15 @@ export default function ProjectWorkspace({ id }: { id: string }) {
 
   if (loadError) {
     return (
-      <main className="mx-auto max-w-6xl px-6 py-10">
-        <p className="text-sm">{loadError}</p>
-        <Link href="/" className="mt-4 inline-block text-sm text-accent underline">
-          Back to your houses
-        </Link>
-      </main>
+      <CantOpen
+        id={id}
+        message={loadError}
+        damaged={damaged}
+        onOpen={(result) => {
+          setRepaired(result ?? null);
+          void open(id);
+        }}
+      />
     );
   }
   if (loading || (!project && !notFound)) {
@@ -185,6 +192,9 @@ export default function ProjectWorkspace({ id }: { id: string }) {
         </div>
       </div>
 
+      <OtherTabBar houseId={project.id} />
+      {repaired && <RepairedBar result={repaired} onDismiss={() => setRepaired(null)} />}
+
       <div className="mb-8 flex items-center justify-between gap-4 border-b border-line pb-3">
         <StageBar current={shownStage(project.stage)} onSelect={setStage} nudges={project.location ? {} : { setup: "Pick where you’ll build" }} />
         <div className="flex shrink-0 items-center gap-3">
@@ -239,6 +249,37 @@ export default function ProjectWorkspace({ id }: { id: string }) {
             setStage("setup");
           }}
         />
+      )}
+    </div>
+  );
+}
+
+/** What "Try to repair" changed, shown once the repaired house opens. */
+function RepairedBar({ result, onDismiss }: { result: RepairResult; onDismiss: () => void }) {
+  const parts = [
+    result.reset.length ? `put ${result.reset.length} ${result.reset.length === 1 ? "setting" : "settings"} back to the defaults` : "",
+    result.removed.length ? `took out ${result.removed.length} broken ${result.removed.length === 1 ? "piece" : "pieces"}` : "",
+  ].filter(Boolean);
+  return (
+    <div className="mb-4 rounded-md border border-line bg-paper px-4 py-2 text-sm" data-testid="repaired">
+      <div className="flex items-start justify-between gap-3">
+        <p>Repaired: {parts.length ? parts.join(" and ") : "nothing needed changing"}. Check the house over before you go on.</p>
+        <button className="text-xs text-muted hover:text-ink" onClick={onDismiss}>
+          Dismiss
+        </button>
+      </div>
+      {parts.length > 0 && (
+        <details className="mt-1 text-xs text-muted">
+          <summary className="cursor-pointer">What changed</summary>
+          <ul className="mt-1 list-disc pl-5">
+            {result.reset.map((r, i) => (
+              <li key={`r${i}`}>Reset: {r}</li>
+            ))}
+            {result.removed.map((r, i) => (
+              <li key={`x${i}`}>Taken out: {r}</li>
+            ))}
+          </ul>
+        </details>
       )}
     </div>
   );
