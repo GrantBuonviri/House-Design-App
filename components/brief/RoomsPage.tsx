@@ -10,6 +10,7 @@ import { PRIORITIES } from "@/lib/brief/priorities";
 import { plotImplications } from "@/lib/land/implications";
 import { Choice, FeetInput, Field, Stepper } from "./controls";
 import Connections from "./Connections";
+import QuickStarts from "./QuickStarts";
 
 type SetAnswers = (patch: Partial<DiscoveryAnswers>, key: string) => void;
 
@@ -87,6 +88,8 @@ export default function RoomsPage({
 
   return (
     <div className="space-y-6">
+      <QuickStarts answers={a} setAnswers={setAnswers} />
+
       <section className="card p-6">
         <div className="grid grid-cols-2 gap-6">
           <Field label="Floors above ground">

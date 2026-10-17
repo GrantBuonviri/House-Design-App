@@ -9,8 +9,10 @@ import {
   deleteProject,
   listDeleted,
   listProjects,
+  listStarts,
   loadProject,
   saveProject,
+  saveStart,
   type DeletedSummary,
   type ProjectSummary,
 } from "@/lib/storage/db";
@@ -135,7 +137,7 @@ export default function HomeScreen() {
         damaged.push(s.name);
       }
     }
-    if (all.length) downloadAllProjects(all);
+    if (all.length) downloadAllProjects(all, await listStarts());
     if (damaged.length) setMessage({ kind: "error", text: `Left out because its saved data is damaged: ${damaged.join(", ")}.` });
   }
 
@@ -145,12 +147,16 @@ export default function HomeScreen() {
     if (!file) return;
     try {
       const taken = new Set((projects ?? []).map((p) => p.id));
-      const { projects: imported, skipped } = importAnyJson(await file.text(), taken);
+      const { projects: imported, skipped, starts } = importAnyJson(await file.text(), taken);
       for (const p of imported) await saveProject(p);
+      const haveStarts = new Set((await listStarts()).map((x) => x.id));
+      const newStarts = starts.filter((x) => !haveStarts.has(x.id));
+      for (const x of newStarts) await saveStart(x);
       await refresh();
       const what = imported.length === 1 ? `"${imported[0].name}"` : `${imported.length} houses`;
       const left = skipped ? ` ${skipped} ${skipped === 1 ? "house was" : "houses were"} damaged and left out.` : "";
-      setMessage({ kind: skipped ? "error" : "info", text: `Imported ${what}.${left}` });
+      const quick = newStarts.length ? ` Also ${newStarts.length} saved quick ${newStarts.length === 1 ? "start" : "starts"}.` : "";
+      setMessage({ kind: skipped ? "error" : "info", text: `Imported ${what}.${quick}${left}` });
     } catch (err) {
       setMessage({ kind: "error", text: err instanceof Error ? err.message : "Import failed." });
     }
