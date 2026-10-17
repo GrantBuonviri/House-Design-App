@@ -136,12 +136,13 @@ export function estimate(
   line("site", "site-prep", 1);
   line("site", "excavation", q.excavationCuyd);
   line("site", "backfill-grade", q.groundSqft);
-  line("site", "driveway", q.driveSqft);
+  const onLot = q.realLot ? `Measured on your real lot (My real lot on the Plans page): about ${Math.round(q.trenchLf)} ft to the street.` : undefined;
+  line("site", "driveway", q.driveSqft, undefined, onLot && `${onLot} ${file.rates.driveway.note ?? ""}`.trim());
   if (q.drainage === "some") line("site", "drainage-some", 1);
   if (q.drainage === "major") line("site", "drainage-major", 1);
   line("site", "retaining-wall", q.retainingWallSqft);
   line("site", "rock-removal", q.rockCuyd);
-  line("site", "utility-trench", q.trenchLf);
+  line("site", "utility-trench", q.trenchLf, undefined, onLot && `${onLot} ${file.rates["utility-trench"].note ?? ""}`.trim());
   line("site", "front-walk", q.walkSqft);
   line("site", "lawn", q.lawnSqft);
   line("site", "planting-beds", q.bedSqft);
@@ -162,7 +163,8 @@ export function estimate(
 
   // Framing
   line("framing", "floor-framing", q.floorFramingSqft);
-  line("framing", "ext-wall-framing", q.extWallSqft + q.gableSqft);
+  const twoBy4 = p.plan.basics?.exteriorWall === "2x4";
+  line("framing", twoBy4 ? "ext-wall-framing-2x4" : "ext-wall-framing", q.extWallSqft + q.gableSqft, undefined, undefined, "ext-wall-framing");
   line("framing", "int-wall-framing", q.intWallLf);
   line("framing", "curved-wall-framing", q.curvedWallLf, "Curved walls: extra framing");
   line("framing", "roof-framing", q.roofSqft);
@@ -197,7 +199,7 @@ export function estimate(
   line("exterior", "ext-trim", q.eaveLf);
 
   // Insulation and drywall
-  line("insulation-drywall", "wall-insulation", q.extWallSqft + q.basementWallSqft * 0.5);
+  line("insulation-drywall", twoBy4 ? "wall-insulation-2x4" : "wall-insulation", q.extWallSqft + q.basementWallSqft * 0.5, undefined, undefined, "wall-insulation");
   line("insulation-drywall", "attic-insulation", q.atticSqft);
   line("insulation-drywall", "drywall", q.drywallSqft);
   line("insulation-drywall", "curved-wall-drywall", q.curvedWallLf, "Curved walls: extra drywall");

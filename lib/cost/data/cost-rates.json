@@ -261,6 +261,20 @@
       "note": "Per sqft of exterior wall area (gross). 2x6 @16 in, headers, 7/16 OSB, housewrap. Lumber prices 2026 assumed near 2024-25 levels. Lowered by about 25% after checking whole-house totals against published Boise cost per sq ft.",
       "normalized": "Boise price divided by Boise's cost level (0.92) to give a US-average price."
     },
+    "ext-wall-framing-2x4": {
+      "label": "Outside wall framing (2x4, sheathing, house wrap)",
+      "unit": "sqft",
+      "material": [
+        3.0435,
+        3.9946,
+        5.5163
+      ],
+      "source": "Claude's estimate: the 2x6 rate less about 12.5% for the smaller studs and plates (sheathing, wrap and headers stay the same)",
+      "url": null,
+      "checked": "2026-10-17",
+      "note": "Per sqft of exterior wall area (gross). 2x4 @16 in, headers, 7/16 OSB, housewrap. Only used when the plan basics say 2x4 outside walls.",
+      "normalized": "Worked out from the US-average 2x6 rate."
+    },
     "int-wall-framing": {
       "label": "Inside wall framing",
       "unit": "linft",
@@ -554,6 +568,20 @@
       "checked": "2026-10-14",
       "note": "Per sqft exterior wall. Fiberglass batts or BIBS; includes air sealing basics. Spray foam would be 2-3x.",
       "normalized": "Boise price divided by Boise's cost level (0.92) to give a US-average price."
+    },
+    "wall-insulation-2x4": {
+      "label": "Wall insulation R-13 + R-5 foam",
+      "unit": "sqft",
+      "material": [
+        1.3,
+        1.75,
+        2.4
+      ],
+      "source": "Claude's estimate: R-13 batts (about $0.50-$0.80/sqft) plus 1 in rigid foam board outside the sheathing (about $0.80-$1.60/sqft), materials",
+      "url": null,
+      "checked": "2026-10-17",
+      "note": "Per sqft exterior wall. 2x4 walls need R-5 continuous foam on the outside to meet the energy code (13+5), as the energy sheet says.",
+      "normalized": "US-average price."
     },
     "attic-insulation": {
       "label": "Attic insulation R-49 blown",

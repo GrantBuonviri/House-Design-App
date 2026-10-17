@@ -1,10 +1,14 @@
 "use client";
 
-import { useState } from "react";
-import type { CostSettings } from "@/lib/model/schema";
+import { useEffect, useState } from "react";
+import type { CostSettings, Project } from "@/lib/model/schema";
 import { fullMoney, shortMoney, type CostCategory, type CostLine, type Estimate } from "@/lib/cost/estimate";
 import { placeLabel } from "@/lib/location/cities";
 import { categoryShares, costByRoom, type BudgetCheck, type CostChange } from "@/lib/cost/breakdown";
+import { compareChoices, type ChoiceGroup, type ChoiceGroupId } from "@/lib/cost/compare";
+import { estimateCsv, estimateFileName, estimatePdf } from "@/lib/cost/exportEstimate";
+import { downloadText } from "@/lib/download";
+import { downloadPdf } from "@/lib/plans/pdf";
 
 /** The top-bar total. Clicking it opens and closes the cost panel. */
 export function CostBadge({
@@ -123,6 +127,7 @@ function Line({ l }: { l: CostLine }) {
         {amount(l)}
         {r ? ` at ${r}` : ""}
       </div>
+      {l.note?.startsWith("Measured on your real lot") && <div className="mt-0.5 text-xs text-emerald-800">{l.note.slice(0, l.note.indexOf(".", l.note.indexOf("street")) + 1)}</div>}
       <div className="mt-0.5 text-xs text-muted" title={l.note}>
         {l.url ? (
           <a href={l.url} target="_blank" rel="noreferrer" className="underline hover:text-ink">
@@ -290,6 +295,104 @@ function RecentChanges({ changes }: { changes: CostChange[] }) {
   );
 }
 
+/** Save the estimate as a spreadsheet or a PDF, to set beside builders' bids. */
+function ExportButtons({ estimate, houseName }: { estimate: Estimate; houseName: string }) {
+  const [busy, setBusy] = useState(false);
+  return (
+    <div className="mt-3 flex flex-wrap items-center gap-2 text-sm" data-testid="cost-export">
+      <span className="text-muted">Save the estimate:</span>
+      <button
+        className="rounded-md border border-line px-2.5 py-1 hover:bg-stone-50"
+        onClick={() => downloadText(estimateCsv(estimate, houseName), estimateFileName(houseName, "csv"), "text/csv")}
+        title="A spreadsheet file that opens in Excel, Numbers or Google Sheets, with an empty Bid column to fill in from each builder's quote"
+        data-testid="cost-export-csv"
+      >
+        Spreadsheet
+      </button>
+      <button
+        className="rounded-md border border-line px-2.5 py-1 hover:bg-stone-50 disabled:opacity-60"
+        disabled={busy}
+        onClick={async () => {
+          setBusy(true);
+          try {
+            downloadPdf(await estimatePdf(estimate, houseName), estimateFileName(houseName, "pdf"));
+          } finally {
+            setBusy(false);
+          }
+        }}
+        data-testid="cost-export-pdf"
+      >
+        {busy ? "Making the PDF…" : "PDF"}
+      </button>
+    </div>
+  );
+}
+
+const signed = (n: number) => (Math.abs(n) < 500 ? "same" : `${n > 0 ? "+" : "−"}${shortMoney(Math.abs(n))}`);
+
+/**
+ * What a few big choices would cost, side by side: each option is the whole estimate again with
+ * only that choice changed. Worked out when opened, since it measures the house a few more times.
+ */
+function CompareChoices({ project, estimate, onChoose }: { project: Project; estimate: Estimate; onChoose?: (group: ChoiceGroupId, value: string) => void }) {
+  const [open, setOpen] = useState(false);
+  const [result, setResult] = useState<{ for: Estimate; groups: ChoiceGroup[] } | null>(null);
+  useEffect(() => {
+    if (!open || result?.for === estimate) return;
+    // Let the panel show "Working it out" before the measuring starts.
+    const t = setTimeout(() => setResult({ for: estimate, groups: compareChoices(project, estimate) }), 30);
+    return () => clearTimeout(t);
+  }, [open, estimate, project, result]);
+  const groups = result?.for === estimate ? result.groups : null;
+  return (
+    <div className="mt-4" data-testid="cost-compare">
+      <button className="text-sm font-medium" onClick={() => setOpen(!open)} aria-expanded={open} data-testid="cost-compare-toggle">
+        <span className="mr-1 inline-block w-3 text-muted">{open ? "▾" : "▸"}</span>
+        Compare choices
+      </button>
+      {open && !groups && <p className="mt-1 ml-4 text-sm text-muted">Working it out…</p>}
+      {open && groups && (
+        <div className="ml-4">
+          <p className="mt-1 text-xs text-muted">The whole estimate with just one thing changed, next to your house as it is now.</p>
+          {groups.map((g) => {
+            const cheapest = Math.min(...g.options.map((o) => o.total));
+            return (
+              <div key={g.id} className="mt-3" data-testid={`cost-compare-${g.id}`}>
+                <div className="text-sm">{g.label}</div>
+                <ul className="mt-1 divide-y divide-line rounded-md border border-line">
+                  {g.options.map((o) => (
+                    <li key={o.value} className={`flex items-center gap-2 px-2.5 py-1.5 text-sm ${o.current ? "bg-accent-soft" : ""}`}>
+                      <span className="w-24 shrink-0">
+                        {o.label}
+                        {o.total === cheapest && o.diff < -500 && <span className="ml-1 text-xs text-emerald-700">least</span>}
+                      </span>
+                      <span className="tabular-nums">{shortMoney(o.total)}</span>
+                      <span className={`ml-auto text-xs tabular-nums ${o.current ? "text-muted" : o.diff > 500 ? "text-amber-800" : o.diff < -500 ? "text-emerald-700" : "text-muted"}`}>
+                        {o.current ? "yours now" : signed(o.diff)}
+                      </span>
+                      {onChoose && (
+                        <button
+                          className="w-16 shrink-0 rounded border border-line px-1.5 py-0.5 text-xs hover:bg-white disabled:invisible"
+                          disabled={o.current}
+                          onClick={() => onChoose(g.id, o.value)}
+                          data-testid={`cost-use-${g.id}-${o.value}`}
+                        >
+                          Use this
+                        </button>
+                      )}
+                    </li>
+                  ))}
+                </ul>
+                {g.note && <p className="mt-1 text-xs text-muted">{g.note}</p>}
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
+
 const UTILITIES: { id: CostSettings["utilities"]; label: string }[] = [
   { id: "city", label: "City hookups" },
   { id: "well-septic", label: "Well and septic" },
@@ -383,8 +486,14 @@ export default function CostPanel({
   budget = null,
   onSetBudget,
   changes = [],
+  project,
+  onChoose,
 }: {
   estimate: Estimate;
+  /** The project the estimate is for: its name for the exported files, and the choices to compare. */
+  project?: Project;
+  /** Save a compared choice (foundation, roof shape, outside walls). */
+  onChoose?: (group: ChoiceGroupId, value: string) => void;
   onClose: () => void;
   onUtilities: (u: CostSettings["utilities"]) => void;
   /** The person's own permit fee in dollars, or null to go back to the typical fee table. */
@@ -420,6 +529,7 @@ export default function CostPanel({
           About {fullMoney(estimate.perSqft.likely)} per sq ft for {Math.round(q.livingSqft).toLocaleString("en-US")} sq ft of living space
           {q.garageSqft > 1 ? ` (plus ${Math.round(q.garageSqft).toLocaleString("en-US")} sq ft of garage)` : ""}.
         </div>
+        <ExportButtons estimate={estimate} houseName={project?.name ?? "House"} />
         <p className="mt-3 rounded-md bg-stone-100 px-3 py-2 text-sm text-ink" data-testid="cost-disclaimer">
           Materials only. Labor isn&apos;t included
           {hiredJobs(estimate).length
@@ -467,6 +577,8 @@ export default function CostPanel({
             </ul>
           </div>
         )}
+
+        {project && <CompareChoices project={project} estimate={estimate} onChoose={onChoose} />}
 
         <div className="mt-4 flex gap-1" role="tablist">
           {(

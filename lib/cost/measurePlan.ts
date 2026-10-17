@@ -19,7 +19,8 @@ import { cabinetsByRoom, furnishExtras, potFillersByRoom } from "./furnishQuanti
 import { overhangsOf, postsUnder, supportOf } from "@/lib/plan/support";
 import { flatProject, savedPlans, savedRoom } from "@/lib/plan/flatten";
 import { roomArea, roomEdgeArc, wallArc } from "@/lib/plan/arcs";
-import type { FloorPlan } from "@/lib/model/schema";
+import type { FloorPlan, Project } from "@/lib/model/schema";
+import { lotAsPlot, realLotOk, siteLayout } from "@/lib/plans/lot";
 
 /** Inches of curved wall along the curve, over every floor. A wall two rooms share counts once. */
 export function curvedWallLength(plans: Record<string, FloorPlan>): number {
@@ -250,13 +251,17 @@ export function measurePlan(p: Ctx): Quantities | null {
 
   // Driveway from the garage (or the house) to the road, and service lines to the road.
   const garageCenter = garagePolys.length ? centerOf(garagePolys.flat()) : centerOf(groundRegions.flatMap((r) => r.outline));
-  const toStreet = ft(toRoad(p, garageCenter, offset));
+  // On "My real lot" the street is the lot's front line, as the site plan draws it; otherwise the land's road.
+  const lot = realLotOk(p.plans?.lot ?? null) ? siteLayout(p as Project) : null;
+  const access = lot ? lotAsPlot(lot, p.plot) : { plot: p.plot, offset };
+  q.realLot = !!lot;
+  const toStreet = ft(toRoad({ ...p, plot: access.plot }, garageCenter, access.offset));
   const garageWidth = garagePolys.length ? Math.min(30, Math.max(12, q.garageDoorLf ? q.garageDoorLf + 4 : 20)) : 12;
   q.driveSqft = toStreet * garageWidth;
   q.trenchLf = toStreet;
 
   // The yard as laid out for the 3D view: driveway, walk, beds, lawn, plants and outdoor lights.
-  const yard = yardLayout(plans, p.levels, basics, p.plot, offset);
+  const yard = yardLayout(plans, p.levels, basics, access.plot, access.offset);
   if (yard) {
     const y = yardAmounts(yard);
     if (y.driveSqft > 0) q.driveSqft = y.driveSqft;

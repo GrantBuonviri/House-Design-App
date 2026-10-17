@@ -28,6 +28,7 @@ import FurnishStage from "@/components/furnish/FurnishStage";
 import CostPanel, { CostBadge } from "@/components/cost/CostPanel";
 import { estimate as estimateCost } from "@/lib/cost/estimate";
 import { budgetCheck } from "@/lib/cost/breakdown";
+import { withChoice } from "@/lib/cost/compare";
 import { useCostChanges } from "@/components/cost/useCostChanges";
 import { locationOf } from "@/lib/location/current";
 import { placeLabel } from "@/lib/location/cities";
@@ -262,6 +263,8 @@ export default function ProjectWorkspace({ id }: { id: string }) {
           }}
           budget={budget}
           changes={costChanges}
+          project={deferred ?? project}
+          onChoose={(group, value) => update((p) => withChoice(p, group, value))}
           onSetBudget={() => {
             setCostOpen(false);
             setStage("brief");

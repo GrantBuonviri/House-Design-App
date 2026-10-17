@@ -53,6 +53,8 @@ export type Quantities = {
   excavationCuyd: number;
   driveSqft: number;
   trenchLf: number;
+  /** The driveway and trench were measured to the street on "My real lot". */
+  realLot: boolean;
 
   // The yard (see lib/exterior/yard.ts)
   walkSqft: number;
@@ -216,6 +218,7 @@ export function empty(source: Quantities["source"]): Quantities {
     excavationCuyd: 0,
     driveSqft: 0,
     trenchLf: 0,
+    realLot: false,
     floorFramingSqft: 0,
     extWallSqft: 0,
     gableSqft: 0,

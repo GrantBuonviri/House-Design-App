@@ -18,7 +18,12 @@ export function downloadSavedData(raw: unknown, name: string) {
 }
 
 function downloadJson(text: string, fileName: string) {
-  const blob = new Blob([text], { type: "application/json" });
+  downloadText(text, fileName, "application/json");
+}
+
+/** Save text (JSON, CSV) as a file through the browser's download. */
+export function downloadText(text: string, fileName: string, type: string) {
+  const blob = new Blob([text], { type });
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
   a.href = url;
