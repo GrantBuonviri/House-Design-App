@@ -23,6 +23,7 @@ Read this file first, then open only the files for the feature you're changing. 
 - The saved project is one Zod object in `lib/model/schema.ts`. Changing its shape means bumping `SCHEMA_VERSION` and adding a migration in `lib/model/project.ts`.
 - Every edit goes through `useProjectStore().update(...)` in `lib/store/projectStore.ts` (undo history + autosave). Undo labels come from `lib/store/describe.ts`.
 - Logic lives in `lib/` as plain functions with tests in `tests/`; `components/` is UI. 3D and Konva components load with `dynamic(..., { ssr: false })`.
+- Kept answers: `planWarnings` reuses each floor's warnings while what `levelDeps` (in `lib/plan/checks.ts`) lists is unchanged, so a check that starts reading another floor must add it there; `measureHouse` keeps its last 8 answers; the Plans page preview draws only the shown sheet (`buildSet`'s `draw`).
 - Everything is worked out by code. No Claude/AI calls and no API keys in the app.
 - Each change: its own branch and PR. The user (Grant, on a Mac, new to dev tools) tests locally; his steps always include `git pull` and `npm install`.
 

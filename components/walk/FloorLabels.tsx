@@ -13,6 +13,7 @@ import { boundsOf } from "@/lib/plan/geometry";
 /** Room labels lying on the floor in the walkthrough, turned to read the way you're facing, or fixed north-up when `settings.locked`. Settings: components/walk/LabelSettingsPanel.tsx. */
 
 type Made = { key: string; texture: THREE.CanvasTexture; w: number; h: number; x: number; y: number; z: number };
+type Drawn = ReturnType<typeof drawLabel>;
 
 const PX = 56;
 
@@ -68,7 +69,11 @@ export function FloorLabels({
   costTotal?: number;
 }) {
   const basics: PlanBasics | null = project.plan.basics;
+  // Each label's picture, by what it says and how it's drawn: an edit redraws only the labels it changed.
+  const drawnRef = useRef(new Map<string, Drawn>());
   const labels = useMemo<Made[]>(() => {
+    const before = drawnRef.current;
+    const now = new Map<string, Drawn>();
     const levels: Level[] = project.levels.filter((l) => heights[l.id] && (project.floorPlans[l.id]?.rooms.length ?? 0) > 0);
     const shares = costShares(levels.map((l) => project.floorPlans[l.id].rooms));
     const out: Made[] = [];
@@ -80,7 +85,9 @@ export function FloorLabels({
         );
         if (!lines.length) continue;
         const ink = labelInk(settings.textColor, floorColorOf(project.interior.selections, room.id));
-        const made = drawLabel(lines, ink, settings.background);
+        const look = JSON.stringify([lines, ink, settings.background]);
+        const made = now.get(look) ?? before.get(look) ?? drawLabel(lines, ink, settings.background);
+        now.set(look, made);
         // About LABEL_LINE_IN inches of floor per line of text, but never wider than the room.
         const bb = boundsOf(room.polygon)!;
         const hIn = (made.height / (PX * 1.25)) * LABEL_LINE_IN[settings.textSize];
@@ -99,10 +106,12 @@ export function FloorLabels({
         });
       }
     }
+    for (const [look, d] of before) if (!now.has(look)) d.texture.dispose();
+    drawnRef.current = now;
     return out;
   }, [project.levels, project.floorPlans, project.interior.selections, basics, heights, settings, frame, costTotal]);
 
-  useEffect(() => () => labels.forEach((l) => l.texture.dispose()), [labels]);
+  useEffect(() => () => drawnRef.current.forEach((d) => d.texture.dispose()), []);
 
   // Every label turns to read the way you're facing, unless locked (rotation 0 is north-up, like the floor plan).
   const group = useRef<THREE.Group>(null);

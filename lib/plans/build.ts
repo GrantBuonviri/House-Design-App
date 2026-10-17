@@ -29,8 +29,13 @@ import { flatProject } from "@/lib/plan/flatten";
 export type SetOptions = {
   /** Sheet ids to draw. Left out: every sheet that can be drawn and isn't excluded in the project's settings. */
   only?: string[];
+  /** Sheet ids to actually draw and return (the Plans page preview). The rest of `only` still counts toward the sheet numbers and "3 of 7"; sheets that can run to more than one page are measured, the others are counted as one. */
+  draw?: string[];
   date?: Date;
 };
+
+/** Sheet kinds that can run to more than one page, so they're built even when not drawn, to count them. */
+const MULTI_PAGE = new Set(["code", "door-window", "finishes", "fixtures", "cabinets", "elevations", "energy", "struct-notes", "sections"]);
 
 export function issueDate(d = new Date()): string {
   return d.toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" });
@@ -51,7 +56,12 @@ export function buildSet(project: Project, opts: SetOptions = {}): Sheet[] {
   const chosen = r.sheets.filter((s) => canDraw(s) && ids.has(s.id));
   const h = houseFacts(project);
   const drafts: { entry: SheetEntry; number: string; title: string; items: Item[]; scale?: string }[] = [];
+  const drawn = (id: string) => !opts.draw || opts.draw.includes(id);
   for (const entry of chosen) {
+    if (!drawn(entry.id) && !MULTI_PAGE.has(entry.id)) {
+      drafts.push({ entry, number: entry.number, title: entry.title, items: [] });
+      continue;
+    }
     if (entry.id === "cover") drafts.push({ entry, number: entry.number, title: entry.title, items: coverSheet(project, { sheets: chosen, report: r.report, label: r.label }) });
     else if (entry.id === "code") {
       codeSheets(project, r.report).forEach((items, i) => drafts.push({ entry, number: i ? `${entry.number}.${i}` : entry.number, title: i ? `${entry.title} (continued)` : entry.title, items }));
@@ -108,12 +118,17 @@ export function buildSet(project: Project, opts: SetOptions = {}): Sheet[] {
     }
   }
   const info = { project, label: r.label, date: issueDate(opts.date), half: project.plans.sheetSize === "half", total: drafts.length };
-  return drafts.map((d, i) => ({
-    id: i && drafts[i - 1].entry.id === d.entry.id ? `${d.entry.id}:${i}` : d.entry.id,
-    number: d.number,
-    title: d.title,
-    w: SHEET_W,
-    h: SHEET_H,
-    items: [...d.items, ...frame(info, { number: d.number, title: d.title, index: i + 1, scale: d.scale })],
-  }));
+  const out: Sheet[] = [];
+  drafts.forEach((d, i) => {
+    if (!drawn(d.entry.id)) return;
+    out.push({
+      id: i && drafts[i - 1].entry.id === d.entry.id ? `${d.entry.id}:${i}` : d.entry.id,
+      number: d.number,
+      title: d.title,
+      w: SHEET_W,
+      h: SHEET_H,
+      items: [...d.items, ...frame(info, { number: d.number, title: d.title, index: i + 1, scale: d.scale })],
+    });
+  });
+  return out;
 }

@@ -17,17 +17,25 @@ export { measureRough } from "./measureRough";
 // The measuring lives in measurePlan.ts, measureRough.ts and measureRoof.ts, sharing quantityBasics.ts.
 
 const CTX_KEYS = ["levels", "plot", "sketch", "bubbles", "floorPlans", "house3d", "plan", "discovery", "brief", "location", "plans"] as const;
-let last: { p: Ctx; q: Quantities | null } | null = null;
+/** Answers kept: the shown estimate survives Suggest scoring a few alternatives (PlanStage's `costOf`). */
+const KEEP = 8;
+let recent: { p: Ctx; q: Quantities | null }[] = [];
 
 /**
  * The best measure available: the floor plan, or the rough one from the Rooms
- * page. The last answer is kept, so changes that don't touch the house's
- * shape (like picking a finish) don't measure it all again.
+ * page. The last few answers are kept, so changes that don't touch the house's
+ * shape (like picking a finish) don't measure it all again, and scoring
+ * alternatives doesn't throw out the estimate that's showing.
  */
 export function measureHouse(p: Ctx): Quantities | null {
   p = flatProject(p);
-  if (last && CTX_KEYS.every((k) => last!.p[k] === p[k])) return last.q;
+  const i = recent.findIndex((e) => CTX_KEYS.every((k) => e.p[k] === p[k]));
+  if (i >= 0) {
+    const hit = recent[i];
+    if (i > 0) recent = [hit, ...recent.slice(0, i), ...recent.slice(i + 1)];
+    return hit.q;
+  }
   const q = measurePlan(p) ?? measureRough(p);
-  last = { p: Object.fromEntries(CTX_KEYS.map((k) => [k, p[k]])) as Ctx, q };
+  recent = [{ p: Object.fromEntries(CTX_KEYS.map((k) => [k, p[k]])) as Ctx, q }, ...recent].slice(0, KEEP);
   return q;
 }

@@ -55,7 +55,7 @@ export default function PlansPage({ project, onClose, onGo, onEditInFurnish }: {
   }, [onClose, details, lotOpen]);
 
   const previewEntry = r.sheets.find((s) => s.id === preview && canDraw(s));
-  const sheets = useMemo(() => (previewEntry ? buildSet(project, { only: [...selected, previewEntry.id] }) : []), [project, selected, previewEntry]);
+  const sheets = useMemo(() => (previewEntry ? buildSet(project, { only: [...selected, previewEntry.id], draw: [previewEntry.id] }) : []), [project, selected, previewEntry]);
   const shown = sheets.filter((s) => s.id === preview || s.id.startsWith(`${preview}:`));
 
   const setPlans = (patch: Partial<PlansSettings>, coalesce?: string) => update((p) => ({ ...p, plans: { ...p.plans, ...patch } }), coalesce ? { coalesce } : undefined);
