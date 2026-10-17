@@ -9,7 +9,7 @@ import { z } from "zod";
  * Angles are degrees clockwise from north (0 = N, 90 = E).
  */
 
-export const SCHEMA_VERSION = 33;
+export const SCHEMA_VERSION = 34;
 
 export const Point = z.object({ x: z.number(), y: z.number() });
 export type Point = z.infer<typeof Point>;
@@ -627,7 +627,6 @@ export const PlanBasics = z.object({
   stairs: z.enum(["straight", "l", "u"]).default("straight"),
   /** Interior door height, inches: 80 (6' 8") or 96 (8'). */
   doorHeightIn: z.number().min(78).max(120).default(80),
-  doorStyle: z.enum(["shaker", "flat", "panel", "glass"]).default("shaker"),
 });
 export type PlanBasics = z.infer<typeof PlanBasics>;
 

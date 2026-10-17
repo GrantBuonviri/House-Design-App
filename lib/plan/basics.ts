@@ -69,10 +69,3 @@ export const STAIRS_LABEL: Record<PlanBasics["stairs"], string> = {
   l: "L-shaped, with a landing",
   u: "U-shaped (switchback)",
 };
-
-export const DOOR_STYLE_LABEL: Record<PlanBasics["doorStyle"], string> = {
-  shaker: "Shaker (simple flat panels)",
-  flat: "Flat slab (modern)",
-  panel: "Raised panel (traditional)",
-  glass: "Glass panel",
-};

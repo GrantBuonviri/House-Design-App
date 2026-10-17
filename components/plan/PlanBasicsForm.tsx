@@ -3,7 +3,7 @@
 import { useState } from "react";
 import type { Level, PlanBasics } from "@/lib/model/schema";
 import { formatFeetInches } from "@/lib/model/units";
-import { DOOR_STYLE_LABEL, GARAGE_LABEL, STAIRS_LABEL, ceilingFor, defaultBasics } from "@/lib/plan/basics";
+import { GARAGE_LABEL, STAIRS_LABEL, ceilingFor, defaultBasics } from "@/lib/plan/basics";
 import { usePlace } from "@/lib/location/usePlace";
 import { placeLabel } from "@/lib/location/cities";
 
@@ -104,16 +104,6 @@ export default function PlanBasicsForm({
             onChange={(v) => set({ doorHeightIn: v })}
           />
         </div>
-        <label className="field-label mt-3" htmlFor="door-style">
-          Style
-        </label>
-        <select id="door-style" className="input" value={b.doorStyle} onChange={(e) => set({ doorStyle: e.target.value as PlanBasics["doorStyle"] })}>
-          {(Object.keys(DOOR_STYLE_LABEL) as PlanBasics["doorStyle"][]).map((k) => (
-            <option key={k} value={k}>
-              {DOOR_STYLE_LABEL[k]}
-            </option>
-          ))}
-        </select>
       </Section>
 
       <div className="mt-8 flex justify-end gap-3">
