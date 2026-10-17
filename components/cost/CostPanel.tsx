@@ -165,7 +165,7 @@ function PermitFeeBox({ estimate, onChange, onPickPlace }: { estimate: Estimate;
       <div className="mt-4" data-testid="permit-fee-box">
         <div className="text-sm font-medium">Permit fee</div>
         <p className="mt-1 text-xs text-muted">
-          {PERMIT_BASIS[estimate.permitBasis]} To type your own fee, first pick where you&apos;ll build in Project setup.
+          No place is picked yet, so this uses {placeLabel(estimate.place)}&apos;s fee. To type your own fee, first pick where you&apos;ll build in Project setup.
           {onPickPlace && (
             <>
               {" "}
