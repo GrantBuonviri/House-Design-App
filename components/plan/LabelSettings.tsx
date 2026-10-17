@@ -22,7 +22,18 @@ const SIZES: { label: string; value: number }[] = [
   { label: "Large", value: 1.25 },
 ];
 
-export default function LabelSettings({ labels, onChange }: { labels: PlanLabels; onChange: (l: PlanLabels) => void }) {
+const COLORS: { value: PlanLabels["overhangColor"]; label: string; dot: string }[] = [
+  { value: "red", label: "Red", dot: "#c8322a" },
+  { value: "orange", label: "Orange", dot: "#d9731a" },
+  { value: "purple", label: "Purple", dot: "#8a3fb8" },
+];
+const STRENGTHS: { value: PlanLabels["overhangStrength"]; label: string }[] = [
+  { value: "light", label: "Light" },
+  { value: "normal", label: "Normal" },
+  { value: "strong", label: "Strong" },
+];
+
+export default function LabelSettings({ labels, onChange, hasAbove = false, hasBelow = false }: { labels: PlanLabels; onChange: (l: PlanLabels) => void; hasAbove?: boolean; hasBelow?: boolean }) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
   useEffect(() => {
@@ -51,7 +62,7 @@ export default function LabelSettings({ labels, onChange }: { labels: PlanLabels
         Labels{labels.hideAll ? " (hidden)" : ""}
       </button>
       {open && (
-        <div role="dialog" aria-label="Label settings" className="absolute top-full left-0 z-30 mt-1 w-72 space-y-3 rounded-lg border border-line bg-white p-3 text-sm text-ink shadow-lg">
+        <div role="dialog" aria-label="Label settings" className="absolute top-full left-0 z-30 mt-1 max-h-[80vh] w-72 space-y-3 overflow-y-auto rounded-lg border border-line bg-white p-3 text-sm text-ink shadow-lg">
           <label className="flex cursor-pointer items-center justify-between gap-2 font-medium">
             Hide all labels <span className="text-xs font-normal text-muted">key L</span>
             <input type="checkbox" className={box} checked={labels.hideAll} onChange={(e) => set({ hideAll: e.target.checked })} />
@@ -64,6 +75,60 @@ export default function LabelSettings({ labels, onChange }: { labels: PlanLabels
               </label>
             ))}
           </div>
+          {(hasAbove || hasBelow) && (
+            <div className="space-y-1.5 border-t border-line pt-3">
+              <p className="text-xs font-medium text-muted">Overhangs and floor above</p>
+              {hasBelow && (
+                <>
+                  <label className="flex cursor-pointer items-center gap-2">
+                    <input type="checkbox" className={box} checked={labels.overhangShading} onChange={(e) => set({ overhangShading: e.target.checked })} />
+                    This floor: overhang stripes
+                  </label>
+                  <label className={`flex cursor-pointer items-center gap-2 ${off ? "opacity-50" : ""}`}>
+                    <input type="checkbox" className={box} checked={labels.overhangText} onChange={(e) => set({ overhangText: e.target.checked })} />
+                    This floor: &quot;hangs past&quot; notes
+                  </label>
+                </>
+              )}
+              {hasAbove && (
+                <>
+                  <label className="flex cursor-pointer items-center gap-2">
+                    <input type="checkbox" className={box} checked={labels.aboveOutlines} onChange={(e) => set({ aboveOutlines: e.target.checked })} />
+                    Floor above: room outlines
+                  </label>
+                  <label className="flex cursor-pointer items-center gap-2">
+                    <input type="checkbox" className={box} checked={labels.aboveShading} onChange={(e) => set({ aboveShading: e.target.checked })} />
+                    Floor above: overhang stripes
+                  </label>
+                  <label className={`flex cursor-pointer items-center gap-2 ${off ? "opacity-50" : ""}`}>
+                    <input type="checkbox" className={box} checked={labels.aboveText} onChange={(e) => set({ aboveText: e.target.checked })} />
+                    Floor above: &quot;hangs past&quot; notes
+                  </label>
+                </>
+              )}
+              <div>
+                <p className="mb-1 text-xs font-medium text-muted">Stripe color</p>
+                <div className="flex gap-1">
+                  {COLORS.map((c) => (
+                    <button key={c.value} className={`${seg(labels.overhangColor === c.value)} flex items-center gap-1`} onClick={() => set({ overhangColor: c.value })}>
+                      <span className="inline-block size-2 rounded-full" style={{ background: c.dot }} aria-hidden />
+                      {c.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <div>
+                <p className="mb-1 text-xs font-medium text-muted">How strong</p>
+                <div className="flex gap-1">
+                  {STRENGTHS.map((c) => (
+                    <button key={c.value} className={seg(labels.overhangStrength === c.value)} onClick={() => set({ overhangStrength: c.value })}>
+                      {c.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
           <div className="space-y-2 border-t border-line pt-3">
             <div>
               <p className="mb-1 text-xs font-medium text-muted">Text size</p>
