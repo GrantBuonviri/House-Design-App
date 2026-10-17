@@ -59,6 +59,7 @@ export const DESIGN_KEYS: [string, string][] = [
   ["R", "Turn what you aim at"],
   ["Delete", "Remove what you aim at"],
   ["Scroll", "Raise or lower what you carry"],
+  ["1 2 3", "Jump to a floor (what you carry comes too)"],
   ["Esc", "Cancel or leave the panel"],
 ];
 

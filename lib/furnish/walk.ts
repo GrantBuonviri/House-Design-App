@@ -6,7 +6,7 @@ import { newPlanId } from "@/lib/plan/edit";
 import { snapPoint, snapTargets } from "@/lib/plan/snap";
 import { splitRoom } from "@/lib/plan/partitions";
 import { catalogEntry } from "./catalog";
-import { placeCheck, snapToWall, type LayerItem } from "./layer";
+import { placeCheck, placeItem, removeItem, roomAt, snapToWall, type LayerItem } from "./layer";
 import { ghostAt, type Ghost } from "./stage";
 import type { ClosetSize } from "./closets";
 
@@ -96,6 +96,48 @@ export function walkMove(plan: FloorPlan, item: LayerItem, spot: WalkSpot, turn:
   const moved = { ...item, x: at.x, y: at.y, rotation, bottomIn };
   const check = placeCheck(plan, moved, items.filter((i) => i.id !== item.id));
   return { entryId: item.entryId, x: at.x, y: at.y, rotation, widthIn: item.widthIn, depthIn: item.depthIn, heightIn: item.heightIn, bottomIn, check };
+}
+
+/**
+ * Carry an item to another floor: it's taken off `from` and put down on `to`
+ * where the ghost is, in one step. Fixtures keep their faucet changes,
+ * furniture and built-ins their color; a ceiling-hung built-in hangs from the
+ * new floor's ceiling (`ceilingIn`). An app-placed cabinet or outlet is hidden
+ * on its old floor, as removing it would, and becomes a hand-placed one here.
+ */
+export function carryToFloor(from: FloorPlan, to: FloorPlan, item: LayerItem, g: Ghost, ceilingIn = 96): { from: FloorPlan; to: FloorPlan; id: string | null } {
+  if (!g.check.ok) return { from, to, id: null };
+  const at = { x: round1(g.x), y: round1(g.y), rotation: g.rotation };
+  const roomId = roomAt(to, at)?.id;
+  const placed = <T extends { roomId?: string }>(x: T): T => {
+    const { roomId: _r, ...rest } = x;
+    void _r;
+    return { ...rest, ...at, ...(roomId ? { roomId } : {}) } as unknown as T;
+  };
+  const left = removeItem(from, item);
+  switch (item.kind) {
+    case "fixture": {
+      const f = from.fixtures.find((x) => x.id === item.id);
+      if (!f) return { from, to, id: null };
+      return { from: left, to: { ...to, fixtures: [...to.fixtures, placed(f)] }, id: f.id };
+    }
+    case "furniture": {
+      const f = from.furniture.find((x) => x.id === item.id);
+      if (!f) return { from, to, id: null };
+      return { from: left, to: { ...to, furniture: [...to.furniture, placed(f)] }, id: f.id };
+    }
+    case "addon": {
+      const a = (from.addOns ?? []).find((x) => x.id === item.id);
+      if (!a) return { from, to, id: null };
+      const bottomIn = item.mount === "ceiling" ? Math.max(0, ceilingIn - a.heightIn) : g.bottomIn;
+      return { from: left, to: { ...to, addOns: [...(to.addOns ?? []), { ...placed(a), bottomIn }] }, id: a.id };
+    }
+    default: {
+      // Cabinets and outlets: a hand-placed one on the new floor, the same size.
+      const out = placeItem(to, item.entryId, at, { rotation: at.rotation, widthIn: item.widthIn, depthIn: item.depthIn, heightIn: item.heightIn, bottomIn: g.bottomIn, ceilingIn });
+      return out.id ? { from: left, to: out.plan, id: out.id } : { from, to, id: null };
+    }
+  }
 }
 
 // ---------- Doors and windows ----------

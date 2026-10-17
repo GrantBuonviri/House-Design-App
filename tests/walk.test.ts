@@ -7,7 +7,7 @@ import { stairsDrawing } from "@/lib/plan/stairs";
 import type { HouseContext } from "@/lib/house3d/build";
 import { levelHeights } from "@/lib/house3d/levels";
 import { siteFor } from "@/lib/house3d/site";
-import { BODY_RADIUS_IN, openAllDoors, standOn, walkStep, walkWorld, whereAmI, yawToward, type Walker, type WalkWorld } from "@/lib/house3d/walk";
+import { BODY_RADIUS_IN, floorSpot, openAllDoors, standOn, walkStep, walkWorld, whereAmI, yawToward, type Walker, type WalkWorld } from "@/lib/house3d/walk";
 import { newDoorStates, stepDoors, toggleDoor, type DoorMode, type DoorStates } from "@/lib/house3d/doors";
 
 const FT = 12;
@@ -226,5 +226,28 @@ describe("doors in the walkthrough", () => {
     expect(r.said).toBeTruthy();
     expect(r.states.d.open).toBe(true);
     expect(toggleDoor(opened, w.doors[0], { p: { x: 7 * FT, y: 6 * FT }, feet: 0 }, "normal").states.d.open).toBe(false);
+  });
+});
+
+describe("number keys jump between floors", () => {
+  const levels = levelsFor(2, 0);
+  // The upper floor covers only the west half of the house.
+  const plans = { "floor-1": plan([room("a", 0, 0, 30 * FT, 20 * FT)]), "floor-2": plan([room("b", 0, 0, 14 * FT, 20 * FT)]) };
+  const w = world(plans, levels);
+  const top = levelHeights(levels, defaultBasics())["floor-2"].floorIn;
+
+  it("keeps you where you are when the floor above has a room there", () => {
+    const to = floorSpot(w, plans, 2, { p: { x: 7 * FT, y: 10 * FT }, yaw: 1 })!;
+    expect(to.levelName).toBe(levels[1].name);
+    expect(to.spot.feet).toBe(top);
+    expect(dist(to.spot.p, { x: 7 * FT, y: 10 * FT })).toBeLessThan(1);
+    expect(floorSpot(w, plans, 1, { p: { x: 7 * FT, y: 10 * FT }, yaw: 1 })!.spot.feet).toBe(0);
+  });
+
+  it("goes to the nearest room on that floor otherwise, and says no for a floor that isn't there", () => {
+    const to = floorSpot(w, plans, 2, { p: { x: 25 * FT, y: 10 * FT }, yaw: 1 })!;
+    expect(to.spot.feet).toBe(top);
+    expect(pointInPolygon(to.spot.p, plans["floor-2"].rooms[0].polygon)).toBe(true);
+    expect(floorSpot(w, plans, 3, { p: { x: 0, y: 0 }, yaw: 0 })).toBeNull();
   });
 });

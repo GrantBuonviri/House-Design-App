@@ -5,6 +5,7 @@ import { useThree } from "@react-three/fiber";
 import * as THREE from "three";
 import InteriorDesign from "@/components/interior/InteriorDesign";
 import ExteriorDesign from "@/components/exterior/ExteriorDesign";
+import type { ExteriorCategoryId } from "@/lib/catalog/exterior";
 
 export type DesignWindowKind = "interior" | "exterior";
 
@@ -14,9 +15,10 @@ export const WINDOW_WIDTH = "max(460px, 45vw)";
 /**
  * The Interior (I) or Exterior (X) design window, docked on the right of the
  * walkthrough. Walking is paused while it's open; the house on the left
- * changes as you pick.
+ * changes as you pick. Interior opens on the room you're in (`roomId`),
+ * Exterior on the part you were looking at (`part`).
  */
-export function DesignWindow({ kind, roomId, onWalk, onClose }: { kind: DesignWindowKind; roomId: string | null; onWalk: () => void; onClose: () => void }) {
+export function DesignWindow({ kind, roomId, part, onWalk, onClose }: { kind: DesignWindowKind; roomId: string | null; part?: ExteriorCategoryId | null; onWalk: () => void; onClose: () => void }) {
   return (
     <aside
       className="absolute top-[var(--walk-bar,4rem)] right-0 bottom-0 z-10 flex max-w-full flex-col overflow-hidden rounded-tl-xl bg-white shadow-2xl"
@@ -38,7 +40,7 @@ export function DesignWindow({ kind, roomId, onWalk, onClose }: { kind: DesignWi
           </button>
         </div>
       </div>
-      <div className="flex-1 overflow-y-auto p-4">{kind === "interior" ? <InteriorDesign startRoomId={roomId} /> : <ExteriorDesign />}</div>
+      <div className="flex-1 overflow-y-auto p-4">{kind === "interior" ? <InteriorDesign startRoomId={roomId} /> : <ExteriorDesign startPart={part} />}</div>
     </aside>
   );
 }
