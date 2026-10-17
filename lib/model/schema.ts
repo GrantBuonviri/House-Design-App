@@ -9,7 +9,7 @@ import { z } from "zod";
  * Angles are degrees clockwise from north (0 = N, 90 = E).
  */
 
-export const SCHEMA_VERSION = 30;
+export const SCHEMA_VERSION = 31;
 
 export const Point = z.object({ x: z.number(), y: z.number() });
 export type Point = z.infer<typeof Point>;
@@ -464,6 +464,18 @@ export const Fixture = z.object({
   depthIn: z.number().positive(),
   /** The room it was placed in; it moves with that room. */
   roomId: z.string().optional(),
+  /**
+   * Changes to the faucet worked out for a sink, vanity, laundry or prep sink,
+   * tub or shower (see lib/furnish/faucets.ts): another shape, slid along the
+   * basin, or taken off. Left out means automatic.
+   */
+  faucet: z
+    .object({
+      removed: z.boolean().optional(),
+      shape: z.string().optional(),
+      alongIn: z.number().optional(),
+    })
+    .optional(),
 });
 export type Fixture = z.infer<typeof Fixture>;
 

@@ -299,7 +299,7 @@ export type Candidate = Pick<LayerItem, "entryId" | "x" | "y" | "rotation" | "wi
 
 /** Counters, islands and vanities hold sinks, ranges, dishwashers and cabinets: those may overlap them. */
 const HOLDERS = new Set(["fixture:counter", "fixture:island", "fixture:vanity"]);
-const NESTS = new Set(["fixture:sink", "fixture:range", "fixture:dishwasher", "fixture:fridge"]);
+const NESTS = new Set(["fixture:sink", "fixture:prep-sink", "fixture:range", "fixture:dishwasher", "fixture:fridge"]);
 const nestsWith = (a: string, b: string) => (HOLDERS.has(a) && (NESTS.has(b) || b.startsWith("cabinet:"))) || (HOLDERS.has(b) && (NESTS.has(a) || a.startsWith("cabinet:")));
 
 const outlineOf = (c: Pick<LayerItem, "x" | "y" | "widthIn" | "depthIn" | "rotation">) => rectangle(c.x, c.y, c.widthIn, c.depthIn, c.rotation ?? 0);

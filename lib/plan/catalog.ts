@@ -54,6 +54,7 @@ export const FIXTURE_TYPES: FixtureType[] = [
   { id: "counter", label: "Counter", group: "Kitchen", widthIn: 96, depthIn: 25, stretch: true },
   { id: "island", label: "Island", group: "Kitchen", widthIn: 72, depthIn: 36, stretch: true },
   { id: "sink", label: "Kitchen sink", group: "Kitchen", widthIn: 33, depthIn: 22 },
+  { id: "prep-sink", label: "Bar or prep sink", group: "Kitchen", widthIn: 15, depthIn: 15 },
   { id: "range", label: "Range", group: "Kitchen", widthIn: 30, depthIn: 26 },
   { id: "fridge", label: "Refrigerator", group: "Kitchen", widthIn: 36, depthIn: 30 },
   { id: "dishwasher", label: "Dishwasher", group: "Kitchen", widthIn: 24, depthIn: 24 },

@@ -1,7 +1,7 @@
 import { HouseSystems, type DesignChoices, type FloorPlan, type House3D, type Level, type PlanBasics, type PlanRoom, type Point, type Selection } from "@/lib/model/schema";
 import { exteriorWallIn, INTERIOR_WALL_IN } from "@/lib/plan/basics";
 import { planOf, type Plans } from "@/lib/plan/edit";
-import { add, collinearOverlap, dist, lerp, pointInPolygon, polygonArea, polygonCenter, project, rectangle, scale, sub, subtractIntervals, unit } from "@/lib/plan/geometry";
+import { add, rotate as rotateBy, collinearOverlap, dist, lerp, pointInPolygon, polygonArea, polygonCenter, project, rectangle, scale, sub, subtractIntervals, unit } from "@/lib/plan/geometry";
 import { areaKind } from "@/lib/plan/measure";
 import { isClosedIn, stairsDrawing } from "@/lib/plan/stairs";
 import { HALF_WALL_IN, openingGeometries, roomEdgeAt, WALL_CAP_IN, WALL_CAP_OVERHANG_IN, wallPieces, type OpeningGeometry, type WallPiece } from "@/lib/plan/walls";
@@ -25,6 +25,10 @@ import { railingsOn } from "@/lib/plan/railings";
 import type { Quality } from "@/lib/graphics";
 import { buildYard } from "./yard";
 import { drawWells, wellsOf } from "./wells";
+import { BRASS, drawFaucet, type FaucetLook } from "./faucets";
+import { CHROME, faucetsOn } from "@/lib/furnish/faucets";
+import { roomFinishes } from "@/lib/interior/picks";
+import { deviceLayout } from "@/lib/plan/devices";
 import { BASE_KINDS, cabinetLayout } from "@/lib/plan/cabinets";
 import { codeNum } from "@/lib/codes/data";
 import { overhangsOf, postsUnder, supportOf } from "@/lib/plan/support";
@@ -38,7 +42,15 @@ import { ROOF_STEP_DEG, flatPlans, sourceEdge } from "@/lib/plan/flatten";
  */
 
 export type PickKind = "room" | "opening" | "stairs" | "fixture" | "yard";
-export type Pick = { kind: PickKind; id: string; levelId: string; /** A stair railing's key (its stairs are `id`): the walkthrough aims at the railing, everything else at the stairs. */ railing?: string };
+export type Pick = {
+  kind: PickKind;
+  id: string;
+  levelId: string;
+  /** A stair railing's key (its stairs are `id`): the walkthrough aims at the railing, everything else at the stairs. */
+  railing?: string;
+  /** A faucet's key (its fixture is `id`), the same way. */
+  faucet?: string;
+};
 
 export type Layer = "walls" | "footprints" | "floors" | "ceilings" | "openings" | "stairs" | "fixtures" | "furniture" | "roof" | "foundation" | "yard";
 
@@ -394,11 +406,24 @@ export function buildLevel(
     if (!glass.empty) parts.push({ key: `${L}:fg:${fx.id}`, levelId: L, layer: "fixtures", pick, mesh: glass.build(), glass: true });
   }
 
+  // ---- Faucets, tub spouts and shower heads, worked out from the fixtures ----
+  const faucetPart = (key: string, pick: Pick | undefined, look: FaucetLook) => {
+    for (const quality of ["pretty", "fast"] as const) {
+      const mb = new MeshBuilder();
+      drawFaucet(mb, f, look, floorIn, quality);
+      if (!mb.empty) parts.push({ key: `${L}:${key}:${quality}`, levelId: L, layer: "fixtures", ...(pick ? { pick } : {}), mesh: mb.build(), quality });
+    }
+  };
+  for (const fc of faucetsOn(plan, L, ctx.interior ?? [], { exteriorIn })) {
+    faucetPart(`fc:${fc.key}`, { kind: "fixture", id: fc.fixtureId, levelId: L, faucet: fc.key }, fc);
+  }
+
   // ---- Upper and tall cabinets (base cabinets are part of the counters) ----
   // Base boxes the app lays out are drawn as the counters; hand-placed ones of any kind are drawn as boxes.
   const counters = plan.fixtures.filter((x) => x.kind === "counter" || x.kind === "island" || x.kind === "vanity");
   const underCounter = (c: { x: number; y: number }) => counters.some((x) => pointInPolygon(c, rectangle(x.x, x.y, x.widthIn, x.depthIn, x.rotation)));
-  const hung = cabinetLayout(plan, ceilingIn, codeNum("kitchen.rangeClearanceAbove")).cabinets.filter(
+  const cabinets = cabinetLayout(plan, ceilingIn, codeNum("kitchen.rangeClearanceAbove"));
+  const hung = cabinets.cabinets.filter(
     (c) => !BASE_KINDS.has(c.kind) || c.bottomIn > 24 || (!c.auto && !underCounter(c)),
   );
   if (hung.length) {
@@ -412,6 +437,15 @@ export function buildLevel(
 
   // ---- Built-ins and extras, and the hookups behind fixtures ----
   for (const a of plan.addOns ?? []) {
+    if (a.kind === "pot-filler") {
+      // A faucet on the wall: the kitchen's pot filler pick (or its faucet pick) gives the finish.
+      const room = roomAt({ x: a.x, y: a.y });
+      const picks = room && ctx.interior?.length ? roomFinishes(ctx.interior, room.id) : undefined;
+      const color = picks?.get("pot-fillers")?.color ?? picks?.get("kitchen-faucets")?.color ?? CHROME;
+      const back = add({ x: a.x, y: a.y }, rotateBy({ x: 0, y: -a.depthIn / 2 }, a.rotation ?? 0));
+      faucetPart(`pf:${a.id}`, undefined, { shape: "pot-filler", at: back, rotation: a.rotation ?? 0, z: a.bottomIn + a.heightIn / 2, color });
+      continue;
+    }
     const mb = new MeshBuilder();
     drawAddOn(mb, f, a, floorIn);
     if (!mb.empty) parts.push({ key: `${L}:ao:${a.id}`, levelId: L, layer: "fixtures", mesh: mb.build() });
@@ -422,6 +456,28 @@ export function buildLevel(
     for (const d of hookups) drawHookup(mb, f, d, floorIn, DEVICE_INFO[d.kind].mountIn ?? 16);
     if (!mb.empty) parts.push({ key: `${L}:hk`, levelId: L, layer: "fixtures", mesh: mb.build() });
   }
+
+  // ---- Hose spigots on the outside walls ----
+  const grade = ordered.find((l) => l.kind !== "basement" && (plans[l.id]?.rooms.length ?? 0) > 0);
+  const bibs = (
+    grade?.id === L
+      ? deviceLayout({
+          plan,
+          cabinets,
+          exteriorIn,
+          systems: ctx.systems ?? HouseSystems.parse({}),
+          coNeeded: false,
+          islandOutlet: false,
+          grade: true,
+          garageHeat: false,
+          panel: false,
+          thermostat: false,
+          stairEnds: [],
+          stairs: [],
+        })
+      : (plan.devices?.added ?? [])
+  ).filter((d) => d.kind === "hose-bib");
+  for (const d of bibs) faucetPart(`hb:${d.id}`, undefined, { shape: "spigot", at: { x: d.x, y: d.y }, rotation: d.rotation ?? 0, z: DEVICE_INFO["hose-bib"].mountIn ?? 18, color: BRASS });
 
   // ---- Furniture ----
   for (const item of plan.furniture) {
