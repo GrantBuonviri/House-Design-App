@@ -67,6 +67,7 @@ export const RATE_IDS = [
   "stem-wall",
   "basement-wall",
   "waterproofing",
+  "window-well",
   "garage-slab",
   "floor-framing",
   "ext-wall-framing",

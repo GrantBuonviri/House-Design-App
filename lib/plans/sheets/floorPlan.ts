@@ -12,6 +12,7 @@ import { codeNum, codeRef } from "@/lib/codes/data";
 import { escapeCheck, operationOf, OPERATION_LABEL } from "@/lib/codes/openings";
 import { atticAccessSpot, inchText, isSleeping } from "@/lib/codes/rules";
 import { houseFacts } from "../house";
+import { windowWells, wellNote } from "@/lib/plan/wells";
 import { levelCabinets } from "./cabinets";
 import { cabinetCorners } from "@/lib/plan/cabinets";
 import { addOnType } from "@/lib/furnish/catalog";
@@ -65,7 +66,8 @@ function drawPlan(project: Project, level: Level, viewNumber: number, base: bool
 
   // ---------- Where the drawing goes, and at what scale ----------
   const own = plan.stairs.map((s) => stairsDrawing(s, h.riseFor(s, level)));
-  const allPts = [...plan.rooms.flatMap((r) => r.polygon), ...own.flatMap((d) => d.footprint), ...h.stairsOn(level.id).flat()];
+  const wells = level.kind === "basement" ? windowWells(project.floorPlans, project.levels, project.plan.basics).filter((w) => w.levelId === level.id) : [];
+  const allPts = [...plan.rooms.flatMap((r) => r.polygon), ...own.flatMap((d) => d.footprint), ...h.stairsOn(level.id).flat(), ...wells.flatMap((w) => w.outline)];
   const b = boundsOf(allPts)!;
   const area = { x0: DRAW_AREA.x0, y0: DRAW_AREA.y0, x1: DRAW_AREA.x1 - NOTES_W - 0.3, y1: DRAW_AREA.y1 - TITLE_BAND };
   const bw = (b.x1 - b.x0) / 12;
@@ -115,6 +117,13 @@ function drawPlan(project: Project, level: Level, viewNumber: number, base: bool
   }
   for (const g of geos) drawOpening(g, thicknessAt(g));
   if (!base) for (const g of geos) drawTag(g, thicknessAt(g));
+  // Window wells outside basement escape windows: their outline, and "WELL".
+  for (const w of wells) {
+    ppoly(w.outline, "fine");
+    // Inside the well, past the window tag by the wall and short of the dimension strings.
+    const mid = scale(add(w.outline[0], w.outline[1]), 0.5);
+    if (!base) items.push({ t: "text", at: T(add(mid, scale(sub(w.outer, mid), 0.5))), text: w.ladder ? "WELL W/ LADDER" : "WELL", size: 5, bold: true, align: "center", valign: "middle" });
+  }
 
   function drawOpening(g: OpeningGeometry, th: number) {
     const o = g.opening;
@@ -417,6 +426,7 @@ function drawPlan(project: Project, level: Level, viewNumber: number, base: bool
       items.push({ t: "text", at: { x: c.x, y: c.y - 0.05 }, text: radiusLabel(arc), size: 5.5, bold: true, align: "center", valign: "middle" });
       items.push({ t: "text", at: { x: c.x, y: c.y + 0.05 }, text: arcLengthLabel(arc), size: 5, align: "center", valign: "middle" });
     }
+    if (wells.length) notes.push(wellNote(wells));
     if (curves.length) notes.push(`Curved walls show their radius (R) and length along the curve (ARC). ${CURVED_FRAMING_NOTE}`);
   }
 
@@ -440,6 +450,7 @@ function drawPlan(project: Project, level: Level, viewNumber: number, base: bool
   legend((c) => [{ t: "poly", pts: hexagon(c, 0.12), stroke: "fine" }, { t: "text", at: c, text: "W1", size: 5.5, bold: true, align: "center", valign: "middle" }], "Window tag. Sizes in the table below; more in the window schedule (A-601).");
   legend((c) => [{ t: "text", at: c, text: "TEMP", size: 5, bold: true, align: "center", valign: "middle" }], `Safety glass (tempered or laminated) needed here (IRC R308.4).`);
   legend((c) => [{ t: "text", at: c, text: "EGR", size: 5, bold: true, align: "center", valign: "middle" }], `Emergency escape window: clear opening at least ${codeNum(level.kind === "basement" ? "egress.netClearOpeningGradeFloor" : "egress.netClearOpening")} sq ft, ${codeNum("egress.minClearHeight")}" high, ${codeNum("egress.minClearWidth")}" wide, sill no higher than ${codeNum("egress.maxSillHeight")}" (${codeRef("egress.netClearOpening")}).`);
+  if (wells.length) legend((c) => [rect(c.x - 0.2, c.y - 0.08, 0.4, 0.16, "fine"), { t: "text", at: c, text: "WELL", size: 5, bold: true, align: "center", valign: "middle" }], "Window well outside an escape window.");
   legend((c) => [line({ x: c.x - 0.2, y: c.y }, { x: c.x + 0.2, y: c.y }, "fine", DASH.hidden)], "Dashed: above, below, or the open side of a porch or deck.");
 
   ny += 0.1;

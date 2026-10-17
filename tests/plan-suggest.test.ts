@@ -430,7 +430,7 @@ describe("warnings", () => {
     const base = front(addDoor(plan([living, bed]), living, bed)!);
     expect(texts(base).some((t) => /Bedroom has no window/.test(t))).toBe(true);
     const high = { ...base, openings: [...base.openings, newOpening("window-high", { roomId: "b", edge: 1 }, 60, 1, 48)] };
-    expect(texts(high).some((t) => /too small or too high/.test(t))).toBe(true);
+    expect(texts(high).some((t) => /don.t open wide enough/.test(t))).toBe(true);
     const good = { ...base, openings: [...base.openings, newOpening("window", { roomId: "b", edge: 1 }, 60, 1, 36)] };
     expect(texts(good).some((t) => /Bedroom/.test(t))).toBe(false);
   });

@@ -24,10 +24,15 @@ import {
   setEdgeLength,
   updateOpening,
 } from "@/lib/plan/edit";
-import { sharedWall } from "@/lib/plan/connect";
+import { newOpening, sharedWall } from "@/lib/plan/connect";
+import { planWarnings } from "@/lib/plan/checks";
+import { addWindows, escapeWidth, makeEscapeWindow } from "@/lib/plan/windows";
+import { windowWells } from "@/lib/plan/wells";
+import { escapeCheck } from "@/lib/codes/openings";
+import { RATE_IDS } from "@/lib/cost/rates";
 import { alignEdges, compact, fitInside, plansFromSketch, resolveOverlaps, straightenOutline } from "@/lib/plan/fromSketch";
 import { overhangsOf, supportOf } from "@/lib/plan/support";
-import { collinearOverlap, dist, edgesOf, isRectangle, polygonArea, polygonsOverlap, rectangle, signedArea, subtractIntervals } from "@/lib/plan/geometry";
+import { collinearOverlap, dist, edgesOf, isRectangle, pointInPolygon, polygonArea, polygonsOverlap, rectangle, signedArea, subtractIntervals } from "@/lib/plan/geometry";
 import { houseTotals, planTotals, roomSqft } from "@/lib/plan/measure";
 import { snapAngles, snapMove, snapNode, snapPoint, snapPush, snapTargets } from "@/lib/plan/snap";
 import { parseTypedLength } from "@/lib/model/units";
@@ -280,15 +285,25 @@ describe("turning the flow sketch into a plan", () => {
   const pick = (type: string, extra: Partial<ChosenRoom> = {}): ChosenRoom => ({ id: `r${++n}`, type, name: roomType(type).label, description: "", ...extra });
   const flat = generatePlot(FLAT_PLOT_SEED, { flat: true });
 
-  function sample(floors = 1) {
+  function sample(floors = 1, garageCars = 2) {
     const rooms = [pick("entry"), pick("kitchen"), pick("dining"), pick("living"), pick("pantry"), pick("mudroom"), pick("primary-bedroom"), pick("bathroom"), pick("garage")];
     if (floors > 1) rooms.push(pick("bedroom", { levelId: "floor-2" }), pick("bedroom", { levelId: "floor-2", name: "Bedroom 2" }), pick("bathroom", { levelId: "floor-2", name: "Upstairs bath" }));
-    const answers = DiscoveryAnswers.parse({ rooms, floorsAbove: floors, floorsBelow: 0 });
+    const answers = DiscoveryAnswers.parse({ rooms, floorsAbove: floors, floorsBelow: 0, garageCars });
     const brief = buildRuleBrief({ answers, profile: { mustHaves: [], dislikes: [] }, plot: flat });
     const levels = levelsFor(brief.floors, brief.floorsBelow);
     const diagrams = suggestDiagrams({ brief, plot: flat, levels });
     return { brief, levels, diagrams };
   }
+
+  it("gives a 3-car garage a 16' and a 9' door, or one 18' door when two won't fit", () => {
+    const { brief, levels, diagrams } = sample(1, 3);
+    const main = plansFromSketch(diagrams, { brief, plot: flat, levels, basics: defaultBasics() }).plans["floor-1"];
+    const widths = main.openings.filter((o) => o.style === "door-garage").map((o) => o.widthIn).sort((a, b) => b - a);
+    expect([[192, 108], [216]]).toContainEqual(widths);
+    const s2 = sample(1, 2);
+    const two = plansFromSketch(s2.diagrams, { brief: s2.brief, plot: flat, levels: s2.levels, basics: defaultBasics() }).plans["floor-1"];
+    expect(two.openings.filter((o) => o.style === "door-garage").map((o) => o.widthIn)).toEqual([192]);
+  });
 
   it("makes one room per bubble, each about the bubble's size, with no overlaps", () => {
     const { brief, levels, diagrams } = sample();
@@ -620,5 +635,86 @@ describe("dismissing things to check", () => {
     const migrated = migrateProject({ ...old, plan });
     expect(migrated.plan.dismissed).toEqual([]);
     expect(migrated.schemaVersion).toBe(SCHEMA_VERSION);
+  });
+});
+
+describe("escape windows and window wells", () => {
+  const levels = levelsFor(1, 1);
+  const basement = levels.find((l) => l.kind === "basement")!;
+  const main = levels.find((l) => l.kind !== "basement")!;
+  const bed = () => plan([room("b", 0, 0, 12, 12, { type: "bedroom", name: "Bed 2" })]);
+  const warn = (p: FloorPlan, levelId = main.id) => planWarnings({ [levelId]: p }, { levels, brief: null, basics: defaultBasics() }).filter((w) => w.id.includes("egress"));
+  const win = (style: string, widthIn: number, extra: Partial<FloorPlan["openings"][number]> = {}) => ({ ...newOpening(style, { roomId: "b", edge: 2 }, 6 * FT, 1, widthIn), ...extra });
+
+  it("a fixed picture window doesn't count; a casement does", () => {
+    expect(warn({ ...bed(), openings: [win("window-picture", 72)] })[0].text).toMatch(/don.t open/);
+    expect(warn({ ...bed(), openings: [win("window-picture", 72)] })[0].escape).toEqual({ roomId: "b" });
+    expect(warn({ ...bed(), openings: [win("window", 30, { operation: "casement" })] })).toHaveLength(0);
+    // A 24" casement is too narrow to climb through (under 20" clear).
+    expect(warn({ ...bed(), openings: [win("window", 24, { operation: "casement" })] })).toHaveLength(1);
+    expect(escapeWidth(false)).toBe(30);
+  });
+
+  it("Suggest a plan's windows give every bedroom a casement that passes", () => {
+    const { plan: p } = addWindows(bed(), main);
+    const own = p.openings.filter((o) => o.kind === "window");
+    expect(own.some((o) => o.operation === "casement" && escapeCheck(o, false).ok)).toBe(true);
+    expect(warn(p)).toHaveLength(0);
+  });
+
+  it("Make this an escape window swaps the biggest window for a passing casement", () => {
+    const p = { ...bed(), openings: [win("window-high", 48), { ...newOpening("window-high", { roomId: "b", edge: 1 }, 6 * FT, 1, 36) }] };
+    const res = makeEscapeWindow(p, "b", main);
+    expect(res.ok).toBe(true);
+    expect(res.added).toBe(false);
+    expect(res.plan.openings).toHaveLength(2);
+    const swapped = res.plan.openings.find((o) => o.id === p.openings[0].id)!;
+    expect(swapped.operation).toBe("casement");
+    expect(escapeCheck(swapped, false).ok).toBe(true);
+    expect(warn(res.plan)).toHaveLength(0);
+    // No window yet: one goes in.
+    const fresh = makeEscapeWindow(bed(), "b", main);
+    expect(fresh.added).toBe(true);
+    expect(warn(fresh.plan)).toHaveLength(0);
+  });
+
+  it("a basement bedroom gets an escape window and a window well with a ladder", () => {
+    const { plan: p } = addWindows(bed(), basement);
+    const plans = { [basement.id]: p };
+    const wells = windowWells(plans, levels, defaultBasics());
+    expect(wells).toHaveLength(1);
+    const w = wells[0];
+    expect(w.projectionIn).toBeGreaterThanOrEqual(36);
+    expect((w.widthIn * w.projectionIn) / 144).toBeGreaterThanOrEqual(9);
+    expect(w.depthIn).toBeGreaterThan(44);
+    expect(w.ladder).toBe(true);
+    // Outside the room, past the wall.
+    expect(w.outline.every((q) => !pointInPolygon(q, p.rooms[0].polygon) || q.y >= 12 * FT)).toBe(true);
+    // Main-floor windows never get wells.
+    expect(windowWells({ [main.id]: addWindows(bed(), main).plan }, levels, defaultBasics())).toHaveLength(0);
+  });
+
+  it("no well (and no escape) where the main floor covers the ground outside a basement wall", () => {
+    const { plan: p } = addWindows(bed(), basement);
+    // The main floor reaches past the bedroom on every side: its walls are buried.
+    const over = plan([room("m", -10, -10, 32, 32, { type: "living" })]);
+    const plans = { [basement.id]: p, [main.id]: over };
+    expect(windowWells(plans, levels, defaultBasics())).toHaveLength(0);
+    const ws = planWarnings(plans, { levels, brief: null, basics: defaultBasics() }).filter((w) => w.id === `${basement.id}:egress:b`);
+    expect(ws[0].text).toMatch(/buried/);
+    // Suggest a plan's windows skip the buried walls.
+    expect(addWindows(bed(), basement, [over.rooms[0].polygon]).plan.openings).toHaveLength(0);
+  });
+
+  it("a basement with a rec room and no way out is flagged, and Suggest gives it an escape window", () => {
+    const rec = plan([room("b", 0, 0, 16, 14, { type: "family", name: "Rec room" })]);
+    expect(warn(rec, basement.id).map((w) => w.id)).toContain(`${basement.id}:egress-basement`);
+    const { plan: p } = addWindows(rec, basement);
+    expect(warn(p, basement.id)).toHaveLength(0);
+    expect(windowWells({ [basement.id]: p }, levels, defaultBasics())).toHaveLength(1);
+  });
+
+  it("window wells are priced", () => {
+    expect(RATE_IDS).toContain("window-well");
   });
 });

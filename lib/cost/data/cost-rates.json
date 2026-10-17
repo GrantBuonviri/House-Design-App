@@ -254,6 +254,24 @@
       "checked": "2026-10-14",
       "note": "Spray/roll membrane + dimple drainage board on exterior of basement walls. Dampproofing only would be ~half."
     },
+    "window-well": {
+      "label": "Egress window well with ladder",
+      "unit": "each",
+      "material": [
+        400,
+        800,
+        1300
+      ],
+      "labor": [
+        600,
+        1200,
+        2200
+      ],
+      "source": "HomeGuide window well line items: steel well $400-800, egress ladder $100-300, labor $400-1,400+ (about $1,000-3,000 installed, $2,000 typical). US numbers; Boise-specific data wasn't found.",
+      "url": "https://homeguide.com/costs/window-well-replacement-cost",
+      "checked": "2026-10-17",
+      "note": "Each well: galvanized well, ladder, gravel, digging and backfill. Not the window or cutting the foundation wall. Ballpark: confirm with local bids."
+    },
     "garage-slab": {
       "label": "Garage slab",
       "unit": "sqft",

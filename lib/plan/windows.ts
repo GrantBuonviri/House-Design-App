@@ -1,6 +1,9 @@
-import type { FloorPlan, Level, PlanRoom, Point } from "@/lib/model/schema";
-import { freeSpot, newOpening } from "./connect";
-import { add, collinearOverlap, dist, dot, edgesOf, leftNormal, lerp, pointInPolygon, scale, sub, subtractIntervals, unit } from "./geometry";
+import type { FloorPlan, Level, Opening, PlanRoom, Point, WindowOperation } from "@/lib/model/schema";
+import { escapeCheck } from "@/lib/codes/openings";
+import { freeSpot, newOpening, openingRooms } from "./connect";
+import { openingType } from "./catalog";
+import { hostSegment } from "./walls";
+import { add, collinearOverlap, dist, dot, edgesOf, leftNormal, lerp, pointInPolygon, polygonArea, scale, sub, subtractIntervals, unit } from "./geometry";
 import { areaKind } from "./measure";
 import { BEDROOMS } from "./closets";
 import { isCurved, roomEdgeArc, roomEdgeLength } from "./arcs";
@@ -17,8 +20,10 @@ const BATHS = new Set(["bathroom", "half-bath", "primary-bath"]);
 const SUNNY = new Set(["living", "family", "dining", "sunroom", "kitchen"]);
 const ONE_SMALL = new Set(["laundry", "mudroom"]);
 const END_IN = 18;
+/** An escape window may sit closer to a corner than the usual windows: a short outside wall still takes one. */
+const ESCAPE_END_IN = 4;
 
-type Placement = { style: string; widthIn: number };
+type Placement = { style: string; widthIn: number; operation?: WindowOperation };
 
 /** `t0`, `t1` are inches along the wall (along the curve on a curved one, which also has its `radius`). */
 export type Stretch = { a: Point; b: Point; t0: number; t1: number; host: { roomId: string; edge: number }; radius?: number };
@@ -60,7 +65,23 @@ export function roomJustOutside(plan: FloorPlan, s: Stretch): boolean {
 }
 
 /** Windows on each room's outside walls: more and bigger facing south, fewer facing north. */
-export function addWindows(plan: FloorPlan, level: Pick<Level, "kind">): { plan: FloorPlan; added: number } {
+/** Is the ground just outside this stretch of wall covered by the floor above (a basement wall under the main floor)? */
+export function buriedStretch(s: Stretch, covered: Point[][]): boolean {
+  if (!covered.length) return false;
+  const n = leftNormal(unit(sub(s.b, s.a)));
+  const L = dist(s.a, s.b);
+  return [0.25, 0.5, 0.75].some((k) => {
+    const p = add(lerp(s.a, s.b, (s.t0 + (s.t1 - s.t0) * k) / L), scale(n, 18));
+    return covered.some((poly) => pointInPolygon(p, poly));
+  });
+}
+
+/**
+ * Windows on each room's outside walls: more and bigger facing south, fewer facing north.
+ * `covered` is where the floor above covers the ground (see wells.ts `coveredAbove`): a
+ * basement gets no windows in walls buried under it.
+ */
+export function addWindows(plan: FloorPlan, level: Pick<Level, "kind">, covered: Point[][] = []): { plan: FloorPlan; added: number } {
   let p = plan;
   let added = 0;
   for (const room of plan.rooms) {
@@ -70,17 +91,25 @@ export function addWindows(plan: FloorPlan, level: Pick<Level, "kind">): { plan:
     const mine = outsideStretches(plan, room)
       .map((w) => ({ w, n: leftNormal(unit(sub(w.b, w.a))), usable: w.t1 - w.t0 - 2 * END_IN }))
       // Not where another room is just a few inches away.
-      .filter((x) => x.usable >= 24 && !roomJustOutside(plan, x.w))
+      .filter((x) => x.usable >= 24 && !roomJustOutside(plan, x.w) && !buriedStretch(x.w, covered))
       .map((x) => ({ ...x, facing: dot(x.n, SOUTH) }))
       // Sunniest first, then east and west, north last; longer walls first.
       .sort((a, b) => b.facing - a.facing || b.usable - a.usable);
-    if (!mine.length) continue;
+    const bedroom = BEDROOMS.has(type);
+    if (!mine.length) {
+      // Too little outside wall for the usual windows; a bedroom still gets an escape window if one fits.
+      if (bedroom) {
+        const fixed = makeEscapeWindow(p, room.id, level, covered);
+        if (fixed.added) added++;
+        p = fixed.plan;
+      }
+      continue;
+    }
 
     const plans: { piece: (typeof mine)[number]; count: number; place: Placement }[] = [];
-    const bedroom = BEDROOMS.has(type);
     if (level.kind === "basement") {
       // Below ground: an egress window for bedrooms, a high window elsewhere.
-      plans.push({ piece: mine[0], count: 1, place: bedroom ? { style: "window", widthIn: 36 } : { style: "window-high", widthIn: 48 } });
+      plans.push({ piece: mine[0], count: 1, place: bedroom ? { style: "window", widthIn: 36, operation: "casement" } : { style: "window-high", widthIn: 48 } });
     } else if (BATHS.has(type)) {
       const longest = [...mine].sort((a, b) => b.usable - a.usable)[0];
       plans.push({ piece: longest, count: 1, place: { style: "window-high", widthIn: type === "half-bath" ? 24 : 36 } });
@@ -88,7 +117,8 @@ export function addWindows(plan: FloorPlan, level: Pick<Level, "kind">): { plan:
       plans.push({ piece: mine[0], count: 1, place: { style: "window", widthIn: 30 } });
     } else if (bedroom) {
       const most = type === "primary-bedroom" ? 3 : 2;
-      for (const piece of mine.slice(0, most)) plans.push({ piece, count: 1, place: { style: "window", widthIn: type === "primary-bedroom" ? 48 : 36 } });
+      // The sunniest one is a casement, which opens all the way: the room's escape window.
+      mine.slice(0, most).forEach((piece, i) => plans.push({ piece, count: 1, place: { style: "window", widthIn: type === "primary-bedroom" ? 48 : 36, ...(i === 0 ? { operation: "casement" as const } : {}) } }));
     } else {
       let total = 0;
       let picture = SUNNY.has(type) && type !== "kitchen";
@@ -124,10 +154,92 @@ export function addWindows(plan: FloorPlan, level: Pick<Level, "kind">): { plan:
         if (widthIn < 24) continue;
         const at = freeSpot(p, w.host, t0, t1, widthIn, 12);
         if (at === null) continue;
-        p = { ...p, openings: [...p.openings, newOpening(place.style, w.host, at, 1, widthIn)] };
+        const o = newOpening(place.style, w.host, at, 1, widthIn);
+        p = { ...p, openings: [...p.openings, place.operation ? { ...o, operation: place.operation } : o] };
         added++;
       }
     }
+    // Every bedroom ends up with a window you could climb out of.
+    if (bedroom && !hasEscape(p, room.id, level.kind === "basement")) {
+      const fixed = makeEscapeWindow(p, room.id, level, covered);
+      if (fixed.added) added++;
+      p = fixed.plan;
+    }
+  }
+  // A basement with rooms to live in and no door outside needs an escape window too (with a well, see wells.ts).
+  if (level.kind === "basement" && !p.openings.some((o) => o.kind === "door" && openingRooms(p, o).includes(null))) {
+    const living = p.rooms.filter((r) => areaKind(r) === "living" && !NO_WINDOWS.has(r.type ?? "other"));
+    const anyEscape = p.openings.some((o) => o.kind === "window" && escapeCheck(o, true).ok);
+    const biggest = [...living].sort((a, b) => polygonArea(b.polygon) - polygonArea(a.polygon)).find((r) => outsideStretches(p, r).some((w) => w.t1 - w.t0 >= 2 * ESCAPE_END_IN + 30 && !buriedStretch(w, covered)));
+    if (living.length && !anyEscape && biggest) {
+      const fixed = makeEscapeWindow(p, biggest.id, level, covered);
+      if (fixed.added) added++;
+      p = fixed.plan;
+    }
   }
   return { plan: p, added };
+}
+
+/** Outside windows of a room. */
+function outsideWindows(plan: FloorPlan, roomId: string): Opening[] {
+  return plan.openings.filter((o) => o.kind === "window" && openingRooms(plan, o).includes(roomId) && openingRooms(plan, o).includes(null));
+}
+
+/** Does the room have a window that meets the escape sizes? Basements (`gradeFloor`) allow the smaller opening. */
+export function hasEscape(plan: FloorPlan, roomId: string, gradeFloor: boolean): boolean {
+  return plan.openings.some((o) => o.kind === "window" && openingRooms(plan, o).includes(roomId) && escapeCheck(o, gradeFloor).ok);
+}
+
+/** The narrowest catalog window that passes as an escape window when it's a casement (30" with the usual 60" height). */
+export function escapeWidth(gradeFloor: boolean): number {
+  const t = openingType("window");
+  const pass = (w: number) => escapeCheck({ ...newOpening("window", { roomId: "", edge: 0 }, 0, 1, w), operation: "casement" }, gradeFloor).ok;
+  return [...t.widths].sort((a, b) => a - b).find(pass) ?? 36;
+}
+
+/**
+ * "Make this an escape window": the room's biggest outside window becomes a
+ * casement big enough to climb out of (and low enough, sill 30"). With no
+ * outside window yet, one goes on the sunniest outside wall. `added` says a
+ * new window was put in rather than one changed.
+ */
+export function makeEscapeWindow(plan: FloorPlan, roomId: string, level: Pick<Level, "kind">, covered: Point[][] = []): { plan: FloorPlan; ok: boolean; added: boolean } {
+  const room = plan.rooms.find((r) => r.id === roomId);
+  if (!room) return { plan, ok: false, added: false };
+  const gradeFloor = level.kind === "basement";
+  const base = openingType("window");
+  const minW = escapeWidth(gradeFloor);
+  const buried = (o: Opening) => {
+    const seg = hostSegment(plan, o.host);
+    return !!seg && buriedStretch({ a: seg.a, b: seg.b, t0: o.offsetIn - 1, t1: o.offsetIn + 1, host: { roomId, edge: 0 } }, covered);
+  };
+  const own = outsideWindows(plan, roomId).filter((o) => !buried(o)).sort((a, b) => b.widthIn * b.heightIn - a.widthIn * a.heightIn);
+  for (const o of own) {
+    const without = { ...plan, openings: plan.openings.filter((x) => x.id !== o.id) };
+    const seg = hostSegment(plan, o.host);
+    if (!seg) continue;
+    const widthIn = Math.max(minW, Math.min(o.widthIn, 72));
+    const swapped: Opening = { ...o, style: "window", operation: "casement", widthIn, heightIn: Math.max(o.heightIn, base.heightIn), sillIn: Math.min(o.sillIn ?? 30, base.sillIn ?? 30) };
+    if (!escapeCheck(swapped, gradeFloor).ok) continue;
+    // Where it was, if it still fits there; else the nearest free spot on the same wall.
+    const fitsHere = freeSpot(without, o.host, o.offsetIn - widthIn / 2 - 2, o.offsetIn + widthIn / 2 + 2, widthIn, 0) !== null;
+    const at = fitsHere ? o.offsetIn : freeSpot(without, o.host, ESCAPE_END_IN, seg.length - ESCAPE_END_IN, widthIn, 6);
+    if (at === null) continue;
+    return { plan: { ...without, openings: [...without.openings, { ...swapped, offsetIn: Math.round(at * 10) / 10 }] }, ok: true, added: false };
+  }
+  // No window that could be made into one: a new casement on the sunniest outside wall that takes it.
+  const pieces = outsideStretches(plan, room)
+    .filter((w) => !roomJustOutside(plan, w) && !buriedStretch(w, covered))
+    .map((w) => ({ w, facing: dot(leftNormal(unit(sub(w.b, w.a))), SOUTH) }))
+    .sort((a, b) => b.facing - a.facing || b.w.t1 - b.w.t0 - (a.w.t1 - a.w.t0));
+  for (const { w } of pieces) {
+    const fitsCurve = w.radius ? Math.floor(widestUnit(w.radius) / 6) * 6 : Infinity;
+    const widthIn = Math.min(Math.max(minW, 36), fitsCurve, Math.floor((w.t1 - w.t0 - 2 * ESCAPE_END_IN) / 6) * 6);
+    if (widthIn < minW) continue;
+    const at = freeSpot(plan, w.host, w.t0 + ESCAPE_END_IN, w.t1 - ESCAPE_END_IN, widthIn, 6);
+    if (at === null) continue;
+    const o = { ...newOpening("window", w.host, at, 1, widthIn), operation: "casement" as const };
+    return { plan: { ...plan, openings: [...plan.openings, o] }, ok: true, added: true };
+  }
+  return { plan, ok: false, added: false };
 }

@@ -8,7 +8,7 @@ import { largestInside, supportOf, tooBigNote } from "./support";
 import { regionArea, subtractRegions, type Region } from "@/lib/house3d/footprint";
 import { add, boundsOf, type Bounds, clockwise, pointInPolygon, dist, dot, leftNormal, polygonArea, rectangle, rotate, roundPoint, sub, unit } from "./geometry";
 import { DEFAULT_STAIRS_WIDTH_IN, stairsDrawing } from "./stairs";
-import { wallPieces } from "./walls";
+import { sameHost, wallPieces } from "./walls";
 
 /**
  * Turn the flow sketch into a starting floor plan. Each bubble becomes a
@@ -532,9 +532,18 @@ export function plansFromSketch(diagrams: Record<string, BubbleDiagram>, ctx: Pl
       if (garage && ctx.basics?.garage !== "none") {
         const facing = ctx.basics?.garage === "side" ? { x: road.y, y: -road.x } : road;
         const bays = ctx.brief?.garageBays ?? 2;
-        const wide = outsideDoor(plan, garage, facing, "door-garage", bays >= 2 ? 192 : 96, exteriorIn);
-        const door = wide ?? (bays >= 2 ? outsideDoor(plan, garage, facing, "door-garage", 96, exteriorIn) : null);
-        if (door) plan.openings.push(door);
+        // Three bays or more: a 16' double door plus a 9' single beside it (the usual 3-car front), else one 18' door.
+        const pair = () => {
+          const big = outsideDoor(plan, garage, facing, "door-garage", 192, exteriorIn);
+          if (!big) return null;
+          const small = outsideDoor({ ...plan, openings: [...plan.openings, big] }, garage, facing, "door-garage", 108, exteriorIn);
+          return small && sameHost(small.host, big.host) ? [big, small] : null;
+        };
+        // Narrower doors when the wall is too short for the first choice.
+        const widths = bays >= 3 ? [216, 192, 96] : bays >= 2 ? [192, 96] : [96];
+        const single = () => widths.map((w) => outsideDoor(plan, garage, facing, "door-garage", w, exteriorIn)).find((o) => o !== null);
+        const doors = (bays >= 3 ? pair() : null) ?? [single()].filter((o): o is Opening => !!o);
+        plan.openings.push(...doors);
       }
     }
     plans[level.id] = plan;

@@ -8,7 +8,7 @@ import type { PlanWarning } from "@/lib/plan/checks";
  * "Things to check": the plan's friendly warnings, all floors at once.
  * Clicking one goes to its floor, selects the room and centers it.
  */
-export default function PlanChecks({ warnings, dismissed = [], levels, levelId, onPick, onFix, onDismiss, onRestore, onRestoreAll, inFurnish = false }: { warnings: PlanWarning[]; dismissed?: PlanWarning[]; levels: Level[]; levelId: string; onPick: (w: PlanWarning) => void; onFix?: (w: PlanWarning, action?: "inside" | "delete" | "plan") => void; inFurnish?: boolean; onDismiss?: (w: PlanWarning) => void; onRestore?: (w: PlanWarning) => void; onRestoreAll?: () => void }) {
+export default function PlanChecks({ warnings, fresh = [], dismissed = [], levels, levelId, onPick, onFix, onDismiss, onRestore, onRestoreAll, inFurnish = false }: { warnings: PlanWarning[]; /** Ids of warnings the last fix brought up, tagged "new". */ fresh?: string[]; dismissed?: PlanWarning[]; levels: Level[]; levelId: string; onPick: (w: PlanWarning) => void; onFix?: (w: PlanWarning, action?: "inside" | "delete" | "plan") => void; inFurnish?: boolean; onDismiss?: (w: PlanWarning) => void; onRestore?: (w: PlanWarning) => void; onRestoreAll?: () => void }) {
   const [open, setOpen] = useState(true);
   const [showDismissed, setShowDismissed] = useState(false);
   const multi = new Set(warnings.map((w) => w.levelId)).size > 1 || warnings.some((w) => w.levelId !== levelId);
@@ -37,6 +37,11 @@ export default function PlanChecks({ warnings, dismissed = [], levels, levelId, 
                 <li key={w.id}>
                   <div className="flex items-start">
                     <button className="min-w-0 flex-1 rounded px-2 py-1.5 text-left text-xs leading-snug hover:bg-amber-50" onClick={() => onPick(w)}>
+                      {fresh.includes(w.id) && (
+                        <span className="mr-1 rounded bg-amber-200 px-1 py-px text-[10px] font-semibold uppercase text-amber-900" data-testid="check-new">
+                          new
+                        </span>
+                      )}
                       {multi && <span className="font-medium text-muted">{name(w.levelId)}: </span>}
                       {w.text}
                     </button>
@@ -71,6 +76,11 @@ export default function PlanChecks({ warnings, dismissed = [], levels, levelId, 
                   {w.closetWalls && onFix && (
                     <button className="btn mx-2 mb-1 px-2 py-0.5 text-xs" onClick={() => onFix(w, inFurnish ? "plan" : undefined)} data-testid="closet-walls-fix">
                       {inFurnish ? "Remove the closet walls in the floor plan" : "Remove the closet walls"}
+                    </button>
+                  )}
+                  {w.escape && onFix && !inFurnish && (
+                    <button className="btn mx-2 mb-1 px-2 py-0.5 text-xs" onClick={() => onFix(w)} data-testid="escape-fix">
+                      Make this an escape window
                     </button>
                   )}
                   {w.gap && onFix && (

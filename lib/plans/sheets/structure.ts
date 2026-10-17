@@ -1,3 +1,4 @@
+import { windowWells, wellNote } from "@/lib/plan/wells";
 import type { Level, Point, Project } from "@/lib/model/schema";
 import { add, boundsOf, dist, leftNormal, lerp, polygonCenter, scale, sub, unit } from "@/lib/plan/geometry";
 import { wallPieces } from "@/lib/plan/walls";
@@ -34,10 +35,12 @@ export type StructSheet = { items: Item[]; scaleLabel: string };
 type Frame = { T: (p: Point) => Point; s: number; inPerFt: number; scaleLabel: string; area: { x0: number; y0: number; x1: number; y1: number } };
 
 /** One scale and placement for every structural plan, so they line up sheet to sheet. */
+const wellsOf = (project: Project) => windowWells(project.floorPlans, project.levels, project.plan.basics);
+
 function structFrame(project: Project): Frame {
   const h = houseFacts(project);
   const sc = houseScene(project);
-  const pts = [...h.drawn.flatMap((l) => h.plan(l.id).rooms.flatMap((r) => r.polygon)), ...sc.roofs.flatMap((r) => r.eave)];
+  const pts = [...h.drawn.flatMap((l) => h.plan(l.id).rooms.flatMap((r) => r.polygon)), ...sc.roofs.flatMap((r) => r.eave), ...wellsOf(project).flatMap((w) => w.outline)];
   const b = boundsOf(pts) ?? { x0: 0, y0: 0, x1: 120, y1: 120 };
   const area = { x0: DRAW_AREA.x0, y0: DRAW_AREA.y0, x1: DRAW_AREA.x1 - NOTES_W - 0.3, y1: DRAW_AREA.y1 - TITLE_BAND };
   const fits = (k: number) => ((b.x1 - b.x0) / 12) * k + MARGIN * 2 <= area.x1 - area.x0 && ((b.y1 - b.y0) / 12) * k + MARGIN * 2 <= area.y1 - area.y0;
@@ -156,6 +159,12 @@ export function foundationSheet(project: Project): StructSheet {
     d.poly([add(p.at, { x: -h2, y: -h2 }), add(p.at, { x: h2, y: -h2 }), add(p.at, { x: h2, y: h2 }), add(p.at, { x: -h2, y: h2 })], "fine", undefined, DASH.hidden);
     d.poly([add(p.at, { x: -4, y: -4 }), add(p.at, { x: 4, y: -4 }), add(p.at, { x: 4, y: 4 }), add(p.at, { x: -4, y: 4 })], "fine", "#5a5a5a");
   });
+  // Window wells outside basement escape windows.
+  const wells = wellsOf(project);
+  for (const w of wells) {
+    d.poly(w.outline, "fine");
+    d.tag(lerp(w.outline[0], w.outer, 0.5), w.ladder ? "WELL W/ LADDER" : "WELL", 5.5, true);
+  }
   // Crawlspace vents and access.
   for (const v of fd.vents) d.tag(v, "V", 5.5, true);
   if (fd.access) d.tag(fd.access, "CRAWL ACCESS", 5.5, true);
@@ -197,6 +206,7 @@ export function foundationSheet(project: Project): StructSheet {
     notes.push(`Crawl access ${codeNum("crawl.accessWallWidth")}" x ${codeNum("crawl.accessWallLength")}" through the wall (${codeRef("crawl.accessWallWidth")}). Wood joists closer than ${codeNum("struct.woodClearanceJoists")}" and girders closer than ${codeNum("struct.woodClearanceGirders")}" to the ground are treated (${codeRef("struct.woodClearanceJoists")}).`);
   }
   if (s.basement) notes.push(`Basement walls ${wallT}" concrete, braced by the floor framing before backfilling, with foundation drainage and dampproofing (R405, R406). Soil assumed the weakest class in the wall table.`);
+  if (wells.length) notes.push(wellNote(wells));
   if (fd.hillside) notes.push(`${ENGINEER}: this lot is steep. Boise asks for an Idaho-licensed engineer to design hillside foundations. The layout here is for the engineer to start from.`);
   for (const e of fd.engineer.filter((x) => !x.text.startsWith("The lot is steep"))) notes.push(`${ENGINEER}: ${e.text}`);
   col.notes(notes);

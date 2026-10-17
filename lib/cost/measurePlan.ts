@@ -7,6 +7,7 @@ import { openSpans, openingGeometries, WALL_CAP_OVERHANG_IN, wallPieces, wallTop
 import { hostPiece } from "@/lib/house3d/build";
 import { floorFootprint, joinRooms, offsetRing, regionArea, subtractRegions, type Region } from "@/lib/house3d/footprint";
 import { levelHeights } from "@/lib/house3d/levels";
+import { windowWells } from "@/lib/plan/wells";
 import { lotOffsetFor, siteFor, type Site } from "@/lib/house3d/site";
 import { rockCuyd, rocksUnder } from "@/lib/land/onLot";
 import { yardAmounts, yardLayout } from "@/lib/exterior/yard";
@@ -57,6 +58,7 @@ export function measurePlan(p: Ctx): Quantities | null {
   const below = (id: string) => heights[id].floorIn < -12;
   q.floorsAbove = Math.max(1, used.filter((l) => !below(l.id)).length);
   q.floorsBelow = used.filter((l) => below(l.id)).length;
+  q.windowWells = windowWells(plans, p.levels, basics, site.groundAt).length;
 
   const allRooms: MeasuredRoom[] = [];
   let lowestUsed = Infinity;

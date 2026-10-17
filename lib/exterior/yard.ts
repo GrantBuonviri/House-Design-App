@@ -9,6 +9,7 @@ import { areaKind } from "@/lib/plan/measure";
 import { openingGeometries, wallPieces, type OpeningGeometry } from "@/lib/plan/walls";
 import { levelHeights } from "@/lib/house3d/levels";
 import { flatPlans } from "@/lib/plan/flatten";
+import { windowWells } from "@/lib/plan/wells";
 
 /**
  * The yard around the house, laid out by code from the floor plan and the
@@ -184,7 +185,11 @@ export function yardLayout(plans: Plans, levels: Level[], basics: PlanBasics | n
   }
   const walked = (p: Point, margin = 0) => walk.some((s) => onStrip(p, s, margin));
 
-  // Planting beds along the outside walls, with gaps at doors, porches and paving.
+  // Window wells outside basement escape windows: no beds, shrubs or lawn on them.
+  const wellBoxes = windowWells(plans, levels, basics).map((w) => boundsOf(w.outline)!);
+  const nearWell = (p: Point, margin = 0) => wellBoxes.some((b) => p.x > b.x0 - margin && p.x < b.x1 + margin && p.y > b.y0 - margin && p.y < b.y1 + margin);
+
+  // Planting beds along the outside walls, with gaps at doors, porches, paving and window wells.
   const beds: Strip[] = [];
   const shrubs: Point[] = [];
   for (const w of walls) {
@@ -193,7 +198,7 @@ export function yardLayout(plans: Plans, levels: Level[], basics: PlanBasics | n
     const off = w.thick / 2 + BED_IN / 2;
     const ok = (t: number) => {
       const c = add(add(w.a, scale(u, t)), scale(w.out, off));
-      if (insideHouse(c) || paved(c, 18) || walked(c, 18) || !pointInPolygon(c, lot)) return false;
+      if (insideHouse(c) || paved(c, 18) || walked(c, 18) || nearWell(c, 18) || !pointInPolygon(c, lot)) return false;
       return !doors.some((d) => {
         const pr = project(d.og.center, w.a, w.b);
         return pr.d < w.thick && Math.abs(pr.t - t) < d.og.opening.widthIn / 2 + 24;
@@ -253,7 +258,7 @@ export function yardLayout(plans: Plans, levels: Level[], basics: PlanBasics | n
   for (let y = Math.floor(y0 / c) * c; y < y1; y += c) {
     for (let x = Math.floor(x0 / c) * c; x < x1; x += c) {
       const m = { x: x + c / 2, y: y + c / 2 };
-      if (!pointInPolygon(m, lot) || insideHouse(m, exteriorIn / 2 + 6) || paved(m, 6) || walked(m, 6) || beds.some((b) => onStrip(m, b))) continue;
+      if (!pointInPolygon(m, lot) || insideHouse(m, exteriorIn / 2 + 6) || paved(m, 6) || walked(m, 6) || beds.some((b) => onStrip(m, b)) || nearWell(m, 6)) continue;
       cells.push({ x, y });
     }
   }

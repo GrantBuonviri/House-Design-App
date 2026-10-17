@@ -24,6 +24,7 @@ import { drawRailing, riseFromHeights, type RailingMeshes } from "./railings";
 import { railingsOn } from "@/lib/plan/railings";
 import type { Quality } from "@/lib/graphics";
 import { buildYard } from "./yard";
+import { drawWells, wellsOf } from "./wells";
 import { BASE_KINDS, cabinetLayout } from "@/lib/plan/cabinets";
 import { codeNum } from "@/lib/codes/data";
 import { overhangsOf, postsUnder, supportOf } from "@/lib/plan/support";
@@ -428,6 +429,11 @@ export function buildLevel(
     drawFurniture(mb, f, item, floorIn);
     if (!mb.empty) parts.push({ key: `${L}:fu:${item.id}`, levelId: L, layer: "furniture", furnitureId: item.id, mesh: mb.build() });
   }
+  // ---- Window wells outside a basement's escape windows ----
+  if (level.kind === "basement") {
+    const wells = drawWells(f, wellsOf(plans, ctx, L), site);
+    if (wells) parts.push({ key: `${L}:wells`, levelId: L, layer: "foundation", mesh: wells });
+  }
   return parts;
 }
 
@@ -500,9 +506,12 @@ export function dugOut(plans: Plans, ctx: HouseContext & { heights: LevelHeights
   const exteriorIn = exteriorWallIn(ctx.basics);
   const grow = (rs: Region[]): Region[] => rs.map((r) => ({ outline: offsetRing(r.outline, exteriorIn / 2), holes: [] }));
   const housed = grow(ctx.levels.filter((l) => !isBelowGround(l, ctx.heights)).flatMap((l) => floorFootprint(planOf(plans, l.id))));
-  return ctx.levels
+  const holes = ctx.levels
     .filter((l) => ctx.heights[l.id].floorIn < -12)
     .flatMap((l) => intersectRegions(grow(floorFootprint(planOf(plans, l.id))), housed).map((r) => r.outline));
+  // Window wells are dug out too, so you can look down into them.
+  const wells = ctx.levels.filter((l) => l.kind === "basement").flatMap((l) => wellsOf(plans, ctx, l.id).map((w) => w.outline));
+  return [...holes, ...wells];
 }
 
 export type HouseModel = {
