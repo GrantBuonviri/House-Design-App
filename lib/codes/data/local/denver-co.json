@@ -1,0 +1,34 @@
+{
+  "jurisdiction": "City and County of Denver, Colorado",
+  "permitOffice": "Denver Community Planning and Development (CPD), Development Services",
+  "zoningCode": "Denver Zoning Code (Denver Revised Municipal Code, Chapter 59 - Zoning)",
+  "codes": {
+    "irc": {
+      "edition": "2024",
+      "amendments": "2025 Denver Building and Fire Code",
+      "effective": "2025-12-31",
+      "source": "https://denvergov.org/Government/Agencies-Departments-Offices/Agencies-Departments-Offices-Directory/Community-Planning-and-Development/Building-Codes-Policies-and-Guides"
+    },
+    "iecc": {
+      "edition": "2021",
+      "amendments": "2021 IECC with Denver amendments (Denver Green Code separate)",
+      "effective": "2025-12-31",
+      "source": "https://denvergov.org/Government/Agencies-Departments-Offices/Agencies-Departments-Offices-Directory/Community-Planning-and-Development/Building-Codes-Policies-and-Guides"
+    },
+    "nec": {
+      "edition": "2023",
+      "effective": "2025-12-31",
+      "source": "https://denvergov.org/Government/Agencies-Departments-Offices/Agencies-Departments-Offices-Directory/Community-Planning-and-Development/Building-Codes-Policies-and-Guides"
+    },
+    "plumbing": {
+      "edition": "2024",
+      "model": "IRC",
+      "name": "2024 IRC P chapters (IPC 2024 for non-residential)",
+      "source": "https://denvergov.org/Government/Agencies-Departments-Offices/Agencies-Departments-Offices-Directory/Community-Planning-and-Development/Building-Codes-Policies-and-Guides",
+      "unverified": true
+    }
+  },
+  "checked": "2026-10-17",
+  "values": {},
+  "notes": "Denver amendments (frost depth 30 in, snow load, etc.) are likely but were not retrieved; confirmed false: footing.minDepthFrost 30 is commonly used in Denver."
+}

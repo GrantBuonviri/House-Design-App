@@ -1,0 +1,16 @@
+{
+  "jurisdiction": "City of Colorado Springs, El Paso County, Colorado",
+  "permitOffice": "Pikes Peak Regional Building Department (PPRBD)",
+  "zoningCode": "Colorado Springs City Code Chapter 7, Article 3 (Zoning Code / Unified Development Code)",
+  "codes": {
+    "irc": {
+      "edition": "2021",
+      "amendments": "2023 Pikes Peak Regional Building Code",
+      "effective": "2023 (2023 PPRBC; exact date not stated)",
+      "source": "https://www.meltplan.com/blogs/finding-the-adopted-building-code-for-any-jurisdiction-in-colorado"
+    }
+  },
+  "checked": "2026-10-17",
+  "values": {},
+  "notes": "PPRBD regional amendments not itemized."
+}

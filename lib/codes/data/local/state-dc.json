@@ -1,0 +1,34 @@
+{
+  "jurisdiction": "DC",
+  "adoption": "statewide",
+  "codes": {
+    "irc": {
+      "edition": "2015",
+      "amendments": "DC Residential Code (R-code)",
+      "effective": "2020-05-29",
+      "source": "https://awc.org/priorities/codes-standards/adoption/washington-dc/"
+    },
+    "iecc": {
+      "edition": "2015",
+      "effective": "2020-05-29",
+      "source": "https://energycodes.gov/status/states/washington-dc"
+    },
+    "nec": {
+      "edition": "2014",
+      "amendments": "2017 DC Electrical Code",
+      "effective": "2020-05-29",
+      "source": "https://awc.org/priorities/codes-standards/adoption/washington-dc/"
+    },
+    "plumbing": {
+      "edition": "2015",
+      "model": "IPC",
+      "name": "DC Plumbing Code 2017 (2015 IPC based)",
+      "source": "https://awc.org/priorities/codes-standards/adoption/washington-dc/",
+      "unverified": true
+    }
+  },
+  "elsewhere": "District-wide; DOB is developing codes based on 2024 I-codes with final rules expected late 2027 (Greater Greater Washington).",
+  "checked": "2026-10-17",
+  "values": {},
+  "notes": "Sources suggest the 2017 DC Construction Codes remain in force in Oct 2026; DC also has its own Green Construction Code and energy amendments."
+}

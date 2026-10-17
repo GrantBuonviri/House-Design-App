@@ -1,0 +1,8 @@
+{
+  "jurisdiction": "District of Columbia (Washington, DC)",
+  "permitOffice": "DC Department of Buildings (DOB)",
+  "zoningCode": "DC Zoning Regulations of 2016 (Title 11 DCMR, Zoning)",
+  "checked": "2026-10-17",
+  "values": {},
+  "notes": "District-wide code; no separate city layer."
+}

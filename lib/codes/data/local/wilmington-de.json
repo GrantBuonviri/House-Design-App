@@ -1,0 +1,14 @@
+{
+  "jurisdiction": "City of Wilmington, New Castle County, Delaware",
+  "codes": {
+    "irc": {
+      "edition": "2018",
+      "amendments": "Wilmington City Code Ch. 4, 2018 ICC adoption (Ord. 4690)",
+      "effective": "2019",
+      "source": "https://www.wilmingtonde.gov/business/construction-development"
+    }
+  },
+  "checked": "2026-10-17",
+  "values": {},
+  "notes": "Edition from city website and Ordinance 4690. Statewide energy code (2024 IECC) overlays."
+}

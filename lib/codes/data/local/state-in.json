@@ -1,0 +1,31 @@
+{
+  "jurisdiction": "IN",
+  "adoption": "statewide",
+  "codes": {
+    "irc": {
+      "edition": "2018",
+      "amendments": "2020 Indiana Residential Code (675 IAC 14-4.4)",
+      "effective": "2019-12-26",
+      "source": "https://secure.in.gov/dhs/files/2025-Readoption-Review.pdf"
+    },
+    "iecc": {
+      "edition": "2018",
+      "effective": "2019-12-26",
+      "source": "https://www.energycodes.gov/status/states/indiana"
+    },
+    "nec": {
+      "edition": "2008",
+      "source": "https://www.in.gov/dhs/files/Rulemaking Docket - Electrical Code_updated.pdf"
+    },
+    "plumbing": {
+      "edition": "2006",
+      "model": "IPC",
+      "name": "2012 Indiana Plumbing Code (675 IAC 16, based on 2006 IPC)",
+      "source": "https://www.warsaw.in.gov/96/Adopted-Building-Codes"
+    }
+  },
+  "elsewhere": "Statewide Indiana Residential Code applies for one-/two-family dwellings; local enforcement.",
+  "checked": "2026-10-17",
+  "values": {},
+  "notes": "Energycodes.gov lists -15.7% efficiency impact for Indiana amendments to 2018 IECC, meaning prescriptive values are weaker than IECC 2018 in places; details not retrieved."
+}

@@ -1,0 +1,23 @@
+{
+  "jurisdiction": "City of Memphis, Shelby County, Tennessee",
+  "permitOffice": "Memphis and Shelby County Office of Construction Code Enforcement (Division of Planning and Development)",
+  "zoningCode": "Memphis and Shelby County Unified Development Code",
+  "codes": {
+    "irc": {
+      "edition": "2021"
+    },
+    "iecc": {
+      "edition": "2021"
+    },
+    "nec": {
+      "edition": "2020"
+    },
+    "plumbing": {
+      "edition": "2021",
+      "model": "IPC",
+      "name": "IPC 2021 with local amendments"
+    }
+  },
+  "checked": "2026-10-17",
+  "values": {}
+}

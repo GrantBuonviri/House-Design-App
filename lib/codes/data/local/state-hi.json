@@ -1,0 +1,32 @@
+{
+  "jurisdiction": "HI",
+  "adoption": "statewide-local-option",
+  "codes": {
+    "irc": {
+      "edition": "2018",
+      "amendments": "Hawaii State Residential Code (2018 IRC with State amendments); counties adopt by ordinance",
+      "effective": "2021-04-20",
+      "source": "https://files.amlegal.com/pdffiles/Honolulu/ORD24-015.pdf"
+    },
+    "iecc": {
+      "edition": "2018",
+      "effective": "2020-12-15",
+      "source": "https://www.energycodes.gov/status/states/hawaii"
+    },
+    "nec": {
+      "edition": "2020",
+      "effective": "2022-03-15",
+      "source": "https://www.iaei.org/page/hawaii-electrical-ceus"
+    },
+    "plumbing": {
+      "edition": "2018",
+      "model": "UPC",
+      "name": "Hawaii State Plumbing Code (2018 UPC with State amendments); Honolulu ROH Ch.19 = 2021 UPC eff 2024-03-01",
+      "source": "https://ags.hawaii.gov/?p=971"
+    }
+  },
+  "elsewhere": "Counties (Honolulu, Hawaii, Maui, Kauai) adopt and amend the State Building Code by ordinance; check each county.",
+  "checked": "2026-10-17",
+  "values": {},
+  "notes": "Hawaii Wind speed/hurricane provisions via state maps; amendments to tracked keys not researched."
+}

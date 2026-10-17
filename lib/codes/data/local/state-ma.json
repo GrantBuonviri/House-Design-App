@@ -1,0 +1,27 @@
+{
+  "jurisdiction": "MA",
+  "adoption": "statewide",
+  "codes": {
+    "irc": {
+      "edition": "2021",
+      "amendments": "780 CMR 10th edition, Chapter 51 Massachusetts Residential Code",
+      "effective": "2024-10-11",
+      "source": "https://www.mass.gov/handbook/tenth-edition-of-the-ma-state-building-code-780"
+    },
+    "iecc": {
+      "edition": "2021",
+      "effective": "2024-10-11",
+      "source": "https://www.energycodes.gov/status/states/massachusetts"
+    },
+    "nec": {
+      "edition": "2023",
+      "effective": "2023-02-17",
+      "source": "https://www.mass.gov/info-details/massachusetts-building-energy-codes",
+      "unverified": true
+    }
+  },
+  "elsewhere": "Statewide 780 CMR; municipalities may adopt the stretch or specialized stretch energy code.",
+  "checked": "2026-10-17",
+  "values": {},
+  "notes": "Other MA IRC amendments to tracked keys were not retrieved."
+}

@@ -1,0 +1,26 @@
+{
+  "jurisdiction": "City of Wichita, Sedgwick County, Kansas",
+  "permitOffice": "Wichita-Sedgwick County Metropolitan Area Building and Construction Department (MABCD)",
+  "zoningCode": "Wichita-Sedgwick County Unified Zoning Code",
+  "codes": {
+    "irc": {
+      "edition": "2018",
+      "amendments": "2018 (UBTC Art. 2, Res. 120-2019 / Ord. 50-833)",
+      "unverified": true
+    },
+    "nec": {
+      "edition": "2023",
+      "amendments": "2023 (Res. 092-2024 / Ord. 52-489)",
+      "unverified": true
+    },
+    "plumbing": {
+      "edition": "2021",
+      "model": "UPC",
+      "name": "UPC 2021 (Res. 232-2021 / Ord. 51-672)",
+      "unverified": true
+    }
+  },
+  "checked": "2026-10-17",
+  "values": {},
+  "notes": "Page also lists a 2021 IRC in the mechanical table, inconsistent. Local amendments exist in UBTC but values not retrieved. Source https://www.sedgwick.gov/mabcd/codes-resolutions-ordinances/"
+}

@@ -1,0 +1,25 @@
+{
+  "jurisdiction": "NE",
+  "adoption": "statewide-local-option",
+  "codes": {
+    "irc": {
+      "edition": "2018",
+      "effective": "2021-08-28",
+      "source": "https://awc.org/priorities/codes-standards/adoption/nebraska/"
+    },
+    "iecc": {
+      "edition": "2018",
+      "effective": "2020-07-01",
+      "source": "https://www.energycodes.gov/status/states/nebraska"
+    },
+    "nec": {
+      "edition": "2023",
+      "effective": "2024-08-01",
+      "source": "https://www.nebraskalegislature.gov/"
+    }
+  },
+  "elsewhere": "Nebraska law (2021) requires each municipality to adopt a code generally conforming to the 2018 state building code or the state code applies; outside cities, 2018 IRC model code, check locally.",
+  "checked": "2026-10-17",
+  "values": {},
+  "notes": "Energycodes.gov: 2018 IECC mandatory statewide eff 2020-07-01 with no amendments."
+}

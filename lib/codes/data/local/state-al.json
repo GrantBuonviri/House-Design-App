@@ -1,0 +1,85 @@
+{
+  "jurisdiction": "AL",
+  "adoption": "statewide",
+  "codes": {
+    "irc": {
+      "edition": "2015",
+      "amendments": "Alabama Residential Building Code (2015 IRC, state amended)",
+      "effective": "2016-10-01",
+      "source": "https://dcm.alabama.gov/bldg_code.aspx"
+    },
+    "iecc": {
+      "edition": "2015",
+      "effective": "2016-10-01",
+      "source": "https://www.energycodes.gov/status/states/Alabama"
+    },
+    "nec": {
+      "edition": "2020",
+      "effective": "2022-07-01",
+      "source": "https://www.meltplan.com/buildingcodes/alabama"
+    },
+    "plumbing": {
+      "edition": "2021",
+      "model": "IPC",
+      "name": "Alabama Plumbing Code (2021 IPC)",
+      "source": "https://www.meltplan.com/buildingcodes/alabama"
+    }
+  },
+  "elsewhere": "Residential code is mandatory statewide but enforced locally; many rural counties do not enforce. Authority moved to the Alabama Home Builders Licensure Board (Oct 1, 2024, Act 2024-443), which was to adopt a residential code by Oct 2025.",
+  "checked": "2026-10-17",
+  "values": {
+    "energy.ceilingR@2": {
+      "value": 30,
+      "code": "IECC 2015",
+      "section": "Alabama Residential Energy Code Table R402.1.2 (Appendix A), Ala. Admin. Code 305-2-4-.10",
+      "amendment": "Alabama table sets ceiling R-30 in zones 2 and 3 (2015 IECC: R-38)",
+      "source": "https://static.auburnalabama.org/media/apps/www/inspection-services/services/current-codes/Alabama-Energy-and-Residential-Code.pdf",
+      "checked": "2026-10-17",
+      "secondCheck": {
+        "verdict": "agree",
+        "source": "https://static.auburnalabama.org/media/apps/www/inspection-services/services/current-codes/Alabama-Energy-and-Residential-Code.pdf"
+      },
+      "resolved": "Added by checker: state-modified prescriptive table found in the Alabama Energy and Residential Code text."
+    },
+    "energy.ceilingR@3": {
+      "value": 30,
+      "code": "IECC 2015",
+      "section": "Alabama Residential Energy Code Table R402.1.2 (Appendix A), Ala. Admin. Code 305-2-4-.10",
+      "amendment": "Alabama table sets ceiling R-30 in zones 2 and 3 (2015 IECC: R-38)",
+      "source": "https://static.auburnalabama.org/media/apps/www/inspection-services/services/current-codes/Alabama-Energy-and-Residential-Code.pdf",
+      "checked": "2026-10-17",
+      "secondCheck": {
+        "verdict": "agree",
+        "source": "https://static.auburnalabama.org/media/apps/www/inspection-services/services/current-codes/Alabama-Energy-and-Residential-Code.pdf"
+      },
+      "resolved": "Added by checker: state-modified prescriptive table found in the Alabama Energy and Residential Code text."
+    },
+    "energy.airLeakageACH50@2": {
+      "value": 5,
+      "code": "IECC 2015",
+      "section": "Alabama Residential Energy Code R402.4.1.2",
+      "amendment": "Alabama requires air leakage not over 5 ACH50 (2015 IECC zone 3: 3 ACH50)",
+      "source": "https://static.auburnalabama.org/media/apps/www/inspection-services/services/current-codes/Alabama-Energy-and-Residential-Code.pdf",
+      "checked": "2026-10-17",
+      "secondCheck": {
+        "verdict": "agree",
+        "source": "https://static.auburnalabama.org/media/apps/www/inspection-services/services/current-codes/Alabama-Energy-and-Residential-Code.pdf"
+      },
+      "resolved": "Added by checker from the Alabama Energy and Residential Code text."
+    },
+    "energy.airLeakageACH50@3": {
+      "value": 5,
+      "code": "IECC 2015",
+      "section": "Alabama Residential Energy Code R402.4.1.2",
+      "amendment": "Alabama requires air leakage not over 5 ACH50 (2015 IECC zone 3: 3 ACH50)",
+      "source": "https://static.auburnalabama.org/media/apps/www/inspection-services/services/current-codes/Alabama-Energy-and-Residential-Code.pdf",
+      "checked": "2026-10-17",
+      "secondCheck": {
+        "verdict": "agree",
+        "source": "https://static.auburnalabama.org/media/apps/www/inspection-services/services/current-codes/Alabama-Energy-and-Residential-Code.pdf"
+      },
+      "resolved": "Added by checker from the Alabama Energy and Residential Code text."
+    }
+  },
+  "notes": "State rule is 2015 IRC/IECC (Ala. Admin. Code 305-2-4-.09/.10). Many cities adopt the 2021 IRC locally. HBLB residential code (Act 2024-443) binds builders from 2027-01-01."
+}

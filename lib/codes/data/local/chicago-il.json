@@ -1,0 +1,20 @@
+{
+  "jurisdiction": "City of Chicago, Cook County, Illinois",
+  "permitOffice": "Chicago Department of Buildings",
+  "zoningCode": "Chicago Zoning Ordinance (Municipal Code of Chicago Title 17)",
+  "codes": {
+    "iecc": {
+      "edition": "2021",
+      "name": "2021 (Chicago Energy Transformation Code, Title 14N, from 2022-11-01)",
+      "unverified": true
+    },
+    "nec": {
+      "edition": "2017",
+      "amendments": "2017 (Chicago Electrical Code, Title 14E)",
+      "unverified": true
+    }
+  },
+  "checked": "2026-10-17",
+  "values": {},
+  "notes": "Chicago ETC prescriptive zone 5A values not retrieved. Sources https://chicago.gov/city/en/depts/bldgs/supp_info/chicago-energy-conservation-code.html"
+}

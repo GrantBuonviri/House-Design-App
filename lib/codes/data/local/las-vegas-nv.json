@@ -1,0 +1,27 @@
+{
+  "jurisdiction": "City of Las Vegas, Clark County, Nevada",
+  "permitOffice": "City of Las Vegas Department of Building and Safety (Building & Safety Division)",
+  "zoningCode": "Las Vegas Municipal Code Title 19 (Unified Development Code)",
+  "codes": {
+    "irc": {
+      "edition": "2024",
+      "amendments": "2024 IRC as Southern Nevada Residential Code (S. NV Amendments)"
+    },
+    "iecc": {
+      "edition": "2024",
+      "amendments": "2024 IECC"
+    },
+    "nec": {
+      "edition": "2023",
+      "amendments": "2023 NEC"
+    },
+    "plumbing": {
+      "edition": "2024",
+      "model": "UPC",
+      "name": "2024 UPC"
+    }
+  },
+  "checked": "2026-10-17",
+  "values": {},
+  "notes": "Projects submitted before 2026-01-05 could use the prior codes. SNV amendments (Clark County copy) delete IRC chapters 11-22 and 24-43 except P2904 in favor of the IECC/UMC/UPC/NEC, and set R302.1(1) as in the IRC. Zone 3B."
+}

@@ -1,0 +1,32 @@
+{
+  "jurisdiction": "MD",
+  "adoption": "statewide",
+  "codes": {
+    "irc": {
+      "edition": "2021",
+      "effective": "2023-05-29",
+      "source": "https://labor.maryland.gov/labor/build/buildadmin.shtml"
+    },
+    "iecc": {
+      "edition": "2021",
+      "effective": "2023-05-29",
+      "source": "https://www.energycodes.gov/status/states/maryland"
+    },
+    "nec": {
+      "edition": "2023",
+      "effective": "2025-03-01",
+      "source": "https://labor.maryland.gov/labor/build/buildadmin.shtml"
+    },
+    "plumbing": {
+      "edition": "2021",
+      "model": "IPC",
+      "name": "Maryland State Plumbing Code (State Board of Plumbing; historically NSPC-based); counties/cities adopt IPC locally (e.g. Hagerstown 2021 IPC)",
+      "source": "https://labor.maryland.gov/labor/build/buildadmin.shtml",
+      "unverified": true
+    }
+  },
+  "elsewhere": "Maryland Building Performance Standards apply statewide (2021 IRC/IECC with State amendments, enforcement required by 2024-05-29); each county and municipality may add local amendments, so check locally. State law also requires fire sprinklers in new one- and two-family dwellings unless a local jurisdiction opts out (sprinklers not a tracked key).",
+  "checked": "2026-10-17",
+  "values": {},
+  "notes": "2021 IRC/IECC with COMAR amendments effective 2023-05-29; specific State amendments to tracked numbers not itemized. NEC edition and plumbing model not confirmed."
+}

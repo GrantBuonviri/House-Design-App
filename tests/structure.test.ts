@@ -6,6 +6,8 @@ import { readiness } from "@/lib/plans/catalog";
 import { buildSet } from "@/lib/plans/build";
 import { sectionCuts } from "@/lib/plans/sheets/sections";
 import { house, RANCH } from "./samples";
+import { withCodeLocation } from "@/lib/codes/data";
+import { cityById, placeFromCity } from "@/lib/location/cities";
 
 /** A two-story house whose second floor sits exactly on the first: the first floor copied up, garage made a bonus room. */
 function stacked(): Project {
@@ -48,12 +50,20 @@ describe("structural tables", () => {
     expect(h?.size).toBeTruthy();
     expect(pickHeader("exterior", "roof-ceiling-2-center-bearing-floors", 36 * 12, 20 * 12)).toBeNull();
   });
-  it("reads the 2021 IRC footing widths for Boise's 20 psf snow", () => {
+  it("reads the 2021 IRC footing widths for 20 psf snow", () => {
+    // Richmond, Virginia: 2021 IRC, 15 psf ground snow (the 20 psf column).
+    withCodeLocation(placeFromCity(cityById("richmond-va")!), () => {
+      expect(footingSize(1500, 1, "crawl")).toEqual({ widthIn: 12, thicknessIn: 6 });
+      expect(footingSize(1500, 2, "crawl")?.widthIn).toBe(15);
+      expect(footingSize(1500, 3, "slab")?.widthIn).toBe(16);
+      expect(footingSize(1500, 3, "basement")).toEqual({ widthIn: 22, thicknessIn: 7 });
+      expect(footingSize(3000, 3, "slab")?.widthIn).toBe(12);
+    });
+  });
+  it("reads Idaho's own footing table for Boise", () => {
     expect(footingSize(1500, 1, "crawl")).toEqual({ widthIn: 12, thicknessIn: 6 });
-    expect(footingSize(1500, 2, "crawl")?.widthIn).toBe(15);
-    expect(footingSize(1500, 3, "slab")?.widthIn).toBe(16);
-    expect(footingSize(1500, 3, "basement")).toEqual({ widthIn: 22, thicknessIn: 7 });
-    expect(footingSize(3000, 3, "slab")?.widthIn).toBe(12);
+    expect(footingSize(1500, 3, "slab")?.widthIn).toBe(23);
+    expect(footingSize(1500, 3, "basement")?.widthIn).toBe(23);
   });
   it("needs more bracing on the first of two floors and in exposure C", () => {
     const top = bracingBase("one-story-or-top", 30, "CS-WSP")!;

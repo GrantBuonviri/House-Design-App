@@ -2,7 +2,7 @@ import type { DeviceKind, Level, Point, Project } from "@/lib/model/schema";
 import { add, dist, pointInPolygon, rotate } from "@/lib/plan/geometry";
 import { DEVICE_INFO, isLight, isSwitch, type PlacedDevice } from "@/lib/plan/devices";
 import { roleOf } from "@/lib/plan/connect";
-import { codeNum, codeRef, codeText } from "@/lib/codes/data";
+import { codeEntry, codeNum, codeRef, codeText } from "@/lib/codes/data";
 import { archFeet } from "../draw";
 import { DRAW_AREA } from "../frame";
 import { viewTitle } from "../view";
@@ -183,7 +183,9 @@ function circuitRows(project: Project): string[][] {
   if (sys.waterHeater === "electric" || sys.waterHeater === "heat-pump") rows.push(["Water heater, 240V", sys.waterHeater === "heat-pump" ? "Heat pump water heater" : "Electric water heater", "Sized to the nameplate"]);
   if (rooms.some((r) => roleOf(r) === "garage")) rows.push(["Garage", "Garage outlets", "GFCI"]);
   rows.push(["Outside", "Outside and deck outlets", "GFCI, in-use covers"]);
-  rows.push(["Bedrooms", "Bedroom outlets and lights", "AFCI (Idaho)"]);
+  const afci = codeEntry("elec.afciLocations").value;
+  if (Array.isArray(afci) && afci.length === 1 && /^bedrooms/.test(afci[0])) rows.push(["Bedrooms", "Bedroom outlets and lights", `AFCI (${codeRef("elec.afciLocations")})`]);
+  else rows.push(["Living areas", "Outlets and lights in bedrooms, living, dining, kitchen, halls, closets and laundry", `AFCI (${codeRef("elec.afciLocations")})`]);
   rows.push(["General", "Other lights and outlets", "15A or 20A, by the electrician"]);
   return rows;
 }

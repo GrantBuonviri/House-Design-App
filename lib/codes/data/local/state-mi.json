@@ -1,0 +1,31 @@
+{
+  "jurisdiction": "MI",
+  "adoption": "statewide",
+  "codes": {
+    "irc": {
+      "edition": "2021",
+      "effective": "2025-08-29",
+      "source": "https://www.icc-nta.org/states/michigan"
+    },
+    "iecc": {
+      "edition": "2021",
+      "effective": "2025-08-29",
+      "source": "https://www.icc-nta.org/states/michigan"
+    },
+    "nec": {
+      "edition": "2023",
+      "effective": "2025-08-29",
+      "source": "https://www.icc-nta.org/states/michigan"
+    },
+    "plumbing": {
+      "edition": "2021",
+      "model": "IRC",
+      "name": "Michigan Residential Code (2021 IRC) plumbing chapters; Michigan Plumbing Code (Part 7, IPC-based) excludes detached 1- and 2-family dwellings",
+      "source": "https://www.icc-nta.org/states/michigan"
+    }
+  },
+  "elsewhere": "Michigan Residential Code and Uniform Energy Code apply statewide in every jurisdiction; local governments enforce with no local amendments to the technical code.",
+  "checked": "2026-10-17",
+  "values": {},
+  "notes": "Older energycodes.gov page still lists 2015 IECC; ICC-NTA shows the 2021 MRC and energy code effective 2025-08-29. 42 in. frost depth from knowledge, not verified in this run."
+}

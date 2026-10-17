@@ -1,0 +1,31 @@
+{
+  "jurisdiction": "NJ",
+  "adoption": "statewide",
+  "codes": {
+    "irc": {
+      "edition": "2024",
+      "effective": "2026-08-17",
+      "source": "https://www.nj.gov/dca/codes/codreg/pdf_rule_adoptions/model_codes_2024_adopt.pdf"
+    },
+    "iecc": {
+      "edition": "2024",
+      "effective": "2026-08-17",
+      "source": "https://www.energycodes.gov/status/states/new-jersey"
+    },
+    "nec": {
+      "edition": "2023",
+      "effective": "2026-08-17",
+      "source": "https://www.nj.gov/dca/codes/codreg/pdf_rule_adoptions/model_codes_2024_adopt.pdf"
+    },
+    "plumbing": {
+      "edition": "2024",
+      "model": "state",
+      "name": "NJ UCC Plumbing Subcode based on 2024 National Standard Plumbing Code (2021 NSPC before Aug 2026)",
+      "source": "https://www.nj.gov/dca/codes/codreg/pdf_rule_adoptions/model_codes_2024_adopt.pdf"
+    }
+  },
+  "elsewhere": "UCC applies in every NJ municipality; permits are issued by the local construction official.",
+  "checked": "2026-10-17",
+  "values": {},
+  "notes": "NJ deleted the IRC R313.2 one- and two-family sprinkler requirement (kept R313.2.1); not a tracked key. Smoke alarm text R314 unchanged from IRC. Balcony live load 60 psf row added to Table R301.5."
+}

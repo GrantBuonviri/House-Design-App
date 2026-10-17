@@ -1,0 +1,57 @@
+{
+  "jurisdiction": "OH",
+  "adoption": "statewide",
+  "codes": {
+    "irc": {
+      "edition": "2018",
+      "effective": "2019-07-01",
+      "source": "https://dam.assets.ohio.gov/image/upload/com.ohio.gov/documents/bbst_ResidentialCodeofOhioEffectiveJuly1,2019.pdf"
+    },
+    "iecc": {
+      "edition": "2018",
+      "effective": "2019-07-01",
+      "source": "https://www.energycodes.gov/status/states/ohio"
+    },
+    "nec": {
+      "edition": "2023",
+      "effective": "2024-04-15",
+      "source": "https://www.iaei.org/page/nec-code-adoption"
+    },
+    "plumbing": {
+      "edition": "2018",
+      "model": "IRC",
+      "name": "Residential Code of Ohio Chapters 25-33 (OAC 4101:8-25-01 et seq., 2018 IRC base); Ohio Plumbing Code (2021 IPC base) for other buildings",
+      "source": "https://dam.assets.ohio.gov/image/upload/com.ohio.gov/documents/bbst_ResidentialCodeofOhioEffectiveJuly1,2019.pdf",
+      "unverified": true
+    }
+  },
+  "elsewhere": "RCO applies statewide to one-, two- and three-family dwellings; enforced where the local government has a certified residential building department, otherwise by the county or state. Frost depth is set locally.",
+  "checked": "2026-10-17",
+  "values": {
+    "stairs.maxRiser": {
+      "value": 8.25,
+      "code": "IRC 2018",
+      "section": "RCO R311.7.5.1",
+      "amendment": "Ohio RCO allows riser up to 8 1/4 in",
+      "source": "https://cityoflorain.org/m/faq?cat=17",
+      "checked": "2026-10-17",
+      "secondCheck": {
+        "verdict": "agree",
+        "source": "https://cityoflorain.org/m/faq?cat=17"
+      }
+    },
+    "stairs.minTread": {
+      "value": 9,
+      "code": "IRC 2018",
+      "section": "RCO R311.7.5.2",
+      "amendment": "Ohio RCO tread at least 9 in",
+      "source": "https://cityoflorain.org/m/faq?cat=17",
+      "checked": "2026-10-17",
+      "secondCheck": {
+        "verdict": "agree",
+        "source": "https://cityoflorain.org/m/faq?cat=17"
+      }
+    }
+  },
+  "notes": "Ohio's residential code is still 2018-based, so IRC 2021 changes (and 2021 IECC) do not apply. Ohio amends the 2018 IECC with its own less stringent provisions; edition-based derivation will overstate energy requirements. RCO 314.1.2 has a dual-technology smoke alarm interpretation."
+}

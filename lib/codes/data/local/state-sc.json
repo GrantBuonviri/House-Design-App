@@ -1,0 +1,32 @@
+{
+  "jurisdiction": "SC",
+  "adoption": "statewide",
+  "codes": {
+    "irc": {
+      "edition": "2021",
+      "effective": "2023-01-01",
+      "source": "https://llr.sc.gov/bcc/BCAdoption.aspx"
+    },
+    "iecc": {
+      "edition": "2009",
+      "amendments": "2009 IECC adopted by statute (SC Building Energy Efficiency Standard Act)",
+      "effective": "2013-01-01",
+      "source": "https://www.energycodes.gov/status/states/south-carolina"
+    },
+    "nec": {
+      "edition": "2020",
+      "effective": "2023-01-01",
+      "source": "https://www.nema.org/code-alerts/view/state-of-south-carolina"
+    },
+    "plumbing": {
+      "edition": "2021",
+      "model": "IRC",
+      "name": "2021 IRC Chapters 25-33 (IPC 2021 for other work)",
+      "source": "https://www.cityofhanahan.com/building-codes/page/building-codes"
+    }
+  },
+  "elsewhere": "SC Building Codes Council codes apply statewide; local jurisdictions enforce, some add flood/wind rules.",
+  "checked": "2026-10-17",
+  "values": {},
+  "notes": "Checked 2026-10-17. 2021 SC codes in force since 2023-01-01. The 2024 SC code set (2024 IRC/IPC, 2023 NEC) had its modifications published in the State Register on 2026-05-22, but no effective date was found; recheck (llr.sc.gov/bcc/BCAdoption.aspx). Energy stays 2009 IECC by statute; bill H.5216 (2026) would keep 2009 IECC for IRC houses but had not passed per the page read."
+}

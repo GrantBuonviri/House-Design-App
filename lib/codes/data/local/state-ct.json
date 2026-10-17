@@ -1,0 +1,33 @@
+{
+  "jurisdiction": "CT",
+  "adoption": "statewide",
+  "codes": {
+    "irc": {
+      "edition": "2021",
+      "amendments": "2022 Connecticut State Building Code",
+      "effective": "2022-10-01",
+      "source": "https://www.meltplan.com/buildingcodes/connecticut"
+    },
+    "iecc": {
+      "edition": "2021",
+      "effective": "2022-10-01",
+      "source": "https://www.energycodes.gov/status/states/Connecticut"
+    },
+    "nec": {
+      "edition": "2020",
+      "effective": "2022-10-01",
+      "source": "https://www.meltplan.com/buildingcodes/connecticut"
+    },
+    "plumbing": {
+      "edition": "2021",
+      "model": "IPC",
+      "name": "2022 CSBC Plumbing (2021 IPC; residential plumbing from IRC P chapters per state)",
+      "source": "https://www.meltplan.com/buildingcodes/connecticut",
+      "unverified": true
+    }
+  },
+  "elsewhere": "2026 Connecticut State Building Code (2024 I-codes, 2023 NEC) was expected 2026-07-01 but is delayed pending Legislative Regulation Review Committee approval (still pending as of Aug 2026), so the 2022 CSBC governs in Oct 2026.",
+  "checked": "2026-10-17",
+  "values": {},
+  "notes": "Statewide and mandatory. CT frost depth 42 in is a commonly used local value but not in the retrieved sources."
+}

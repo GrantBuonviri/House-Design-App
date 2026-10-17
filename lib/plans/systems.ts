@@ -79,13 +79,18 @@ export function levelDevices(project: Project, level: Pick<Level, "id" | "kind" 
 
 export const roomAt = (rooms: PlanRoom[], p: Point) => rooms.find((r) => pointInPolygon(p, r.polygon));
 
-/** Does an outlet here need GFCI protection (NEC 210.8(A), as Idaho amended it)? */
+/** Does an outlet here need GFCI protection (NEC 210.8(A), as the place adopted it)? */
 export function needsGfci(rooms: PlanRoom[], sinks: Point[], d: Pick<PlacedDevice, "x" | "y">, levelKind: Level["kind"]): boolean {
   const p = { x: d.x, y: d.y };
   const r = roomAt(rooms, p);
   if (!r || roleOf(r) === "outdoor" || roleOf(r) === "garage") return true;
-  if (isBath(r) || ["kitchen", "laundry", "outdoor-kitchen"].includes(r.type ?? "")) return true;
-  if (levelKind === "basement" && ["storage", "mechanical"].includes(r.type ?? "")) return true;
+  if (isBath(r) || ["kitchen", "outdoor-kitchen"].includes(r.type ?? "")) return true;
+  const list = codeEntry("elec.gfciLocations").value;
+  const has = (text: string) => Array.isArray(list) && list.includes(text);
+  // Every laundry area (NEC 2020 on), or only near its sink where a state took that out.
+  if (r.type === "laundry" && has("laundry areas")) return true;
+  // Every basement outlet (NEC 2020 on), or only unfinished basement rooms.
+  if (levelKind === "basement" && (has("basements") || ["storage", "mechanical"].includes(r.type ?? ""))) return true;
   return sinks.some((s) => dist(s, p) <= 72);
 }
 

@@ -1,0 +1,34 @@
+{
+  "jurisdiction": "CA",
+  "adoption": "statewide",
+  "codes": {
+    "irc": {
+      "edition": "2024",
+      "amendments": "2025 California Residential Code (Title 24 Part 2.5)",
+      "effective": "2026-01-01",
+      "source": "https://www.meltplan.com/buildingcodes/california"
+    },
+    "iecc": {
+      "edition": "2025",
+      "name": "2025 California Energy Code (Title 24 Part 6)",
+      "effective": "2026-01-01",
+      "source": "https://www.energycodes.gov/status/states/California"
+    },
+    "nec": {
+      "edition": "2023",
+      "amendments": "2025 California Electrical Code (Title 24 Part 3)",
+      "effective": "2026-01-01",
+      "source": "https://www.meltplan.com/buildingcodes/california"
+    },
+    "plumbing": {
+      "edition": "2024",
+      "model": "UPC",
+      "name": "2025 California Plumbing Code (Part 5)",
+      "source": "https://www.meltplan.com/buildingcodes/california"
+    }
+  },
+  "elsewhere": "Statewide and mandatory; local jurisdictions may only make stricter amendments with findings. Fire sprinklers are required in new one- and two-family homes (CRC R313.2).",
+  "checked": "2026-10-17",
+  "values": {},
+  "notes": "Energy: California Title 24 Part 6 is not IECC-based and is mainly performance/CalGreen driven; prescriptive per-zone R-values and U-factors for CA climate zones (not IECC 3B/3C) were not retrieved, so no energy.* values are given (flagged unconfirmed). Climate zone mapping to CEC zones 1-16 differs from IECC zones."
+}

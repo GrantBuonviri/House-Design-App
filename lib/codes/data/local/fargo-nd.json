@@ -1,0 +1,23 @@
+{
+  "jurisdiction": "City of Fargo, Cass County, North Dakota",
+  "codes": {
+    "irc": {
+      "edition": "2024",
+      "effective": "2025-07-02",
+      "source": "https://fargond.gov/city-government/departments/inspections/commercial-building-permits-fees/current-codes"
+    },
+    "iecc": {
+      "edition": "2024",
+      "effective": "2025-07-02",
+      "source": "https://fargond.gov/city-government/departments/inspections/commercial-building-permits-fees/current-codes"
+    },
+    "nec": {
+      "edition": "2023",
+      "effective": "2024-07-01",
+      "source": "https://fargond.gov/city-government/departments/inspections/commercial-building-permits-fees/current-codes"
+    }
+  },
+  "checked": "2026-10-17",
+  "values": {},
+  "notes": "Fargo adopts 2024 I-codes with local amendments (documents at City Hall); the amendment contents, including frost depth, were not retrieved. Fargo typically requires deep frost footings (48 in. or more); unverified."
+}

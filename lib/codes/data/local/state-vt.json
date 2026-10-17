@@ -1,0 +1,27 @@
+{
+  "jurisdiction": "VT",
+  "adoption": "statewide",
+  "codes": {
+    "iecc": {
+      "edition": "2018",
+      "amendments": "Vermont RBES 2020 (2018 IECC basis, unconfirmed); 2024 RBES optional from 2026-07-14",
+      "effective": "2020-09-01",
+      "source": "https://publicservice.vermont.gov/efficiency/building-energy-standards/residential-building-energy-standards",
+      "unverified": true
+    },
+    "nec": {
+      "edition": "2023",
+      "source": "https://firesafety.vermont.gov/buildingcode/codes"
+    },
+    "plumbing": {
+      "edition": "2024",
+      "model": "IPC",
+      "name": "2025 Vermont Plumbing Rules (2024 IPC listed as the state-adopted plumbing code)",
+      "source": "https://firesafety.vermont.gov/buildingcode/codes"
+    }
+  },
+  "elsewhere": "Only energy (RBES), electrical, plumbing and fire/life-safety rules apply statewide; no statewide residential structural code, so 2021 IRC model code, check locally.",
+  "checked": "2026-10-17",
+  "values": {},
+  "notes": "Checked 2026-10-17. RBES: 2020 or 2024 RBES allowed since 2026-07-14; zone 6A values not captured. NEC and plumbing updated in the 2025 state rules. No statewide residential structural code was not re-verified."
+}

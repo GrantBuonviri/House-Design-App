@@ -1,0 +1,40 @@
+{
+  "jurisdiction": "OK",
+  "adoption": "statewide",
+  "codes": {
+    "irc": {
+      "edition": "2024",
+      "effective": "2026-09-14",
+      "source": "https://oklahoma.gov/content/dam/ok/en/oubcc/documents/rules/2026%2009%2014%20IRC%202024%20Permanent%20Rule.pdf"
+    },
+    "nec": {
+      "edition": "2023",
+      "effective": "2024-09-14",
+      "source": "https://www.law.cornell.edu/regulations/oklahoma/OAC-748-20-10-1"
+    },
+    "plumbing": {
+      "edition": "2024",
+      "model": "IPC",
+      "name": "OUBCC 2024 IPC (OAC 748:20), effective 2026-09-14 (2018 IPC before)",
+      "source": "https://oklahoma.gov/content/dam/ok/en/oubcc/documents/rules/2026%2009%2014%20IPC%202026%20Permanent%20Rule%20.pdf",
+      "unverified": true
+    }
+  },
+  "elsewhere": "OUBCC codes are the statewide minimum; cities may adopt more stringent local amendments. Table R301.2(1) climate cells are left for local jurisdictions to fill.",
+  "checked": "2026-10-17",
+  "values": {
+    "stairs.maxRiserVariation": {
+      "value": 0.75,
+      "code": "IRC 2024",
+      "section": "R318.7.5.1 (2024 IRC numbering)",
+      "amendment": "Oklahoma R318.7.5.1 Exception 3: the top and bottom riser in each flight may vary by 3/4 in (19 mm); the 3/8 in limit still applies to the other risers",
+      "source": "https://oklahoma.gov/content/dam/ok/en/oubcc/documents/rules/2026%2009%2014%20IRC%202024%20Permanent%20Rule.pdf",
+      "checked": "2026-10-17",
+      "secondCheck": {
+        "verdict": "agree",
+        "source": "https://oklahoma.gov/content/dam/ok/en/oubcc/documents/rules/2026%2009%2014%20IRC%202024%20Permanent%20Rule.pdf"
+      }
+    }
+  },
+  "notes": "OUBCC 2024 IRC amendments also: R302.1/R302.2.2 exception for open metal carports, ICC 500 storm shelters at 250 mph, R309.2 sprinklers moved to non-adopted Appendix BP, egress rules extended to garages, two #4 rebar in footings, simplified bracing limited to 115 mph. Verify the 2024 effective date against the OUBCC site."
+}

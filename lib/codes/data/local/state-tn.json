@@ -1,0 +1,58 @@
+{
+  "jurisdiction": "TN",
+  "adoption": "statewide-local-option",
+  "codes": {
+    "irc": {
+      "edition": "2018",
+      "effective": "2020-07-16",
+      "source": "https://www.tn.gov/commerce/fire/codes-enforcement/history.html"
+    },
+    "iecc": {
+      "edition": "2018",
+      "effective": "2020-07-16",
+      "source": "https://www.tn.gov/commerce/fire/codes-enforcement/history.html"
+    },
+    "nec": {
+      "edition": "2017",
+      "effective": "2018-03-19",
+      "source": "https://www.tn.gov/commerce/fire/codes-enforcement/history.html"
+    },
+    "plumbing": {
+      "edition": "2018",
+      "model": "IRC",
+      "name": "2018 IRC Chapters 25-33 for houses; state-adopted IPC is 2021 (effective 2025-04-17) for other work",
+      "source": "https://www.tn.gov/commerce/fire/codes-enforcement/history.html"
+    }
+  },
+  "elsewhere": "Local governments may adopt building codes but must use the State Fire Marshal's designated editions; some rural counties have none. Statewide minimum fire/life-safety and electrical (NEC) licensing apply.",
+  "checked": "2026-10-17",
+  "values": {
+    "elec.afciLocations": {
+      "value": [
+        "kitchens",
+        "family rooms",
+        "dining rooms",
+        "living rooms",
+        "parlors",
+        "libraries",
+        "dens",
+        "bedrooms",
+        "sunrooms",
+        "recreation rooms",
+        "closets",
+        "hallways",
+        "similar rooms or areas"
+      ],
+      "code": "NEC 2017",
+      "section": "NEC 2017 210.12(A) (TN amendment)",
+      "amendment": "Tennessee makes AFCI optional for certain bathroom, laundry, garage, unfinished basement and refrigeration circuits; laundry areas dropped from the required list",
+      "source": "https://www.tn.gov/commerce/fire/codes-enforcement/history.html",
+      "checked": "2026-10-17",
+      "secondCheck": {
+        "verdict": "agree",
+        "source": "https://www.tn.gov/commerce/fire/codes-enforcement/history.html"
+      }
+    }
+  },
+  "notes": "Checked 2026-10-17 against the SFMO currently-adopted-codes page: IRC 2018 and IECC 2018 (residential) from 2020-07-16, NEC 2017 from 2018-03-19 with optional 110.24 and AFCI relief, IPC 2021 from 2025-04-17. Large cities (Nashville) are on newer local editions."
+}

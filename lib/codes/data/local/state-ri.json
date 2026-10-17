@@ -1,0 +1,56 @@
+{
+  "jurisdiction": "RI",
+  "adoption": "statewide",
+  "codes": {
+    "irc": {
+      "edition": "2021",
+      "effective": "2025-12-01",
+      "source": "https://rules.sos.ri.gov/regulations/Part/510-00-00-2"
+    },
+    "iecc": {
+      "edition": "2024",
+      "effective": "2025-12-01",
+      "source": "https://www.energycodes.gov/status/states/rhode-island"
+    },
+    "nec": {
+      "edition": "2023",
+      "effective": "2025-12-01",
+      "source": "https://www.architechtura.ai/code/rhode-island"
+    },
+    "plumbing": {
+      "edition": "2021",
+      "model": "IRC",
+      "name": "RISBC-2 IRC Chapters 25-33 with RI amendments for one- and two-family dwellings (2025 RISBC-3, 2021 IPC base, for other buildings)",
+      "source": "https://rules.sos.ri.gov/regulations/Part/510-00-00-2"
+    }
+  },
+  "elsewhere": "Statewide code applies in all cities and towns; New Shoreham frost depth is 30 in and ground snow 30 to 40 psf varies by town.",
+  "checked": "2026-10-17",
+  "values": {
+    "stairs.maxRiser": {
+      "value": 8.25,
+      "code": "IRC 2021",
+      "section": "R311.7.5.1",
+      "amendment": "RI maximum riser 8 1/4 in",
+      "source": "https://rules.sos.ri.gov/regulations/Part/510-00-00-2",
+      "checked": "2026-10-17",
+      "secondCheck": {
+        "verdict": "agree",
+        "source": "https://rules.sos.ri.gov/regulations/Part/510-00-00-2"
+      }
+    },
+    "stairs.minTread": {
+      "value": 9,
+      "code": "IRC 2021",
+      "section": "R311.7.5.2",
+      "amendment": "RI minimum tread 9 in",
+      "source": "https://rules.sos.ri.gov/regulations/Part/510-00-00-2",
+      "checked": "2026-10-17",
+      "secondCheck": {
+        "verdict": "agree",
+        "source": "https://rules.sos.ri.gov/regulations/Part/510-00-00-2"
+      }
+    }
+  },
+  "notes": "RI Table 2.4: ground snow typically 30 psf (35 or 40 in some towns), winter design temp 0F in Providence County, 5F elsewhere. Basement windows R310.8 need two operable 12 x 32 in windows. Hallway width 36 in with trim not below 34 1/2 in. RI building sewer min 36 in below grade, vent extension 3 in in Providence County."
+}

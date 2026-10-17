@@ -1,0 +1,21 @@
+{
+  "jurisdiction": "ND",
+  "adoption": "statewide-local-option",
+  "codes": {
+    "nec": {
+      "edition": "2023",
+      "effective": "2024-07-01",
+      "source": "https://fargond.gov/city-government/departments/inspections/commercial-building-permits-fees/current-codes"
+    },
+    "plumbing": {
+      "edition": "2018",
+      "model": "UPC",
+      "name": "North Dakota State Plumbing Code (statewide, UPC 2018-based)",
+      "source": "https://fargond.gov/city-government/departments/inspections/commercial-building-permits-fees/current-codes"
+    }
+  },
+  "elsewhere": "Home rule: North Dakota has no mandatory statewide residential building code; each city or county adopts (2021 IRC model code, check locally). State plumbing code and wiring standards are statewide.",
+  "checked": "2026-10-17",
+  "values": {},
+  "notes": "energycodes.gov: Home Rule, no statewide residential energy code."
+}

@@ -1,0 +1,33 @@
+{
+  "jurisdiction": "NC",
+  "adoption": "statewide",
+  "codes": {
+    "irc": {
+      "edition": "2015",
+      "amendments": "2018 North Carolina Residential Code",
+      "effective": "2019-01-01",
+      "source": "https://www.carync.gov/services-publications/residential-permits-inspections/nc-building-codes"
+    },
+    "iecc": {
+      "edition": "2015",
+      "amendments": "2018 North Carolina Energy Conservation Code",
+      "effective": "2019-01-01",
+      "source": "https://www.carync.gov/services-publications/residential-permits-inspections/nc-building-codes"
+    },
+    "nec": {
+      "edition": "2017",
+      "effective": "2021-11-01",
+      "source": "https://www.carync.gov/services-publications/residential-permits-inspections/nc-building-codes"
+    },
+    "plumbing": {
+      "edition": "2015",
+      "model": "IRC",
+      "name": "2018 NC Residential Code plumbing chapters (25-33); NC Plumbing Code excludes 1- and 2-family dwellings",
+      "source": "https://www.carync.gov/services-publications/residential-permits-inspections/nc-building-codes"
+    }
+  },
+  "elsewhere": "The NC State Building Code applies statewide and is mandatory; local governments may not amend it. Energy edition is flagged as 2018 NCECC by Cary; energycodes.gov says 2015 IECC (eff 2019-01-01) for the residential code.",
+  "checked": "2026-10-17",
+  "values": {},
+  "notes": "Conflict on energy edition: 2018 NCECC (Cary) vs 2015 IECC base (DOE). 2024 NC codes delayed past 2027-03-01. Second check: 2024 NC codes (2021 I-code base) delayed; Cary says not effective until after 2027-03-01."
+}

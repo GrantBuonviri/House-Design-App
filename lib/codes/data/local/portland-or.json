@@ -1,0 +1,21 @@
+{
+  "jurisdiction": "City of Portland, Multnomah County (also Washington and Clackamas Counties), Oregon",
+  "permitOffice": "Portland Permitting & Development (formerly Bureau of Development Services)",
+  "zoningCode": "Portland Zoning Code (Title 33, Portland City Code)",
+  "checked": "2026-10-17",
+  "values": {
+    "design.roofSnowLoadMin": {
+      "value": 20,
+      "code": "Design criteria",
+      "section": "ORSC R301.2 / Portland structural criteria",
+      "amendment": "Minimum design roof snow load 20 psf plus 5 psf rain-on-snow where applicable",
+      "source": "https://www.portland.gov/ppd/residential-permitting/structural-engineering/one-and-two-family-residential-structures",
+      "checked": "2026-10-17",
+      "secondCheck": {
+        "verdict": "agree",
+        "source": "https://www.portland.gov/ppd/residential-permitting/structural-engineering/one-and-two-family-residential-structures"
+      }
+    }
+  },
+  "notes": "Seismic design category D1; wind pressure 18 psf ASD. Zone 4C."
+}

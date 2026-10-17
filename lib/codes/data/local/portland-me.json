@@ -1,0 +1,15 @@
+{
+  "jurisdiction": "City of Portland, Cumberland County, Maine",
+  "permitOffice": "City of Portland Permitting and Inspections Department",
+  "zoningCode": "Portland City Code Chapter 14 (Land Use Ordinance)",
+  "codes": {
+    "iecc": {
+      "edition": "2021",
+      "effective": "2023-07-01",
+      "source": "https://mainebiz.biz/article/portlands-stricter-energy-code-for-builders-will-go-into-effect-on-july-1"
+    }
+  },
+  "checked": "2026-10-17",
+  "values": {},
+  "notes": "Portland adopted the 2021 IECC locally (effective July 1, 2023, ahead of the state) under the Green New Deal; no change versus base IECC 2021 values."
+}

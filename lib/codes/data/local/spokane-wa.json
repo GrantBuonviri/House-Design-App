@@ -1,0 +1,20 @@
+{
+  "jurisdiction": "City of Spokane, Spokane County, Washington",
+  "zoningCode": "Spokane Municipal Code Title 17C (Land Use Standards)",
+  "checked": "2026-10-17",
+  "values": {
+    "design.roofSnowLoadMin": {
+      "value": 30,
+      "code": "Design criteria",
+      "section": "SMC 17F.040.105 Design Criteria",
+      "amendment": "Spokane minimum roof snow load 30 psf (ground snow 39 psf)",
+      "source": "https://my.spokanecity.org/smc/?Section=17F.040.105",
+      "checked": "2026-10-17",
+      "secondCheck": {
+        "verdict": "agree",
+        "source": "https://my.spokanecity.org/smc/?Section=17F.040.105"
+      }
+    }
+  },
+  "notes": "Spokane design criteria: wind 110 mph (ult), ground snow 39 psf, minimum roof snow 30 psf, frost 24 in."
+}

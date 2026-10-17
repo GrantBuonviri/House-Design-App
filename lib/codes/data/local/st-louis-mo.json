@@ -1,0 +1,29 @@
+{
+  "jurisdiction": "City of St. Louis, Missouri",
+  "codes": {
+    "irc": {
+      "edition": "2018",
+      "effective": "2018-08-01",
+      "source": "https://www.stlouis-mo.gov/government/departments/public-safety/building/building-codes.cfm"
+    },
+    "iecc": {
+      "edition": "2018",
+      "effective": "2018-08-01",
+      "source": "https://www.stlouis-mo.gov/government/departments/public-safety/building/building-codes.cfm"
+    },
+    "nec": {
+      "edition": "2017",
+      "effective": "2018-08-01",
+      "source": "https://www.stlouis-mo.gov/government/departments/public-safety/building/building-codes.cfm"
+    },
+    "plumbing": {
+      "edition": "2021",
+      "model": "UPC",
+      "effective": "2023-02-20",
+      "source": "https://www.stlouis-mo.gov/government/departments/public-safety/building/building-codes.cfm"
+    }
+  },
+  "checked": "2026-10-17",
+  "values": {},
+  "notes": "Editions per city page (2018 ICC adopted 2018-08-01). Second check: city page lists adoption dates (not separate effective dates); no 2021/2024 ICC adoptions listed."
+}

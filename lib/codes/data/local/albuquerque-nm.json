@@ -1,0 +1,20 @@
+{
+  "jurisdiction": "City of Albuquerque, Bernalillo County, New Mexico",
+  "permitOffice": "City of Albuquerque Planning Department, Building Safety Division",
+  "zoningCode": "Integrated Development Ordinance (IDO), City of Albuquerque",
+  "codes": {
+    "irc": {
+      "edition": "2021",
+      "amendments": "2021 New Mexico Residential Code (effective 2023-12-14 in the city)",
+      "unverified": true
+    },
+    "nec": {
+      "edition": "2020",
+      "amendments": "2020 NEC via NM Electrical Code (effective 2023-09-28)",
+      "unverified": true
+    }
+  },
+  "checked": "2026-10-17",
+  "values": {},
+  "notes": "Adopts state codes plus the 2023 Uniform Administrative Code of the City of Albuquerque (effective 2024-02-02). Zone 4B."
+}

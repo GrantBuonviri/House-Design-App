@@ -1,0 +1,32 @@
+{
+  "jurisdiction": "NH",
+  "adoption": "statewide",
+  "codes": {
+    "irc": {
+      "edition": "2021",
+      "effective": "2024-07-01",
+      "source": "https://www.portsmouthnh.gov/sites/default/files/2024-08/2024_07_01%20Amendments%20to%20the%20NH%20State%20Building%20Code.pdf"
+    },
+    "iecc": {
+      "edition": "2018",
+      "effective": "2023-01-01",
+      "source": "https://www.energycodes.gov/status/states/new-hampshire"
+    },
+    "nec": {
+      "edition": "2023",
+      "effective": "2025-07-01",
+      "source": "https://www.henniker.org/sites/g/files/vyhlif5391/f/uploads/hb_134_update.pdf"
+    },
+    "plumbing": {
+      "edition": "2021",
+      "model": "IRC",
+      "name": "2021 IRC plumbing chapters for 1-2 family (NH list also adopts 2021 IPC with NH amendments)",
+      "source": "https://mm.nh.gov/files/uploads/fmo/remote-docs/nh-adopted-codes-august-2024.pdf",
+      "unverified": true
+    }
+  },
+  "elsewhere": "The NH State Building Code (RSA 155-A) applies statewide on paper, but permits and inspections happen only where the town has set up enforcement; many small towns do not enforce. Frost depth and ground snow load are set town by town (frost commonly 48 in).",
+  "checked": "2026-10-17",
+  "values": {},
+  "notes": "Residential energy code is still the 2018 IECC. NH amends IRC R310.1 (egress), R313.2 (sprinklers), R302.13, Table R301.2(1) snow footnote and the electrical chapters; the numeric text of the NH egress change could not be retrieved (firemarshal and mm.nh.gov amendment PDFs returned errors), so no tracked-key value is reported. Sprinklers not required in 1-2 family by state code."
+}

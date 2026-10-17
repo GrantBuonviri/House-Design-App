@@ -1,0 +1,34 @@
+{
+  "jurisdiction": "UT",
+  "adoption": "statewide",
+  "codes": {
+    "irc": {
+      "edition": "2021",
+      "effective": "2022-07-01",
+      "source": "https://le.utah.gov/Session/2026/bills/introduced/HB0065S04.pdf"
+    },
+    "iecc": {
+      "edition": "2021",
+      "amendments": "2021 IRC Chapter 11 as amended by Utah; 2024 IECC applies to commercial only from 2026-07-01. DOE rates the Utah amendments about equal to the 2009 IECC, so energy.* values differ but were not captured.",
+      "effective": "2022-07-01",
+      "source": "https://dopl.utah.gov/construction-codes/"
+    },
+    "nec": {
+      "edition": "2020",
+      "amendments": "2021 IRC Chapters 34-43 (2020 NEC basis) for IRC dwellings; 2023 NEC for other installations",
+      "effective": "2025-07-01",
+      "source": "https://le.utah.gov/Session/2025/bills/enrolled/HB0313.pdf"
+    },
+    "plumbing": {
+      "edition": "2024",
+      "model": "IPC",
+      "name": "2024 IPC with Utah amendments (2021 IRC P chapters may apply to IRC dwellings)",
+      "effective": "2026-07-01",
+      "source": "https://www.icc-nta.org/code-update/utah-adopts-new-i-codes/"
+    }
+  },
+  "elsewhere": "Utah State Construction Code applies statewide; cities may not amend beyond state-allowed local amendments.",
+  "checked": "2026-10-17",
+  "values": {},
+  "notes": "Checked 2026-10-17. Since 2026-07-01: 2021 IRC kept; 2024 IBC/IPC/IMC/IFGC/IECC (commercial); NEC 2023 for non-IRC work. Utah IRC amendment R303.4 exc.: dwellings tested at 3.0 ACH50 or more need no mechanical ventilation (not tracked). Utah residential energy amendments are significant but values not captured."
+}

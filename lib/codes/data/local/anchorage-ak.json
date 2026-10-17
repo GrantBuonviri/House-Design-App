@@ -1,0 +1,97 @@
+{
+  "jurisdiction": "Municipality of Anchorage, Alaska",
+  "permitOffice": "Municipality of Anchorage Planning, Development and Public Works Department, Development Services Division (Building Safety)",
+  "zoningCode": "Anchorage Municipal Code Title 21 (Land Use Planning)",
+  "codes": {
+    "irc": {
+      "edition": "2024",
+      "amendments": "2024 IRC with AMC 23.85 local amendments (AO 2026-33)",
+      "effective": "2026-04-14 (adoption date; effective date not stated)",
+      "source": "https://www.muni.org/Departments/OCPD/development-services/about/Building%20Board%20Documents/AMC%2023.85%20%28IRC-2024%29.pdf"
+    },
+    "iecc": {
+      "edition": "2024",
+      "effective": "2026-04-14 (adoption date)",
+      "source": "https://awc.org/priorities/codes-standards/adoption/alaska/"
+    },
+    "nec": {
+      "edition": "2023",
+      "effective": "2026-04-14 (adoption date)",
+      "source": "https://ecode360.com/50586770"
+    },
+    "plumbing": {
+      "edition": "2024",
+      "model": "UPC",
+      "name": "2024 UPC with AMC 23.25 local amendments",
+      "source": "https://ecode360.com/50586770"
+    }
+  },
+  "checked": "2026-10-17",
+  "values": {
+    "design.roofSnowLoadMin": {
+      "value": 40,
+      "code": "Design criteria",
+      "section": "Table R301.2(1)",
+      "amendment": "Ground snow load 50 psf (allowable), 80 psf (ultimate, ASCE 7); roof value not stated in current text",
+      "source": "https://www.muni.org/Departments/OCPD/development-services/about/Building%20Board%20Documents/AMC%2023.85%20%28IRC-2024%29.pdf",
+      "checked": "2026-10-17",
+      "secondCheck": {
+        "verdict": "could-not-confirm",
+        "source": "https://ecode360.com/49608432"
+      },
+      "resolved": "The \"40 psf roof snow load\" wording was in the older 2018-based file; the current AMC 23.85 Table R301.2 (AO 2026-33) lists only ground snow load 50 psf allowable / 80 psf ultimate (ASCE 7). Roof value not confirmed.",
+      "unverified": true
+    },
+    "egress.maxSillHeight": {
+      "value": 48,
+      "code": "IRC 2024",
+      "section": "AMC 23.85 R319.2.3 (2024 IRC numbering)",
+      "amendment": "Basement emergency escape openings: clear opening not more than 48 in above the floor",
+      "source": "https://www.muni.org/Departments/OCPD/development-services/about/Building%20Board%20Documents/AMC%2023.85%20%28IRC-2024%29.pdf",
+      "checked": "2026-10-17",
+      "secondCheck": {
+        "verdict": "agree",
+        "source": "https://ecode360.com/49608432"
+      }
+    },
+    "garage.gypsumGarageSide": {
+      "value": 0.625,
+      "code": "IRC 2024",
+      "section": "Table R302.6",
+      "amendment": "Table R302.6 amended: all 1/2 in gypsum board references replaced with 5/8 in Type X",
+      "source": "https://www.muni.org/Departments/OCPD/development-services/about/Building%20Board%20Documents/AMC%2023.85%20%28IRC-2024%29.pdf",
+      "checked": "2026-10-17",
+      "secondCheck": {
+        "verdict": "agree",
+        "source": "https://ecode360.com/49608432"
+      }
+    },
+    "energy.ceilingR@7": {
+      "value": 49,
+      "code": "IECC 2024",
+      "section": "AMC 23.85 Table N1102.1.3",
+      "amendment": "Zone 7 ceiling minimum R-49 (2024 model: R-60)",
+      "source": "https://www.muni.org/Departments/OCPD/development-services/about/Building%20Board%20Documents/AMC%2023.85%20%28IRC-2024%29.pdf",
+      "checked": "2026-10-17",
+      "secondCheck": {
+        "verdict": "agree",
+        "source": "https://ecode360.com/49608432"
+      },
+      "resolved": "Now a true amendment: current AMC 23.85 Table N1102.1.3 keeps ceiling R-49 for zone 7 against the adopted 2024 IECC/IRC (R-60)."
+    },
+    "energy.fenestrationU@7": {
+      "value": 0.32,
+      "code": "IECC 2024",
+      "section": "AMC 23.85 Table N1102.1.2",
+      "amendment": "Zone 7 fenestration U-factor maximum 0.32 (enhanced 0.27)",
+      "source": "https://www.muni.org/Departments/OCPD/development-services/about/Building%20Board%20Documents/AMC%2023.85%20%28IRC-2024%29.pdf",
+      "checked": "2026-10-17",
+      "secondCheck": {
+        "verdict": "disagree",
+        "source": "https://ecode360.com/49608432"
+      },
+      "resolved": "Value was 0.31. Current AMC 23.85 Table N1102.1.2 gives zone 7 fenestration U-0.32 approvable maximum (U-0.27 enhanced)."
+    }
+  },
+  "notes": "AO 2026-33 (adopted 2026-04-14) moved Anchorage to the 2024 I-codes; the AMC 23.85 local amendments carried forward (ecode360 chapter 23.85). Also: attic access may not be in a room with bathing facilities (R807.1 amendment, not a tracked number)."
+}

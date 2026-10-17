@@ -1,0 +1,23 @@
+{
+  "jurisdiction": "Metropolitan Government of Nashville and Davidson County, Tennessee",
+  "permitOffice": "Metropolitan Department of Codes Administration (Metro Codes)",
+  "zoningCode": "Metropolitan Code of Laws Title 17 (Zoning)",
+  "codes": {
+    "irc": {
+      "edition": "2024"
+    },
+    "iecc": {
+      "edition": "2024"
+    },
+    "nec": {
+      "edition": "2023"
+    },
+    "plumbing": {
+      "edition": "2024",
+      "model": "IRC",
+      "name": "IPC 2024 (IRC 2024 P chapters for houses)"
+    }
+  },
+  "checked": "2026-10-17",
+  "values": {}
+}

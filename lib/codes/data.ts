@@ -1,6 +1,8 @@
 import base from "./data/irc-2021.json";
 import zones from "./data/iecc-2021-zones.json";
-import { CITY_OVERLAYS, STATE_OVERLAYS, type CodeOverlay } from "./data/local";
+import editions from "./data/editions.json";
+import { CITY_OVERLAYS, STATE_OVERLAYS } from "./data/local";
+import type { AdoptedCode, AdoptedCodes, CodeOverlay, EditionTables, OverlayValue } from "./data/local/types";
 import type { Location } from "@/lib/model/schema";
 import { DEFAULT_PLACE } from "@/lib/location/current";
 
@@ -14,6 +16,10 @@ import { DEFAULT_PLACE } from "@/lib/location/current";
  * 3. location: the design criteria (snow, wind, quakes, frost, temperatures) from `project.location`;
  * 4. state: data/local/state-<st>.json, the editions and changes the state adopted;
  * 5. city: data/local/<cityId>.json, city-only changes and the jurisdiction's names.
+ *
+ * Where a state or city adopted another model edition (the 2018 IECC, the UPC
+ * for plumbing, the 2020 NEC), the numbers that edition prints differently come
+ * from data/editions.json and count as that state's or city's changes.
  *
  * Every entry keeps its code section, where it came from and when it was
  * checked. Only numbers and section references are kept, never the code's
@@ -59,6 +65,20 @@ export type CodeSet = {
   values: Record<string, CodeEntry>;
   /** The place the set was built for. */
   location: Location;
+  /** Who reviews the plans there, for the PDF. */
+  local: LocalFacts;
+};
+
+/** The building department's names, from the city file. */
+export type LocalFacts = {
+  /** "City of Boise, Ada County, Idaho", or "Elsewhere in Idaho, ID" for a place off the list. */
+  jurisdiction: string;
+  permitOffice?: string;
+  zoningCode?: string;
+  /** statewide, or local-only where each city or county adopts its own codes. */
+  adoption?: CodeOverlay["adoption"];
+  /** For "Elsewhere in <state>": what applies there. */
+  elsewhere?: string;
 };
 
 type BaseData = { meta: CodeSet["meta"]; editionLines: EditionLine[]; values: Record<string, CodeEntry> };
@@ -67,6 +87,7 @@ type ZoneData = { meta: { source: string; secondSource: string; checked: string;
 
 const BASE = base as unknown as BaseData;
 const ZONES = zones as unknown as ZoneData;
+const EDITIONS = editions as unknown as EditionTables;
 
 /**
  * The zone table row for a climate zone: the number, except marine 4 ("4C"),
@@ -79,10 +100,12 @@ export function zoneRow(climateZone: string): string {
   return n;
 }
 
-/** The energy numbers for a climate zone (layer 2). */
-function zoneLayer(climateZone: string): Record<string, CodeEntry> {
+/** The energy numbers for a climate zone (layer 2), from the 2021 IECC or the edition the place adopted. */
+function zoneLayer(climateZone: string, adopted?: { edition: string; who: string; layer: CodeLayer }): Record<string, CodeEntry> {
   const key = zoneRow(climateZone);
-  const row = ZONES.zones[key] ?? ZONES.zones["5"];
+  const other = adopted ? EDITIONS.iecc[adopted.edition] : undefined;
+  const zonesOf = other?.zones ?? ZONES.zones;
+  const row = zonesOf[key] ?? zonesOf["5"] ?? ZONES.zones[key] ?? ZONES.zones["5"];
   const out: Record<string, CodeEntry> = {};
   for (const [field, value] of Object.entries(row)) {
     const k = `energy.${field}`;
@@ -91,14 +114,14 @@ function zoneLayer(climateZone: string): Record<string, CodeEntry> {
       ...(prev ?? {}),
       value,
       unit: ZONES.units[field] || prev?.unit || "",
-      code: "IECC 2021",
+      code: other ? `IECC ${adopted!.edition}` : "IECC 2021",
       section: ZONES.sections[field] ?? ZONES.meta.section,
-      amendment: null,
-      source: ZONES.meta.source,
-      checked: ZONES.meta.checked,
-      secondCheck: { verdict: "agree", source: ZONES.meta.secondSource },
+      amendment: other ? `${adopted!.who} uses the ${adopted!.edition} IECC` : null,
+      source: other?.source ?? ZONES.meta.source,
+      checked: other ? EDITIONS.checked : ZONES.meta.checked,
+      secondCheck: { verdict: "agree", source: other?.secondSource ?? ZONES.meta.secondSource },
       note: `Climate zone ${climateZone}${key === "4C" ? " (marine 4 uses the zone 5 column)" : ""}.`,
-      layer: "zone",
+      layer: other ? adopted!.layer : "zone",
     };
   }
   return out;
@@ -154,31 +177,127 @@ function locationLayer(loc: Location): Record<string, CodeEntry> {
   ]);
 }
 
-/** Apply an overlay's changes on top, marking each with its layer. Numbers the person typed on the place card (`keep`) stay. */
-function applyOverlay(values: Record<string, CodeEntry>, overlay: CodeOverlay | undefined, layer: CodeLayer, keep: Set<string>) {
-  if (!overlay) return;
-  for (const [k, change] of Object.entries(overlay.values)) {
-    if (keep.has(k)) continue;
-    values[k] = { ...(values[k] ?? { unit: "", code: "", section: "", amendment: null, source: "", checked: "" }), ...change, layer } as CodeEntry;
+/** Apply an overlay's changes on top, marking each with its layer. Numbers the person typed on the place card (`keep`) stay, and numbers nobody could confirm are left out. */
+function applyValues(values: Record<string, CodeEntry>, changes: Record<string, OverlayValue> | undefined, layer: CodeLayer, keep: Set<string>, extra: Partial<CodeEntry> = {}, climateZone?: string) {
+  if (!changes) return;
+  const inZone = (z: string) => !!climateZone && (z.toUpperCase() === climateZone.toUpperCase() || (!/[A-C]$/i.test(z) && /^\d/.exec(z)?.[0] === /^\d/.exec(climateZone)?.[0]));
+  // "energy.ceilingR@6" holds a state's own number for climate zone 6 only (a state energy table, zone by zone).
+  for (const [key, { zones, ...change }] of Object.entries(changes)) {
+    const [k, zone] = key.split("@");
+    if (keep.has(k) || change.unverified) continue;
+    if (zone && !inZone(zone)) continue;
+    if (zones && !zones.some(inZone)) continue;
+    values[k] = { ...(values[k] ?? { unit: "", code: "", section: "", amendment: null, source: "", checked: "" }), ...extra, ...change, layer } as CodeEntry;
   }
+}
+
+/** An adopted code the app can use: confirmed, and not the base edition. */
+const otherEdition = (c: AdoptedCode | undefined, baseEdition: string): string | null => (c && !c.unverified && c.edition !== baseEdition ? c.edition : null);
+
+/** The closest edition the tables hold for a model ("UPC"), at or before `edition` if there is one. */
+function nearestEdition(tables: Record<string, unknown>, model: string, edition: string): string | null {
+  const have = Object.keys(tables)
+    .filter((k) => k.startsWith(`${model} `))
+    .map((k) => k.slice(model.length + 1))
+    .sort();
+  if (!have.length) return null;
+  const before = have.filter((e) => e <= edition);
+  return before.length ? before[before.length - 1] : have[0];
+}
+
+/** Which overlay set a code: the city's own adoption wins over its state's. */
+type Adopted = { codes: AdoptedCodes; by: { irc?: Owner; iecc?: Owner; nec?: Owner; plumbing?: Owner } };
+type Owner = { who: string; layer: CodeLayer };
+
+function adoptedOf(location: Location, state?: CodeOverlay, city?: CodeOverlay): Adopted {
+  const codes: AdoptedCodes = {};
+  const by: Adopted["by"] = {};
+  const stateWho = state?.jurisdiction ?? location.state;
+  const cityWho = city?.jurisdiction?.split(",")[0] ?? location.name;
+  for (const k of ["irc", "iecc", "nec", "plumbing"] as const) {
+    const c = city?.codes?.[k];
+    const s = state?.codes?.[k];
+    if (c) {
+      (codes as Record<string, unknown>)[k] = c;
+      by[k] = { who: cityWho, layer: "city" };
+    } else if (s) {
+      (codes as Record<string, unknown>)[k] = s;
+      by[k] = { who: stateWho, layer: "state" };
+    }
+  }
+  return { codes, by };
+}
+
+/** The numbers that the adopted editions print differently from the 2021 IRC, 2021 IECC and 2023 NEC. */
+function editionValues(values: Record<string, CodeEntry>, { codes, by }: Adopted) {
+  const put = (changes: Record<string, OverlayValue> | undefined, owner: Owner, code: string, why: string) =>
+    applyValues(values, changes, owner.layer, new Set(), { code, amendment: why, checked: EDITIONS.checked });
+  const irc = otherEdition(codes.irc, "2021");
+  if (irc && by.irc) put(EDITIONS.irc[irc], by.irc, `IRC ${irc}`, `${by.irc.who} uses the ${irc} IRC`);
+  const iecc = otherEdition(codes.iecc, "2021");
+  if (iecc && by.iecc && !codes.iecc?.name) put(EDITIONS.iecc[iecc]?.values, by.iecc, `IECC ${iecc}`, `${by.iecc.who} uses the ${iecc} IECC`);
+  const nec = otherEdition(codes.nec, "2023");
+  if (nec && by.nec) put(EDITIONS.nec[nec], by.nec, `NEC ${nec}`, `${by.nec.who} uses the ${nec} NEC`);
+  const pl = codes.plumbing;
+  if (pl && !pl.unverified && by.plumbing && (pl.model === "UPC" || pl.model === "IPC")) {
+    const ed = nearestEdition(EDITIONS.plumbing, pl.model, pl.edition);
+    if (ed) put(EDITIONS.plumbing[`${pl.model} ${ed}`], by.plumbing, `${pl.model} ${ed}`, `${by.plumbing.who} uses ${pl.name ?? `the ${pl.edition} ${pl.model}`}`);
+  }
+}
+
+/** The cover sheet's code list for what the place adopted. */
+function editionLinesFor({ codes }: Adopted, elsewhere?: string): EditionLine[] {
+  if (!Object.keys(codes).length) return elsewhere ? BASE.editionLines.map((l, i) => (i === 0 ? { ...l, detail: elsewhere } : l)) : BASE.editionLines;
+  const ed = (c: AdoptedCode | undefined, base: string) => (c && !c.unverified ? c.edition : base);
+  const detail = (c: AdoptedCode | undefined, model: string) =>
+    c?.unverified ? `${model}; the adoption here couldn't be confirmed, check with the building department` : (c?.amendments ?? model);
+  const irc = ed(codes.irc, "2021");
+  const pl = codes.plumbing;
+  const plumbing = !pl || pl.unverified || pl.model === "IRC" ? `${irc} IRC chapters 25 to 33` : (pl.name ?? `${pl.edition} ${pl.model === "UPC" ? "Uniform Plumbing Code (UPC)" : pl.model === "IPC" ? "International Plumbing Code (IPC)" : "state plumbing code"}`);
+  const iecc = ed(codes.iecc, "2021");
+  // An edition the app has no table for keeps the 2021 numbers; say so.
+  const noTable = iecc !== "2021" && !codes.iecc?.name && !EDITIONS.iecc[iecc] ? "; the energy numbers shown are the 2021 IECC's for this climate zone" : "";
+  return [
+    { label: `Residential: ${irc} International Residential Code (IRC)`, detail: detail(codes.irc, "Model code") },
+    { label: `Energy: ${codes.iecc?.name && !codes.iecc.unverified ? codes.iecc.name : `${iecc} International Energy Conservation Code (IECC)`}`, detail: detail(codes.iecc, "Prescriptive values for the climate zone") + noTable },
+    { label: `Electrical: ${ed(codes.nec, "2023")} National Electrical Code (NEC)`, detail: detail(codes.nec, "Model code") },
+    { label: `Plumbing: ${plumbing}`, detail: detail(pl, pl?.model === "IRC" || !pl ? "The IRC plumbing chapters" : "Model code") },
+    { label: `Mechanical and fuel gas: ${irc} IRC chapters 12 to 24`, detail: detail(codes.irc, "Model code") },
+  ];
 }
 
 /** Build the whole code set for a place. `overlays` stands in for the built-in state and city files (tests). */
 export function buildCodeSet(location: Location, overlays?: { state?: CodeOverlay; city?: CodeOverlay }): CodeSet {
-  const values: Record<string, CodeEntry> = {};
-  for (const [k, e] of Object.entries(BASE.values)) values[k] = { ...e, layer: "base" };
-  Object.assign(values, zoneLayer(location.climateZone), locationLayer(location));
-  // Water heaters are strapped against earthquakes in seismic categories D0 to D2 (IRC P2801.8).
-  const strap = values["plumbing.whStrapRequired"];
-  if (strap) values["plumbing.whStrapRequired"] = { ...strap, value: /^D[012]$/.test(location.seismicCategory.toUpperCase()), layer: "location", note: `Seismic design category ${location.seismicCategory}: strapping is required in D0 to D2.` };
   const state = overlays ? overlays.state : STATE_OVERLAYS[location.state.toLowerCase()];
   const city = overlays ? overlays.city : CITY_OVERLAYS[location.cityId];
+  const adopted = adoptedOf(location, state, city);
+  const values: Record<string, CodeEntry> = {};
+  for (const [k, e] of Object.entries(BASE.values)) values[k] = { ...e, layer: "base" };
+  editionValues(values, adopted);
+  const iecc = otherEdition(adopted.codes.iecc, "2021");
+  const ieccBy = adopted.by.iecc;
+  Object.assign(values, zoneLayer(location.climateZone, iecc && ieccBy && !adopted.codes.iecc?.name ? { edition: iecc, ...ieccBy } : undefined), locationLayer(location));
+  // Water heaters are strapped against earthquakes in seismic categories D0 to D2 (IRC P2801.8); the UPC straps them everywhere.
+  const strap = values["plumbing.whStrapRequired"];
+  if (strap && strap.layer === "base") values["plumbing.whStrapRequired"] = { ...strap, value: /^D[012]$/.test(location.seismicCategory.toUpperCase()), layer: "location", note: `Seismic design category ${location.seismicCategory}: strapping is required in D0 to D2.` };
   const keep = new Set(Object.entries(values).filter(([, e]) => e.layer === "location" && e.note === EDITED_NOTE).map(([k]) => k));
-  applyOverlay(values, state, "state", keep);
-  applyOverlay(values, city, "city", keep);
-  const editions = city?.editionLines ?? state?.editionLines ?? BASE.editionLines;
-  const jurisdiction = city?.jurisdiction ?? state?.jurisdiction ?? `${location.name}, ${location.state}`;
-  return { meta: { ...BASE.meta, jurisdiction, editions: [...BASE.meta.editions, ...(state?.editions ?? []), ...(city?.editions ?? [])] }, editions, values, location };
+  applyValues(values, state?.values, "state", keep, {}, location.climateZone);
+  applyValues(values, city?.values, "city", keep, {}, location.climateZone);
+  // A local roof snow load is a minimum: a snowier place keeps its own.
+  const roof = values["design.roofSnowLoadMin"];
+  if (roof.layer !== "location" && typeof roof.value === "number" && roof.value < roofSnowFor(location.groundSnowPsf)) values["design.roofSnowLoadMin"] = locationLayer(location)["design.roofSnowLoadMin"];
+  const elsewhere = location.cityId.startsWith("elsewhere-") ? state?.elsewhere : undefined;
+  const editions = city?.editionLines ?? state?.editionLines ?? editionLinesFor(adopted, elsewhere);
+  const jurisdiction = city?.jurisdiction ?? `${location.name}, ${location.state}`;
+  const local: LocalFacts = {
+    jurisdiction,
+    permitOffice: city?.permitOffice,
+    zoningCode: city?.zoningCode,
+    adoption: city?.adoption ?? state?.adoption,
+    elsewhere,
+  };
+  const metaEditions: CodeEdition[] = editions.map((l) => ({ code: l.label.replace(/:.*/, ""), edition: l.label.replace(/^[^:]+: /, ""), amendments: l.detail }));
+  return { meta: { ...BASE.meta, jurisdiction, editions: metaEditions }, editions, values, location, local };
 }
 
 // ---------- The active set ----------

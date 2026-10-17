@@ -1,0 +1,23 @@
+{
+  "jurisdiction": "City of Dallas, Dallas County, Texas",
+  "permitOffice": "Dallas Development Services - Building Inspection",
+  "zoningCode": "Dallas Development Code (Chapter 51 and 51A, Dallas City Code)",
+  "codes": {
+    "irc": {
+      "edition": "2021"
+    },
+    "iecc": {
+      "edition": "2021"
+    },
+    "nec": {
+      "edition": "2023"
+    },
+    "plumbing": {
+      "edition": "2021",
+      "model": "IPC",
+      "name": "2021 IPC with Dallas amendments (Chapter 54)"
+    }
+  },
+  "checked": "2026-10-17",
+  "values": {}
+}

@@ -1,0 +1,18 @@
+{
+  "jurisdiction": "City of Kansas City, Jackson County, Missouri",
+  "codes": {
+    "irc": {
+      "edition": "2018",
+      "effective": "2020-06-28",
+      "source": "https://www.kcmo.gov/city-hall/departments/city-planning-development/building-and-rehabilitation-code/"
+    },
+    "iecc": {
+      "edition": "2021",
+      "effective": "2023-07-01",
+      "source": "https://www.kcmo.gov/city-hall/departments/city-planning-development/building-and-rehabilitation-code/"
+    }
+  },
+  "checked": "2026-10-17",
+  "values": {},
+  "notes": "Energy: 2021 IECC effective 2023-07-01 (confirmed on city page). Residential/electrical/plumbing: city page shows 2024 drafts of Articles III, IV, VII; adopted edition not confirmed (likely 2018 IRC, possibly updating to 2024)."
+}

@@ -1,0 +1,26 @@
+{
+  "jurisdiction": "City of Cheyenne, Laramie County, Wyoming",
+  "codes": {
+    "irc": {
+      "edition": "2021",
+      "unverified": true
+    },
+    "iecc": {
+      "edition": "2021",
+      "unverified": true
+    },
+    "nec": {
+      "edition": "2023",
+      "unverified": true
+    },
+    "plumbing": {
+      "edition": "2021",
+      "model": "IRC",
+      "name": "2021 UPC/IRC",
+      "unverified": true
+    }
+  },
+  "checked": "2026-10-17",
+  "values": {},
+  "notes": "Local editions unverified."
+}

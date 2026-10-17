@@ -1,0 +1,24 @@
+{
+  "jurisdiction": "LA",
+  "adoption": "statewide",
+  "codes": {
+    "irc": {
+      "edition": "2021",
+      "source": "https://luccc.louisiana.gov/"
+    },
+    "iecc": {
+      "edition": "2018",
+      "effective": "2023-07-01",
+      "source": "https://www.energycodes.gov/status/states/louisiana"
+    },
+    "nec": {
+      "edition": "2020",
+      "source": "https://awc.org/priorities/codes-standards/adoption/louisiana/",
+      "unverified": true
+    }
+  },
+  "elsewhere": "State Uniform Construction Code applies in every parish and municipality.",
+  "checked": "2026-10-17",
+  "values": {},
+  "notes": "A May 2026 emergency rule (2605emr015) exists at doa.louisiana.gov but was unreadable."
+}

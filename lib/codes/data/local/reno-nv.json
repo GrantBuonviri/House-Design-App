@@ -1,0 +1,39 @@
+{
+  "jurisdiction": "City of Reno, Washoe County, Nevada",
+  "codes": {
+    "irc": {
+      "edition": "2024",
+      "amendments": "2024 IRC with 2024 Northern Nevada Amendments"
+    },
+    "iecc": {
+      "edition": "2024",
+      "amendments": "2024 IECC"
+    },
+    "nec": {
+      "edition": "2023",
+      "amendments": "2023 NEC"
+    },
+    "plumbing": {
+      "edition": "2024",
+      "model": "UPC",
+      "name": "2024 UPC"
+    }
+  },
+  "checked": "2026-10-17",
+  "values": {
+    "design.roofSnowLoadMin": {
+      "value": 29,
+      "code": "Design criteria",
+      "section": "IBC 1608 / Table R301.2",
+      "amendment": "Washoe County: roof snow loads at least 29 psf, higher with elevation; not verified for City of Reno",
+      "source": "https://www.washoecounty.gov/building/getting_started/Construction_Design_Requirements.php",
+      "checked": "2026-10-17",
+      "secondCheck": {
+        "verdict": "could-not-confirm",
+        "source": "https://www.washoecounty.gov/building/getting_started/Construction_Design_Requirements.php"
+      },
+      "unverified": true
+    }
+  },
+  "notes": "Washoe County adopted the 2024 codes effective 2025-07-01 (mandatory from 2026-01-01). Reno wind Vult 120 mph (Vasd 93), seismic D2 per NNICC/Washoe. Zone 5B."
+}

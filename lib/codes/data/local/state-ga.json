@@ -1,0 +1,73 @@
+{
+  "jurisdiction": "GA",
+  "adoption": "statewide",
+  "codes": {
+    "irc": {
+      "edition": "2024",
+      "amendments": "2024 IRC with 2026 Georgia Amendments",
+      "effective": "2026-01-01",
+      "source": "https://dca.georgia.gov/document/document/new-codes-and-amendments-effective-january-1-2026-memo/download"
+    },
+    "iecc": {
+      "edition": "2015",
+      "amendments": "Georgia State Minimum Standard Energy Code (2015 IECC with Georgia supplements and amendments)",
+      "effective": "2020-01-01",
+      "source": "https://www.energycodes.gov/status/states/georgia"
+    },
+    "nec": {
+      "edition": "2023",
+      "amendments": "2026 Georgia Amendments to the 2023 NEC",
+      "effective": "2026-01-01",
+      "source": "https://dca.georgia.gov/document/document/nec-2026-amendment-packet/download"
+    },
+    "plumbing": {
+      "edition": "2024",
+      "model": "IPC",
+      "name": "Georgia State Minimum Standard Plumbing Code (2024 IPC + 2026 GA amendments); IRC P chapters deleted",
+      "effective": "2026-01-01",
+      "source": "https://dca.georgia.gov/document/document/2026-irc-amendment-packet/download"
+    }
+  },
+  "elsewhere": "Mandatory statewide minimum codes; local governments may adopt/enforce (must adopt the state minimums). Some counties lack enforcement.",
+  "checked": "2026-10-17",
+  "values": {
+    "elec.islandReceptacleRequired": {
+      "value": true,
+      "code": "NEC 2023",
+      "section": "NEC 2023 210.52(C)(2)",
+      "amendment": "Georgia amendment requires at least one receptacle at each island/peninsular countertop 24 in x 12 in or larger",
+      "source": "https://dca.georgia.gov/document/document/nec-2026-amendment-packet/download",
+      "checked": "2026-10-17",
+      "secondCheck": {
+        "verdict": "agree",
+        "source": "https://dca.georgia.gov/document/document/nec-2026-amendment-packet/download"
+      }
+    },
+    "elec.gfciLocations": {
+      "value": [
+        "bathrooms",
+        "garages and accessory buildings (floor at or below grade)",
+        "outdoors",
+        "crawl spaces",
+        "basements",
+        "kitchen countertop receptacles",
+        "sinks (within 6 ft)",
+        "bathtubs or shower stalls (within 6 ft)",
+        "laundry areas",
+        "boathouses",
+        "indoor damp or wet locations"
+      ],
+      "code": "NEC 2023",
+      "section": "NEC 2023 210.8(A),(D),(F)",
+      "amendment": "Georgia replaces 210.8(A) list: kitchens limited to countertop receptacles (no food-prep-area item); 210.8(D) appliance list keeps dishwashers/sump pumps but not ranges, ovens, cooktops, dryers, microwaves",
+      "source": "https://dca.georgia.gov/document/document/nec-2026-amendment-packet/download",
+      "checked": "2026-10-17",
+      "secondCheck": {
+        "verdict": "disagree",
+        "source": "https://dca.georgia.gov/document/document/nec-2026-amendment-packet/download"
+      },
+      "resolved": "value was a prose string; base key is a list. Also it is mostly a narrowing (kitchen countertops only, appliance list trimmed), not an expansion; per 2026 GA NEC amendment packet"
+    }
+  },
+  "notes": "Georgia deletes IRC Ch.1, Ch.11 (energy), P chapters, R313/R317.5 sprinkler mandate (optional, NFPA 13D), and adds APA SR-102 bracing. Energy edition 2015 IECC; check DCA for any 2025/2026 energy update (unconfirmed)."
+}

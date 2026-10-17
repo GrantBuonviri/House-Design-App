@@ -1,0 +1,60 @@
+{
+  "jurisdiction": "MT",
+  "adoption": "statewide-local-option",
+  "codes": {
+    "irc": {
+      "edition": "2024",
+      "effective": "2026-09-26",
+      "source": "https://bsd.dli.mt.gov/building-codes-permits/current-codes"
+    },
+    "iecc": {
+      "edition": "2024",
+      "effective": "2026-09-26",
+      "source": "https://bsd.dli.mt.gov/building-codes-permits/current-codes"
+    },
+    "nec": {
+      "edition": "2023",
+      "effective": "2026-09-26",
+      "source": "https://bsd.dli.mt.gov/building-codes-permits/current-codes"
+    },
+    "plumbing": {
+      "edition": "2024",
+      "model": "UPC",
+      "name": "Uniform Plumbing Code with ARM 24.301.301/.351",
+      "source": "https://bsd.dli.mt.gov/building-codes-permits/current-codes"
+    }
+  },
+  "elsewhere": "Montana's state codes apply only where a city or county has a certified building code program; unincorporated areas without one have no residential permit or inspection. 2021 IRC and IECC (as amended, DOE rates the state IECC as equivalent to 2009 IECC) were in force 2024-09-21 until the 2024 set took effect 2026-09-26 per the DLI page.",
+  "checked": "2026-10-17",
+  "values": {
+    "stairs.maxRiser": {
+      "value": 8.25,
+      "code": "IRC 2024",
+      "section": "ARM 24.301.154",
+      "amendment": "Montana amends R311.7.5.1: maximum riser 8-1/4 in.",
+      "source": "https://regulations.justia.com/states/montana/department-24/chapter-24-301/subchapter-24-301-1/rule-24-301-154/",
+      "checked": "2026-10-17",
+      "secondCheck": {
+        "verdict": "could-not-confirm",
+        "source": "https://regulations.justia.com/states/montana/department-24/chapter-24-301/subchapter-24-301-1/rule-24-301-154/"
+      },
+      "resolved": "Found in the 2021-IRC version of ARM 24.301.154 (current through June 2025); whether the 2024-IRC rule effective 2026-09-26 keeps it was not verified",
+      "unverified": true
+    },
+    "stairs.minTread": {
+      "value": 9,
+      "code": "IRC 2024",
+      "section": "ARM 24.301.154",
+      "amendment": "Montana amends R311.7.5.2: minimum tread depth 9 in.",
+      "source": "https://regulations.justia.com/states/montana/department-24/chapter-24-301/subchapter-24-301-1/rule-24-301-154/",
+      "checked": "2026-10-17",
+      "secondCheck": {
+        "verdict": "could-not-confirm",
+        "source": "https://regulations.justia.com/states/montana/department-24/chapter-24-301/subchapter-24-301-1/rule-24-301-154/"
+      },
+      "resolved": "Found in the 2021-IRC version of ARM 24.301.154 (current through June 2025); whether the 2024-IRC rule effective 2026-09-26 keeps it was not verified",
+      "unverified": true
+    }
+  },
+  "notes": "IMPORTANT: Montana amended the 2021 IECC (DOE: -11.2% vs model, ~2009 IECC equivalent). The amended prescriptive values (ARM 24.301.161) were NOT retrieved; energy.* for zone 6B needs follow-up. 2026-09-26 date taken from DLI page; verify in force. SECOND CHECK: 2024 set effective 2026-09-26 confirmed on DLI current-codes page (Bozeman page says state planned 2024 adoption mid-2026). 2021 rule also had 30 psf min roof snow load. Montana 2024 IECC amendments not found; no energy.* values added."
+}

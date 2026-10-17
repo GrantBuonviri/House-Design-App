@@ -1,0 +1,33 @@
+{
+  "jurisdiction": "VA",
+  "adoption": "statewide",
+  "codes": {
+    "irc": {
+      "edition": "2021",
+      "effective": "2024-01-18",
+      "source": "https://www.dhcd.virginia.gov/codes"
+    },
+    "iecc": {
+      "edition": "2021",
+      "amendments": "2021 IECC with Virginia amendments (DOE rates them about equal to the 2018 IECC; values not captured)",
+      "effective": "2024-01-18",
+      "source": "https://www.energycodes.gov/status/states/virginia"
+    },
+    "nec": {
+      "edition": "2020",
+      "effective": "2024-01-18",
+      "source": "https://www.iaei.org/page/nec-code-adoption"
+    },
+    "plumbing": {
+      "edition": "2021",
+      "model": "IRC",
+      "name": "VRC Part VII Plumbing based on 2021 IRC P chapters",
+      "source": "https://www.dhcd.virginia.gov/building-codes",
+      "unverified": true
+    }
+  },
+  "elsewhere": "Virginia Uniform Statewide Building Code (2021 VRC) applies in every locality.",
+  "checked": "2026-10-17",
+  "values": {},
+  "notes": "Checked 2026-10-17. 2021 Virginia codes effective 2024-01-18 (DHCD). No 2024 USBC effective date found. VA amends the 2021 IECC residential provisions (weaker than model); specific values not captured. Plumbing model (VRC P chapters vs IPC) not confirmed."
+}

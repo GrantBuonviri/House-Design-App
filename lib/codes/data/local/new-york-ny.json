@@ -1,0 +1,53 @@
+{
+  "jurisdiction": "City of New York, New York",
+  "permitOffice": "New York City Department of Buildings",
+  "zoningCode": "Zoning Resolution of the City of New York",
+  "codes": {
+    "iecc": {
+      "edition": "2025",
+      "amendments": "2025 NYC Energy Conservation Code (adopted; enforcement anticipated 2026-03-30, 2020 NYCECC before); IECC base edition not confirmed",
+      "unverified": true
+    },
+    "nec": {
+      "edition": "2025",
+      "amendments": "2025 NYC Electrical Code, based on NEC 2020, full effect 2025-12-21",
+      "unverified": true
+    },
+    "plumbing": {
+      "edition": "2022",
+      "model": "state",
+      "name": "2022 NYC Plumbing Code (model base edition not confirmed)",
+      "unverified": true
+    }
+  },
+  "checked": "2026-10-17",
+  "values": {
+    "stairs.maxRiser": {
+      "value": 8.25,
+      "code": "IRC 2024",
+      "section": "NYC BC 1011.5.2 (R-3 exception)",
+      "amendment": "Group R-3 max riser 8 1/4 in, tread 9 in (from memory, not verified)",
+      "source": "",
+      "checked": "2026-10-17",
+      "secondCheck": {
+        "verdict": "could-not-confirm",
+        "source": ""
+      },
+      "unverified": true
+    },
+    "stairs.minTread": {
+      "value": 9,
+      "code": "IRC 2024",
+      "section": "NYC BC 1011.5.2 (R-3 exception)",
+      "amendment": "Group R-3 min tread 9 in (from memory, not verified)",
+      "source": "",
+      "checked": "2026-10-17",
+      "secondCheck": {
+        "verdict": "could-not-confirm",
+        "source": ""
+      },
+      "unverified": true
+    }
+  },
+  "notes": "NYC is not governed by the IRC; the app's IRC base is only a proxy here. Zone 4A."
+}
