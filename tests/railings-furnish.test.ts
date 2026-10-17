@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { emptyPlan } from "@/lib/plan/edit";
+import { emptyPlan, makeRoom } from "@/lib/plan/edit";
+import { rectangle } from "@/lib/plan/geometry";
 import type { Project } from "@/lib/model/schema";
 import { describeChange } from "@/lib/store/describe";
 import { estimate } from "@/lib/cost/estimate";
@@ -13,7 +14,15 @@ import { bareSlots, describeRailingEdit, editRailing, railingLengths, railingsFo
 import { house, TWO_STORY } from "./samples";
 
 const FLOOR1 = "floor-1";
-const twoStory = () => house(TWO_STORY, 2);
+
+/** The sample two-story with each floor made one big room, so the stairs stand in the open and have guards on every open side. */
+const twoStory = (): Project => {
+  const p = house(TWO_STORY, 2);
+  const floorPlans = Object.fromEntries(
+    Object.entries(p.floorPlans).map(([id, pl]) => [id, { ...pl, openings: [], walls: [], rooms: [{ ...makeRoom(rectangle(0, 0, 900, 900), "Open plan", { type: "living" }), id: `big-${id}` }] }]),
+  );
+  return { ...p, floorPlans };
+};
 const stairsOf = (p: Project) => p.floorPlans[FLOOR1].stairs[0];
 const found = (p: Project, levelId = FLOOR1) => stageRailings(p.floorPlans, p.levels, p.plan.basics, levelId);
 const apply = (p: Project, edge: string, change: Parameters<typeof changeRailingIn>[2]): Project => {

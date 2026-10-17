@@ -186,7 +186,7 @@ function existingHall(plan: FloorPlan, stackId: string, floor: Point[]): PlanRoo
  * windows near where they were. A floor without one gets a new "Stair hall".
  * Other rooms in the way are trimmed back around it.
  */
-function setHall(plan: FloorPlan, stackId: string, outline: Point[], anchored: boolean, floor: Point[]): { plan: FloorPlan; trimmed: string[]; made: boolean } {
+export function setHall(plan: FloorPlan, stackId: string, outline: Point[], anchored: boolean, floor: Point[]): { plan: FloorPlan; trimmed: string[]; made: boolean } {
   const have = existingHall(plan, stackId, floor);
   let next: FloorPlan;
   let id: string;
@@ -252,14 +252,20 @@ function withStack(r: PlanRoom, stackId: string, anchored: boolean): PlanRoom {
   return { ...rest, stairStack: stackId, ...(anchored ? { anchored: true } : {}) };
 }
 
+const overlapCount = (plan: FloorPlan): number => {
+  let n = 0;
+  for (let i = 0; i < plan.rooms.length; i++) for (let j = i + 1; j < plan.rooms.length; j++) if (polygonsOverlap(plan.rooms[i].polygon, plan.rooms[j].polygon)) n++;
+  return n;
+};
+
 /** Rooms a few inches off the stair hall move up against it, so it can still have a door. */
-function closeHallGaps(plan: FloorPlan, hallId: string): FloorPlan {
+export function closeHallGaps(plan: FloorPlan, hallId: string): FloorPlan {
   let next = plan;
   for (let k = 0; k < 4; k++) {
     const gap = findGaps(next).find((g) => g.aId === hallId || g.bId === hallId);
     if (!gap) break;
     const after = closeGap(next, gap);
-    if (after === next) break;
+    if (after === next || overlapCount(after) > overlapCount(next)) break;
     next = after;
   }
   return next;
@@ -277,6 +283,27 @@ export function syncHall(plans: Plans, ctx: StackCtx, stackId: string, outline: 
     if (!hall) continue;
     if (hall.polygon.length === outline.length && sameShape(hall.polygon, outline)) continue;
     next = { ...next, [levelId]: setHall(plan, stackId, outline, anchored, floor).plan };
+  }
+  return next;
+}
+
+/**
+ * Link every set of overlapping stairs into a stack and anchor it, without
+ * touching rooms. Automatic plans use this before they build the stair halls.
+ */
+export function linkStacks(plans: Plans, ctx: StackCtx): Plans {
+  const next: Plans = { ...plans };
+  for (const [levelId, p] of Object.entries(plans)) {
+    for (const s of p.stairs) {
+      if (planOf(next, levelId).stairs.find((x) => x.id === s.id)?.stackId) continue;
+      const flights = stackFrom(next, ctx, levelId, s.id);
+      const stackId = flights.find((f) => f.stairs.stackId)?.stairs.stackId ?? newPlanId("stack");
+      const ids = new Set(flights.map((f) => f.stairs.id));
+      for (const lid of new Set(flights.map((f) => f.levelId))) {
+        const q = planOf(next, lid);
+        next[lid] = { ...q, stairs: q.stairs.map((x) => (ids.has(x.id) ? { ...x, stackId, anchored: true } : x)) };
+      }
+    }
   }
   return next;
 }

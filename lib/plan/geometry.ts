@@ -1,3 +1,4 @@
+import polygonClipping from "polygon-clipping";
 import type { Point } from "@/lib/model/schema";
 
 /**
@@ -197,9 +198,19 @@ export function polygonsOverlap(p: Point[], q: Point[], inset = 1): boolean {
   };
   const a = shrink(p);
   const b = shrink(q);
-  if (a.some((v) => pointInPolygon(v, b)) || b.some((v) => pointInPolygon(v, a))) return true;
-  for (const e of edgesOf(a)) for (const f of edgesOf(b)) if (segmentsCross(e.a, e.b, f.a, f.b)) return true;
-  return false;
+  const hit =
+    a.some((v) => pointInPolygon(v, b)) ||
+    b.some((v) => pointInPolygon(v, a)) ||
+    edgesOf(a).some((e) => edgesOf(b).some((f) => segmentsCross(e.a, e.b, f.a, f.b)));
+  return hit && sharedArea(p, q) > SLIVER_AREA;
+}
+
+/** Less than this much shared floor (sq in) is two rooms touching, not overlapping: shrinking toward the middle misreads long thin rooms that only touch. */
+const SLIVER_AREA = 20;
+
+function sharedArea(p: Point[], q: Point[]): number {
+  const ring = (poly: Point[]): [number, number][][] => [[...poly.map((v): [number, number] => [v.x, v.y]), [poly[0].x, poly[0].y]]];
+  return polygonClipping.intersection(ring(p), ring(q)).reduce((t, poly) => t + Math.abs(polygonArea(poly[0].slice(0, -1).map(([x, y]) => ({ x, y })))) - poly.slice(1).reduce((h, r) => h + Math.abs(polygonArea(r.slice(0, -1).map(([x, y]) => ({ x, y })))), 0), 0);
 }
 
 function segmentsCross(a: Point, b: Point, c: Point, d: Point): boolean {
