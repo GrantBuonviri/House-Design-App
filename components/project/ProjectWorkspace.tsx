@@ -234,7 +234,11 @@ export default function ProjectWorkspace({ id }: { id: string }) {
     </main>
       {costOpen && cost && (
         <CostPanel estimate={cost} onClose={() => setCostOpen(false)} onUtilities={(utilities) => update((p) => ({ ...p, cost: { ...p.cost, utilities } }))}
-          onPermitFee={(permitFee) => update((p) => ({ ...p, location: { ...locationOf(p), permitFee } }), { coalesce: "permit-fee" })}
+          onPermitFee={(permitFee) => update((p) => (p.location ? { ...p, location: { ...p.location, permitFee } } : p), { coalesce: "permit-fee" })}
+          onPickPlace={() => {
+            setCostOpen(false);
+            setStage("setup");
+          }}
         />
       )}
     </div>

@@ -3,6 +3,7 @@
 import { useState } from "react";
 import type { CostSettings } from "@/lib/model/schema";
 import { fullMoney, shortMoney, type CostCategory, type CostLine, type Estimate } from "@/lib/cost/estimate";
+import { placeLabel } from "@/lib/location/cities";
 
 /** The top-bar total. Clicking it opens and closes the cost panel. */
 export function CostBadge({ estimate, error, open, onToggle }: { estimate: Estimate | null; error?: string | null; open: boolean; onToggle: () => void }) {
@@ -135,15 +136,47 @@ const PERMIT_BASIS = {
   typed: "Your fee.",
 } as const;
 
-function PermitFeeBox({ estimate, onChange }: { estimate: Estimate; onChange: (fee: number | null) => void }) {
+/** "Boise, ID", or "a house elsewhere in Idaho" for a state's catch-all place. */
+function placePhrase(place: Estimate["place"]): string {
+  const label = placeLabel(place);
+  return place.cityId.startsWith("elsewhere-") ? `a house ${label.charAt(0).toLowerCase()}${label.slice(1)}` : label;
+}
+
+function PermitFeeBox({ estimate, onChange, onPickPlace }: { estimate: Estimate; onChange: (fee: number | null) => void; onPickPlace?: () => void }) {
   const line = estimate.categories.flatMap((c) => c.lines).find((l) => l.id === "building-permit");
   const typed = estimate.permitBasis === "typed";
-  const [text, setText] = useState(typed && line ? String(Math.round(line.cost.likely)) : "");
+  const saved = typed && line ? String(Math.round(line.cost.likely)) : "";
+  const [text, setText] = useState(saved);
+  // Follow the saved fee when it changes from outside the box (Undo, Redo).
+  const [shown, setShown] = useState(saved);
+  if (saved !== shown) {
+    setShown(saved);
+    setText(saved);
+  }
   const commit = () => {
+    if (text.trim() === saved) return;
     const n = Number(text.replace(/[$,\s]/g, ""));
     if (text.trim() === "") onChange(null);
     else if (Number.isFinite(n) && n >= 0) onChange(Math.round(n));
   };
+  // The fee belongs to a place: typing one before a place is picked would quietly pick the default place.
+  if (!estimate.place.picked)
+    return (
+      <div className="mt-4" data-testid="permit-fee-box">
+        <div className="text-sm font-medium">Permit fee</div>
+        <p className="mt-1 text-xs text-muted">
+          {PERMIT_BASIS[estimate.permitBasis]} To type your own fee, first pick where you&apos;ll build in Project setup.
+          {onPickPlace && (
+            <>
+              {" "}
+              <button className="text-accent underline" onClick={onPickPlace}>
+                Pick a place
+              </button>
+            </>
+          )}
+        </p>
+      </div>
+    );
   return (
     <div className="mt-4" data-testid="permit-fee-box">
       <div className="text-sm font-medium">Permit fee</div>
@@ -167,7 +200,7 @@ function PermitFeeBox({ estimate, onChange }: { estimate: Estimate; onChange: (f
               onChange(null);
             }}
           >
-            Use the {estimate.place.name} estimate
+            Use the usual fee
           </button>
         )}
       </div>
@@ -181,12 +214,15 @@ export default function CostPanel({
   onClose,
   onUtilities,
   onPermitFee,
+  onPickPlace,
 }: {
   estimate: Estimate;
   onClose: () => void;
   onUtilities: (u: CostSettings["utilities"]) => void;
   /** The person's own permit fee in dollars, or null to go back to the typical fee table. */
   onPermitFee: (fee: number | null) => void;
+  /** Go to Project setup to pick where the house will be built. */
+  onPickPlace?: () => void;
 }) {
   const [openCat, setOpenCat] = useState<string | null>(null);
   const t = estimate.total;
@@ -242,7 +278,7 @@ export default function CostPanel({
           </div>
         </div>
 
-        <PermitFeeBox estimate={estimate} onChange={onPermitFee} />
+        <PermitFeeBox estimate={estimate} onChange={onPermitFee} onPickPlace={onPickPlace} />
 
         {estimate.drivers.length > 0 && (
           <div className="mt-4">
@@ -263,11 +299,11 @@ export default function CostPanel({
         </ul>
 
         <p className="mt-4 text-xs text-muted">
-          Finishes are priced as mid-range until you pick products in the interior and exterior stages. Click a category to see what was measured, the rates, and
+          Finishes are priced as mid-range until you pick products in the Interior and Exterior design windows (press I or X in the Walkthrough). Click a category to see what was measured, the rates, and
           where each rate came from.
         </p>
         <p className="mt-2 text-xs text-muted">
-          This is a materials estimate for {estimate.place.name}, {estimate.place.state} in 2026 (cost level {estimate.place.costIndex.toFixed(2)}), not a bid. Real prices vary by store and change over time.
+          This is a materials estimate for {placePhrase(estimate.place)} in 2026 (cost level {estimate.place.costIndex.toFixed(2)}), not a bid. Real prices vary by store and change over time.
         </p>
       </div>
     </aside>
