@@ -27,6 +27,7 @@ import {
 import { newOpening, sharedWall } from "@/lib/plan/connect";
 import { openingHeight, withDoorHeight } from "@/lib/plan/catalog";
 import { planWarnings } from "@/lib/plan/checks";
+import { codeReport } from "@/lib/codes/rules";
 import { addWindows, escapeWidth, makeEscapeWindow } from "@/lib/plan/windows";
 import { windowWells } from "@/lib/plan/wells";
 import { escapeCheck } from "@/lib/codes/openings";
@@ -729,6 +730,11 @@ describe("escape windows and window wells", () => {
     expect(windowWells(plans, levels, defaultBasics())).toHaveLength(0);
     const ws = planWarnings(plans, { levels, brief: null, basics: defaultBasics() }).filter((w) => w.id === `${basement.id}:egress:b`);
     expect(ws[0].text).toMatch(/buried/);
+    // The code check words it the same way (it once said "no window is big enough ... ()").
+    const egress = codeReport({ ...createProject("T"), levels, floorPlans: plans }).find((r) => r.rule.id === "egress-bedroom")!;
+    const text = egress.results.find((x) => x.status === "fail")!.text;
+    expect(text).toMatch(/buried under the floor above/);
+    expect(text).not.toMatch(/\(\)/);
     // Suggest a plan's windows skip the buried walls.
     expect(addWindows(bed(), basement, [over.rooms[0].polygon]).plan.openings).toHaveLength(0);
   });

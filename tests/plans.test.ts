@@ -529,10 +529,23 @@ describe("systems (part 4)", () => {
     expect(facing({ x: 1, y: 0 })).toBe("E");
     const env = envelope(p);
     const windows = env.windows.reduce((s, w) => s + w.sqft, 0);
-    expect(windows).toBeCloseTo(DIRECTIONS.reduce((s, d) => s + env.walls[d].windows, 0));
+    expect(windows).toBeCloseTo(DIRECTIONS.reduce((s, d) => s + env.walls[d].windows, 0) + env.basementOpenings.windows);
     expect(env.conditionedSqft).toBeGreaterThan(1000);
     expect(env.ceiling).toBeCloseTo(env.conditionedSqft, 0);
     expect(roughHeatLoss(p).btuh).toBeGreaterThan(5000);
+  });
+
+  it("lists basement windows with the windows, marked as in the basement", () => {
+    const base = house(RANCH, 1, 1);
+    const bsmt = base.levels.find((l) => l.kind === "basement")!;
+    const win: Opening = { id: "bw", host: { roomId: "bf", edge: 0 }, offsetIn: 60, kind: "window", style: "window", widthIn: 48, heightIn: 36, sillIn: 44, side: 1, hinge: "start" };
+    const rooms = [{ id: "bf", name: "Family", type: "family", polygon: [{ x: 0, y: 0 }, { x: 240, y: 0 }, { x: 240, y: 180 }, { x: 0, y: 180 }] }];
+    const q: Project = { ...base, floorPlans: { ...base.floorPlans, [bsmt.id]: { ...emptyPlan(), rooms, openings: [win] } } };
+    const env = envelope(q);
+    const listed = env.windows.find((w) => w.belowGrade)!;
+    expect(listed.sqft).toBeCloseTo(12, 1);
+    expect(env.basementOpenings.windows).toBeCloseTo(12, 1);
+    expect(sheetText(buildSet(q).find((s) => s.number === "G-003")!).join(" ")).toMatch(/basement/);
   });
 
   it("works out the whole-house fresh air and the dryer duct", () => {
