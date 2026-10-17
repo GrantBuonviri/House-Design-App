@@ -17,7 +17,7 @@ import { roomSqft } from "@/lib/plan/measure";
 import {
   addClosets,
   addHallways,
-  addStairHalls,
+  coverStairs,
   addWindows,
   connectAll,
   outsideStretches,
@@ -28,7 +28,7 @@ import {
 } from "@/lib/plan/suggest";
 import { openingGeometry } from "@/lib/plan/walls";
 import { hangingArea } from "@/lib/plan/support";
-import { floorsOf, hallLimit, hallOn, stackIds } from "@/lib/plan/anchor";
+import { stackIds } from "@/lib/plan/anchor";
 
 const FT = 12;
 const EXT = 6.5;
@@ -234,77 +234,65 @@ describe("windows", () => {
   });
 });
 
-describe("stair halls", () => {
-  it("puts a hallway around stairs that stand between rooms", () => {
+describe("stairs in a room", () => {
+  const boxes = (p: FloorPlan, plans: Plans, ctx: Parameters<typeof stairsBoxes>[1], levelId: string) =>
+    stairsBoxes({ ...plans, [levelId]: p }, ctx, ctx.levels.find((l) => l.id === levelId)!);
+
+  it("stretches the neighboring living space to take in stairs that stand outside every room", () => {
+    const a = room("a", "bedroom", 0, 0, 12, 12);
+    const l = room("l", "living", 20, 0, 12, 12);
+    const box = { x0: 12 * FT + 4, y0: 4 * FT, x1: 20 * FT - 4, y1: 8 * FT + 60 };
+    const { plan: p, added } = coverStairs(plan([a, l]), [box]);
+    expect(added).toBe(1);
+    expect(p.rooms.some((r) => r.name === "Stair hall")).toBe(false);
+    const living = byId(p, "l");
+    const b = boundsOf(living.polygon)!;
+    expect(b.x0).toBeLessThanOrEqual(box.x0 + 0.5);
+    expect(b.y1).toBeGreaterThanOrEqual(box.y1 + 36 - 0.5);
+    expect(byId(p, "a").polygon).toEqual(a.polygon);
+    expectSound(p);
+  });
+
+  it("never stretches a bedroom: a plain Hall takes the stairs instead", () => {
     const a = room("a", "bedroom", 0, 0, 12, 12);
     const b = room("b", "bedroom", 20, 0, 12, 12);
     const box = { x0: 12 * FT + 4, y0: 1 * FT, x1: 20 * FT - 4, y1: 11 * FT };
-    const { plan: p, added } = addStairHalls(plan([a, b]), [box]);
+    const { plan: p, added } = coverStairs(plan([a, b]), [box]);
     expect(added).toBe(1);
+    expect(byId(p, "a").polygon).toEqual(a.polygon);
+    expect(byId(p, "b").polygon).toEqual(b.polygon);
     const hall = p.rooms.find((r) => r.type === "hall")!;
-    expect(hall.name).toBe("Stair hall");
-    expect(sharedWall(hall, byId(p, "a"))).not.toBeNull();
-    expect(sharedWall(hall, byId(p, "b"))).not.toBeNull();
+    expect(hall.name).toBe("Hall");
+    expect(hall.stairStack).toBeUndefined();
     expectSound(p);
-    // Stairs already inside a room are left alone.
-    expect(addStairHalls(plan([room("l", "living", 0, 0, 30, 20)]), [box]).added).toBe(0);
   });
 
-  it("makes the hall only the stairs plus 3' at each end, and closes small gaps to neighbors", () => {
-    const a = room("a", "bedroom", 0, 0, 12, 12);
-    const b = room("b", "bedroom", 20, 0, 12, 12);
-    const box = { x0: 12 * FT + 4, y0: 4 * FT, x1: 20 * FT - 4, y1: 8 * FT + 60 };
-    const { plan: p } = addStairHalls(plan([a, b]), [box]);
-    const hall = p.rooms.find((r) => r.name === "Stair hall")!;
-    const ys = hall.polygon.map((q) => q.y);
-    // Stairs 4' + 5' long plus 3' at each end, not reaching for anything else.
-    expect(Math.max(...ys) - Math.min(...ys)).toBeCloseTo(box.y1 - box.y0 + 72, 0);
-    expect(sharedWall(hall, byId(p, "a"))).not.toBeNull();
+  it("leaves stairs that are already inside a room alone", () => {
+    const box = { x0: 12 * FT + 4, y0: 1 * FT, x1: 20 * FT - 4, y1: 11 * FT };
+    const living = plan([room("l", "living", 0, 0, 30, 20)]);
+    const { plan: p, added } = coverStairs(living, [box]);
+    expect(added).toBe(0);
+    expect(p).toEqual(living);
   });
-});
 
-describe("Suggest a plan anchors its stairs", () => {
-  it("gives every floor a matching, fitted stair hall with a door", () => {
-    const { ctx, result } = house(TWO_STORY, 2);
-    const ids = stackIds(result.plans);
-    expect(ids.length).toBeGreaterThan(0);
-    for (const id of ids) {
-      const limit = hallLimit(result.plans, ctx, id)!;
-      const limitArea = polygonArea(limit);
-      let outline: string | null = null;
-      const floors = floorsOf(result.plans, ctx, id);
-      expect(floors.length).toBeGreaterThanOrEqual(2);
-      for (const lid of floors) {
-        const p = planOf(result.plans, lid);
-        expect(p.stairs.filter((s) => s.stackId === id).every((s) => s.anchored)).toBe(true);
-        const hall = hallOn(p, id)!;
-        expect(hall, lid).toBeTruthy();
-        expect(hall.anchored).toBe(true);
-        expect(polygonArea(hall.polygon)).toBeLessThanOrEqual(limitArea + 4);
-        expect(p.openings.some((o) => o.kind !== "window" && openingRooms(p, o).includes(hall.id))).toBe(true);
-        const key = hall.polygon.map((q) => `${Math.round(q.x)},${Math.round(q.y)}`).sort().join("|");
-        if (outline) expect(key).toBe(outline);
-        outline = key;
-      }
-    }
-  });
-});
-
-describe("Suggest a plan with U stairs", () => {
-  it("fits the stair hall around the whole U, so the stairs don't hang into the next room", () => {
-    const { ctx, sketch } = house(TWO_STORY, 2);
-    const u = { ...ctx, basics: { ...ctx.basics, stairs: "u" as const } };
-    const res = suggestPlans(sketch, u);
-    for (const level of ctx.levels) {
-      const p = planOf(res.plans, level.id);
-      expectSound(p);
-      for (const box of stairsBoxes(res.plans, u, level)) {
-        const hall = p.rooms.find((r) => r.stairStack)!;
-        const b = boundsOf(hall.polygon)!;
-        expect(b.x0).toBeLessThanOrEqual(box.x0 + 0.5);
-        expect(b.x1).toBeGreaterThanOrEqual(box.x1 - 0.5);
-        expect(b.y0).toBeLessThanOrEqual(box.y0 + 0.5);
-        expect(b.y1).toBeGreaterThanOrEqual(box.y1 - 0.5);
+  it("Suggest a plan makes no stair halls, keeps stairs linked and anchored, and puts them inside rooms", () => {
+    for (const stairs of ["straight", "u"] as const) {
+      const { ctx, sketch } = house(TWO_STORY, 2);
+      const c = { ...ctx, basics: { ...ctx.basics, stairs } };
+      const res = suggestPlans(sketch, c);
+      expect(res.notes[0]).not.toMatch(/around the stairs/);
+      const ids = stackIds(res.plans);
+      expect(ids.length).toBeGreaterThan(0);
+      for (const level of c.levels) {
+        const p = planOf(res.plans, level.id);
+        expectSound(p);
+        expect(p.rooms.some((r) => /stair hall/i.test(r.name) || r.stairStack || r.anchored)).toBe(false);
+        expect(p.stairs.every((st) => !st.stackId || st.anchored)).toBe(true);
+        for (const b of boxes(p, res.plans, c, level.id)) {
+          const cx = (b.x0 + b.x1) / 2;
+          const cy = (b.y0 + b.y1) / 2;
+          expect(p.rooms.some((r) => polygonsOverlap(rectangle(cx, cy, b.x1 - b.x0 - 4, b.y1 - b.y0 - 4), r.polygon, 0)), `${stairs} stairs on ${level.id}`).toBe(true);
+        }
       }
     }
   });
