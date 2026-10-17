@@ -4,9 +4,25 @@ import { useState } from "react";
 import type { CostSettings } from "@/lib/model/schema";
 import { fullMoney, shortMoney, type CostCategory, type CostLine, type Estimate } from "@/lib/cost/estimate";
 import { placeLabel } from "@/lib/location/cities";
+import { categoryShares, costByRoom, type BudgetCheck, type CostChange } from "@/lib/cost/breakdown";
 
 /** The top-bar total. Clicking it opens and closes the cost panel. */
-export function CostBadge({ estimate, error, open, onToggle }: { estimate: Estimate | null; error?: string | null; open: boolean; onToggle: () => void }) {
+export function CostBadge({
+  estimate,
+  error,
+  open,
+  onToggle,
+  budget,
+  latest,
+}: {
+  estimate: Estimate | null;
+  error?: string | null;
+  open: boolean;
+  onToggle: () => void;
+  budget?: BudgetCheck | null;
+  /** The last edit's change to the total, shown under the button for a few seconds. */
+  latest?: CostChange | null;
+}) {
   if (error) {
     return (
       <button className="btn border-red-300 text-red-700" onClick={() => alert(`The cost estimate couldn't be worked out:\n\n${error}`)} title={error}>
@@ -22,19 +38,36 @@ export function CostBadge({ estimate, error, open, onToggle }: { estimate: Estim
     );
   }
   const t = estimate.total;
+  const over = budget?.status === "over";
   return (
-    <button
-      className={`btn tabular-nums ${open ? "border-accent bg-accent-soft" : ""}`}
-      onClick={onToggle}
-      title={`Likely materials cost ${fullMoney(t.likely)}, from ${fullMoney(t.low)} to ${fullMoney(t.high)}. Click for the breakdown.`}
-      data-testid="cost-badge"
-    >
-      <span className="text-muted">{estimate.source === "rough" ? "Rough materials" : "Materials"}</span>
-      <span>about {shortMoney(t.likely)}</span>
-      <span className="text-xs text-muted">
-        ({shortMoney(t.low)} to {shortMoney(t.high)})
-      </span>
-    </button>
+    <span className="relative inline-flex">
+      <button
+        className={`btn whitespace-nowrap tabular-nums ${open ? "border-accent bg-accent-soft" : ""} ${over ? "border-red-300" : ""}`}
+        onClick={onToggle}
+        title={`Likely materials cost ${fullMoney(t.likely)}, from ${fullMoney(t.low)} to ${fullMoney(t.high)}.${over ? ` ${fullMoney(budget!.diff)} over your budget.` : ""} Click for the breakdown.`}
+        data-testid="cost-badge"
+      >
+        <span className="text-muted">{estimate.source === "rough" ? "Rough materials" : "Materials"}</span>
+        <span>about {shortMoney(t.likely)}</span>
+        <span className="text-xs text-muted">
+          ({shortMoney(t.low)} to {shortMoney(t.high)})
+        </span>
+        {over && (
+          <span className="rounded bg-red-100 px-1.5 text-xs text-red-800" data-testid="cost-over-budget">
+            {shortMoney(budget!.diff)} over
+          </span>
+        )}
+      </button>
+      {latest && (
+        <span
+          key={latest.id}
+          className={`pointer-events-none absolute top-full right-0 z-40 mt-1 whitespace-nowrap rounded-md px-2 py-1 text-xs shadow ${latest.diff > 0 ? "bg-amber-50 text-amber-900" : "bg-emerald-50 text-emerald-900"}`}
+          data-testid="cost-change-note"
+        >
+          {latest.text}
+        </span>
+      )}
+    </span>
   );
 }
 
@@ -122,6 +155,138 @@ function Category({ c, max, open, onToggle }: { c: CostCategory; max: number; op
       </button>
       {open && <ul className="mb-2 ml-4 divide-y divide-line border-t border-line">{c.lines.map((l, i) => <Line key={`${l.id}-${i}`} l={l} />)}</ul>}
     </li>
+  );
+}
+
+/** The Rooms page's budget against the likely cost, with a bar and a warning when over. */
+function BudgetBox({ budget, onSetBudget }: { budget: BudgetCheck | null; onSetBudget?: () => void }) {
+  if (!budget)
+    return (
+      <p className="mt-3 text-sm text-muted" data-testid="cost-budget">
+        No budget set.
+        {onSetBudget && (
+          <>
+            {" "}
+            <button className="text-accent underline" onClick={onSetBudget}>
+              Set a materials budget on the Rooms page
+            </button>
+          </>
+        )}
+      </p>
+    );
+  const { status, diff } = budget;
+  const color = status === "over" ? "bg-red-500" : status === "close" ? "bg-amber-500" : "bg-emerald-600";
+  return (
+    <div
+      className={`mt-3 rounded-md border px-3 py-2 text-sm ${status === "over" ? "border-red-200 bg-red-50 text-red-900" : status === "close" ? "border-amber-200 bg-amber-50 text-amber-900" : "border-line"}`}
+      data-testid="cost-budget"
+    >
+      <div className="flex items-baseline justify-between gap-3">
+        <span className="font-medium">Budget {fullMoney(budget.budget)}</span>
+        <span className="tabular-nums">{Math.round(budget.used * 100)}% used</span>
+      </div>
+      <div className="mt-1.5 h-2 rounded-full bg-stone-200">
+        <div className={`h-2 rounded-full ${color}`} style={{ width: `${Math.min(100, budget.used * 100)}%` }} />
+      </div>
+      <p className="mt-1.5 text-xs">
+        {status === "over"
+          ? `${fullMoney(diff)} over budget${budget.lowOver ? ", even at the low end of the range" : ""}. The biggest drivers below are the places to look.`
+          : `${fullMoney(-diff)} left${status === "close" ? ", close to the limit" : ""}.`}
+        {onSetBudget && (
+          <>
+            {" "}
+            <button className="underline" onClick={onSetBudget}>
+              Change it
+            </button>
+          </>
+        )}
+      </p>
+    </div>
+  );
+}
+
+const SHARE_COLORS = ["bg-teal-600", "bg-sky-500", "bg-amber-500", "bg-rose-400", "bg-violet-500", "bg-lime-600", "bg-stone-400"];
+
+/** One bar split by category, biggest first, with a legend. */
+function ShareChart({ estimate }: { estimate: Estimate }) {
+  const shares = categoryShares(estimate);
+  if (!shares.length) return null;
+  return (
+    <div className="mt-2" data-testid="cost-share-chart">
+      <div className="flex h-4 overflow-hidden rounded" role="img" aria-label={shares.map((s) => `${s.label} ${Math.round(s.share * 100)}%`).join(", ")}>
+        {shares.map((s, i) => (
+          <div key={s.id} className={SHARE_COLORS[i % SHARE_COLORS.length]} style={{ width: `${s.share * 100}%` }} title={`${s.label}: ${fullMoney(s.likely)}`} />
+        ))}
+      </div>
+      <ul className="mt-2 grid grid-cols-2 gap-x-3 gap-y-1 text-xs">
+        {shares.map((s, i) => (
+          <li key={s.id} className="flex items-center gap-1.5">
+            <span className={`inline-block h-2.5 w-2.5 shrink-0 rounded-sm ${SHARE_COLORS[i % SHARE_COLORS.length]}`} />
+            <span className="truncate">{s.label}</span>
+            <span className="ml-auto tabular-nums text-muted">{Math.round(s.share * 100)}%</span>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
+/** Each room's likely cost: its own finishes plus its share of the shell and systems. */
+function RoomList({ estimate }: { estimate: Estimate }) {
+  const { rooms, wholeHouse } = costByRoom(estimate);
+  if (!rooms.length) return <p className="mt-2 text-sm text-muted">Add rooms to see what each one costs.</p>;
+  const max = Math.max(...rooms.map((r) => r.total), wholeHouse);
+  return (
+    <>
+      <ul className="mt-1" data-testid="cost-rooms">
+        {rooms.map((r) => (
+          <li key={r.id} className="border-b border-line py-2 last:border-b-0" title={`${fullMoney(r.own)} for its own finishes and fixtures, ${fullMoney(r.shared)} as its share of the shell and systems`}>
+            <div className="flex items-baseline justify-between gap-3">
+              <span className="truncate text-sm">{r.name}</span>
+              <span className="text-sm tabular-nums">{shortMoney(r.total)}</span>
+            </div>
+            <div className="mt-0.5 flex items-baseline justify-between gap-3 text-xs text-muted tabular-nums">
+              <span>
+                {Math.round(r.sqft).toLocaleString("en-US")} sq ft{r.sqft > 1 ? ` · ${fullMoney(r.total / r.sqft)} per sq ft` : ""}
+              </span>
+              <span>{shortMoney(r.own)} own</span>
+            </div>
+            <div className="mt-1 h-1.5 rounded-full bg-stone-100">
+              <div className="h-1.5 rounded-full bg-accent/70" style={{ width: `${max ? (r.total / max) * 100 : 0}%` }} />
+            </div>
+          </li>
+        ))}
+        <li className="py-2">
+          <div className="flex items-baseline justify-between gap-3">
+            <span className="text-sm">Whole house: site work, permits and fees</span>
+            <span className="text-sm tabular-nums">{shortMoney(wholeHouse)}</span>
+          </div>
+        </li>
+      </ul>
+      <p className="mt-1 text-xs text-muted">
+        &quot;Own&quot; is the room&apos;s flooring, tile, fixtures and cabinets. The rest of the house (framing, roof, wiring, heating and so on) is shared out by floor area.
+      </p>
+    </>
+  );
+}
+
+/** The last few edits that moved the total. */
+function RecentChanges({ changes }: { changes: CostChange[] }) {
+  if (!changes.length) return null;
+  return (
+    <div className="mt-4" data-testid="cost-changes">
+      <div className="text-sm font-medium">What changed</div>
+      <ul className="mt-1 space-y-1 text-sm">
+        {changes.map((c) => (
+          <li key={c.id} className="flex gap-2">
+            <span className={`shrink-0 tabular-nums ${c.diff > 0 ? "text-amber-800" : "text-emerald-700"}`}>
+              {c.text.slice(0, c.text.indexOf(":"))}
+            </span>
+            <span className="text-muted">{c.label}</span>
+          </li>
+        ))}
+      </ul>
+    </div>
   );
 }
 
@@ -215,6 +380,9 @@ export default function CostPanel({
   onUtilities,
   onPermitFee,
   onPickPlace,
+  budget = null,
+  onSetBudget,
+  changes = [],
 }: {
   estimate: Estimate;
   onClose: () => void;
@@ -223,8 +391,15 @@ export default function CostPanel({
   onPermitFee: (fee: number | null) => void;
   /** Go to Project setup to pick where the house will be built. */
   onPickPlace?: () => void;
+  /** The Rooms page's budget against this estimate, or null without one. */
+  budget?: BudgetCheck | null;
+  /** Go to the Rooms page to set the budget. */
+  onSetBudget?: () => void;
+  /** Recent edits that moved the total, newest first. */
+  changes?: CostChange[];
 }) {
   const [openCat, setOpenCat] = useState<string | null>(null);
+  const [view, setView] = useState<"category" | "room">("category");
   const t = estimate.total;
   const max = Math.max(...estimate.categories.map((c) => c.cost.likely));
   const q = estimate.quantities;
@@ -257,6 +432,8 @@ export default function CostPanel({
             Rough: based on your room list. Draw the floor plan for a closer number.
           </p>
         )}
+        <BudgetBox budget={budget} onSetBudget={onSetBudget} />
+        <RecentChanges changes={changes} />
 
         <div className="mt-4 flex items-baseline justify-between border-y border-line py-2 text-sm">
           <span>Land</span>
@@ -291,12 +468,37 @@ export default function CostPanel({
           </div>
         )}
 
-        <div className="mt-4 text-sm font-medium">By category</div>
-        <ul className="mt-1">
-          {estimate.categories.map((c) => (
-            <Category key={c.id} c={c} max={max} open={openCat === c.id} onToggle={() => setOpenCat(openCat === c.id ? null : c.id)} />
+        <div className="mt-4 flex gap-1" role="tablist">
+          {(
+            [
+              ["category", "By category"],
+              ["room", "By room"],
+            ] as const
+          ).map(([id, label]) => (
+            <button
+              key={id}
+              role="tab"
+              aria-selected={view === id}
+              className={`rounded-md border px-3 py-1 text-sm ${view === id ? "border-accent bg-accent-soft font-medium" : "border-line hover:bg-stone-50"}`}
+              onClick={() => setView(id)}
+              data-testid={`cost-view-${id}`}
+            >
+              {label}
+            </button>
           ))}
-        </ul>
+        </div>
+        {view === "category" ? (
+          <>
+            <ShareChart estimate={estimate} />
+            <ul className="mt-2">
+              {estimate.categories.map((c) => (
+                <Category key={c.id} c={c} max={max} open={openCat === c.id} onToggle={() => setOpenCat(openCat === c.id ? null : c.id)} />
+              ))}
+            </ul>
+          </>
+        ) : (
+          <RoomList estimate={estimate} />
+        )}
 
         <p className="mt-4 text-xs text-muted">
           Finishes are priced as mid-range until you pick products in the Interior and Exterior design windows (press I or X in the Walkthrough). Click a category to see what was measured, the rates, and

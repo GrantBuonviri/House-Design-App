@@ -27,6 +27,8 @@ import PlanStage from "@/components/plan/PlanStage";
 import FurnishStage from "@/components/furnish/FurnishStage";
 import CostPanel, { CostBadge } from "@/components/cost/CostPanel";
 import { estimate as estimateCost } from "@/lib/cost/estimate";
+import { budgetCheck } from "@/lib/cost/breakdown";
+import { useCostChanges } from "@/components/cost/useCostChanges";
 import { locationOf } from "@/lib/location/current";
 import { placeLabel } from "@/lib/location/cities";
 import { keyIsForPage } from "@/lib/keys";
@@ -59,6 +61,8 @@ export default function ProjectWorkspace({ id }: { id: string }) {
       return { cost: null, costError: e instanceof Error ? e.message : String(e) };
     }
   }, [deferred]);
+  const { changes: costChanges, latest: costChange, dismiss: dismissCostChange } = useCostChanges(deferred, cost);
+  const budget = cost && deferred ? budgetCheck(deferred.profile, cost) : null;
 
   // The guided tour: on its own the first time a house opens in this browser, then from "Take the tour".
   const [touring, setTouring] = useState<{ from: Stage; steps?: TourStep[]; startAt?: number } | null>(null);
@@ -163,7 +167,11 @@ export default function ProjectWorkspace({ id }: { id: string }) {
           </button>
           <span data-tour="cost">
           {cost || costError ? (
-            <CostBadge estimate={cost} error={costError} open={costOpen} onToggle={() => setCostOpen(!costOpen)} />
+            <CostBadge estimate={cost} error={costError} open={costOpen} onToggle={() => {
+                // The panel lists the change, so the note by the button isn't needed after it's opened.
+                dismissCostChange();
+                setCostOpen(!costOpen);
+              }} budget={budget} latest={costOpen ? null : costChange} />
           ) : (
             <NeedsFirst message={`Pick your rooms first, and a rough cost for building in ${placeLabel(locationOf(project))} shows up here.`} action="Go to Rooms" onAction={() => setStage("brief")} testId="cost-needs">
               Cost
@@ -251,6 +259,12 @@ export default function ProjectWorkspace({ id }: { id: string }) {
           onPickPlace={() => {
             setCostOpen(false);
             setStage("setup");
+          }}
+          budget={budget}
+          changes={costChanges}
+          onSetBudget={() => {
+            setCostOpen(false);
+            setStage("brief");
           }}
         />
       )}
