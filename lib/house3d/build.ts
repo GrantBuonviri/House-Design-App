@@ -16,6 +16,7 @@ import { isBelowGround, levelHeights, type LevelHeights } from "./levels";
 import { against, faceOf, stretchOf, wallFootprints } from "./joints";
 import { MeshBuilder, toScene, type Frame, type MeshData, type Vec3 } from "./mesh";
 import { drawOpening, openingSpan, type DoorMotion } from "./openings";
+import { CROWN_ROOMS, drawWallTrim } from "./trim";
 import { drawRoof, roofShape, roofTop, ROOF_THICK_IN } from "./roof";
 import type { Site } from "./site";
 import { entrySteps } from "./entry";
@@ -179,6 +180,8 @@ export function buildLevel(
   const prints = { outside: new MeshBuilder(), inside: new MeshBuilder() };
   const found = new MeshBuilder();
   found.pattern = PATTERN.concrete;
+  // Baseboards and crown molding, drawn with Pretty graphics only.
+  const trims = { outside: new MeshBuilder(), inside: new MeshBuilder() };
   const standing = pieces.filter((p) => !p.open && dist(p.a, p.b) > 0.01);
   // Outside walls run up to the next floor where there's one above, so there's no gap at the floor structure.
   // A half wall stops at 42" (its counter cap, if any, goes on top below).
@@ -256,6 +259,16 @@ export function buildLevel(
       for (const r of capFeet[pi]) walls[group].prism(f, r, upTo, upTo + WALL_CAP_IN, (a, b) => (against(capFeet, pi, a, b) >= 0 ? null : { color: cc }), cc);
       walls[group].pattern = 0;
     }
+    // Baseboards on each side that faces a room, and crown molding in the main rooms.
+    if (!p.height) {
+      const uw = unit(sub(p.b, p.a));
+      const doorwaysAt = cuts.filter((c) => openingSpan(c.og, ceilingIn).bottom <= 0.5).map((c): [number, number] => [c.t0, c.t1]);
+      for (const sign of p.exterior ? ([-1] as const) : ([1, -1] as const)) {
+        const r = roomAt(add(mid, scale({ x: uw.y, y: -uw.x }, sign * (p.thicknessIn / 2 + 4))));
+        if (!r) continue;
+        drawWallTrim(trims[group], f, { a: p.a, b: p.b, thicknessIn: p.thicknessIn, sign, doorways: doorwaysAt, color: looks.get(r.id)!.trim, crown: CROWN_ROOMS.has(r.type ?? "") }, floorIn, topIn);
+      }
+    }
     // The footprint: everywhere the wall meets the floor, so only doorways (openings down to the floor) leave gaps.
     const doorways = cuts.filter((c) => openingSpan(c.og, ceilingIn).bottom <= 0.5).map((c): [number, number] => [c.t0, c.t1]);
     const fc = FOOTPRINT_COLOR[group];
@@ -275,6 +288,7 @@ export function buildLevel(
   for (const g of ["outside", "inside"] as const) {
     if (!walls[g].empty) parts.push({ key: `${L}:walls:${g}`, levelId: L, layer: "walls", wall: g, mesh: walls[g].build() });
     if (!prints[g].empty) parts.push({ key: `${L}:footprints:${g}`, levelId: L, layer: "footprints", wall: g, mesh: prints[g].build() });
+    if (!trims[g].empty) parts.push({ key: `${L}:trim:${g}`, levelId: L, layer: "walls", wall: g, mesh: trims[g].build(), quality: "pretty" });
   }
   if (!found.empty) parts.push({ key: `${L}:foundation`, levelId: L, layer: "foundation", mesh: found.build() });
 
@@ -285,15 +299,21 @@ export function buildLevel(
     const host = hostPiece(pieces, og);
     const doorLook = host && !host.exterior ? (lookAt(add(og.center, scale(og.n, 10))) ?? lookAt(add(og.center, scale(og.n, -10)))) : undefined;
     solid.pattern = PATTERN.paint;
-    const leaves = drawOpening(solid, glass, f, og, hostThickness(host), floorIn, ceilingIn, doorLook, host?.exterior ? ext : undefined);
+    const detail = new MeshBuilder();
+    // Casing, sills and grids: the outside face (the side the opening's normal points to, for an outside wall) takes the outside trim paint.
+    const insideTrim = (host?.exterior ? lookAt(add(og.center, scale(og.n, -10))) : doorLook)?.trim ?? COLORS.trim;
+    const trimColors = host?.exterior ? { positive: ext.trim, negative: insideTrim, frame: ext.frame } : { positive: insideTrim, negative: insideTrim, frame: insideTrim };
+    const leaves = drawOpening(solid, glass, f, og, hostThickness(host), floorIn, ceilingIn, doorLook, host?.exterior ? ext : undefined, { into: detail, trim: trimColors });
     const pick: Pick = { kind: "opening", id: og.opening.id, levelId: L };
     // Doors and windows hide with the wall they're in (an opening in no wall counts as inside).
     const wall: WallGroup = host?.exterior ? "outside" : "inside";
     if (!solid.empty) parts.push({ key: `${L}:o:${og.opening.id}`, levelId: L, layer: "openings", pick, wall, mesh: solid.build() });
+    if (!detail.empty) parts.push({ key: `${L}:od:${og.opening.id}`, levelId: L, layer: "openings", pick, wall, mesh: detail.build(), quality: "pretty" });
     if (!glass.empty) parts.push({ key: `${L}:og:${og.opening.id}`, levelId: L, layer: "openings", pick, wall, mesh: glass.build(), glass: true });
     leaves.forEach((leaf, i) => {
       const door = { id: og.opening.id, motion: leaf.motion };
       if (!leaf.solid.empty) parts.push({ key: `${L}:ol:${og.opening.id}:${i}`, levelId: L, layer: "openings", pick, wall, mesh: leaf.solid.build(), door });
+      if (!leaf.detail.empty) parts.push({ key: `${L}:old:${og.opening.id}:${i}`, levelId: L, layer: "openings", pick, wall, mesh: leaf.detail.build(), door, quality: "pretty" });
       if (!leaf.glass.empty) parts.push({ key: `${L}:olg:${og.opening.id}:${i}`, levelId: L, layer: "openings", pick, wall, mesh: leaf.glass.build(), glass: true, door });
     });
   }

@@ -74,7 +74,7 @@ const A = room("a", rectangle(10 * FT, 6 * FT, 20 * FT, 12 * FT));
 const B = room("b", rectangle(30 * FT, 6 * FT, 20 * FT, 12 * FT));
 const twoRooms = plan([A, B], { openings: [door("a", 1, 6 * FT), windowOn("a", 0, 5 * FT)] });
 const parts = buildHouse({ [MAIN_LEVEL_ID]: twoRooms }, ctx()).parts;
-const of = (layer: Part["layer"], wall?: Part["wall"]) => parts.filter((p) => p.layer === layer && (wall === undefined || p.wall === wall));
+const of = (layer: Part["layer"], wall?: Part["wall"]) => parts.filter((p) => !p.quality && p.layer === layer && (wall === undefined || p.wall === wall));
 
 describe("wall groups for hiding walls in 3D", () => {
   it("splits each floor's walls into an outside group and an inside group", () => {

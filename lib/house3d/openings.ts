@@ -6,6 +6,7 @@ import { COLORS } from "./colors";
 import { PATTERN } from "./finishes";
 import { MeshBuilder, type Frame, type RGB } from "./mesh";
 import type { ExteriorLook } from "./exterior";
+import { drawLeafDetail, drawOpeningTrim, type TrimColors } from "./trim";
 
 /**
  * Doors, windows and openings in 3D. The frame, casing and glass of a window
@@ -23,7 +24,8 @@ export type DoorMotion =
   /** Rolls up into the header: shrinks toward `topIn` (the height of its top, above the main floor). */
   | { kind: "roll"; topIn: number };
 
-export type DoorLeaf = { motion: DoorMotion; solid: MeshBuilder; glass: MeshBuilder };
+/** `detail` is the Pretty-only extras that ride with the leaf: raised panels and handles. */
+export type DoorLeaf = { motion: DoorMotion; solid: MeshBuilder; glass: MeshBuilder; detail: MeshBuilder };
 
 /** The turn, in plan angle, that takes a leaf pointing along `from` to point along `to`. */
 const turnBetween = (from: Point, to: Point) => Math.atan2(from.x * to.y - from.y * to.x, from.x * to.x + from.y * to.y);
@@ -67,6 +69,8 @@ export function drawOpening(
   look?: { door: RGB; trim: RGB },
   /** Picked window frame, door and trim colors, for doors and windows in outside walls. */
   outside?: ExteriorLook,
+  /** Pretty-only casing, sills and grids for the opening go here, colored by `trim`; the leaves get their own `detail`. */
+  pretty?: { into: MeshBuilder; trim: TrimColors },
 ): DoorLeaf[] {
   const o = og.opening;
   const w = o.widthIn;
@@ -85,6 +89,7 @@ export function drawOpening(
     // A middle bar on wide windows.
     if (w > 60) solid.box(f, at(og, w / 2 - 1), at(og, w / 2 + 1), 2, z0 + FRAME_IN, z1 - FRAME_IN, c);
     glass.box(f, at(og, FRAME_IN), at(og, w - FRAME_IN), 0.5, z0 + FRAME_IN, z1 - FRAME_IN, plain(COLORS.glass));
+    if (pretty) drawOpeningTrim(pretty.into, f, og, wallIn, z0, z1, floorIn + ceilingIn, { ...pretty.trim, frame: outside?.frame ?? COLORS.frame });
     return [];
   }
 
@@ -93,13 +98,15 @@ export function drawOpening(
   solid.box(f, og.a, at(og, CASING_IN), depth, z0, z1, c);
   solid.box(f, at(og, w - CASING_IN), og.b, depth, z0, z1, c);
   solid.box(f, og.a, og.b, depth, z1 - CASING_IN, z1, c);
+  // A garage door and a barn door have their own trim already.
+  if (pretty && o.style !== "door-garage" && o.style !== "door-barn") drawOpeningTrim(pretty.into, f, og, wallIn, z0, z1, floorIn + ceilingIn, pretty.trim);
   if (o.kind === "opening") return [];
 
   const side = o.side ?? 1;
   const swing = scale(og.n, side);
   const leaves: DoorLeaf[] = [];
   const newLeaf = (motion: DoorMotion): DoorLeaf => {
-    const l = { motion, solid: new MeshBuilder(), glass: new MeshBuilder() };
+    const l = { motion, solid: new MeshBuilder(), glass: new MeshBuilder(), detail: new MeshBuilder() };
     // Painted door slabs with Pretty graphics.
     l.solid.pattern = PATTERN.paint;
     leaves.push(l);
@@ -113,6 +120,7 @@ export function drawOpening(
     const along = scale(og.u, dir);
     const l = newLeaf({ kind: "swing", hinge: pivot, angle: turnBetween(along, swing) });
     l.solid.box(f, pivot, add(pivot, scale(along, length)), SLAB_IN, z0 + 0.5, slabTop, plain(color));
+    drawLeafDetail(l.detail, f, pivot, along, length, SLAB_IN, z0 + 0.5, slabTop, style, color);
   };
   if (style === "door-garage") {
     const l = newLeaf({ kind: "roll", topIn: z1 - CASING_IN });

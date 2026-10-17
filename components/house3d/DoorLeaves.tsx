@@ -3,7 +3,8 @@
 import { useEffect, useMemo, useRef } from "react";
 import { useFrame, useThree, type ThreeEvent } from "@react-three/fiber";
 import * as THREE from "three";
-import type { Part, Pick } from "@/lib/house3d/build";
+import { forQuality, type Part, type Pick } from "@/lib/house3d/build";
+import { useGraphics } from "@/lib/graphics";
 import { leafPose } from "@/lib/house3d/doors";
 import { IN_PER_UNIT, toScene, type Frame } from "@/lib/house3d/mesh";
 import { toGeometry } from "./geometry";
@@ -35,9 +36,12 @@ export function DoorLeaves({
   groupRef?: React.Ref<THREE.Group>;
   on?: PickHandlers;
 }) {
+  // Panels and handles ride with the leaf in Pretty only.
+  const quality = useGraphics((g) => g.quality);
+  const shown = useMemo(() => forQuality(parts, quality), [parts, quality]);
   return (
     <group ref={groupRef}>
-      {parts.map((p) => (
+      {shown.map((p) => (
         <Leaf key={p.key} part={p} frame={frame} amountOf={amountOf} on={on} />
       ))}
     </group>
