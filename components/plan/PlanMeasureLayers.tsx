@@ -180,7 +180,7 @@ export function DistanceGuides({ guides, labels, s }: { guides: Guide[]; labels:
             {[g.from, g.to].map((p, j) => (
               <Line key={j} points={[p.x - tick.x, p.y - tick.y, p.x + tick.x, p.y + tick.y]} stroke={GUIDE_RED} strokeWidth={1} strokeScaleEnabled={false} />
             ))}
-            <LText x={mid.x + away.x} y={mid.y + away.y} text={formatLength(g.inches, labels.units)} fontSize={11 / s} fill={GUIDE_RED} bold bg s={s} />
+            <LText x={mid.x + away.x} y={mid.y + away.y} text={g.note ? `${formatLength(g.inches, labels.units)} ${g.note}` : formatLength(g.inches, labels.units)} fontSize={11 / s} fill={GUIDE_RED} bold bg s={s} />
           </Group>
         );
       })}

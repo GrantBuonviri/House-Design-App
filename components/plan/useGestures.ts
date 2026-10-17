@@ -15,12 +15,13 @@ import { curveRun, isRun, runInfo, runOf, sharesOf, startBow, type Run } from "@
 import { lockedNote, unlocked } from "@/lib/plan/locks";
 import { addRoom, insertGluedCorner, makeRoom, moveEdge, moveMany, moveOpeningTo, newPlanId, removeCorner, rotateMany, setCornerGlued } from "@/lib/plan/edit";
 import { add, boundsOf, dist, polygonArea, project, rectangle, round1, roundPoint, scale as scaleV, sub, unit } from "@/lib/plan/geometry";
-import { curvedOpeningGuides, distanceGuides, formatLength, openingGuides, wallSegments, type Guide } from "@/lib/plan/labels";
+import { distanceGuides, formatLength, wallSegments, type Guide } from "@/lib/plan/labels";
 import { snapFrom, snapMove, snapNode, snapPush, snapTargets, type Guides, type SnapTargets } from "@/lib/plan/snap";
 import { mergeTargets } from "@/lib/plan/support";
 import { parseTypedLength } from "@/lib/model/units";
 import { DEFAULT_STAIRS_WIDTH_IN } from "@/lib/plan/stairs";
-import { drawThickness, clampOffset, hostSegment, nearestHost, sameHost, openingGeometries, type WallPiece } from "@/lib/plan/walls";
+import { drawThickness, clampOffset, hostSegment, nearestHost, sameHost, type WallPiece } from "@/lib/plan/walls";
+import { cornerGuides } from "@/lib/plan/corners";
 import { fillRoomAt, splitRoom, whyNotFill } from "@/lib/plan/partitions";
 import { bowForTyped, curveBow, drawCurve } from "@/lib/plan/curveTool";
 import type { View } from "@/components/canvas/CanvasBits";
@@ -622,12 +623,7 @@ export function useGestures(c: GestureContext) {
       const next = moveOpeningTo(base, g.id, p, Math.max(18, 14 / s), g.grab);
       setPreview(next);
       const moved = next.openings.find((x) => x.id === g.id);
-      const seg = moved && hostSegment(next, moved.host);
-      if (moved && seg?.bulge) setDragGuides(curvedOpeningGuides(seg, moved));
-      else {
-        const og = openingGeometries(next).find((x) => x.opening.id === g.id);
-        setDragGuides(og ? openingGuides(og) : []);
-      }
+      setDragGuides(moved ? cornerGuides(next, moved, exteriorIn) : []);
     } else if (g.type === "furn") {
       const item = baseItems.find((x) => x.id === g.id);
       if (!item) return;

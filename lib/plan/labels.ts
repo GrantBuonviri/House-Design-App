@@ -146,7 +146,8 @@ export function outsideDimensions(plan: FloorPlan, units: PlanLabels["units"] = 
 
 // ---------- Distance guides ----------
 
-export type Guide = { from: Point; to: Point; inches: number };
+/** A dimension line drawn while dragging; `note` follows the length (such as "to corner"). */
+export type Guide = { from: Point; to: Point; inches: number; note?: string };
 
 type Seg = { a: Point; b: Point };
 
