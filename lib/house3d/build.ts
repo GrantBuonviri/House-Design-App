@@ -11,8 +11,8 @@ import { drawAddOn, drawFixture, drawFurniture, drawHookup } from "./fixtures";
 import { DEVICE_INFO, placedHookups } from "@/lib/plan/devices";
 import { roomLook, type RoomLook } from "./finishes";
 import { exteriorLook, type ExteriorLook } from "./exterior";
-import { COVERED, cutHoles, floorFootprint, offsetRing, roofFootprint, subtractRegions, type Region } from "./footprint";
-import { levelHeights, type LevelHeights } from "./levels";
+import { COVERED, cutHoles, floorFootprint, intersectRegions, offsetRing, roofFootprint, subtractRegions, type Region } from "./footprint";
+import { isBelowGround, levelHeights, type LevelHeights } from "./levels";
 import { against, faceOf, stretchOf, wallFootprints } from "./joints";
 import { MeshBuilder, toScene, type Frame, type MeshData, type Vec3 } from "./mesh";
 import { drawOpening, openingSpan, type DoorMotion } from "./openings";
@@ -466,6 +466,8 @@ export function buildRoofs(plans: Plans, ctx: HouseContext & { heights: LevelHei
   let leansOnWall = false;
   let topIn = -Infinity;
   ordered.forEach((level, i) => {
+    // Below-ground floors get no roof: the ground (or the floor above) covers them.
+    if (isBelowGround(level, heights)) return;
     const regions = roofFootprint(planOf(plans, level.id));
     if (!regions.length) return;
     // Whatever the next floor up doesn't cover needs a roof (even where a floor further up hangs over it).
@@ -478,12 +480,10 @@ export function buildRoofs(plans: Plans, ctx: HouseContext & { heights: LevelHei
     const upper = next && { regions: above, topIn: heights[next.id].floorIn + heights[next.id].ceilingIn };
     const mb = { roof: new MeshBuilder(), trim: new MeshBuilder(), siding: new MeshBuilder() };
     const ext = lookOutside(ctx);
-    // Below ground floors that stick out get a flat top (usually a deck or patio over them).
-    const flat = level.kind === "basement" || floorIn < 0;
     for (const found of exposed) {
       // Small pockets between rooms get roofed over rather than left as tiny open-air wells.
       const r = { ...found, holes: found.holes.filter((h) => polygonArea(h) > 150 * 144) };
-      const shape = roofShape(r, floorIn + ceilingIn, exteriorIn, ctx.house3d.roof, flat, upper);
+      const shape = roofShape(r, floorIn + ceilingIn, exteriorIn, ctx.house3d.roof, false, upper);
       leansOnWall ||= !!shape.leansOnWall;
       fellBack ||= shape.fellBack;
       topIn = Math.max(topIn, roofTop(shape));
@@ -494,13 +494,15 @@ export function buildRoofs(plans: Plans, ctx: HouseContext & { heights: LevelHei
   return { parts, fellBack, leansOnWall, topIn };
 }
 
-/** Basements and other floors below the ground, grown to the outside of their walls: where the ground is dug out. */
+/** Where a basement or other floor below the ground sits under the floors above it, grown to the outside of the walls: where the ground is dug out. The rest of it is buried under grass. */
 export function dugOut(plans: Plans, ctx: HouseContext & { heights: LevelHeights }): Point[][] {
   plans = flatPlans(plans);
   const exteriorIn = exteriorWallIn(ctx.basics);
+  const grow = (rs: Region[]): Region[] => rs.map((r) => ({ outline: offsetRing(r.outline, exteriorIn / 2), holes: [] }));
+  const housed = grow(ctx.levels.filter((l) => !isBelowGround(l, ctx.heights)).flatMap((l) => floorFootprint(planOf(plans, l.id))));
   return ctx.levels
     .filter((l) => ctx.heights[l.id].floorIn < -12)
-    .flatMap((l) => floorFootprint(planOf(plans, l.id)).map((r) => offsetRing(r.outline, exteriorIn / 2)));
+    .flatMap((l) => intersectRegions(grow(floorFootprint(planOf(plans, l.id))), housed).map((r) => r.outline));
 }
 
 export type HouseModel = {

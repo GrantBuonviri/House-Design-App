@@ -307,7 +307,7 @@ describe("the house on the land", () => {
     expect(yRange(parts.map((x) => x.mesh))[0]).toBeLessThan(lowestGround / IN_PER_UNIT);
   });
 
-  it("digs the ground out where the basement is, and nowhere on a house without one", () => {
+  it("digs the ground out where the basement is under the house, and nowhere on a house without one", () => {
     const withB = houseOn(SLOPED, TYPES, 1, 1);
     const heights = levelHeights(withB.levels, defaultBasics());
     const holes = dugOut(withB.plans, { ...withB.c, heights });
@@ -319,7 +319,9 @@ describe("the house on the land", () => {
       const [a, b, cc] = [at(g.indices[i]), at(g.indices[i + 1]), at(g.indices[i + 2])];
       const mid: Point = { x: (a.x + b.x + cc.x) / 3, y: (a.y + b.y + cc.y) / 3 };
       const plot = { x: mid.x + 0, y: mid.y + 0 };
-      return withB.plans["basement-1"].rooms.some((r) => pointInPolygon(plot, offsetRing(r.polygon, -2)));
+      const under = (id: string) => withB.plans[id].rooms.some((r) => pointInPolygon(plot, offsetRing(r.polygon, -2)));
+      // Only the part of the basement under the house is dug out; the rest is buried under grass.
+      return under("basement-1") && under("floor-1");
     };
     for (let i = 0; i < g.indices.length; i += 3) expect(inside(i)).toBe(false);
 

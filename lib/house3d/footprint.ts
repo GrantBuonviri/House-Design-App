@@ -114,6 +114,16 @@ export function subtractRegions(a: Region[], b: Region[]): Region[] {
   }
 }
 
+/** Only the parts that are in both `a` and `b`. */
+export function intersectRegions(a: Region[], b: Region[]): Region[] {
+  if (!a.length || !b.length) return [];
+  try {
+    return regionsOf(polygonClipping.intersection(a.map(asPolygon) as MultiPolygon, b.map(asPolygon) as MultiPolygon));
+  } catch {
+    return [];
+  }
+}
+
 /** A plain polygon minus some holes (for a floor with a stairwell cut out). */
 export function cutHoles(poly: Point[], holes: Point[][]): Region[] {
   const base: Region = { outline: clockwise(poly), holes: [] };

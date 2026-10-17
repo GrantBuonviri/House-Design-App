@@ -13,6 +13,11 @@ export type LevelHeights = Record<string, { floorIn: number; ceilingIn: number }
 
 const REGULAR = /^(floor|basement)-(\d)$/;
 
+/** A basement, or any floor whose floor sits below the ground line: it gets no roof, the ground covers it. */
+export function isBelowGround(level: Level, heights: LevelHeights): boolean {
+  return level.kind === "basement" || heights[level.id].floorIn < 0;
+}
+
 export function levelHeights(levels: Level[], basics: PlanBasics | null): LevelHeights {
   const out: LevelHeights = {};
   const sorted = [...levels].sort((a, b) => a.elevationIn - b.elevationIn);

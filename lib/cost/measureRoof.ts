@@ -3,7 +3,7 @@ import { exteriorWallIn } from "@/lib/plan/basics";
 import { planOf, type Plans } from "@/lib/plan/edit";
 import { polygonArea } from "@/lib/plan/geometry";
 import { floorFootprint, offsetRing, regionArea, roofFootprint, subtractRegions, type Region } from "@/lib/house3d/footprint";
-import { levelHeights } from "@/lib/house3d/levels";
+import { isBelowGround, levelHeights } from "@/lib/house3d/levels";
 import { roofShape, type RoofShape } from "@/lib/house3d/roof";
 import { sqft, ft, ringLength } from "./quantityBasics";
 import { ROOF_STEP_DEG, flatPlans } from "@/lib/plan/flatten";
@@ -78,6 +78,7 @@ export function measureRoof(plans: Plans, levels: Level[], basics: PlanBasics | 
   const exteriorIn = exteriorWallIn(basics);
   const out = { roofSqft: 0, flatSqft: 0, gableSqft: 0, hipValleyLf: 0, gutterLf: 0, eaveLf: 0, atticSqft: 0 };
   ordered.forEach((level, i) => {
+    if (isBelowGround(level, heights)) return;
     const plan = planOf(plans, level.id);
     const regions = roofFootprint(plan);
     if (!regions.length) return;
@@ -86,12 +87,11 @@ export function measureRoof(plans: Plans, levels: Level[], basics: PlanBasics | 
     const exposed = subtractRegions(regions, above);
     out.atticSqft += sqft(subtractRegions(floorFootprint(plan), above).reduce((s, r) => s + regionArea(r), 0));
     const { floorIn, ceilingIn } = heights[level.id];
-    const flat = level.kind === "basement" || floorIn < 0;
     for (const found of exposed) {
       const r: Region = { ...found, holes: found.holes.filter((h) => polygonArea(h) > 150 * 144) };
-      const shape = roofShape(r, floorIn + ceilingIn, exteriorIn, roof, flat, next && { regions: above, topIn: heights[next.id].floorIn + heights[next.id].ceilingIn });
+      const shape = roofShape(r, floorIn + ceilingIn, exteriorIn, roof, false, next && { regions: above, topIn: heights[next.id].floorIn + heights[next.id].ceilingIn });
       const area = sqft(shape.tris.reduce((s, t) => s + triArea3D(t), 0));
-      const isFlat = flat || shape.fellBack || roof.style === "flat";
+      const isFlat = shape.fellBack || roof.style === "flat";
       if (isFlat) out.flatSqft += area;
       else out.roofSqft += area;
       out.gableSqft += sqft(shape.walls.reduce((s, w) => s + wallArea(w), 0));
