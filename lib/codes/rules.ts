@@ -245,9 +245,17 @@ export const RULES: CodeRule[] = [
         if (door) return room(level, r, { status: "pass", text: `${where(level, r)}: door straight outside` });
         if (good) return room(level, r, { status: "pass", text: `${where(level, r)}: ${h.tags.get(good.o.id) ?? "window"} opens about ${f1(good.c.clear.sqft)} sq ft` });
         if (!windows.length) return room(level, r, { status: "fail", text: `${where(level, r)} has no window.`, fix: "Add a window you can climb out of (about 36\" wide by 60\" tall works as a single-hung)." });
+        const small = windows.find((w) => !w.c.ok);
+        // Big enough, but below ground with no well possible: the floor above covers the ground outside.
+        if (!small)
+          return room(level, r, {
+            status: "fail",
+            text: `${where(level, r)}: its windows are in walls buried under the floor above, so there's no room for a window well to climb out through.`,
+            fix: "Put an escape window in a wall with open ground outside it, where a window well can be dug, or add a door straight outside.",
+          });
         return room(level, r, {
           status: "fail",
-          text: `${where(level, r)}: no window is big enough to escape through (${windows[0].c.problems.join("; ")}).`,
+          text: `${where(level, r)}: no window is big enough to escape through (${small.c.problems.join("; ")}).`,
           fix: "Make one window bigger or lower, or use a casement window.",
         });
       }),
@@ -539,6 +547,7 @@ export const RULES: CodeRule[] = [
       if (!site?.real) return [{ status: "manual", text: "The site plan uses a sample lot. Fill in \"My real lot\" on the Plans page with your lot's sides and zoning setbacks to check them." }];
       const out: RuleResult[] = site.checks.map((c) => {
         const side = `${c.name} setback`;
+        if (c.providedFt < 0) return { status: "fail", text: `${side}: the house reaches ${feetText(-c.providedFt)} past the ${c.side} lot line.`, fix: "Move the house on the lot in \"My real lot\", or make the house smaller on that side." };
         if (c.ok === null) return { status: "manual", text: `${side}: no setback entered. The house is ${feetText(c.providedFt)} from the ${c.side} lot line.` };
         return c.ok
           ? { status: "pass", text: `${side}: the house is ${feetText(c.providedFt)} from the lot line, ${feetText(c.requiredFt!)} needed.` }

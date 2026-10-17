@@ -16,7 +16,7 @@ export { measureRough } from "./measureRough";
 
 // The measuring lives in measurePlan.ts, measureRough.ts and measureRoof.ts, sharing quantityBasics.ts.
 
-const CTX_KEYS = ["levels", "plot", "sketch", "bubbles", "floorPlans", "house3d", "plan", "discovery", "brief", "location"] as const;
+const CTX_KEYS = ["levels", "plot", "sketch", "bubbles", "floorPlans", "house3d", "plan", "discovery", "brief", "location", "plans"] as const;
 let last: { p: Ctx; q: Quantities | null } | null = null;
 
 /**

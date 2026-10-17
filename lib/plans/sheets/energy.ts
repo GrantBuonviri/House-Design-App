@@ -31,10 +31,12 @@ export type Envelope = {
   slabArea: number;
   slabPerimeterFt: number;
   basementWalls: number;
+  /** Windows and doors in the basement walls, sq ft (kept out of the above-ground walls by direction). */
+  basementOpenings: { windows: number; glassDoors: number; doors: number };
   floorOverGarage: number;
   conditionedSqft: number;
   volumeCuFt: number;
-  windows: { tag: string; dir: Direction; size: string; sqft: number }[];
+  windows: { tag: string; dir: Direction; size: string; sqft: number; belowGrade?: boolean }[];
   foundation: "crawlspace" | "slab" | "basement";
 };
 
@@ -51,7 +53,7 @@ const sq = (inches2: number) => inches2 / 144;
 export function envelope(project: Project): Envelope {
   const h = houseFacts(project);
   const walls = Object.fromEntries(DIRECTIONS.map((d) => [d, { gross: 0, windows: 0, doors: 0, glassDoors: 0 }])) as Envelope["walls"];
-  const env: Envelope = { walls, garageWalls: 0, ceiling: 0, floorOverCrawl: 0, slabArea: 0, slabPerimeterFt: 0, basementWalls: 0, floorOverGarage: 0, conditionedSqft: 0, volumeCuFt: 0, windows: [], foundation: project.plans.systems.foundation };
+  const env: Envelope = { walls, garageWalls: 0, ceiling: 0, floorOverCrawl: 0, slabArea: 0, slabPerimeterFt: 0, basementWalls: 0, basementOpenings: { windows: 0, glassDoors: 0, doors: 0 }, floorOverGarage: 0, conditionedSqft: 0, volumeCuFt: 0, windows: [], foundation: project.plans.systems.foundation };
   const levels = h.drawn;
   const cond = (l: Level): Region[] => joinRooms(h.plan(l.id).rooms.filter(heated).map((r) => r.polygon));
   const garage = (l: Level): Region[] => joinRooms(h.plan(l.id).rooms.filter((r) => roleOf(r) === "garage").map((r) => r.polygon));
@@ -96,14 +98,15 @@ export function envelope(project: Project): Envelope {
       if (inL === inR) continue;
       const otherSide = inL ? right : left;
       if (otherSide && roleOf(otherSide) === "garage") continue;
-      if (basement) continue;
       const dir = facing(inL ? scale(g.n, -1) : g.n);
       const a = sq(o.widthIn * o.heightIn);
+      // Basement windows and doors are in the basement walls, not the framed walls by direction.
+      const into = basement ? env.basementOpenings : walls[dir];
       if (o.kind === "window") {
-        walls[dir].windows += a;
-        env.windows.push({ tag: h.tags.get(o.id) ?? "", dir, size: `${archFeet(o.widthIn)} x ${archFeet(o.heightIn)}`, sqft: a });
-      } else if (o.style === "door-slider" || o.style === "door-double") walls[dir].glassDoors += a;
-      else if (o.style !== "door-garage") walls[dir].doors += a;
+        into.windows += a;
+        env.windows.push({ tag: h.tags.get(o.id) ?? "", dir, size: `${archFeet(o.widthIn)} x ${archFeet(o.heightIn)}`, sqft: a, ...(basement ? { belowGrade: true } : {}) });
+      } else if (o.style === "door-slider" || o.style === "door-double") into.glassDoors += a;
+      else if (o.style !== "door-garage") into.doors += a;
     }
     // Ceilings: heated rooms with no heated floor above.
     const above = levels[i + 1];
@@ -135,8 +138,10 @@ export function roughHeatLoss(project: Project, env = envelope(project)): { btuh
   const u = codeNum("energy.fenestrationU");
   const dt = 70 - codeNum("design.manualJWinter");
   const wallNet = DIRECTIONS.reduce((s, d) => s + env.walls[d].gross - env.walls[d].windows - env.walls[d].doors - env.walls[d].glassDoors, 0) + env.garageWalls;
-  const glass = DIRECTIONS.reduce((s, d) => s + env.walls[d].windows + env.walls[d].glassDoors + env.walls[d].doors, 0);
-  const ua = wallNet / wallR + glass * u + env.ceiling / codeNum("energy.ceilingR") + (env.floorOverCrawl + env.floorOverGarage) / codeNum("energy.floorR") + env.basementWalls / 15;
+  const b = env.basementOpenings;
+  const bOpen = b.windows + b.glassDoors + b.doors;
+  const glass = DIRECTIONS.reduce((s, d) => s + env.walls[d].windows + env.walls[d].glassDoors + env.walls[d].doors, 0) + bOpen;
+  const ua = wallNet / wallR + glass * u + env.ceiling / codeNum("energy.ceilingR") + (env.floorOverCrawl + env.floorOverGarage) / codeNum("energy.floorR") + Math.max(0, env.basementWalls - bOpen) / 15;
   const air = 0.018 * env.volumeCuFt * (codeNum("energy.airLeakageACH50") / 20);
   return { btuh: Math.round(((ua + air) * dt) / 100) * 100, dt };
 }
@@ -186,7 +191,13 @@ export function energySheets(project: Project): Item[][] {
   ];
   if (env.floorOverCrawl) other.push(["Floor over the crawlspace", `${r0(env.floorOverCrawl)} sq ft`]);
   if (env.slabArea) other.push(["Slab on grade", `${r0(env.slabArea)} sq ft, ${r0(env.slabPerimeterFt)} ft of edge`]);
-  if (env.basementWalls) other.push(["Basement walls", `${r0(env.basementWalls)} sq ft`]);
+  if (env.basementWalls) {
+    const b = env.basementOpenings;
+    const open = b.windows + b.glassDoors + b.doors;
+    other.push(["Basement walls", `${r0(env.basementWalls)} sq ft${open ? `, ${r0(env.basementWalls - open)} sq ft net` : ""}`]);
+    if (b.windows + b.glassDoors) other.push(["Basement windows and glass doors", `${r0(b.windows + b.glassDoors)} sq ft (below grade)`]);
+    if (b.doors) other.push(["Basement solid doors", `${r0(b.doors)} sq ft`]);
+  }
   if (env.floorOverGarage) other.push(["Floor over the garage", `${r0(env.floorOverGarage)} sq ft`]);
   const loss = roughHeatLoss(project, env);
   other.push(["Rough heat loss (not a Manual J)", `About ${r0(loss.btuh)} Btu/h at ${codeNum("design.manualJWinter")}°F outside, ${loss.dt}°F difference`]);
@@ -228,12 +239,12 @@ export function energySheets(project: Project): Item[][] {
         title: "Windows",
         cols: [
           { title: "Tag", width: 0.8 },
-          { title: "Facing", width: 1.2 },
+          { title: "Facing", width: 1.8 },
           { title: "Size (W x H)", width: 1.8 },
           { title: "Area", width: 1.2 },
           { title: "U-factor", width: 1.4 },
         ],
-        rows: env.windows.map((w) => [w.tag, DIR_NAME[w.dir], w.size, `${w.sqft.toFixed(1)} sq ft`, `${codeText("energy.fenestrationU")} max`]),
+        rows: env.windows.map((w) => [w.tag, w.belowGrade ? `${DIR_NAME[w.dir]}, basement` : DIR_NAME[w.dir], w.size, `${w.sqft.toFixed(1)} sq ft`, `${codeText("energy.fenestrationU")} max`]),
       },
     ],
     notes,

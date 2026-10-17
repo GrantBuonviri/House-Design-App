@@ -14,7 +14,8 @@ import { houseFacts } from "@/lib/plans/house";
 import { emptyPlan } from "@/lib/plan/edit";
 import { exportProjectJson } from "@/lib/storage/exchange";
 import { RealLot } from "@/lib/model/schema";
-import { lotCorners, siteLayout } from "@/lib/plans/lot";
+import { polygonArea } from "@/lib/plan/geometry";
+import { houseFootprintSqft, houseOutlines, lotCorners, siteLayout } from "@/lib/plans/lot";
 import { houseScene } from "@/lib/plans/scene";
 import { roofSheet } from "@/lib/plans/sheets/roof";
 import { elevationSheets } from "@/lib/plans/sheets/elevations";
@@ -223,6 +224,26 @@ describe("the outside of the house (part 2)", () => {
     expect(r2.status).toBe("fail");
     expect(r2.results.some((x) => /easement/.test(x.text))).toBe(true);
     expect(readiness(back).sheets.find((s) => s.id === "site")!.reasons.some((x) => x.action === "lot")).toBe(true);
+  });
+
+  it("fails a house that reaches past a lot line, even with no setback entered", () => {
+    // A lot 30 ft wide, narrower than the house, which sits centered on it.
+    const over = onRealLot(ranch, { frontFt: 30, setbacks: { front: 20, side: null, rear: 15, streetSide: null } });
+    const left = siteLayout(over)!.checks.find((c) => c.side === "left")!;
+    expect(left.providedFt).toBeLessThan(-1);
+    expect(left.ok).toBe(false);
+    const rule = codeReport(over).find((r) => r.rule.id === "setbacks")!;
+    expect(rule.status).toBe("fail");
+    expect(rule.results.some((x) => /past the left lot line/.test(x.text))).toBe(true);
+  });
+
+  it("counts the footprint once for stacked floors, and only stories above ground", () => {
+    const p = house(TWO_STORY, 2, 1);
+    const all = houseOutlines(p).reduce((t, ring) => t + polygonArea(ring), 0) / 144;
+    const foot = houseFootprintSqft(p);
+    expect(foot).toBeLessThan(all * 0.7);
+    const text = sheetText(buildSet(p).find((s) => s.number === "C-101")!).join(" ");
+    expect(text).toContain("2 stories");
   });
 
   it("checks walls and eaves near the side lot lines", () => {
@@ -508,10 +529,23 @@ describe("systems (part 4)", () => {
     expect(facing({ x: 1, y: 0 })).toBe("E");
     const env = envelope(p);
     const windows = env.windows.reduce((s, w) => s + w.sqft, 0);
-    expect(windows).toBeCloseTo(DIRECTIONS.reduce((s, d) => s + env.walls[d].windows, 0));
+    expect(windows).toBeCloseTo(DIRECTIONS.reduce((s, d) => s + env.walls[d].windows, 0) + env.basementOpenings.windows);
     expect(env.conditionedSqft).toBeGreaterThan(1000);
     expect(env.ceiling).toBeCloseTo(env.conditionedSqft, 0);
     expect(roughHeatLoss(p).btuh).toBeGreaterThan(5000);
+  });
+
+  it("lists basement windows with the windows, marked as in the basement", () => {
+    const base = house(RANCH, 1, 1);
+    const bsmt = base.levels.find((l) => l.kind === "basement")!;
+    const win: Opening = { id: "bw", host: { roomId: "bf", edge: 0 }, offsetIn: 60, kind: "window", style: "window", widthIn: 48, heightIn: 36, sillIn: 44, side: 1, hinge: "start" };
+    const rooms = [{ id: "bf", name: "Family", type: "family", polygon: [{ x: 0, y: 0 }, { x: 240, y: 0 }, { x: 240, y: 180 }, { x: 0, y: 180 }] }];
+    const q: Project = { ...base, floorPlans: { ...base.floorPlans, [bsmt.id]: { ...emptyPlan(), rooms, openings: [win] } } };
+    const env = envelope(q);
+    const listed = env.windows.find((w) => w.belowGrade)!;
+    expect(listed.sqft).toBeCloseTo(12, 1);
+    expect(env.basementOpenings.windows).toBeCloseTo(12, 1);
+    expect(sheetText(buildSet(q).find((s) => s.number === "G-003")!).join(" ")).toMatch(/basement/);
   });
 
   it("works out the whole-house fresh air and the dryer duct", () => {

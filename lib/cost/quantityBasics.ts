@@ -27,7 +27,8 @@ export type Quantities = {
   floorsBelow: number;
 
   // Site and foundation
-  foundation: FoundationType;
+  /** The land's foundation, with the Plans page's choice of slab, crawlspace or basement winning (see siteFacts). */
+  foundation: FoundationType | "basement";
   slopePercent: number;
   drainage: "none" | "some" | "major";
   /** Footprint of everything touching the ground (not basements), for grading. */
@@ -176,7 +177,7 @@ export function samplesAround(ring: Point[], step = 24): Point[] {
   return out;
 }
 
-export type Ctx = Pick<Project, "levels" | "plot" | "sketch" | "bubbles" | "floorPlans" | "house3d" | "plan" | "discovery" | "brief"> & { location?: Project["location"] };
+export type Ctx = Pick<Project, "levels" | "plot" | "sketch" | "bubbles" | "floorPlans" | "house3d" | "plan" | "discovery" | "brief"> & { location?: Project["location"]; plans?: Project["plans"] };
 
 export function empty(source: Quantities["source"]): Quantities {
   return {
@@ -266,11 +267,18 @@ export function empty(source: Quantities["source"]): Quantities {
 
 /** Site facts that don't depend on the plan. */
 export function siteFacts(p: Ctx, q: Quantities) {
-  if (!p.plot) return;
-  const imp = plotImplications(p.plot, houseSpot(p));
-  q.foundation = imp.foundation.type;
-  q.slopePercent = p.plot.slope.percent;
-  q.drainage = imp.drainageWork;
+  if (p.plot) {
+    const imp = plotImplications(p.plot, houseSpot(p));
+    q.foundation = imp.foundation.type;
+    q.slopePercent = p.plot.slope.percent;
+    q.drainage = imp.drainageWork;
+  }
+  // The Plans page's foundation wins, so the cost matches what the sheets draw: a slab only when
+  // it's set to a slab, a basement when it's set to one, otherwise a crawlspace (on sloped land the
+  // land's walkout or stepped foundation, which are framed floors too).
+  const chosen = p.plans?.systems.foundation;
+  if (chosen === "slab" || chosen === "basement") q.foundation = chosen;
+  else if (chosen === "crawlspace" && q.foundation === "slab") q.foundation = "crawlspace";
 }
 
 /** How far a point (plan inches) is from where its driveway meets the main road or a lane, in inches. */

@@ -132,7 +132,8 @@ export function readiness(project: Project): Readiness {
     if (!site.real) reasons.push({ text: project.plot?.source === "custom" ? "Designed lot, not a surveyed property: fill in My real lot (it can copy your designed land)" : "Sample lot, not a real property: fill in My real lot", action: "lot" });
     for (const p of site.problems) reasons.push({ text: p, action: "lot" });
     for (const c of site.checks) {
-      if (c.ok === false) reasons.push({ text: `${c.name} setback: the house is ${c.providedFt.toFixed(1)} ft from the lot line, ${c.requiredFt} ft needed`, action: "lot" });
+      if (c.ok === false && c.providedFt < 0) reasons.push({ text: `${c.name}: the house reaches ${(-c.providedFt).toFixed(1)} ft past the lot line`, action: "lot" });
+      else if (c.ok === false) reasons.push({ text: `${c.name} setback: the house is ${c.providedFt.toFixed(1)} ft from the lot line, ${c.requiredFt} ft needed`, action: "lot" });
       if (c.ok === null) reasons.push({ text: `${c.name} setback isn't entered`, action: "lot" });
     }
     return { status: reasons.length ? "notes" : "ready", reasons };

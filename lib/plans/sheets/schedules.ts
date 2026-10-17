@@ -308,7 +308,7 @@ export function finishRows(project: Project): string[][] {
 export function finishSheets(project: Project): Item[][] {
   const rows = finishRows(project);
   const notes = [
-    "Products and colors are the owner's picks on the Interior page of House Design App. A room without its own pick uses the whole-house pick. Equal products may be used.",
+    "Products and colors are the owner's picks in House Design App's Interior design window (press I in the Walkthrough). A room without its own pick uses the whole-house pick. Equal products may be used.",
     "Walls and ceilings: 1/2\" gypsum board unless noted, taped, finished and painted. Ceilings flat white.",
     `Showers and walls over tubs with a shower head: a smooth, hard, nonabsorbent surface to at least ${inchText(codeNum("bath.nonabsorbentWallHeight"))} above the floor (${codeRef("bath.nonabsorbentWallHeight")}).`,
     `Garage: ${inchText(codeNum("garage.gypsumGarageSide"))} gypsum on the garage side of walls next to the house; ${inchText(codeNum("garage.gypsumCeilingUnderHabitable"))} Type X on the ceiling under rooms above (${codeRef("garage.gypsumCeilingUnderHabitable")}).`,
@@ -489,7 +489,7 @@ export function fixtureSheets(project: Project): Item[][] {
     { title: "Must meet", width: 6.4 },
   ];
   const notes = [
-    "Products are the owner's picks on the Interior page of House Design App; equal products may be used. Install every fixture and appliance to its maker's instructions and listing.",
+    "Products are the owner's picks in House Design App's Interior design window (press I in the Walkthrough); equal products may be used. Install every fixture and appliance to its maker's instructions and listing.",
     `Water use limits come from the ${codeName("Plumbing")} (${codeRef("plumbing.wcMaxFlush")}). Look for the WaterSense label.`,
     "Fixture units and hose bibs are on the plumbing plan; gas, ducts and fans on the mechanical plan.",
   ];

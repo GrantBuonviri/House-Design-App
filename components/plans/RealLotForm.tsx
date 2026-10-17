@@ -240,7 +240,7 @@ export default function RealLotForm({ project, onSave, onClose }: { project: Pro
                       <td>{c.name}</td>
                       <td>{c.requiredFt === null ? "–" : `${c.requiredFt} ft`}</td>
                       <td>
-                        {c.providedFt.toFixed(1)} ft{c.ok === false ? " (too close)" : ""}
+                        {c.providedFt < 0 ? `${(-c.providedFt).toFixed(1)} ft past the lot line` : `${c.providedFt.toFixed(1)} ft${c.ok === false ? " (too close)" : ""}`}
                       </td>
                     </tr>
                   ))}

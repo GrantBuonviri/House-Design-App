@@ -72,7 +72,8 @@ export type Estimate = {
   drivers: { text: string; amount: number }[];
   utilities: CostSettings["utilities"];
   /** Where the prices are for, and how the building permit was worked out. */
-  place: { name: string; state: string; costIndex: number };
+  /** `picked` is false while the default place stands in, before one is picked in Project setup. */
+  place: { name: string; state: string; cityId: string; costIndex: number; picked: boolean };
   permitBasis: "city" | "typed" | "typical";
 };
 
@@ -309,7 +310,7 @@ export function estimate(
   const total = spread(lines.map((l) => l.cost));
   const area = Math.max(1, q.livingSqft);
   const perSqft = { low: total.low / area, likely: total.likely / area, high: total.high / area };
-  return { source: q.source, quantities: q, categories, total, perSqft, land: 0, drivers: drivers(q, lines, file, utilities), utilities, place: { name: place.name, state: place.state, costIndex: place.costIndex }, permitBasis };
+  return { source: q.source, quantities: q, categories, total, perSqft, land: 0, drivers: drivers(q, lines, file, utilities), utilities, place: { name: place.name, state: place.state, cityId: place.cityId, costIndex: place.costIndex, picked: !!p.location }, permitBasis };
 }
 
 /**

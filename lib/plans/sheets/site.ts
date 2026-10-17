@@ -1,5 +1,5 @@
 import type { Point, Project } from "@/lib/model/schema";
-import { add, boundsOf, dist, dot, leftNormal, lerp, polygonArea, project as projectOn, scale, sub, unit } from "@/lib/plan/geometry";
+import { add, boundsOf, dist, dot, leftNormal, lerp, project as projectOn, scale, sub, unit } from "@/lib/plan/geometry";
 import { landDrawing } from "@/lib/bubbles/land";
 import { yardLayout, yardAmounts, type Strip } from "@/lib/exterior/yard";
 import { exteriorPick } from "@/lib/exterior/picks";
@@ -10,7 +10,7 @@ import { DRAW_AREA } from "../frame";
 import { zoningCode } from "../local";
 import { archFeet, capHeight, DASH, GREY, heading, HEADING_H, LIGHT, table, textBlock, readable, type Item, type Weight } from "../draw";
 import { houseFacts } from "../house";
-import { lotAsPlot, siteLayout, type SiteLayout } from "../lot";
+import { houseFootprintSqft, lotAsPlot, siteLayout, type SiteLayout } from "../lot";
 import { houseScene } from "../scene";
 import { viewTitle } from "../view";
 
@@ -133,13 +133,14 @@ export function siteSheet(project: Project): { items: Item[]; scaleLabel: string
   // ---------- The house ----------
   for (const ring of site.house) ppoly(ring, "heavy", LIGHT);
   for (const r of sc.roofs) ppoly(r.eave, "fine", undefined, DASH.hidden);
-  const footprint = site.house.reduce((sum, ring) => sum + polygonArea(ring), 0) / 144;
+  const footprint = houseFootprintSqft(project);
+  const stories = h.drawn.filter((l) => l.kind !== "basement").length;
   const hb = boundsOf(site.house.flat());
   if (hb) {
     const hc = { x: (hb.x0 + hb.x1) / 2, y: (hb.y0 + hb.y1) / 2 };
     label(add(hc, { x: 0, y: -0.16 / s }), "PROPOSED HOUSE", 8, { bold: true });
     label(add(hc, { x: 0, y: 0.04 / s }), `${Math.round(footprint).toLocaleString("en-US")} sq ft footprint`, 6.5);
-    label(add(hc, { x: 0, y: 0.18 / s }), `Main floor ±0'-0", ${h.drawn.length} ${h.drawn.length === 1 ? "story" : "stories"}`, 6.5);
+    label(add(hc, { x: 0, y: 0.18 / s }), `Main floor ±0'-0", ${stories} ${stories === 1 ? "story" : "stories"}`, 6.5);
 
     // Drainage: arrows away from the house on each side.
     const fall = codeNum("site.gradeFall");
@@ -224,7 +225,7 @@ function notesColumn(project: Project, site: SiteLayout, footprint: number, amou
   items.push(...heading("Setbacks", nx, ny, NOTES_W));
   ny += HEADING_H + 0.05;
   const setRows = site.real
-    ? site.checks.map((c) => [c.name, c.requiredFt === null ? "Not entered" : `${c.requiredFt}'-0"`, archFeet(c.providedFt * 12), c.ok === null ? "Check" : c.ok ? "OK" : "TOO CLOSE"])
+    ? site.checks.map((c) => [c.name, c.requiredFt === null ? "Not entered" : `${c.requiredFt}'-0"`, c.providedFt < 0 ? `${archFeet(-c.providedFt * 12)} past` : archFeet(c.providedFt * 12), c.ok === null ? "Check" : c.ok ? "OK" : c.providedFt < 0 ? "OVER LOT LINE" : "TOO CLOSE"])
     : [["Fill in My real lot on the Plans page to show and check the setbacks.", "", "", ""]];
   tb = table(nx, ny, [{ title: "Side", width: 1.7 }, { title: "Required", width: 1.3 }, { title: "Provided", width: 1.5 }, { title: "Result", width: NOTES_W - 4.5 }], setRows, { size: 7, boldFirst: true });
   items.push(...tb.items);

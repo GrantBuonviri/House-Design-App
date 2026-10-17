@@ -42,6 +42,7 @@ export default function PlansPage({ project, onClose, onGo, onEditInFurnish }: {
   const [details, setDetails] = useState(false);
   const [lotOpen, setLotOpen] = useState(false);
   const [busy, setBusy] = useState<string | null>(null);
+  const [exportError, setExportError] = useState<string | null>(null);
   const [zoom, setZoom] = useState(1);
   const selected = useMemo(() => new Set(selectedIds(project)), [project]);
   const excluded = new Set(project.plans.excluded);
@@ -62,18 +63,26 @@ export default function PlansPage({ project, onClose, onGo, onEditInFurnish }: {
 
   async function exportSheets(ids: string[], what: string) {
     setBusy(what);
+    setExportError(null);
     try {
       const set = buildSet(project, { only: ids });
       const doc = await sheetsToPdf(set, half ? 0.5 : 1);
       downloadPdf(doc, pdfFileName(project.name, what));
+    } catch (e) {
+      console.error(e);
+      setExportError(`The ${what} PDF couldn't be made. Try again, or export fewer sheets at a time.`);
     } finally {
       setBusy(null);
     }
   }
   async function exportReport() {
     setBusy("code check");
+    setExportError(null);
     try {
       downloadPdf(await sheetsToPdf(codeReportPages(project)), pdfFileName(project.name, "code check"));
+    } catch (e) {
+      console.error(e);
+      setExportError("The code check PDF couldn't be made. Try again.");
     } finally {
       setBusy(null);
     }
@@ -130,6 +139,14 @@ export default function PlansPage({ project, onClose, onGo, onEditInFurnish }: {
           </button>
         </div>
       </header>
+      {exportError && (
+        <div className="flex items-center gap-3 border-b border-line bg-red-50 px-5 py-2 text-sm text-red-700" role="alert" data-testid="export-error">
+          <span>{exportError}</span>
+          <button className="ml-auto text-xs underline" onClick={() => setExportError(null)}>
+            Dismiss
+          </button>
+        </div>
+      )}
 
       <div className="flex min-h-0 flex-1">
         <aside className="flex w-[430px] shrink-0 flex-col border-r border-line bg-white">
