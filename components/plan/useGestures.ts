@@ -5,6 +5,7 @@ import type { LayerItem } from "@/lib/furnish/layer";
 import type { FloorPlan, Opening, OpeningHost, PlanStairs, Point } from "@/lib/model/schema";
 import { openingHeight, openingType } from "@/lib/plan/catalog";
 import { dragItem, ghostAt, placeGhost, wallGaps } from "@/lib/furnish/stage";
+import type { SnapLine } from "@/lib/furnish/snapping";
 import { trimOverlap } from "@/lib/plan/overlaps";
 import { bendInfo, bendWall, bowFromPoint, planRadii, snapBow, type BendSnap, type BendTarget } from "@/lib/plan/bend";
 import { savedHost } from "@/lib/plan/flatten";
@@ -123,6 +124,8 @@ export type GestureContext = Pick<
   pinMenu: State<{ id: string; x: number; y: number } | null>;
   dragCorner: State<{ roomId: string; i: number } | null>;
   badId: State<string | null>;
+  /** The furnish item being dragged and the marks where it lined up with others. */
+  furnSnap: State<{ id: string; lines: SnapLine[] } | null>;
   reveal: State<string | null>;
 };
 
@@ -148,6 +151,7 @@ export function useGestures(c: GestureContext) {
   const [, setPinMenu] = c.pinMenu;
   const [, setDragCorner] = c.dragCorner;
   const [, setBadId] = c.badId;
+  const [, setFurnSnap] = c.furnSnap;
   const [reveal, setReveal] = c.reveal;
   const world = () => layerRef.current?.getRelativePointerPosition() ?? { x: 0, y: 0 };
 
@@ -630,13 +634,14 @@ export function useGestures(c: GestureContext) {
       const to = sub(p, g.grab);
       if (!g.moved && Math.hypot(to.x - item.x, to.y - item.y) * s < 3) return;
       g.moved = true;
-      const out = dragItem(base, item, to, baseItems);
+      const out = dragItem(base, item, to, baseItems, e.evt.altKey);
       g.ok = out.check.ok;
       g.problem = out.check.problem;
       g.newId = out.id;
       setBadId(out.check.ok ? null : out.id);
       setPreview(out.plan);
       setDragGuides(wallGaps(out.plan, out.item).map((w) => w.guide));
+      setFurnSnap({ id: out.id, lines: out.snaps });
     } else if (g.type === "bend") {
       const info = bendInfo(base, g.target);
       if (!info) return;
@@ -673,6 +678,7 @@ export function useGestures(c: GestureContext) {
     setDragCorner(null);
     setBendTip(null);
     setBadId(null);
+    setFurnSnap(null);
     if (!g) return;
     const { preview: pv } = latest.current;
     if (g.type === "furn") {

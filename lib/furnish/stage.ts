@@ -8,6 +8,7 @@ import type { PlacedCabinet } from "@/lib/plan/cabinets";
 import type { PlacedDevice } from "@/lib/plan/devices";
 import { catalogEntry, type CatalogEntry } from "./catalog";
 import { CLOSET_SIZES, closetSpotAt, placeCloset, type ClosetSize, type ClosetSpot, type ClosetType } from "./closets";
+import { lineUp, type SnapLine } from "./snapping";
 import { layerItems, placeCheck, placeItem, removeItem, snapToWall, swapItem, updateItem, type FurnishCheck, type ItemPatch, type LayerItem } from "./layer";
 
 /**
@@ -76,6 +77,8 @@ export type Ghost = {
   check: FurnishCheck;
   /** A closet piece: where its walls, door and rod go. */
   closet?: ClosetSpot;
+  /** Where it lined up with other furniture or slid into a corner (drawn as short marks). */
+  snaps?: SnapLine[];
 };
 
 /** The size a catalog entry is placed at on this floor (ceiling items hang from the real ceiling). */
@@ -87,7 +90,8 @@ function placedSize(e: CatalogEntry, ceilingIn: number) {
 /**
  * Where an item would land with the mouse at `cursor`: backed onto the
  * nearest wall (or flat on it, for wall-hung things), turned a further
- * `turn` degrees, and whether it can go there.
+ * `turn` degrees, lined up with the furniture around it (`lineUp`), and
+ * whether it can go there.
  */
 export function ghostAt(plan: FloorPlan, entryId: string, cursor: Point, turn: number, items: LayerItem[], ceilingIn = 96, closetSize?: ClosetSize): Ghost | null {
   const e = catalogEntry(entryId);
@@ -102,8 +106,10 @@ export function ghostAt(plan: FloorPlan, entryId: string, cursor: Point, turn: n
   const snap = snapToWall(plan, cursor, { widthIn: size.widthIn, depthIn: size.depthIn, mount: e.mount });
   const at = snap ?? { x: round1(cursor.x), y: round1(cursor.y), rotation: 0 };
   const rotation = (((at.rotation + turn) % 360) + 360) % 360;
-  const check = placeCheck(plan, { entryId, x: at.x, y: at.y, rotation, ...size }, items);
-  return { entryId, x: at.x, y: at.y, rotation, ...size, check };
+  // Turned off the wall it snapped to, it's no longer backed onto it, so it can line up both ways.
+  const lined = lineUp(plan, { entryId, x: at.x, y: at.y, rotation, mount: e.mount, ...size }, items, Boolean(snap) && turn % 360 === 0);
+  const check = placeCheck(plan, { entryId, x: lined.x, y: lined.y, rotation, ...size }, items);
+  return { entryId, x: lined.x, y: lined.y, rotation, ...size, check, snaps: lined.lines };
 }
 
 /** Drop the ghost: the new plan and the id of what was placed (nothing when it doesn't fit). */
@@ -117,15 +123,18 @@ export function placeGhost(plan: FloorPlan, g: Ghost, ceilingIn = 96): { plan: F
 
 /**
  * The item dragged so its middle is at `to`: it backs onto a wall that is
- * close (so it can be pulled off one), and says whether it fits there.
+ * close (so it can be pulled off one), lines up with the furniture around
+ * it unless `free` (Alt held), and says whether it fits there.
  */
-export function dragItem(plan: FloorPlan, item: LayerItem, to: Point, items: LayerItem[]): { plan: FloorPlan; id: string; check: FurnishCheck; item: LayerItem } {
+export function dragItem(plan: FloorPlan, item: LayerItem, to: Point, items: LayerItem[], free = false): { plan: FloorPlan; id: string; check: FurnishCheck; item: LayerItem; snaps: SnapLine[] } {
   const snap = item.mount === "ceiling" ? null : snapToWall(plan, to, { widthIn: item.widthIn, depthIn: item.depthIn, mount: item.mount }, 12);
-  const at = snap ?? { x: round1(to.x), y: round1(to.y), rotation: item.rotation };
+  const at0 = snap ?? { x: round1(to.x), y: round1(to.y), rotation: item.rotation };
+  const lined = free ? { x: at0.x, y: at0.y, lines: [] } : lineUp(plan, { ...item, ...at0 }, items, Boolean(snap));
+  const at = { x: lined.x, y: lined.y, rotation: at0.rotation };
   const moved = { ...item, x: at.x, y: at.y, rotation: at.rotation };
   const check = placeCheck(plan, moved, items);
   const out = patchItem(plan, item, { x: at.x, y: at.y, rotation: at.rotation });
-  return { ...out, check, item: moved };
+  return { ...out, check, item: moved, snaps: lined.lines };
 }
 
 // ---------- Distances to the walls ----------

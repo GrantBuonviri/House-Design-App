@@ -6,6 +6,8 @@ import type { DeviceKind } from "@/lib/model/schema";
 import { DEVICE_INFO } from "@/lib/plan/devices";
 import type { LayerItem } from "@/lib/furnish/layer";
 import type { Ghost } from "@/lib/furnish/stage";
+import type { ClearanceZone } from "@/lib/furnish/clearance";
+import type { SnapLine } from "@/lib/furnish/snapping";
 import { ACCENT, FixtureSymbol } from "@/components/plan/PlanShapes";
 
 /**
@@ -91,4 +93,40 @@ export function FurnishGhost({ ghost, label, mount, s }: { ghost: Ghost; label: 
     auto: false,
   };
   return <ItemShape it={it} selected={false} s={s} names={false} bad={!ghost.check.ok} ghost />;
+}
+
+/** The soft "room to move" zones around an item: green when clear, red where a wall or another item is in the way. */
+export function FurnishClearance({ zones }: { zones: ClearanceZone[] }) {
+  return (
+    <Group listening={false} name="clearance">
+      {zones.map((z, i) => (
+        <Line
+          key={i}
+          points={z.polygon.flatMap((p) => [p.x, p.y])}
+          closed
+          fill={z.blocked ? "rgba(179,38,30,0.16)" : "rgba(47,111,90,0.16)"}
+          stroke={z.blocked ? "rgba(179,38,30,0.55)" : "rgba(47,111,90,0.45)"}
+          strokeWidth={1}
+          dash={[4, 3]}
+          strokeScaleEnabled={false}
+        />
+      ))}
+    </Group>
+  );
+}
+
+/** Short marks where an item lined up with another or slid up against it. */
+export function SnapMarks({ lines, s }: { lines: SnapLine[]; s: number }) {
+  return (
+    <Group listening={false} name="snap-marks">
+      {lines.map((l, i) => {
+        // A touching edge is drawn as is; a line-up gets a little past both ends so it reads as a guide.
+        const dx = l.b.x - l.a.x;
+        const dy = l.b.y - l.a.y;
+        const len = Math.hypot(dx, dy) || 1;
+        const ext = 6 / s;
+        return <Line key={i} points={[l.a.x - (dx / len) * ext, l.a.y - (dy / len) * ext, l.b.x + (dx / len) * ext, l.b.y + (dy / len) * ext]} stroke={ACCENT} strokeWidth={1.5} dash={[5, 3]} strokeScaleEnabled={false} />;
+      })}
+    </Group>
+  );
 }

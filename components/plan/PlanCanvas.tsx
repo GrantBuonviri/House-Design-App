@@ -7,7 +7,9 @@ import type { BubbleDiagram, FloorPlan, Level, OpeningHost, PlanBasics, PlanLabe
 import { exteriorWallIn, riseBetween } from "@/lib/plan/basics";
 import { catalogEntry } from "@/lib/furnish/catalog";
 import { stageItems, type Layouts } from "@/lib/furnish/stage";
-import { FurnishGhost, FurnishItems } from "@/components/furnish/FurnishLayers";
+import { FurnishClearance, FurnishGhost, FurnishItems, SnapMarks } from "@/components/furnish/FurnishLayers";
+import { clearanceNote, clearanceZones } from "@/lib/furnish/clearance";
+import type { SnapLine } from "@/lib/furnish/snapping";
 import type { ClosetSize } from "@/lib/furnish/closets";
 import { type BendSnap, type BendTarget } from "@/lib/plan/bend";
 import { DRAW_STEP_DEG, flatPlan, roomOutline, savedHost } from "@/lib/plan/flatten";
@@ -137,6 +139,7 @@ export default function PlanCanvas(props: PlanCanvasProps) {
   const [pinMenu, setPinMenu] = useState<{ id: string; x: number; y: number } | null>(null);
   const [dragCorner, setDragCorner] = useState<{ roomId: string; i: number } | null>(null);
   const [badId, setBadId] = useState<string | null>(null);
+  const [furnSnap, setFurnSnap] = useState<{ id: string; lines: SnapLine[] } | null>(null);
   const { spaceDown, hovering } = useSpacePan();
   const shown = preview ?? plan;
   const overhangs = useMemo(() => (support ? overhangsOf(shown.rooms, support.regions) : []), [shown, support]);
@@ -355,7 +358,7 @@ export default function PlanCanvas(props: PlanCanvasProps) {
     preview: [preview, setPreview], guides: [guides, setGuides], lotDelta: [lotDelta, setLotDelta], box: [box, setBox], draft: [draft, setDraft],
     cursor: [cursor, setCursor], rectEnd: [rectEnd, setRectEnd], typed: [typed, setTyped], bow: [bow, setBow], selCorner: [selCorner, setSelCorner],
     hoverWall: [hoverWall, setHoverWall], bendTip: [bendTip, setBendTip], dragGuides: [dragGuides, setDragGuides], tapePts: [tapePts, setTapePts],
-    tapeEnd: [tapeEnd, setTapeEnd], pinMenu: [pinMenu, setPinMenu], dragCorner: [dragCorner, setDragCorner], badId: [badId, setBadId], reveal: [reveal, setReveal],
+    tapeEnd: [tapeEnd, setTapeEnd], pinMenu: [pinMenu, setPinMenu], dragCorner: [dragCorner, setDragCorner], badId: [badId, setBadId], furnSnap: [furnSnap, setFurnSnap], reveal: [reveal, setReveal],
   });
 
   // ---- Drawing ----
@@ -367,6 +370,14 @@ export default function PlanCanvas(props: PlanCanvasProps) {
   const ghostOpening = tool === "door" && cursor ? ghostOpeningAt(plan, cursor, placeOpening, s) : null;
   const ghost = tool === "place" && cursor ? ghostFor(cursor) : null;
   const ghostEntry = ghost ? catalogEntry(ghost.entryId) : undefined;
+  // Room to move: shaded around what's being placed, dragged or picked on the Furnish page.
+  const focusItem = !furnishing
+    ? undefined
+    : ghost && ghostEntry && !ghost.closet
+      ? { ...ghost, id: "ghost", mount: ghostEntry.mount }
+      : shownItems.find((it) => it.id === (furnSnap?.id ?? (single?.kind === "furnish" ? single.id : undefined)));
+  const clearance = focusItem ? clearanceZones(preview ?? plan, focusItem, shownItems) : [];
+  const snapLines = ghost?.snaps ?? furnSnap?.lines ?? [];
   const ghostStairs = tool === "stairs" && cursor ? { x: cursor.x, y: cursor.y, rotation: 0, widthIn: DEFAULT_STAIRS_WIDTH_IN, shape: basics?.stairs ?? "straight", flip: false } : null;
   const rectPreview = rectEnd && gesture.current?.type === "rect" ? gesture.current.start : null;
 
@@ -443,6 +454,7 @@ export default function PlanCanvas(props: PlanCanvasProps) {
               s={s}
             />
 
+            {clearance.length > 0 && <FurnishClearance zones={clearance} />}
             {(furnishing || showFurnishings) && <FurnishItems items={shownItems} selectedId={single?.kind === "furnish" ? single.id : undefined} badId={badId ?? undefined} s={s} faded={!furnishing} names={labelOn(labels, "fixtureNames")} />}
             {(furnishing || showFurnishings) && (
               <FaucetSymbols faucets={furnishing && furnish?.faucets ? furnish.faucets : faucetsHere} selectedId={single?.kind === "faucet" ? single.id : undefined} pickable={furnishing && tool === "select"} s={s} />
@@ -495,6 +507,10 @@ export default function PlanCanvas(props: PlanCanvasProps) {
 
             {ghostOpening && <OpeningSymbol g={ghostOpening.g} thickness={ghostOpening.thickness} selected scale={s} ghost />}
             {ghost && ghostEntry && <FurnishGhost ghost={ghost} label={ghostEntry.label} mount={ghostEntry.mount} s={s} />}
+            {snapLines.length > 0 && <SnapMarks lines={snapLines} s={s} />}
+            {focusItem && clearanceNote(clearance) && (!ghost || ghost.check.ok) && (
+              <Text x={focusItem.x - 120 / s} y={focusItem.y + (Math.max(focusItem.depthIn, focusItem.widthIn) / 2 + 10 / s)} width={240 / s} align="center" text={clearanceNote(clearance)!} fontSize={11 / s} fill={clearance.some((z) => z.blocked) ? "#b3261e" : "#2f6f5a"} listening={false} name="clearance-note" />
+            )}
             {ghost && !ghost.check.ok && ghost.check.problem && (
               <Text x={ghost.x - 90 / s} y={ghost.y + (Math.max(ghost.depthIn, ghost.widthIn) / 2 + 10 / s)} width={180 / s} align="center" text={ghost.check.problem} fontSize={11 / s} fill="#b3261e" listening={false} />
             )}
