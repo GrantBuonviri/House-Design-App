@@ -1,10 +1,11 @@
 import { roomType } from "@/lib/brief/rooms";
+import { priorityWeights } from "@/lib/plan/score";
 import { centerOf, compacted, currentSpots, howDifferent, moveToSpots, type Diagrams, type SketchContext } from "./arrange";
 import { bubbleIdFor } from "./shapes";
 import { mirroredSpot, oppositeSpot, ruleSpot, siteOf, zoneOf, type Spot } from "./site";
 
-/** One of the "Show me alternatives" designs. */
-export type Alternative = { title: string; why: string; diagrams: Diagrams };
+/** One of the "Show me alternatives" designs. `numbers` says what it changes compared with the user's sketch. */
+export type Alternative = { title: string; why: string; diagrams: Diagrams; numbers?: string };
 
 const SIDE: Record<string, string> = { N: "north", S: "south", E: "east", W: "west" };
 
@@ -96,6 +97,18 @@ export function ruleAlternatives(ctx: SketchContext, current: Diagrams, skip: st
     });
   }
 
+  // Best first by the sketch's own score, with numbers for each reason.
+  const { weights } = priorityWeights(ctx.brief.priorities);
+  const before = scoreSketch(ctx, current);
+  const ranked = candidates
+    .map((alt) => {
+      const after = scoreSketch(ctx, alt.diagrams);
+      return { alt: { ...alt, numbers: compareSketches(before, after).slice(0, 3).join(" · ") || undefined }, gain: sketchTotal(after, weights) - sketchTotal(before, weights) };
+    })
+    .sort((a, b) => b.gain - a.gain)
+    .map((x) => x.alt);
+  candidates.splice(0, candidates.length, ...ranked);
+
   if (!skip.length) return pickDistinct(current, candidates, 3);
   // Show me different ones: ideas not shown yet first, even smaller changes, then the ones shown before.
   const seen = new Set(skip.map((t) => t.toLowerCase()));
@@ -133,4 +146,78 @@ export function pickDistinct(current: Diagrams, candidates: Alternative[], count
     if (picked.length < count && !picked.includes(alt)) picked.push(alt);
   }
   return picked;
+}
+
+// ---------- A light score from the sketch alone ----------
+
+export type SketchScore = {
+  /** Living rooms on a south-facing spot (S, SE or SW). */
+  sunnyLiving: number;
+  /** Garages and storage on the north or west. */
+  garageNorthWest: number;
+  garages: number;
+  /** Average distance from each bedroom to the nearest garage or kitchen, in room widths; null without both. */
+  bedroomsAway: number | null;
+  /** The brief's connections whose bubbles touch, out of all of them. */
+  kept: number;
+  connections: number;
+};
+
+const BEDROOM_TYPES = new Set(["bedroom", "primary-bedroom", "guest-suite"]);
+
+export function scoreSketch(ctx: SketchContext, diagrams: Diagrams): SketchScore {
+  const spots = currentSpots(ctx, diagrams);
+  const typeOf = new Map(ctx.brief.rooms.map((r) => [bubbleIdFor(r.id), r.type]));
+  const bubbles = Object.entries(diagrams).flatMap(([levelId, d]) => d.bubbles.map((b) => ({ ...b, levelId, type: b.roomId ? ctx.brief.rooms.find((r) => r.id === b.roomId)?.type : typeOf.get(b.id) })));
+  const spotOf = (id: string) => spots.get(id)?.spot ?? "center";
+  const living = bubbles.filter((b) => b.type && zoneOf(b.type) === "living" && roomType(b.type).category === "living");
+  const garages = bubbles.filter((b) => b.type === "garage" || b.type === "storage");
+  const r = (b: (typeof bubbles)[number]) => Math.max(b.rx, b.ry);
+  const across = bubbles.length ? (bubbles.reduce((n, b) => n + 2 * r(b), 0) / bubbles.length) : 1;
+  const away: number[] = [];
+  for (const bed of bubbles.filter((b) => BEDROOM_TYPES.has(b.type ?? ""))) {
+    const noisy = bubbles.filter((b) => b.levelId === bed.levelId && (b.type === "garage" || b.type === "kitchen"));
+    if (noisy.length) away.push(Math.min(...noisy.map((n) => Math.hypot(n.x - bed.x, n.y - bed.y))) / across);
+  }
+  let kept = 0;
+  let connections = 0;
+  for (const e of ctx.brief.adjacencies) {
+    const a = bubbles.find((b) => b.roomId === e.a || b.id === bubbleIdFor(e.a));
+    const b = bubbles.find((x) => x.roomId === e.b || x.id === bubbleIdFor(e.b));
+    if (!a || !b) continue;
+    connections++;
+    if (a.levelId === b.levelId && Math.hypot(a.x - b.x, a.y - b.y) <= (r(a) + r(b)) * 1.15) kept++;
+  }
+  return {
+    sunnyLiving: living.filter((b) => spotOf(b.id).includes("S")).length,
+    garageNorthWest: garages.filter((b) => /N|W/.test(spotOf(b.id))).length,
+    garages: garages.length,
+    bedroomsAway: away.length ? Math.round((away.reduce((n, x) => n + x, 0) / away.length) * 10) / 10 : null,
+    kept,
+    connections,
+  };
+}
+
+/** One number for a sketch: the plan's weights (fit, sun, quiet) applied to the sketch's parts. */
+export function sketchTotal(s: SketchScore, w: { fit: number; sun: number; quiet: number }): number {
+  return w.sun * s.sunnyLiving + w.sun * s.garageNorthWest + Math.max(1, w.quiet) * (s.bedroomsAway ?? 0) + w.fit * s.kept;
+}
+
+/** What changed, in numbers: "1 more living room on the sunny side · bedrooms 2 rooms farther from the garage". */
+export function compareSketches(now: SketchScore, alt: SketchScore): string[] {
+  const out: string[] = [];
+  const n = (k: number, one: string, many: string) => `${k} ${k === 1 ? one : many}`;
+  const sun = alt.sunnyLiving - now.sunnyLiving;
+  if (sun) out.push(sun > 0 ? `${n(sun, "more living room", "more living rooms")} on the sunny side` : `${n(-sun, "living room", "living rooms")} off the sunny side`);
+  const garage = alt.garageNorthWest - now.garageNorthWest;
+  if (garage) out.push(garage > 0 ? "garage moves to the north or west" : "garage leaves the north and west");
+  if (alt.bedroomsAway !== null && now.bedroomsAway !== null) {
+    const d = Math.round((alt.bedroomsAway - now.bedroomsAway) * 2) / 2;
+    const k = Math.abs(d);
+    const rooms = k === 0.5 ? "half a room" : `${Math.floor(k)}${k % 1 ? "½" : ""} ${k === 1 ? "room" : "rooms"}`;
+    if (k >= 0.5) out.push(`bedrooms ${rooms} ${d > 0 ? "farther from" : "closer to"} the garage and kitchen`);
+  }
+  const kept = alt.kept - now.kept;
+  if (kept) out.push(kept > 0 ? `${n(kept, "more connection", "more connections")} from your brief side by side` : `${n(-kept, "connection", "connections")} from your brief pulled apart`);
+  return out;
 }

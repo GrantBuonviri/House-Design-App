@@ -1,6 +1,6 @@
 "use client";
 
-import type { ChosenRoom, DiscoveryAnswers, Plot, Point } from "@/lib/model/schema";
+import type { ChosenRoom, DiscoveryAnswers, Plot, Point, Profile } from "@/lib/model/schema";
 import { CATEGORIES, MAX_PER_TYPE, BRIEF_ROOM_TYPES, newRoomId, setTypeCount, sqftFromDims } from "@/lib/brief/rooms";
 import { MAX_ABOVE, MAX_BELOW, levelIdsFor, levelName } from "@/lib/brief/levels";
 import { plotImplications } from "@/lib/land/implications";
@@ -21,11 +21,15 @@ export default function RoomsPage({
   setAnswers,
   plot,
   spot,
+  profile,
+  setProfile,
 }: {
   answers: DiscoveryAnswers;
   setAnswers: SetAnswers;
   plot: Plot | null;
   spot?: Point;
+  profile: Profile;
+  setProfile: (patch: Partial<Profile>, key: string) => void;
 }) {
   const levels = levelIdsFor(a.floorsAbove, a.floorsBelow);
   const foundation = plot ? plotImplications(plot, spot).foundation : null;
@@ -71,6 +75,32 @@ export default function RoomsPage({
               max={MAX_BELOW}
               value={a.floorsBelow}
               onChange={(floorsBelow) => setFloors({ floorsBelow }, "floorsBelow")}
+            />
+          </Field>
+        </div>
+      </section>
+
+      <section className="card p-6">
+        <h3 className="font-semibold">Who it&apos;s for</h3>
+        <p className="mb-4 text-sm text-muted">Optional. Room sizes you don&apos;t type in fit the number of people and the budget.</p>
+        <div className="grid grid-cols-3 gap-6">
+          <Field label="Adults">
+            <Stepper label="adults" max={20} value={profile.adults ?? 0} onChange={(adults) => setProfile({ adults: adults || undefined }, "adults")} />
+          </Field>
+          <Field label="Kids">
+            <Stepper label="kids" max={20} value={profile.kids ?? 0} onChange={(kids) => setProfile({ kids: kids || undefined }, "kids")} />
+          </Field>
+          <Field label="Building budget ($)" hint="Not counting the land.">
+            <input
+              className="input"
+              inputMode="numeric"
+              aria-label="Building budget in dollars"
+              placeholder="For example 650,000"
+              value={profile.budget?.high ? profile.budget.high.toLocaleString("en-US") : ""}
+              onChange={(e) => {
+                const n = Number(e.target.value.replace(/[^0-9]/g, ""));
+                setProfile({ budget: n > 0 ? { high: Math.min(n, 100_000_000) } : undefined }, "budget");
+              }}
             />
           </Field>
         </div>

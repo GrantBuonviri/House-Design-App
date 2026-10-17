@@ -98,7 +98,7 @@ export function suggestPlans(diagrams: Record<string, BubbleDiagram>, ctx: PlanC
       halls += bridge.added;
       plan = bridge.plan;
       plan = connectAll(plan, obstacles, ctx.brief?.openKitchen ?? false, doorOpts(level));
-      const c = addClosets(plan, exteriorIn, ctx.brief, doorReasons);
+      const c = addClosets(plan, exteriorIn, ctx.brief, doorReasons, Boolean(support));
       closets += c.added;
       // A basement's walls under the main floor are buried: no windows there.
       const w = addWindows(c.plan, level, level.kind === "basement" ? coveredAbove(base.plans, ctx.levels) : []);

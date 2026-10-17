@@ -1,10 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import type { DesignBrief, DiscoveryAnswers } from "@/lib/model/schema";
+import type { DesignBrief, DiscoveryAnswers, Profile } from "@/lib/model/schema";
 import { houseSpot } from "@/lib/house3d/site";
 import { syncLevels } from "@/lib/brief/levels";
-import { buildRuleBrief } from "@/lib/brief/rules";
+import { buildRuleBrief, sizingNote } from "@/lib/brief/rules";
 import { plotFacts } from "@/components/land/plotText";
 import { useProjectStore } from "@/lib/store/projectStore";
 import BriefEditor from "./BriefEditor";
@@ -33,6 +33,8 @@ export default function BriefStage({ onContinue, onPickLand }: { onContinue: () 
         coalesce: `answers.${key}`,
       },
     );
+
+  const setProfile = (patch: Partial<Profile>, key: string) => update((p) => ({ ...p, profile: { ...p.profile, ...patch } }), { coalesce: `profile.${key}` });
 
   const buildBrief = () => {
     if (project.brief && !window.confirm("Replace your current brief, including any edits you made to it?")) return;
@@ -84,7 +86,7 @@ export default function BriefStage({ onContinue, onPickLand }: { onContinue: () 
             onChange={(e) => editBrief({ ...project.brief!, summary: e.target.value || undefined }, "summary")}
           />
         </section>
-        <BriefEditor brief={project.brief} onChange={editBrief} />
+        <BriefEditor brief={project.brief} onChange={editBrief} sizing={sizingNote(answers, project.profile)} />
       </div>
     );
   }
@@ -109,7 +111,7 @@ export default function BriefStage({ onContinue, onPickLand }: { onContinue: () 
           )}
         </div>
 
-        <RoomsPage answers={answers} setAnswers={setAnswers} plot={project.plot} spot={houseSpot(project)} />
+        <RoomsPage answers={answers} setAnswers={setAnswers} plot={project.plot} spot={houseSpot(project)} profile={project.profile} setProfile={setProfile} />
 
 
         <div className="flex items-center justify-end gap-4">

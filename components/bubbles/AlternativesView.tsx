@@ -101,7 +101,10 @@ export default function AlternativesView({
             </div>
             <figcaption className="flex flex-1 flex-col p-3">
               <p className="text-sm font-semibold">{alt.title}</p>
-              <p className="mt-1 flex-1 text-xs text-muted">{alt.why}</p>
+              <p className="mt-1 flex-1 text-xs text-muted">
+                {alt.why}
+                {alt.numbers && <span className="mt-1 block font-medium text-ink">{alt.numbers}</span>}
+              </p>
               <div className="mt-3 flex flex-wrap gap-2">
                 <button className="btn px-2.5 py-1.5" onClick={() => onUse(i, false)}>
                   Use this design

@@ -1,7 +1,7 @@
 import type { DesignBrief, Fixture, FloorPlan, PlanRoom, Point } from "@/lib/model/schema";
 import { placeDoor, neighbors, roleOf, roomLinks, sharedWall } from "./connect";
 import { makeRoom, newPlanId, reshapeRoom } from "./edit";
-import { add, angleOf, dist, edgesOf, isRectangle, leftNormal, pointInPolygon, polygonArea, round1, scale, sub, unit } from "./geometry";
+import { add, angleOf, boundsOf, dist, edgesOf, isRectangle, leftNormal, pointInPolygon, polygonArea, polygonsOverlap, round1, scale, sub, unit } from "./geometry";
 import { openingGeometry, wallPieces } from "./walls";
 import { isCurved } from "./arcs";
 
@@ -13,8 +13,8 @@ export const BEDROOMS = new Set(["bedroom", "guest-suite", "primary-bedroom"]);
 const REACH_IN_IN = 26;
 const WALK_IN_IN = 66;
 
-/** A closet in the corner of a bedroom, against an inside wall and clear of doors. */
-export function addClosets(plan: FloorPlan, exteriorIn: number, brief: DesignBrief | null = null, reasons?: Map<string, string>): { plan: FloorPlan; added: number } {
+/** A closet in the corner of a bedroom, against an inside wall and clear of doors. When that would make a bedroom on the main floor or a basement smaller than its brief size, the closet goes just outside it instead, where the floor has empty space. */
+export function addClosets(plan: FloorPlan, exteriorIn: number, brief: DesignBrief | null = null, reasons?: Map<string, string>, upperFloor = false): { plan: FloorPlan; added: number } {
   let p = plan;
   let added = 0;
   const briefHasCloset = Boolean(brief?.rooms.some((r) => r.type === "primary-closet"));
@@ -33,7 +33,14 @@ export function addClosets(plan: FloorPlan, exteriorIn: number, brief: DesignBri
     const geos = p.openings.map((o) => ({ o, ...openingEnds(p, o) })).filter((g) => g.a);
 
     let best: { score: number; poly: Point[]; bulges?: number[]; closet: Point[]; back: [Point, Point]; n: Point; L: number } | null = null;
-    for (const e of edgesOf(now.polygon)) {
+    // A closet inside would take the bedroom below its brief size: outside it, in an empty corner of the floor, if there is one.
+    // Not on an upper floor, where empty space is open air or roof, and new floor there changes what holds it up.
+    const want = brief?.rooms.find((r) => r.id === now.briefRoomId)?.targetSqFt;
+    if (!walkIn && !upperFloor && want && sqft - (REACH_IN_IN * Math.min(96, Math.max(...sides) - 30)) / 144 < want) {
+      const out = outsideCloset(p, now, geos);
+      if (out) best = { score: 0, poly: now.polygon, bulges: now.bulges, ...out };
+    }
+    for (const e of best ? [] : edgesOf(now.polygon)) {
       // A closet never goes against a curved wall.
       if (isCurved(now.bulges?.[e.i])) continue;
       const len = dist(e.a, e.b);
@@ -82,6 +89,34 @@ export function addClosets(plan: FloorPlan, exteriorIn: number, brief: DesignBri
     added++;
   }
   return { plan: p, added };
+}
+
+/** A reach-in closet just outside a bedroom wall, in space no room uses, inside the floor's outline and clear of doors and windows. */
+function outsideCloset(plan: FloorPlan, room: PlanRoom, geos: { a?: Point; center?: Point; b?: Point }[]): { closet: Point[]; back: [Point, Point]; n: Point; L: number } | null {
+  const all = boundsOf(plan.rooms.flatMap((r) => r.polygon));
+  if (!all) return null;
+  const within = (q: Point) => q.x >= all.x0 - 1 && q.x <= all.x1 + 1 && q.y >= all.y0 - 1 && q.y <= all.y1 + 1;
+  let best: { closet: Point[]; back: [Point, Point]; n: Point; L: number } | null = null;
+  for (const e of edgesOf(room.polygon)) {
+    if (isCurved(room.bulges?.[e.i])) continue;
+    const len = dist(e.a, e.b);
+    const L = Math.min(len - 30, 96);
+    if (L < 48 || (best && best.L >= L)) continue;
+    const u = unit(sub(e.b, e.a));
+    const o = leftNormal(u);
+    for (const atStart of [true, false]) {
+      const C = atStart ? e.a : e.b;
+      const w = atStart ? u : scale(u, -1);
+      const closet = [C, add(C, scale(w, L)), add(C, add(scale(w, L), scale(o, REACH_IN_IN))), add(C, scale(o, REACH_IN_IN))];
+      const grown = [add(C, add(scale(w, -4), scale(o, -4))), add(C, add(scale(w, L + 4), scale(o, -4))), add(C, add(scale(w, L + 4), scale(o, REACH_IN_IN + 4))), add(C, add(scale(w, -4), scale(o, REACH_IN_IN + 4)))];
+      if (!closet.every(within)) continue;
+      if (plan.rooms.some((r) => polygonsOverlap(closet, r.polygon))) continue;
+      if (geos.some((g) => [g.a, g.center, g.b].some((q) => q && pointInPolygon(q, grown)))) continue;
+      best = { closet, back: [closet[3], closet[2]], n: scale(o, -1), L };
+      break;
+    }
+  }
+  return best;
 }
 
 function openingEnds(plan: FloorPlan, o: FloorPlan["openings"][number]) {

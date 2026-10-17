@@ -8,7 +8,7 @@ import { suggestDiagrams } from "@/lib/bubbles/arrange";
 import { defaultBasics } from "@/lib/plan/basics";
 import { OUTSIDE, addDoor, doorBetween, freeSpot, newOpening, openingRooms, reachable, roomLinks, sharedWall } from "@/lib/plan/connect";
 import { applyChange, applyChanges, mirrorPlans, pushWall, type PlanChange } from "@/lib/plan/changes";
-import { pickDistinct, ruleAlternatives, signature, suggestPlanAlternatives } from "@/lib/plan/alternatives";
+import { pickDistinct, rankAlternatives, ruleAlternatives, signature, suggestPlanAlternatives } from "@/lib/plan/alternatives";
 import { planWarnings } from "@/lib/plan/checks";
 import { emptyPlan, makeRoom, moveEdge, planOf, type Plans } from "@/lib/plan/edit";
 import { closeGaps } from "@/lib/plan/fromSketch";
@@ -489,6 +489,13 @@ describe("changes", () => {
     return p;
   };
 
+  it("closes an opening between living spaces when every room can still be reached", () => {
+    const p = applyChange(linked([k, d, lr]), { op: "open_up", room: "d", other: "lr", side: "none", feet: 0 }, { exteriorIn: EXT, seeds })!.plan;
+    const closing = ruleAlternatives({ [MAIN_LEVEL_ID]: p }, ctx).find((a) => a.title === "Close the opening between living room and dining");
+    expect(closing?.why).toMatch(/quieter/);
+    expect(planOf(closing!.plans, MAIN_LEVEL_ID).openings.filter((o) => o.kind === "opening")).toHaveLength(0);
+  });
+
   it("pushes a wall into the next room, which gives up the space", () => {
     const p = linked([k, d, lr]);
     const res = applyChange(p, { op: "grow", room: "k", other: "", side: "E", feet: 2 }, { exteriorIn: EXT, seeds })!;
@@ -604,5 +611,74 @@ describe("built-in alternatives", () => {
     const again = suggestPlanAlternatives(result.plans, ctx, r.alternatives.map((a) => a.title));
     expect(again.alternatives[0].title).not.toBe(r.alternatives[0].title);
     expect(suggestPlanAlternatives({}, ctx).note).toMatch(/rooms first/);
+  });
+
+  it("ranks the ideas best first, with numbers in each reason", () => {
+    const { ctx: withPriorities, result } = house([...RANCH, ["office"]]);
+    // No priorities, so the default weights rank both lists.
+    const ctx = { ...withPriorities, brief: { ...withPriorities.brief, priorities: [] } };
+    const ranked = rankAlternatives(result.plans, ruleAlternatives(result.plans, ctx), ctx);
+    expect(ranked.length).toBeGreaterThan(3);
+    for (let i = 1; i < ranked.length; i++) expect(ranked[i - 1].gain!).toBeGreaterThanOrEqual(ranked[i].gain!);
+    expect(ranked.every((a) => a.details && /sq ft south glass/.test(a.details))).toBe(true);
+    expect(ranked.filter((a) => a.numbers && /\d/.test(a.numbers)).length).toBeGreaterThan(2);
+    expect(ranked.every((a) => !a.numbers || a.numbers.split(" · ").length <= 3)).toBe(true);
+    const shown = suggestPlanAlternatives(result.plans, ctx).alternatives;
+    expect(shown[0].gain).toBe(ranked[0].gain);
+  });
+
+  it("names the priorities that set the order", () => {
+    const { ctx, result } = house(RANCH);
+    const r = suggestPlanAlternatives(result.plans, { ...ctx, brief: { ...ctx.brief, priorities: ["Stay on budget", "Keep the trees for shade and privacy"] } });
+    expect(r.rankedFor).toEqual(["Stay on budget"]);
+  });
+
+  it("tries swapping a bedroom east for morning sun", () => {
+    const { ctx, result } = house([...RANCH, ["office"]]);
+    const swap = ruleAlternatives(result.plans, ctx).find((a) => a.title.startsWith("Swap"));
+    expect(swap?.why).toMatch(/morning sun/);
+    const plan = planOf(swap!.plans, MAIN_LEVEL_ID);
+    const before = planOf(result.plans, MAIN_LEVEL_ID);
+    // Same outlines; the bedroom and office traded places.
+    expect(plan.rooms.map((r) => r.polygon)).toEqual(before.rooms.map((r) => r.polygon));
+    expect(plan.rooms.map((r) => r.type)).not.toEqual(before.rooms.map((r) => r.type));
+  });
+
+  it("adds a door the brief wants", () => {
+    const { ctx, result } = house(RANCH);
+    const plan = planOf(result.plans, MAIN_LEVEL_ID);
+    // Take away the door between two rooms the brief wants together.
+    const between = (o: FloorPlan["openings"][number], a: string, b: string) => {
+      const [x, y] = openingRooms(plan, o);
+      return (x === a && y === b) || (x === b && y === a);
+    };
+    const pairs = ctx.brief.adjacencies
+      .map((e) => [plan.rooms.find((r) => r.briefRoomId === e.a), plan.rooms.find((r) => r.briefRoomId === e.b)] as const)
+      .filter(([a, b]) => a && b && (sharedWall(a, b)?.t1 ?? 0) - (sharedWall(a, b)?.t0 ?? 0) >= 48 && plan.openings.some((o) => o.kind === "door" && between(o, a.id, b.id)));
+    expect(pairs.length).toBeGreaterThan(0);
+    const [a, b] = pairs[0] as [PlanRoom, PlanRoom];
+    const cut = { ...plan, openings: plan.openings.filter((o) => !between(o, a.id, b.id)) };
+    const idea = ruleAlternatives({ ...result.plans, [MAIN_LEVEL_ID]: cut }, ctx).find((x) => x.title.startsWith("Add a door from the"));
+    expect(idea?.title).toMatch(new RegExp(`${a.name.toLowerCase()}|${b.name.toLowerCase()}`));
+    expect(planOf(idea!.plans, MAIN_LEVEL_ID).openings.some((o) => between(o, a.id, b.id))).toBe(true);
+  });
+});
+
+describe("closets and the brief", () => {
+  it("puts the closet outside a bedroom that's at its brief size, where the floor has room", () => {
+    // A 10x12 bedroom next to a 10x15 den, leaving an empty 10x3 pocket south of the bedroom.
+    const bed = makeRoom(rectangle(5 * FT, 6 * FT, 10 * FT, 12 * FT), "Bed 2", { type: "bedroom", briefRoomId: "b-bed" });
+    const den = makeRoom(rectangle(15 * FT, 7.5 * FT, 10 * FT, 15 * FT), "Den", { type: "office" });
+    const plan = { ...emptyPlan(), rooms: [bed, den], openings: [newOpening("door-hinged", { roomId: den.id, edge: 0 }, 60, 1, 32)] };
+    const b = brief([{ id: "b-bed", type: "bedroom", name: "Bed 2", targetSqFt: 120 }]);
+    const res = addClosets(plan, EXT, b);
+    expect(res.added).toBe(1);
+    const after = res.plan.rooms.find((r) => r.id === bed.id)!;
+    expect(roomSqft(after)).toBe(120);
+    const closet = res.plan.rooms.find((r) => r.type === "closet")!;
+    expect(polygonsOverlap(closet.polygon, after.polygon)).toBe(false);
+    // Without a brief size to keep, the closet goes inside as before.
+    const inside = addClosets(plan, EXT, null);
+    expect(roomSqft(inside.plan.rooms.find((r) => r.id === bed.id)!)).toBeLessThan(120);
   });
 });

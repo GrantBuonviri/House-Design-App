@@ -1,6 +1,7 @@
 import type { Adjacency, ChosenRoom, DesignBrief, DiscoveryAnswers, Plot, Point, Profile } from "@/lib/model/schema";
 import { plotImplications } from "@/lib/land/implications";
 import { compassName } from "@/lib/land/sun";
+import { rates as loadRates } from "@/lib/cost/rates";
 import { GARAGE_SQFT, roomType, sqftFromDims } from "./rooms";
 import { MAIN_LEVEL_ID, levelIdsFor } from "./levels";
 
@@ -101,6 +102,7 @@ export function buildRuleBrief(ctx: BriefContext): DesignBrief {
     return room;
   });
 
+  fitSizes(rooms, new Set(a.rooms.filter((r) => sqftFromDims(r.lengthIn, r.widthIn)).map((r) => r.id)), ctx);
   const hasGarage = rooms.some((r) => r.type === "garage");
   return {
     rooms,
@@ -117,6 +119,78 @@ export function buildRuleBrief(ctx: BriefContext): DesignBrief {
     summary: ruleSummary(ctx, rooms),
     source: "rules",
   };
+}
+
+// ---------- Sizes that fit the household ----------
+
+/** Rooms that grow and shrink with the number of people. */
+const SHARED = new Set(["living", "family", "dining", "kitchen"]);
+const BEDROOM_TYPES = new Set(["bedroom", "guest-suite", "primary-bedroom"]);
+/** No default bedroom is smaller than 10 x 11 ft. */
+const MIN_BEDROOM_SQFT = 110;
+
+export type Sizing = {
+  /** Null when neither the profile nor the bedrooms say. */
+  people: number | null;
+  /** True when the people come from the bedroom count (one each, two in the primary bedroom), not the profile. */
+  guessed: boolean;
+  /** Living space the budget pays for, in sq ft (budget / Boise cost per sq ft), or null without a budget. */
+  targetSqft: number | null;
+};
+
+/** How many people the house is for, and the size the budget pays for. */
+export function householdSizing(answers: Pick<DiscoveryAnswers, "rooms">, profile: Profile): Sizing {
+  const told = (profile.adults ?? 0) + (profile.kids ?? 0);
+  const beds = answers.rooms.reduce((n, r) => n + (r.type === "primary-bedroom" ? 2 : r.type === "bedroom" ? 1 : 0), 0);
+  const people = told > 0 ? told : beds > 0 ? beds : null;
+  const { low, high } = profile.budget ?? {};
+  const budget = low && high ? (low + high) / 2 : (high ?? low ?? 0);
+  const perSqft = loadRates().calibration.costPerSqft[1];
+  return { people, guessed: told === 0, targetSqft: budget > 0 ? Math.round(budget / perSqft / 50) * 50 : null };
+}
+
+/** Living, family, dining and kitchen sizes for this many people: about 6% bigger per person over 4, 85% for 1 or 2, the usual size for 3 or 4. */
+export function householdFactor(people: number): number {
+  if (people <= 2) return 0.85;
+  return 1 + 0.06 * Math.max(0, people - 4);
+}
+
+const clampTo = (type: string, sqft: number) => {
+  const t = roomType(type);
+  const floor = BEDROOM_TYPES.has(type) ? Math.max(t.min, MIN_BEDROOM_SQFT) : t.min;
+  return Math.round(Math.min(t.max, Math.max(floor, sqft)) / 5) * 5;
+};
+
+/**
+ * Rooms without a typed size scale with the household, then all of them
+ * together toward the size the budget pays for, when the rooms add up to
+ * more than 115% or less than 85% of it. Typed sizes never change. Changes
+ * `rooms` in place.
+ */
+function fitSizes(rooms: Room[], typed: Set<string>, ctx: BriefContext) {
+  const sizing = householdSizing(ctx.answers, ctx.profile);
+  const free = rooms.filter((r) => !typed.has(r.id) && r.type !== "garage" && roomType(r.type).category !== "outdoor");
+  const k = sizing.people === null ? 1 : householdFactor(sizing.people);
+  for (const r of free) if (SHARED.has(r.type)) r.targetSqFt = clampTo(r.type, r.targetSqFt * k);
+  if (sizing.targetSqft) {
+    const { heated } = briefTotals({ rooms });
+    if (heated > sizing.targetSqft * 1.15 || heated < sizing.targetSqft * 0.85) {
+      const fixed = rooms.filter((r) => !free.includes(r) && roomType(r.type).category !== "garage" && roomType(r.type).category !== "outdoor").reduce((n, r) => n + r.targetSqFt, 0);
+      const flexible = free.reduce((n, r) => n + r.targetSqFt, 0);
+      const s = flexible > 0 ? Math.max(0.5, Math.min(2, (sizing.targetSqft / 1.15 - fixed) / flexible)) : 1;
+      for (const r of free) r.targetSqFt = clampTo(r.type, r.targetSqFt * s);
+    }
+  }
+  for (const r of free) if (BEDROOM_TYPES.has(r.type)) r.targetSqFt = clampTo(r.type, r.targetSqFt);
+}
+
+/** The brief's one line about default sizes: "Sizes fit 5 people and about 2,400 sq ft." Null when every room has a typed size. */
+export function sizingNote(answers: Pick<DiscoveryAnswers, "rooms">, profile: Profile): string | null {
+  if (!answers.rooms.some((r) => !sqftFromDims(r.lengthIn, r.widthIn))) return null;
+  const s = householdSizing(answers, profile);
+  if (s.people === null) return s.targetSqft ? `Sizes fit about ${s.targetSqft.toLocaleString("en-US")} sq ft. Rooms you gave a size keep it.` : null;
+  const who = `${s.people} ${s.people === 1 ? "person" : "people"}${s.guessed ? " (counted from the bedrooms)" : ""}`;
+  return `Sizes fit ${who}${s.targetSqft ? ` and about ${s.targetSqft.toLocaleString("en-US")} sq ft` : ""}. Rooms you gave a size keep it.`;
 }
 
 const samePair = (e: Adjacency, a: string, b: string) => (e.a === a && e.b === b) || (e.a === b && e.b === a);

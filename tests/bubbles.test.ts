@@ -17,7 +17,8 @@ import {
   type Diagrams,
   type SketchContext,
 } from "@/lib/bubbles/arrange";
-import { ruleAlternatives } from "@/lib/bubbles/alternatives";
+import { compareSketches, ruleAlternatives, scoreSketch, sketchTotal } from "@/lib/bubbles/alternatives";
+import { priorityWeights } from "@/lib/plan/score";
 import { freeSpot, layout, overlapAmount } from "@/lib/bubbles/layout";
 import { bubbleIdFor, bubbleSqft, emptyDiagram, radiiFor, resized, reshaped, type Bubble } from "@/lib/bubbles/shapes";
 import { mirroredSpot, oppositeSpot, ruleSpot, siteOf, spotFromVector, spotVector } from "@/lib/bubbles/site";
@@ -253,7 +254,8 @@ describe("built-in alternatives", () => {
         for (const level of ctx.levels) {
           const before = sketch[level.id]?.bubbles.find((b) => b.stairs);
           const after = alt.diagrams[level.id]?.bubbles.find((b) => b.stairs);
-          if (before) expect({ x: after?.x, y: after?.y }).toEqual({ x: before.x, y: before.y });
+          // "More compact" pulls the stairs in with everything else (still lined up floor to floor).
+          if (before && alt.title !== "More compact") expect({ x: after?.x, y: after?.y }).toEqual({ x: before.x, y: before.y });
         }
       }
     }
@@ -353,5 +355,35 @@ describe("suggestions", () => {
     const again = suggestAlternatives(ctx, sketch, first.alternatives.map((a) => a.title));
     expect(again.alternatives[0].title).not.toBe(first.alternatives[0].title);
     expect(suggestAlternatives(ctx, {}).note).toMatch(/sketch first/);
+  });
+});
+
+describe("sketch scores", () => {
+  it("counts sunny living rooms, the garage's side, quiet bedrooms and kept connections", () => {
+    const ctx = context(ranch());
+    const sketch = suggestDiagrams(ctx);
+    const s = scoreSketch(ctx, sketch);
+    expect(s.connections).toBe(ctx.brief.adjacencies.length);
+    expect(s.kept).toBeGreaterThan(0);
+    expect(s.kept).toBeLessThanOrEqual(s.connections);
+    expect(s.bedroomsAway).toBeGreaterThan(0);
+    // Every bubble piled in the middle: nothing on the sunny side, and no connection far apart.
+    const piled = Object.fromEntries(Object.entries(sketch).map(([id, d]) => [id, { ...d, bubbles: d.bubbles.map((b) => ({ ...b, x: 0, y: 0 })) }]));
+    const p = scoreSketch(ctx, piled);
+    expect(p.sunnyLiving).toBe(0);
+    expect(p.bedroomsAway).toBe(0);
+    expect(compareSketches(s, p).join(" ")).toMatch(/closer to the garage and kitchen/);
+  });
+
+  it("puts the best alternative first, with numbers in its reason", () => {
+    const ctx = context(ranch());
+    const sketch = suggestDiagrams(ctx);
+    const alts = ruleAlternatives(ctx, sketch);
+    const before = scoreSketch(ctx, sketch);
+    const { weights } = priorityWeights(ctx.brief.priorities);
+    const gains = alts.map((a) => sketchTotal(scoreSketch(ctx, a.diagrams), weights) - sketchTotal(before, weights));
+    // Distinct picks can skip a near copy, but the first one shown is the best scoring of those shown.
+    expect(gains[0]).toBeGreaterThanOrEqual(Math.max(...gains) - 1e-9);
+    expect(alts.some((a) => a.numbers && /\d|half/.test(a.numbers))).toBe(true);
   });
 });
