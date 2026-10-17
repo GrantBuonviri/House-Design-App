@@ -25,9 +25,11 @@ export const PAGE_HELP: Record<Exclude<Stage, "plan" | "interior" | "exterior">,
   brief: {
     title: "Rooms",
     lines: [
-      ["Check a room", "Tick the rooms you want and set how many floors."],
+      ["Check a room", "Tick the rooms you want and set how many floors. Each one shows up under Your rooms."],
+      ["Open a room", "Click its name to set the size, floor, notes and Next to. Duplicate adds another just like it."],
       ["Who it's for", "The household changes the starting room sizes."],
-      ["Connections", "Say which rooms should be next to each other."],
+      ["Priorities", "Ticked ones change how sketches and plans are ranked."],
+      ["Right panel", "Your brief, the living space and a rough materials cost, kept up to date as you go."],
     ],
   },
   bubbles: {
