@@ -8,7 +8,8 @@ import { deleteMyLand, listMyLand, saveMyLand, type MyLandRow } from "@/lib/stor
 import LandDesigner from "./LandDesigner";
 import DesignCard from "./DesignCard";
 import MyLandList from "./MyLandList";
-import { FLAT_PLOT_SEED, feedPlotSeed, generatePlot } from "@/lib/land/generate";
+import { FLAT_PLOT_SEED, climateTypeOf, feedPlotSeed, generatePlot, type ClimateType } from "@/lib/land/generate";
+import { locationOf } from "@/lib/location/current";
 import { useProjectStore } from "@/lib/store/projectStore";
 import PlotCard from "./PlotCard";
 import PlotDetails from "./PlotDetails";
@@ -61,10 +62,10 @@ function useViewMode(): [LandViewMode, (m: LandViewMode) => void] {
  * The feed is endless: slot 0 is always the perfectly flat plot, slot 1 the
  * "Design your own land" card, and every slot after is a new made-up plot.
  */
-function plotAt(feedSeed: number, slot: number, flat: Plot): Plot | "design" {
+function plotAt(feedSeed: number, slot: number, flat: Plot, climate: ClimateType): Plot | "design" {
   if (slot === 0) return flat;
   // Slot 1 is the pinned "Design your own land" card.
-  return slot === 1 ? "design" : generatePlot(feedPlotSeed(feedSeed, slot - 2));
+  return slot === 1 ? "design" : generatePlot(feedPlotSeed(feedSeed, slot - 2), { climate });
 }
 
 export default function LandStage({ onContinue }: { onContinue: () => void }) {
@@ -79,9 +80,10 @@ export default function LandStage({ onContinue }: { onContinue: () => void }) {
   const [direction, setDirection] = useState<"next" | "prev">("next");
 
   const flat = useMemo(() => generatePlot(FLAT_PLOT_SEED, { flat: true }), []);
+  const climate = climateTypeOf(locationOf(project).climateZone);
   const plots = useMemo(
-    () => Array.from({ length: PER_PAGE }, (_, i) => plotAt(feed.seed, feed.page * PER_PAGE + i, flat)),
-    [feed.seed, feed.page, flat],
+    () => Array.from({ length: PER_PAGE }, (_, i) => plotAt(feed.seed, feed.page * PER_PAGE + i, flat, climate)),
+    [feed.seed, feed.page, flat, climate],
   );
 
   const goNext = useCallback(() => {

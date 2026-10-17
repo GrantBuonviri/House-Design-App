@@ -18,7 +18,7 @@ export const FIELD_INFO: Record<LocationField, FieldInfo> = {
   longitudeDeg: { label: "Longitude", unit: "°", hint: "How far east or west (west is negative). Sets clock times for sunrise and sunset.", step: 0.01 },
 };
 
-/** "Boise, ID · climate zone 5B · frost 24" · snow 20 psf · wind 90 mph · quake C · cost level 0.96" (without the name). */
+/** "Denver, CO · climate zone 5B · frost 36" · snow 30 psf · wind 115 mph · quake B · cost level 1.00" (without the name). */
 export function placeSummary(p: { climateZone: string; frostDepthIn: number; groundSnowPsf: number; windMph: number; seismicCategory: string; costIndex: number }): string {
   return `climate zone ${p.climateZone} · frost ${p.frostDepthIn}" · snow ${p.groundSnowPsf} psf · wind ${p.windMph} mph · quake ${p.seismicCategory} · cost level ${p.costIndex.toFixed(2)}`;
 }

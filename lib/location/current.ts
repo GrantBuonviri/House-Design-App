@@ -1,10 +1,10 @@
 import type { Location, LocationField, Project } from "@/lib/model/schema";
 import { cityById, placeFromCity } from "./cities";
 
-/** Boise's numbers: what every project used before places could be picked, and the stand-in until one is. */
+/** The default place: what every project used before places could be picked, and the stand-in until one is. */
 export const DEFAULT_PLACE: Location = placeFromCity(cityById("boise-id")!);
 
-/** The project's place, or Boise's numbers when none has been picked yet. */
+/** The project's place, or the default place's numbers when none has been picked yet. */
 export function locationOf(project: Pick<Project, "location">): Location {
   return project.location ?? DEFAULT_PLACE;
 }

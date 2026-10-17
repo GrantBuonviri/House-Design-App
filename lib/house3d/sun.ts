@@ -31,7 +31,7 @@ export function daylight(day: number, latitudeDeg: number): { sunrise: number; s
 
 /**
  * The clock time for a solar time at a place: its offset from its time zone
- * (Boise's clocks read about 45 minutes ahead of the sun), plus an hour on
+ * (a place west of its time zone's middle line reads ahead of the sun), plus an hour on
  * daylight saving days where the place uses it (not Arizona or Hawaii).
  */
 export function clockTime(solarHour: number, daylightSaving: boolean, place: SunPlace): string {
