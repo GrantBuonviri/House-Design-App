@@ -8,7 +8,7 @@ import { capHeight, heading, HEADING_H, lineHeight, rect, table, textBlock, type
 
 /**
  * The exterior materials schedule: every outside part of this house, the
- * product picked for it on the Exterior page (or "not picked yet"), its
+ * product picked for it in the Exterior design window (or "not picked yet"), its
  * color, where it goes, and the code numbers it has to meet.
  */
 
@@ -88,7 +88,7 @@ export function materialsSheet(project: Project): Item[] {
   });
   y += tb.height + 0.3;
   const notes = [
-    "Products and colors are the owner's picks on the Exterior page of House Design App. Equal products may be used; install each to its maker's instructions and listing.",
+    "Products and colors are the owner's picks in House Design App's Exterior design window (press X in the Walkthrough). Equal products may be used; install each to its maker's instructions and listing.",
     "Flash every door, window and roof-to-wall joint (IRC R703.4). Caulk and seal per the siding maker.",
     "Colors print as close as the printer allows; use the maker's color names and samples.",
   ];

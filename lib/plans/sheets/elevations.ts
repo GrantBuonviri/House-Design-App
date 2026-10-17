@@ -16,7 +16,7 @@ import { viewTitle } from "../view";
  * Exterior elevations: the four sides of the house seen straight on, drawn
  * from the same walls, openings and roofs as the 3D view, with the ground
  * line, floor and plate heights, door and window tags, and callouts naming
- * the outside materials picked on the Exterior page.
+ * the outside materials picked in the Exterior design window (X in the Walkthrough).
  */
 
 const NOTES_W = 4.6;

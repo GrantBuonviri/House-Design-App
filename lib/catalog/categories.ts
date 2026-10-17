@@ -3,7 +3,7 @@ import type { RateId } from "@/lib/cost/rates";
 import { isHeated } from "@/lib/brief/rooms";
 
 /**
- * The kinds of products picked on the Interior stage, which rooms each one
+ * The kinds of products picked in the Interior design window (I in the Walkthrough), which rooms each one
  * belongs in, and which cost line its price replaces.
  *
  * `share` is how much of that line's mid-range material allowance the pick

@@ -134,7 +134,7 @@ export function roofSheet(project: Project): { items: Item[]; scaleLabel: string
   const rows: string[][] = [
     ["Shape", `${roof.style[0].toUpperCase()}${roof.style.slice(1)} roof, ${roof.style === "flat" ? "low slope" : `${roof.pitch}:12 pitch`}`],
     ["Overhang", `${roof.overhangIn}" past the outside walls`],
-    ["Roofing", pick ? `${pick.name} (${pick.brand})` : "To be picked (Exterior page)"],
+    ["Roofing", pick ? `${pick.name} (${pick.brand})` : "To be picked (Exterior design window, press X in the Walkthrough)"],
     ["Roof area", `${f0(m.roofSqft + m.flatSqft)} sq ft (sloped ${f0(m.roofSqft)}, low-slope ${f0(m.flatSqft)})`],
     ["Gutters", `${f0(gutters.reduce((sum, g) => sum + dist(g.a, g.b), 0) / 12)} ft${gutterPick ? `, ${gutterPick.name}` : ""}, ${downspouts} downspouts (DS)`],
     ["Hips and valleys", `${f0(m.hipValleyLf)} ft`],
