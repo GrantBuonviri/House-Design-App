@@ -150,6 +150,8 @@ export default function Walkthrough({ project, cost, onClose }: { project: Proje
   const shiftDown = useRef(false);
   const labelSettings = project.house3d.walkLabels;
   const setLabelSettings = (next: WalkLabels) => update((p) => ({ ...p, house3d: { ...p.house3d, walkLabels: next } }));
+  const labelSettingsRef = useRef(labelSettings);
+  labelSettingsRef.current = labelSettings;
   // Doors: the Doors picker (not saved; each walkthrough starts on Normal), how open each is, and the door under the dot.
   const [doorMode, setDoorMode] = useState<DoorMode>("normal");
   const doorStates = useRef<DoorStates>({});
@@ -561,6 +563,13 @@ export default function Walkthrough({ project, cost, onClose }: { project: Proje
         openTopDown();
         return;
       }
+      if (e.code === "KeyL" && e.shiftKey) {
+        const next = !labelSettingsRef.current.locked;
+        setLabelSettings({ ...labelSettingsRef.current, locked: next });
+        setLabelsOn(true);
+        say(next ? "Labels locked" : "Labels turn with you");
+        return;
+      }
       if (e.code === "KeyL") {
         setLabelsOn((v) => !v);
         return;
@@ -892,6 +901,7 @@ export default function Walkthrough({ project, cost, onClose }: { project: Proje
             {panel.kind === "labels" && (
               <LabelSettingsPanel
                 settings={labelSettings}
+                lockable
                 onChange={setLabelSettings}
                 onHideAll={() => {
                   setLabelsOn(false);

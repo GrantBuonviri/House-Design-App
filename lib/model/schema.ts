@@ -9,7 +9,7 @@ import { z } from "zod";
  * Angles are degrees clockwise from north (0 = N, 90 = E).
  */
 
-export const SCHEMA_VERSION = 28;
+export const SCHEMA_VERSION = 29;
 
 export const Point = z.object({ x: z.number(), y: z.number() });
 export type Point = z.infer<typeof Point>;
@@ -699,6 +699,8 @@ export const WalkLabels = z.object({
   textColor: z.enum(["dark", "light", "auto"]).default("auto"),
   background: z.enum(["none", "soft"]).default("soft"),
   units: z.enum(["feet", "inches"]).default("feet"),
+  /** Labels keep the floor plan's direction (north at the top) instead of turning with you. */
+  locked: z.boolean().default(false),
 });
 export type WalkLabels = z.infer<typeof WalkLabels>;
 

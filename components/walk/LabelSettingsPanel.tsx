@@ -43,6 +43,7 @@ export default function LabelSettingsPanel<S extends WalkLabels>({
   hiddenRooms,
   onShowRoom,
   onResetRooms,
+  lockable = false,
 }: {
   settings: S;
   onChange: (next: S) => void;
@@ -57,6 +58,8 @@ export default function LabelSettingsPanel<S extends WalkLabels>({
   hiddenRooms?: { id: string; name: string }[];
   onShowRoom?: (id: string) => void;
   onResetRooms?: () => void;
+  /** Walkthrough: show the Lock labels switch. */
+  lockable?: boolean;
 }) {
   const set = <K extends keyof WalkLabels>(k: K, v: WalkLabels[K]) => onChange({ ...settings, [k]: v });
   return (
@@ -79,6 +82,15 @@ export default function LabelSettingsPanel<S extends WalkLabels>({
           </li>
         ))}
       </ul>
+      {lockable && (
+        <div className="mt-3">
+          <label className="flex items-center gap-2 text-sm">
+            <input type="checkbox" checked={settings.locked} onChange={(e) => set("locked", e.target.checked)} />
+            Lock labels (keep floor plan direction)
+          </label>
+          <p className="mt-1 text-xs text-muted">Labels stay put instead of turning to face you. Shift+L</p>
+        </div>
+      )}
       <Choice label="Text size" value={settings.textSize} options={[{ id: "small", label: "Small" }, { id: "medium", label: "Medium" }, { id: "large", label: "Large" }]} onPick={(v) => set("textSize", v)} />
       <Choice label="Text color" value={settings.textColor} options={[{ id: "dark", label: "Dark" }, { id: "light", label: "Light" }, { id: "auto", label: "Auto" }]} onPick={(v) => set("textColor", v)} />
       <Choice label="Background" value={settings.background} options={[{ id: "none", label: "None" }, { id: "soft", label: "Soft box" }]} onPick={(v) => set("background", v)} />

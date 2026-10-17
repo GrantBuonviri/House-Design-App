@@ -86,6 +86,7 @@ export function migrateProject(raw: unknown): Project {
   // Version 27 to 28 added stair stacks and anchoring (`PlanStairs.stackId`,
   // `PlanStairs.anchored`, `PlanRoom.stairStack`, `PlanRoom.anchored`, all optional), so no change
   // beyond the version.
+  // Version 28 to 29 added `house3d.walkLabels.locked` (default off), so no change beyond the version.
   return Project.parse({ ...migrated, schemaVersion: SCHEMA_VERSION });
 }
 

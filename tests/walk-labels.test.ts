@@ -61,6 +61,15 @@ describe("saved label settings", () => {
     const m = migrateProject(old);
     expect(m.schemaVersion).toBe(SCHEMA_VERSION);
     expect(m.house3d.walkLabels.textSize).toBe("medium");
+    expect(m.house3d.walkLabels.locked).toBe(false);
+  });
+  it("an older project keeps its label settings and gets locked off", () => {
+    const old = JSON.parse(JSON.stringify({ ...createProject("x"), schemaVersion: 28 }));
+    old.house3d.walkLabels = { name: false, textSize: "large" };
+    const m = migrateProject(old);
+    expect(m.schemaVersion).toBe(SCHEMA_VERSION);
+    expect(m.house3d.walkLabels).toMatchObject({ name: false, textSize: "large", locked: false });
+    expect(WalkLabels.parse({ locked: true }).locked).toBe(true);
   });
 });
 

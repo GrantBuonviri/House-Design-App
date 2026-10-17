@@ -151,7 +151,7 @@ export function WalkHelp({ onStart }: { onStart: () => void }) {
           <li>F opens Place: furniture, fixtures, cabinets, outlets, hookups, built-ins, doors, windows and walls. Aim at anything placed and click to move, turn, size, swap or delete it. Stair railings are there too: aim at one and click to change its kind or look, or press Delete to remove it. Tab switches between Finishes and Place</li>
           <li>M shows this floor from above with the Furnish tools; M or Esc comes back</li>
           <li>Walk into a door to open it, or click it to open and close it by hand. K locks the door you aim at (a locked door only opens when clicked). O changes the Doors setting</li>
-          <li>L shows room labels on the floor (the ⚙ button sets what they say)</li>
+          <li>L shows room labels on the floor (the ⚙ button sets what they say). Shift+L locks them to the floor plan&apos;s direction instead of turning with you</li>
           <li>T is the tape measure: click two points. Shift keeps it level or upright, C clears</li>
           <li>Esc to stop, and Esc again to close</li>
         </ul>
