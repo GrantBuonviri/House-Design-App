@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo } from "react";
+import { useEffect, useMemo } from "react";
 import { Html } from "@react-three/drei";
 import * as THREE from "three";
 import { IN_PER_UNIT, type Frame } from "@/lib/house3d/mesh";
@@ -33,6 +33,14 @@ function Measured({ tape, frame, units, live, pinned, aimed, onPin }: { tape: Ta
     l.renderOrder = 10;
     return l;
   }, [a.x, a.y, a.z, b.x, b.y, b.z, pinned, aimed]); // eslint-disable-line react-hooks/exhaustive-deps
+  // A new line is made each time the end moves (it follows the dot): free the old one.
+  useEffect(
+    () => () => {
+      line.geometry.dispose();
+      (line.material as THREE.Material).dispose();
+    },
+    [line],
+  );
   const r = reading(tape);
   const mid = a.clone().add(b).multiplyScalar(0.5);
   const f = (n: number) => formatLength(n, units);
