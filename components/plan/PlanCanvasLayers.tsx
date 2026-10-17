@@ -2,7 +2,7 @@
 
 import { Circle, Group, Layer, Line, Rect, Text } from "react-konva";
 import type { BubbleDiagram, FloorPlan, Level, PlanLabels, PlanRoom, Point } from "@/lib/model/schema";
-import { formatFeetInches } from "@/lib/model/units";
+import { formatFeetInches, lengthPreview } from "@/lib/model/units";
 import { add, dist, edgesOf, leftNormal, rotate as rotateBy, scale as scaleV, sub, unit } from "@/lib/plan/geometry";
 import { bendInfo, type BendSnap, type BendTarget } from "@/lib/plan/bend";
 import { runInfo, type Run } from "@/lib/plan/curveRun";
@@ -230,7 +230,7 @@ export function DraftPreview({ rectStart, rectEnd, draft, cursor, tool, typed, b
             <Circle key={i} x={p.x} y={p.y} radius={(i === 0 && tool === "room" ? 6 : 3.5) / s} fill={i === 0 ? ACCENT : "#fff"} stroke={ACCENT} strokeWidth={1.5} strokeScaleEnabled={false} />
           ))}
           {cursor && (
-            <Text x={cursor.x + 10 / s} y={cursor.y + 10 / s} text={typed ? `${typed}▏ (Enter)` : formatFeetInches(dist(draft[draft.length - 1], cursor))} fontSize={11.5 / s} fontStyle="600" fill={ACCENT} />
+            <Text x={cursor.x + 10 / s} y={cursor.y + 10 / s} text={typed ? `${typed}▏ ${lengthPreview(typed) ?? "?"} (Enter)` : formatFeetInches(dist(draft[draft.length - 1], cursor))} fontSize={11.5 / s} fontStyle="600" fill={ACCENT} />
           )}
         </Group>
       )}
@@ -242,7 +242,7 @@ export function DraftPreview({ rectStart, rectEnd, draft, cursor, tool, typed, b
 function CurvePreview({ a, b, left, snap, cursor, typed, s }: { a: Point; b: Point; left: number; snap: BendSnap; cursor: Point | null; typed: string; s: number }) {
   const arc = arcBetween(a, b, left);
   const note = snap === "half" ? "Half circle · " : snap === "radius" ? "Same radius · " : "";
-  const text = typed ? `Radius ${typed}▏ (Enter)` : arc ? `${note}R ${formatFeetInches(arc.radius)} · arc ${formatFeetInches(arc.length)}` : `Straight · ${formatFeetInches(dist(a, b))} (move to bow it)`;
+  const text = typed ? `Radius ${typed}▏ ${lengthPreview(typed) ?? "?"} (Enter)` : arc ? `${note}R ${formatFeetInches(arc.radius)} · arc ${formatFeetInches(arc.length)}` : `Straight · ${formatFeetInches(dist(a, b))} (move to bow it)`;
   const at = cursor ?? a;
   return (
     <Group listening={false}>

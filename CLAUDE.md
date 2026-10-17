@@ -19,7 +19,7 @@ Read this file first, then open only the files for the feature you're changing. 
 
 ## Conventions
 
-- All lengths are **inches** (`lib/model/units.ts` formats feet and inches). Plan and sketch coordinates: x east, y south.
+- All lengths are **inches** (`lib/model/units.ts` formats feet and inches). Typed lengths all go through `parseFeetInches` there (a plain number is feet, inches need `"`, `12 6` = 12' 6"); `lengthPreview` gives the live "= 12' 6"" text, and `LengthField` (PlanSidePanel) is the side-panel box. Plan and sketch coordinates: x east, y south.
 - The saved project is one Zod object in `lib/model/schema.ts`. Changing its shape means bumping `SCHEMA_VERSION` and adding a migration in `lib/model/project.ts`.
 - Every edit goes through `useProjectStore().update(...)` in `lib/store/projectStore.ts` (undo history + autosave). Undo labels come from `lib/store/describe.ts`.
 - Logic lives in `lib/` as plain functions with tests in `tests/`; `components/` is UI. 3D and Konva components load with `dynamic(..., { ssr: false })`.

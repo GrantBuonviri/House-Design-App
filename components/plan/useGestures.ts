@@ -314,7 +314,7 @@ export function useGestures(c: GestureContext) {
   }
 
   // While a room or walls are being clicked out: Enter finishes (or places a typed length), Escape drops it.
-  // Digits, ' and " type a length for the line being drawn, e.g. 12'6 or 150 (inches).
+  // Digits, ' and " type a length for the line being drawn, e.g. 12'6 or 150 (a plain number is feet; inches need ").
   useEffect(() => {
     if (!drafting) return;
     const onKey = (e: KeyboardEvent) => {
@@ -339,7 +339,7 @@ export function useGestures(c: GestureContext) {
           const r = parseTypedLength(typed);
           const left = r === null ? null : bowForTyped(draft[0], draft[1], r, bow?.left ?? 1);
           setTyped("");
-          if (r === null) onMessage(`I couldn't read "${typed}" as a radius. Try 8' or 96 (inches).`);
+          if (r === null) onMessage(`I couldn't read "${typed}" as a radius. Try 8' (a plain number is feet; inches need \").`);
           else if (left === null) onMessage(`That radius is too small to reach. It needs to be at least ${formatLength(dist(draft[0], draft[1]) / 2)}.`);
           else finishCurve(draft[0], draft[1], left, e.altKey || altDown.current);
           return;
@@ -347,7 +347,7 @@ export function useGestures(c: GestureContext) {
         if (typed) {
           const len = parseTypedLength(typed);
           if (len === null) {
-            onMessage(`I couldn't read "${typed}" as a length. Try 12'6 or 150 (inches).`);
+            onMessage(`I couldn't read "${typed}" as a length. Try 12'6 (a plain number is feet; inches need \").`);
           } else {
             setDraft([...draft, pointAtLength(draft[draft.length - 1], len)]);
             setTyped("");
