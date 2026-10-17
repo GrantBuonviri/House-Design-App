@@ -17,9 +17,29 @@ import {
 import { importAnyJson } from "@/lib/storage/exchange";
 import { downloadAllProjects, downloadProject } from "@/lib/download";
 import { STAGE_INFO, shownStage } from "@/lib/stages";
+import { houseThumb, shownHouses, type HouseSort, type HouseThumb } from "@/lib/home/cards";
 import BackupsList from "./BackupsList";
 import RecentlyDeleted from "./RecentlyDeleted";
 import { formatDate } from "./formatDate";
+
+function ThumbPicture({ thumb }: { thumb: HouseThumb | null }) {
+  return (
+    <div className="mb-3 flex h-32 items-center justify-center rounded-md bg-accent-soft/40">
+      {thumb ? (
+        <svg viewBox={thumb.box.join(" ")} className="h-full w-full p-2" role="img" aria-label="Floor plan picture">
+          {thumb.rooms.map((pts, i) => (
+            <polygon key={i} points={pts} fill="white" stroke="currentColor" strokeWidth={thumb.box[2] / 120} strokeLinejoin="round" className="text-ink" />
+          ))}
+          {thumb.walls.map((w, i) => (
+            <line key={i} x1={w[0]} y1={w[1]} x2={w[2]} y2={w[3]} stroke="currentColor" strokeWidth={thumb.box[2] / 120} className="text-ink" />
+          ))}
+        </svg>
+      ) : (
+        <span className="text-xs text-muted">No floor plan yet</span>
+      )}
+    </div>
+  );
+}
 
 export default function HomeScreen() {
   const router = useRouter();
@@ -33,10 +53,25 @@ export default function HomeScreen() {
   /** The house card showing its backups, or null. */
   const [backupsOf, setBackupsOf] = useState<string | null>(null);
   const fileInput = useRef<HTMLInputElement>(null);
+  const [query, setQuery] = useState("");
+  const [sort, setSort] = useState<HouseSort>("edited");
+  /** Each house's floor plan picture; null when nothing is drawn yet or its data won't open. */
+  const [thumbs, setThumbs] = useState<Record<string, HouseThumb | null>>({});
 
   async function refresh() {
-    setProjects(await listProjects());
+    const list = await listProjects();
+    setProjects(list);
     setDeleted(await listDeleted());
+    const next: Record<string, HouseThumb | null> = {};
+    for (const s of list) {
+      try {
+        const p = await loadProject(s.id);
+        next[s.id] = p ? houseThumb(p) : null;
+      } catch {
+        next[s.id] = null;
+      }
+    }
+    setThumbs(next);
   }
 
   useEffect(() => {
@@ -204,9 +239,41 @@ export default function HomeScreen() {
           </button>
         </div>
       ) : (
+        <>
+        {projects.length > 1 && (
+          <div className="mb-4 flex items-center gap-3">
+            <input
+              className="input max-w-xs"
+              type="search"
+              aria-label="Search your houses"
+              placeholder="Search your houses"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+            />
+            <label className="flex items-center gap-2 whitespace-nowrap text-sm text-muted">
+              Sort by
+              <select className="input" value={sort} onChange={(e) => setSort(e.target.value as HouseSort)}>
+                <option value="edited">Last edited</option>
+                <option value="name">Name (A to Z)</option>
+              </select>
+            </label>
+          </div>
+        )}
+        {shownHouses(projects, query, sort).length === 0 && (
+          <p className="text-sm text-muted">No house has &ldquo;{query}&rdquo; in its name.</p>
+        )}
         <ul className="grid grid-cols-3 gap-4">
-          {projects.map((p) => (
-            <li key={p.id} className="card flex flex-col p-5">
+          {shownHouses(projects, query, sort).map((p) => (
+            <li
+              key={p.id}
+              className="card flex cursor-pointer flex-col p-5 hover:border-accent"
+              onClick={(e) => {
+                if (renamingId !== p.id && !(e.target as HTMLElement).closest("button, input, a, form")) {
+                  router.push(`/project/${p.id}`);
+                }
+              }}
+            >
+              <ThumbPicture thumb={thumbs[p.id] ?? null} />
               {renamingId === p.id ? (
                 <form
                   onSubmit={(e) => {
@@ -276,6 +343,7 @@ export default function HomeScreen() {
             </li>
           ))}
         </ul>
+        </>
       )}
 
       <RecentlyDeleted
