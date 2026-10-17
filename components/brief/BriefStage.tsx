@@ -7,6 +7,7 @@ import { syncLevels } from "@/lib/brief/levels";
 import { buildRuleBrief, sizingNote } from "@/lib/brief/rules";
 import { plotFacts } from "@/components/land/plotText";
 import { useProjectStore } from "@/lib/store/projectStore";
+import { locationOf } from "@/lib/location/current";
 import BriefEditor from "./BriefEditor";
 import RoomsPage from "./RoomsPage";
 
@@ -39,7 +40,7 @@ export default function BriefStage({ onContinue, onPickLand }: { onContinue: () 
   const buildBrief = () => {
     if (project.brief && !window.confirm("Replace your current brief, including any edits you made to it?")) return;
     update((p) => {
-      const brief = buildRuleBrief({ answers: p.discovery.answers, profile: p.profile, plot: p.plot, spot: houseSpot(p) });
+      const brief = buildRuleBrief({ answers: p.discovery.answers, profile: p.profile, costIndex: locationOf(p).costIndex, plot: p.plot, spot: houseSpot(p) });
       return { ...p, brief, levels: syncLevels(p.levels, brief) };
     });
     setView("brief");
@@ -86,7 +87,7 @@ export default function BriefStage({ onContinue, onPickLand }: { onContinue: () 
             onChange={(e) => editBrief({ ...project.brief!, summary: e.target.value || undefined }, "summary")}
           />
         </section>
-        <BriefEditor brief={project.brief} onChange={editBrief} sizing={sizingNote(answers, project.profile)} />
+        <BriefEditor brief={project.brief} onChange={editBrief} sizing={sizingNote(answers, project.profile, locationOf(project).costIndex)} />
       </div>
     );
   }

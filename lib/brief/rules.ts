@@ -9,6 +9,8 @@ import { MAIN_LEVEL_ID, levelIdsFor } from "./levels";
 export type BriefContext = {
   answers: DiscoveryAnswers;
   profile: Profile;
+  /** The place's cost level (1.00 = US average); Boise's when not given. */
+  costIndex?: number;
   plot: Plot | null;
   /** Where the house sits on the land (plot inches), when it is placed. */
   spot?: Point;
@@ -134,18 +136,18 @@ export type Sizing = {
   people: number | null;
   /** True when the people come from the bedroom count (one each, two in the primary bedroom), not the profile. */
   guessed: boolean;
-  /** Living space the budget pays for, in sq ft (budget / Boise cost per sq ft), or null without a budget. */
+  /** Living space the budget pays for, in sq ft (budget / the place's cost per sq ft), or null without a budget. */
   targetSqft: number | null;
 };
 
 /** How many people the house is for, and the size the budget pays for. */
-export function householdSizing(answers: Pick<DiscoveryAnswers, "rooms">, profile: Profile): Sizing {
+export function householdSizing(answers: Pick<DiscoveryAnswers, "rooms">, profile: Profile, costIndex: number = loadRates().costLevelBase.index): Sizing {
   const told = (profile.adults ?? 0) + (profile.kids ?? 0);
   const beds = answers.rooms.reduce((n, r) => n + (r.type === "primary-bedroom" ? 2 : r.type === "bedroom" ? 1 : 0), 0);
   const people = told > 0 ? told : beds > 0 ? beds : null;
   const { low, high } = profile.budget ?? {};
   const budget = low && high ? (low + high) / 2 : (high ?? low ?? 0);
-  const perSqft = loadRates().calibration.costPerSqft[1];
+  const perSqft = loadRates().calibration.costPerSqft[1] * costIndex;
   return { people, guessed: told === 0, targetSqft: budget > 0 ? Math.round(budget / perSqft / 50) * 50 : null };
 }
 
@@ -168,7 +170,7 @@ const clampTo = (type: string, sqft: number) => {
  * `rooms` in place.
  */
 function fitSizes(rooms: Room[], typed: Set<string>, ctx: BriefContext) {
-  const sizing = householdSizing(ctx.answers, ctx.profile);
+  const sizing = householdSizing(ctx.answers, ctx.profile, ctx.costIndex);
   const free = rooms.filter((r) => !typed.has(r.id) && r.type !== "garage" && roomType(r.type).category !== "outdoor");
   const k = sizing.people === null ? 1 : householdFactor(sizing.people);
   for (const r of free) if (SHARED.has(r.type)) r.targetSqFt = clampTo(r.type, r.targetSqFt * k);
@@ -185,9 +187,9 @@ function fitSizes(rooms: Room[], typed: Set<string>, ctx: BriefContext) {
 }
 
 /** The brief's one line about default sizes: "Sizes fit 5 people and about 2,400 sq ft." Null when every room has a typed size. */
-export function sizingNote(answers: Pick<DiscoveryAnswers, "rooms">, profile: Profile): string | null {
+export function sizingNote(answers: Pick<DiscoveryAnswers, "rooms">, profile: Profile, costIndex?: number): string | null {
   if (!answers.rooms.some((r) => !sqftFromDims(r.lengthIn, r.widthIn))) return null;
-  const s = householdSizing(answers, profile);
+  const s = householdSizing(answers, profile, costIndex);
   if (s.people === null) return s.targetSqft ? `Sizes fit about ${s.targetSqft.toLocaleString("en-US")} sq ft. Rooms you gave a size keep it.` : null;
   const who = `${s.people} ${s.people === 1 ? "person" : "people"}${s.guessed ? " (counted from the bedrooms)" : ""}`;
   return `Sizes fit ${who}${s.targetSqft ? ` and about ${s.targetSqft.toLocaleString("en-US")} sq ft` : ""}. Rooms you gave a size keep it.`;

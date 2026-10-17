@@ -7,7 +7,10 @@ import { levelFor, MAIN_LEVEL_ID } from "@/lib/brief/levels";
 import { defaultBasics } from "@/lib/plan/basics";
 import { rectangle } from "@/lib/plan/geometry";
 import { estimate, type Estimate } from "@/lib/cost/estimate";
-import { rates } from "@/lib/cost/rates";
+import { rates as usRates, scaleRates } from "@/lib/cost/rates";
+
+/** Boise is the default place, so its prices are the US-average ones times its cost level. */
+const rates = () => scaleRates(usRates(), usRates().costLevelBase.index);
 import { catalog, parseCatalog, type CatalogProduct } from "@/lib/catalog/catalog";
 import { INTERIOR_CATEGORIES, interiorCategory } from "@/lib/catalog/categories";
 import { categoriesFor, effectivePick, interiorRooms, setPick, toProduct } from "@/lib/interior/picks";

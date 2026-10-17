@@ -11,8 +11,11 @@ import { suggestPlans } from "@/lib/plan/suggest";
 import { rectangle } from "@/lib/plan/geometry";
 import { measurePlan, measureRoof, measureRough } from "@/lib/cost/quantities";
 import { estimate, permitFee, type Estimate } from "@/lib/cost/estimate";
-import { parseRates, rates, RATE_IDS } from "@/lib/cost/rates";
+import { parseRates, rates, scaleRates, RATE_IDS } from "@/lib/cost/rates";
 import raw from "@/lib/cost/data/cost-rates.json";
+import baseline from "./fixtures/cost-boise-baseline.json";
+import { house, RANCH, TWO_STORY } from "./samples";
+import { placeFromCity, cityById } from "@/lib/location/cities";
 
 const FT = 12;
 const flat = generatePlot(FLAT_PLOT_SEED, { flat: true });
@@ -209,7 +212,7 @@ describe("the estimate", () => {
 
   it("lands near published Boise cost per square foot for a typical one-story house", () => {
     // The published figures leave out contingency and landscaping, so compare without them.
-    const target = rates().calibration.costPerSqft;
+    const target = scaleRates(rates(), rates().costLevelBase.index).calibration.costPerSqft;
     const LANDSCAPING = ["front-walk", "lawn", "planting-beds", "shrubs", "trees"];
     for (const types of [TYPICAL, [...TYPICAL, "office", "bedroom", "family", "half-bath"]]) {
       const e = estimate(suggestedHouse(flat, types))!;
@@ -272,5 +275,66 @@ describe("saving", () => {
     const older = { ...createProject("Old"), schemaVersion: 5 } as Record<string, unknown>;
     delete older.cost;
     expect(migrateProject(older).cost).toEqual({ utilities: "city" });
+  });
+});
+
+describe("costs at the place's cost level", () => {
+  const lineCosts = (e: Estimate) => Object.fromEntries(e.categories.flatMap((c) => c.lines).map((l) => [l.id, l.cost]));
+  const atLevel = (p: Project, costIndex: number, permitFee: number | null = null): Project => ({
+    ...p,
+    location: { ...placeFromCity(cityById("boise-id")!), costIndex, permitFee },
+  });
+
+  it("keeps a Boise project's cost the same as before the rates were made US-average", () => {
+    for (const [name, types, up, down] of [["ranch", RANCH, 1, 0], ["two", TWO_STORY, 2, 1]] as const) {
+      const was = (baseline as Record<string, Record<string, number[]>>)[name];
+      const now = lineCosts(estimate(house(types as never, up, down))!);
+      for (const [id, [low, likely, high]] of Object.entries(was)) {
+        if (id === "__total") continue;
+        // Window wells were already a US figure, so they now follow the cost level.
+        if (id === "window-well") continue;
+        expect(now[id], id).toBeTruthy();
+        expect(Math.abs(now[id].low - low), `${name} ${id} low`).toBeLessThan(1);
+        expect(Math.abs(now[id].likely - likely), `${name} ${id} likely`).toBeLessThan(1);
+        expect(Math.abs(now[id].high - high), `${name} ${id} high`).toBeLessThan(1);
+      }
+    }
+  });
+
+  it("raises every priced line 20% at a cost level of 1.2 (compared with 1.0), except percentages and a typed permit fee", () => {
+    const base = house(RANCH, 1, 0);
+    const one = lineCosts(estimate(atLevel(base, 1))!);
+    const high = lineCosts(estimate(atLevel(base, 1.2))!);
+    for (const [id, c] of Object.entries(one)) {
+      if (["overhead-profit", "contingency", "plan-review", "building-permit"].includes(id)) continue;
+      expect(high[id].likely / c.likely, id).toBeCloseTo(1.2, 5);
+    }
+  });
+
+  it("uses Boise's own permit schedule in Boise, the typical table elsewhere, and a typed fee over both", () => {
+    const base = house(RANCH, 1, 0);
+    const boise = estimate(base)!;
+    expect(boise.permitBasis).toBe("city");
+    const denver = estimate({ ...base, location: placeFromCity(cityById("denver-co")!) })!;
+    expect(denver.permitBasis).toBe("typical");
+    const fee = (e: Estimate) => lineCosts(e)["building-permit"].likely;
+    expect(fee(denver)).toBeGreaterThan(0);
+    const typed = estimate(atLevel(base, 1, 4321))!;
+    expect(typed.permitBasis).toBe("typed");
+    expect(fee(typed)).toBe(4321);
+    expect(fee(estimate(atLevel(base, 1.5, 4321))!)).toBe(4321);
+  });
+
+  it("scales the typical permit table with the cost level, since its building value does", () => {
+    const base = house(RANCH, 1, 0);
+    const loc = (costIndex: number) => ({ ...base, location: { ...placeFromCity(cityById("denver-co")!), costIndex } });
+    const fee = (p: Project) => lineCosts(estimate(p)!)["building-permit"].likely;
+    expect(fee(loc(1.3))).toBeGreaterThan(fee(loc(0.8)));
+  });
+
+  it("says which place the prices are for", () => {
+    const e = estimate({ ...house(RANCH, 1, 0), location: placeFromCity(cityById("denver-co")!) })!;
+    expect(e.place.name).toBe("Denver");
+    expect(e.place.costIndex).toBe(cityById("denver-co")!.costIndex);
   });
 });

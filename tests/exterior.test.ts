@@ -12,7 +12,10 @@ import { pointInPolygon } from "@/lib/plan/geometry";
 import { areaKind } from "@/lib/plan/measure";
 import { estimate, type Estimate } from "@/lib/cost/estimate";
 import { measureRough } from "@/lib/cost/quantities";
-import { rates } from "@/lib/cost/rates";
+import { rates as usRates, scaleRates } from "@/lib/cost/rates";
+
+/** Boise is the default place, so its prices are the US-average ones times its cost level. */
+const rates = () => scaleRates(usRates(), usRates().costLevelBase.index);
 import { catalog } from "@/lib/catalog/catalog";
 import { EXTERIOR_CATEGORIES, EXTERIOR_FILES, exteriorCatalog, exteriorProductsFor, parseExteriorCatalog, type ExteriorCategoryId } from "@/lib/catalog/exterior";
 import { effectiveExterior, exteriorBoard, guessExterior, rankedExterior } from "@/lib/exterior/style";

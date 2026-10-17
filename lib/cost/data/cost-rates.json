@@ -1,258 +1,272 @@
 {
-  "region": "Boise, Idaho",
+  "region": "US average",
   "checked": "2026-10-14",
   "rates": {
     "site-prep": {
       "label": "Site prep (clearing, layout, erosion control, temporary power)",
       "unit": "each",
       "material": [
-        1500,
-        2500,
-        4000
+        1630.4348,
+        2717.3913,
+        4347.8261
       ],
       "labor": [
-        2500,
-        4000,
-        6500
+        2717.3913,
+        4347.8261,
+        7065.2174
       ],
       "source": "Judgment based on typical GC general-conditions budgets for a flat suburban Treasure Valley lot",
       "url": null,
       "checked": "2026-10-14",
-      "note": "Per house. Includes survey staking, silt fence/SWPPP, temp power pole, portable toilet and dumpster setup for ~6-9 months. Wooded or foothill lots higher."
+      "note": "Per house. Includes survey staking, silt fence/SWPPP, temp power pole, portable toilet and dumpster setup for ~6-9 months. Wooded or foothill lots higher.",
+      "normalized": "Boise price divided by Boise's cost level (0.92) to give a US-average price."
     },
     "excavation": {
       "label": "Digging and hauling dirt",
       "unit": "cuyd",
       "material": [
-        2,
-        4,
-        7
+        2.1739,
+        4.3478,
+        7.6087
       ],
       "labor": [
-        10,
-        14,
-        23
+        10.8696,
+        15.2174,
+        25
       ],
       "source": "Judgment based on Boise excavation sub pricing (equipment + trucking, dump fees as material)",
       "url": null,
       "checked": "2026-10-14",
-      "note": "Equipment and operator time counted as labor; dump/tipping fees and fuel surcharges as material. Basalt/caliche or rock in the foothills can double the high end."
+      "note": "Equipment and operator time counted as labor; dump/tipping fees and fuel surcharges as material. Basalt/caliche or rock in the foothills can double the high end.",
+      "normalized": "Boise price divided by Boise's cost level (0.92) to give a US-average price."
     },
     "backfill-grade": {
       "label": "Backfill and finish grading",
       "unit": "sqft",
       "material": [
-        0.3,
-        0.6,
-        1.2
+        0.3261,
+        0.6522,
+        1.3043
       ],
       "labor": [
-        1.2,
-        1.9,
-        2.8
+        1.3043,
+        2.0652,
+        3.0435
       ],
       "source": "Judgment based on typical excavation sub pricing; per sqft of building footprint",
       "url": null,
       "checked": "2026-10-14",
-      "note": "Backfill around foundation with native soil, compaction, rough and finish grade to drain away from house. Imported fill or topsoil pushes toward high."
+      "note": "Backfill around foundation with native soil, compaction, rough and finish grade to drain away from house. Imported fill or topsoil pushes toward high.",
+      "normalized": "Boise price divided by Boise's cost level (0.92) to give a US-average price."
     },
     "driveway": {
       "label": "Concrete driveway",
       "unit": "sqft",
       "material": [
-        3.5,
-        4.5,
-        6
+        3.8043,
+        4.8913,
+        6.5217
       ],
       "labor": [
-        3,
-        4,
-        5.5
+        3.2609,
+        4.3478,
+        5.9783
       ],
       "source": "HomeGuide concrete slab cost (driveway $6-$15/sqft installed)",
       "url": "https://homeguide.com/costs/concrete-slab-cost",
       "checked": "2026-10-14",
-      "note": "4-5 in broom-finish concrete on compacted gravel. Split ~55/45 material/labor per HomeGuide's stated 50-60% materials share."
+      "note": "4-5 in broom-finish concrete on compacted gravel. Split ~55/45 material/labor per HomeGuide's stated 50-60% materials share.",
+      "normalized": "Boise price divided by Boise's cost level (0.92) to give a US-average price."
     },
     "drainage-some": {
       "label": "Drainage work (swales, downspout lines)",
       "unit": "each",
       "material": [
-        600,
-        1200,
-        2200
+        652.1739,
+        1304.3478,
+        2391.3043
       ],
       "labor": [
-        1400,
-        2800,
-        4800
+        1521.7391,
+        3043.4783,
+        5217.3913
       ],
       "source": "Judgment based on typical landscape/excavation sub bids",
       "url": null,
       "checked": "2026-10-14",
-      "note": "Shaped swales plus ~100-200 ft of solid downspout drain line to daylight or drywell. Split ~30/70 material/labor."
+      "note": "Shaped swales plus ~100-200 ft of solid downspout drain line to daylight or drywell. Split ~30/70 material/labor.",
+      "normalized": "Boise price divided by Boise's cost level (0.92) to give a US-average price."
     },
     "drainage-major": {
       "label": "Major drainage work (French drains, sump, grading)",
       "unit": "each",
       "material": [
-        3000,
-        5500,
-        11000
+        3260.8696,
+        5978.2609,
+        11956.5217
       ],
       "labor": [
-        5000,
-        9500,
-        19000
+        5434.7826,
+        10326.087,
+        20652.1739
       ],
       "source": "Judgment based on typical excavation/drainage sub bids for poorly draining lots",
       "url": null,
       "checked": "2026-10-14",
-      "note": "French drain around foundation, sump basin + pump, drywell(s), extra grading. Ada County requires on-site stormwater retention (drywells/seepage beds) on many lots."
+      "note": "French drain around foundation, sump basin + pump, drywell(s), extra grading. Ada County requires on-site stormwater retention (drywells/seepage beds) on many lots.",
+      "normalized": "Boise price divided by Boise's cost level (0.92) to give a US-average price."
     },
     "retaining-wall": {
       "label": "Retaining wall (concrete/block)",
       "unit": "sqft",
       "material": [
-        14,
-        22,
-        36
+        15.2174,
+        23.913,
+        39.1304
       ],
       "labor": [
-        21,
-        33,
-        54
+        22.8261,
+        35.8696,
+        58.6957
       ],
       "source": "Judgment based on national retaining-wall cost guides ($30-$90/sqft face installed)",
       "url": null,
       "checked": "2026-10-14",
-      "note": "Segmental block or poured concrete, under ~4 ft without engineering. Taller engineered walls (foothills) exceed high. Split ~40/60."
+      "note": "Segmental block or poured concrete, under ~4 ft without engineering. Taller engineered walls (foothills) exceed high. Split ~40/60.",
+      "normalized": "Boise price divided by Boise's cost level (0.92) to give a US-average price."
     },
     "rock-removal": {
       "label": "Big rock removal (break up and haul)",
       "unit": "cuyd",
       "material": [
-        15,
-        25,
-        45
+        16.3043,
+        27.1739,
+        48.913
       ],
       "labor": [
-        60,
-        110,
-        200
+        65.2174,
+        119.5652,
+        217.3913
       ],
       "source": "Judgment based on national boulder and rock removal guides (about $75-$250 per cubic yard with a breaker and haul-off)",
       "url": null,
       "checked": "2026-10-16",
-      "note": "For big rocks under the house on designed land. Equipment and operator time counted as labor; hauling and dump fees as material. Blasting or very hard basalt can exceed high."
+      "note": "For big rocks under the house on designed land. Equipment and operator time counted as labor; hauling and dump fees as material. Blasting or very hard basalt can exceed high.",
+      "normalized": "Boise price divided by Boise's cost level (0.92) to give a US-average price."
     },
     "utility-trench": {
       "label": "Utility trenching",
       "unit": "linft",
       "material": [
-        1,
-        2,
-        4
+        1.087,
+        2.1739,
+        4.3478
       ],
       "labor": [
-        5,
-        10,
-        16
+        5.4348,
+        10.8696,
+        17.3913
       ],
       "source": "Judgment based on Boise excavation sub pricing",
       "url": null,
       "checked": "2026-10-14",
-      "note": "Trench, bedding sand, backfill. Excludes the pipe/conduit itself (in water-service / electrical-service). Rock trenching much higher."
+      "note": "Trench, bedding sand, backfill. Excludes the pipe/conduit itself (in water-service / electrical-service). Rock trenching much higher.",
+      "normalized": "Boise price divided by Boise's cost level (0.92) to give a US-average price."
     },
     "slab": {
       "label": "Concrete slab floor (4 in, gravel, vapor barrier)",
       "unit": "sqft",
       "material": [
-        3.2,
-        4.3,
-        5.6
+        3.4783,
+        4.6739,
+        6.087
       ],
       "labor": [
-        2.8,
-        3.7,
-        4.9
+        3.0435,
+        4.0217,
+        5.3261
       ],
       "source": "HomeGuide concrete slab cost (4\" slab $6-$8 installed; gravel base $1-$3/sqft)",
       "url": "https://homeguide.com/costs/concrete-slab-cost",
       "checked": "2026-10-14",
-      "note": "Includes 4 in gravel base, 10-15 mil vapor barrier, rebar/mesh. Excludes footings. Split ~54/46 per HomeGuide materials 50-60%."
+      "note": "Includes 4 in gravel base, 10-15 mil vapor barrier, rebar/mesh. Excludes footings. Split ~54/46 per HomeGuide materials 50-60%.",
+      "normalized": "Boise price divided by Boise's cost level (0.92) to give a US-average price."
     },
     "footing": {
       "label": "Continuous footing",
       "unit": "linft",
       "material": [
-        11,
-        17,
-        25
+        11.9565,
+        18.4783,
+        27.1739
       ],
       "labor": [
-        14,
-        21,
-        30
+        15.2174,
+        22.8261,
+        32.6087
       ],
       "source": "Judgment based on typical 20x10 in footing with 2-3 #4 bars (~0.06 cuyd/ft) at Boise ready-mix pricing plus forming labor",
       "url": null,
       "checked": "2026-10-14",
-      "note": "Formed, reinforced, poured. Wider frost/engineered footings higher. Idaho frost depth 24 in in Ada County."
+      "note": "Formed, reinforced, poured. Wider frost/engineered footings higher. Idaho frost depth 24 in in Ada County.",
+      "normalized": "Boise price divided by Boise's cost level (0.92) to give a US-average price."
     },
     "stem-wall": {
       "label": "Crawlspace stem wall",
       "unit": "sqft",
       "material": [
-        7,
-        11,
-        15
+        7.6087,
+        11.9565,
+        16.3043
       ],
       "labor": [
-        11,
-        16,
-        23
+        11.9565,
+        17.3913,
+        25
       ],
       "source": "HomeGuide foundation cost (stem wall $6-$18; poured walls $15-$40/sqft); Boise stem-wall crawlspaces are the regional norm",
       "url": "https://homeguide.com/costs/foundation-cost",
       "checked": "2026-10-14",
-      "note": "Per sqft of wall face, 8 in poured, reinforced, anchor bolts. Split ~40/60."
+      "note": "Per sqft of wall face, 8 in poured, reinforced, anchor bolts. Split ~40/60.",
+      "normalized": "Boise price divided by Boise's cost level (0.92) to give a US-average price."
     },
     "basement-wall": {
       "label": "Basement wall 8\" poured concrete",
       "unit": "sqft",
       "material": [
-        10,
-        13,
-        18
+        10.8696,
+        14.1304,
+        19.5652
       ],
       "labor": [
-        14,
-        19,
-        27
+        15.2174,
+        20.6522,
+        29.3478
       ],
       "source": "HomeGuide foundation cost (poured concrete walls $15-$40/sqft)",
       "url": "https://homeguide.com/costs/foundation-cost",
       "checked": "2026-10-14",
-      "note": "Per sqft of wall face, 8-9 ft tall, reinforced. Excludes footing, waterproofing, excavation. Split ~40/60."
+      "note": "Per sqft of wall face, 8-9 ft tall, reinforced. Excludes footing, waterproofing, excavation. Split ~40/60.",
+      "normalized": "Boise price divided by Boise's cost level (0.92) to give a US-average price."
     },
     "waterproofing": {
       "label": "Below-grade waterproofing",
       "unit": "sqft",
       "material": [
-        1.2,
-        2,
-        3.2
+        1.3043,
+        2.1739,
+        3.4783
       ],
       "labor": [
-        1.8,
-        3,
-        4.8
+        1.9565,
+        3.2609,
+        5.2174
       ],
       "source": "Judgment based on exterior membrane/drainage-board pricing; HomeGuide gives only whole-house totals ($10k-$18k exterior)",
       "url": "https://homeguide.com/costs/foundation-cost",
       "checked": "2026-10-14",
-      "note": "Spray/roll membrane + dimple drainage board on exterior of basement walls. Dampproofing only would be ~half."
+      "note": "Spray/roll membrane + dimple drainage board on exterior of basement walls. Dampproofing only would be ~half.",
+      "normalized": "Boise price divided by Boise's cost level (0.92) to give a US-average price."
     },
     "window-well": {
       "label": "Egress window well with ladder",
@@ -270,879 +284,928 @@
       "source": "HomeGuide window well line items: steel well $400-800, egress ladder $100-300, labor $400-1,400+ (about $1,000-3,000 installed, $2,000 typical). US numbers; Boise-specific data wasn't found.",
       "url": "https://homeguide.com/costs/window-well-replacement-cost",
       "checked": "2026-10-17",
-      "note": "Each well: galvanized well, ladder, gravel, digging and backfill. Not the window or cutting the foundation wall. Ballpark: confirm with local bids."
+      "note": "Each well: galvanized well, ladder, gravel, digging and backfill. Not the window or cutting the foundation wall. Ballpark: confirm with local bids.",
+      "normalized": "Already a US-average figure; not divided by Boise's cost level."
     },
     "garage-slab": {
       "label": "Garage slab",
       "unit": "sqft",
       "material": [
-        3,
-        4,
-        5.3
+        3.2609,
+        4.3478,
+        5.7609
       ],
       "labor": [
-        2.5,
-        3.5,
-        4.7
+        2.7174,
+        3.8043,
+        5.1087
       ],
       "source": "HomeGuide concrete slab cost",
       "url": "https://homeguide.com/costs/concrete-slab-cost",
       "checked": "2026-10-14",
-      "note": "4 in reinforced slab on gravel, sloped to door, no vapor barrier needed. Slightly cheaper than house slab."
+      "note": "4 in reinforced slab on gravel, sloped to door, no vapor barrier needed. Slightly cheaper than house slab.",
+      "normalized": "Boise price divided by Boise's cost level (0.92) to give a US-average price."
     },
     "floor-framing": {
       "label": "Floor framing (joists + subfloor)",
       "unit": "sqft",
       "material": [
-        5,
-        7.5,
-        10.5
+        5.4348,
+        8.1522,
+        11.413
       ],
       "labor": [
-        4,
-        5.5,
-        7.5
+        4.3478,
+        5.9783,
+        8.1522
       ],
       "source": "Judgment based on HomeGuide framing ($4-$17/sqft material, $7-$13 labor for whole-house framing) scaled to floor system only",
       "url": "https://homeguide.com/costs/cost-to-frame-a-house",
       "checked": "2026-10-14",
-      "note": "I-joists or 2x10/2x12 at 16 in o.c., rim, 3/4 in T&G OSB subfloor glued/screwed, beams/posts. Per sqft of floor."
+      "note": "I-joists or 2x10/2x12 at 16 in o.c., rim, 3/4 in T&G OSB subfloor glued/screwed, beams/posts. Per sqft of floor.",
+      "normalized": "Boise price divided by Boise's cost level (0.92) to give a US-average price."
     },
     "ext-wall-framing": {
       "label": "Outside wall framing (2x6, sheathing, house wrap)",
       "unit": "sqft",
       "material": [
-        3.2,
-        4.2,
-        5.8
+        3.4783,
+        4.5652,
+        6.3043
       ],
       "labor": [
-        2.6,
-        3.4,
-        4.6
+        2.8261,
+        3.6957,
+        5
       ],
       "source": "HomeGuide cost to frame a house (sheathing $1-$3.50/sqft installed) + judgment",
       "url": "https://homeguide.com/costs/cost-to-frame-a-house",
       "checked": "2026-10-14",
-      "note": "Per sqft of exterior wall area (gross). 2x6 @16 in, headers, 7/16 OSB, housewrap. Lumber prices 2026 assumed near 2024-25 levels. Lowered by about 25% after checking whole-house totals against published Boise cost per sq ft."
+      "note": "Per sqft of exterior wall area (gross). 2x6 @16 in, headers, 7/16 OSB, housewrap. Lumber prices 2026 assumed near 2024-25 levels. Lowered by about 25% after checking whole-house totals against published Boise cost per sq ft.",
+      "normalized": "Boise price divided by Boise's cost level (0.92) to give a US-average price."
     },
     "int-wall-framing": {
       "label": "Inside wall framing",
       "unit": "linft",
       "material": [
-        10,
-        14,
-        20
+        10.8696,
+        15.2174,
+        21.7391
       ],
       "labor": [
-        12,
-        17,
-        25
+        13.0435,
+        18.4783,
+        27.1739
       ],
       "source": "HomeGuide (basement wall framing $18-$24/lf) adjusted up for 9 ft walls, headers, blocking",
       "url": "https://homeguide.com/costs/cost-to-frame-a-house",
       "checked": "2026-10-14",
-      "note": "2x4 @16 in, double top plate, headers at openings."
+      "note": "2x4 @16 in, double top plate, headers at openings.",
+      "normalized": "Boise price divided by Boise's cost level (0.92) to give a US-average price."
     },
     "curved-wall-framing": {
       "label": "Curved walls: extra framing",
       "unit": "linft",
       "material": [
-        2.5,
-        4.5,
-        9
+        2.7174,
+        4.8913,
+        9.7826
       ],
       "labor": [
-        5.5,
-        10.5,
-        21
+        5.9783,
+        11.413,
+        22.8261
       ],
       "source": "Judgment: no published curved-wall price; extra on top of straight framing for kerfed or bent plates and layout (about 1.5x to 2.5x the straight labor), from HomeAdvisor wall-install baselines",
       "url": "https://www.homeadvisor.com/cost/walls-and-ceilings/install-a-wall/",
       "checked": "2026-10-16",
-      "note": "Extra cost per foot of curved wall along the curve, added to the straight-wall rates. Ballpark: confirm with local bids."
+      "note": "Extra cost per foot of curved wall along the curve, added to the straight-wall rates. Ballpark: confirm with local bids.",
+      "normalized": "Boise price divided by Boise's cost level (0.92) to give a US-average price."
     },
     "roof-framing": {
       "label": "Roof framing (trusses + sheathing)",
       "unit": "sqft",
       "material": [
-        2.8,
-        3.8,
-        5.2
+        3.0435,
+        4.1304,
+        5.6522
       ],
       "labor": [
-        1.8,
-        2.5,
-        3.4
+        1.9565,
+        2.7174,
+        3.6957
       ],
       "source": "HomeGuide roof framing ($6-$15/sqft installed)",
       "url": "https://homeguide.com/costs/roof-framing-cost",
       "checked": "2026-10-14",
-      "note": "Per sqft of roof surface. Engineered trusses, 7/16-1/2 in OSB sheathing, crane set. Stick-framed vaulted roofs toward high. Lowered by about 25% after checking whole-house totals against published Boise cost per sq ft."
+      "note": "Per sqft of roof surface. Engineered trusses, 7/16-1/2 in OSB sheathing, crane set. Stick-framed vaulted roofs toward high. Lowered by about 25% after checking whole-house totals against published Boise cost per sq ft.",
+      "normalized": "Boise price divided by Boise's cost level (0.92) to give a US-average price."
     },
     "stairs": {
       "label": "Stairs (one straight flight, finished)",
       "unit": "each",
       "material": [
-        1500,
-        2700,
-        4800
+        1630.4348,
+        2934.7826,
+        5217.3913
       ],
       "labor": [
-        2000,
-        3300,
-        5200
+        2173.913,
+        3586.9565,
+        5652.1739
       ],
       "source": "Judgment based on stair-builder pricing for site-framed stringers with oak/maple treads, painted risers, simple rail",
       "url": null,
       "checked": "2026-10-14",
-      "note": "One 13-14 riser straight run with a wall-mounted handrail (included here); open-side guards and half walls along the stairs are priced separately as Stair railings."
+      "note": "One 13-14 riser straight run with a wall-mounted handrail (included here); open-side guards and half walls along the stairs are priced separately as Stair railings.",
+      "normalized": "Boise price divided by Boise's cost level (0.92) to give a US-average price."
     },
     "deck": {
       "label": "Deck (pressure-treated frame, composite boards)",
       "unit": "sqft",
       "material": [
-        14,
-        20,
-        30
+        15.2174,
+        21.7391,
+        32.6087
       ],
       "labor": [
-        14,
-        20,
-        28
+        15.2174,
+        21.7391,
+        30.4348
       ],
       "source": "Judgment based on national deck cost guides ($30-$60/sqft installed for composite)",
       "url": null,
       "checked": "2026-10-14",
-      "note": "Includes footings, framing, decking and a simple railing."
+      "note": "Includes footings, framing, decking and a simple railing.",
+      "normalized": "Boise price divided by Boise's cost level (0.92) to give a US-average price."
     },
     "overhang-post": {
       "label": "Post and footing under a room on posts",
       "unit": "each",
       "material": [
-        180,
-        260,
-        380
+        195.6522,
+        282.6087,
+        413.0435
       ],
       "labor": [
-        220,
-        320,
-        450
+        239.1304,
+        347.8261,
+        489.1304
       ],
       "source": "Judgment based on a 6x6 treated post, post base and cap, and a 24 in square pier footing at Boise ready-mix pricing plus labor",
       "url": null,
       "checked": "2026-10-16",
-      "note": "Each post with its footing, below the frost line (24 in in Ada County)."
+      "note": "Each post with its footing, below the frost line (24 in in Ada County).",
+      "normalized": "Boise price divided by Boise's cost level (0.92) to give a US-average price."
     },
     "overhang-beam": {
       "label": "Beam under a room on posts",
       "unit": "linft",
       "material": [
-        18,
-        26,
-        38
+        19.5652,
+        28.2609,
+        41.3043
       ],
       "labor": [
-        10,
-        15,
-        22
+        10.8696,
+        16.3043,
+        23.913
       ],
       "source": "Judgment based on built-up 2x12 or 3.5x11.25 LVL beam pricing at Boise lumber yards plus framing labor",
       "url": null,
       "checked": "2026-10-16",
-      "note": "For a room on an upper floor held up by posts and a beam. An engineer sizes the real beam."
+      "note": "For a room on an upper floor held up by posts and a beam. An engineer sizes the real beam.",
+      "normalized": "Boise price divided by Boise's cost level (0.92) to give a US-average price."
     },
     "roof-shingle": {
       "label": "Architectural asphalt shingle roof",
       "unit": "sqft",
       "material": [
-        1.8,
-        2.4,
-        3.2
+        1.9565,
+        2.6087,
+        3.4783
       ],
       "labor": [
-        2.2,
-        2.85,
-        3.8
+        2.3913,
+        3.0978,
+        4.1304
       ],
       "source": "HomeGuide asphalt shingle roof cost (architectural $4-$6/sqft installed, material $1-$2.50)",
       "url": "https://homeguide.com/costs/asphalt-shingle-roof-cost",
       "checked": "2026-10-14",
-      "note": "Includes synthetic underlayment, ice & water at eaves/valleys, drip edge, flashing, ridge vent. New construction (no tear-off) priced at or slightly below replacement figures."
+      "note": "Includes synthetic underlayment, ice & water at eaves/valleys, drip edge, flashing, ridge vent. New construction (no tear-off) priced at or slightly below replacement figures.",
+      "normalized": "Boise price divided by Boise's cost level (0.92) to give a US-average price."
     },
     "roof-flat": {
       "label": "Flat roof (TPO membrane)",
       "unit": "sqft",
       "material": [
-        3.5,
-        4.8,
-        6.5
+        3.8043,
+        5.2174,
+        7.0652
       ],
       "labor": [
-        4.5,
-        6.2,
-        8.5
+        4.8913,
+        6.7391,
+        9.2391
       ],
       "source": "Judgment based on national TPO cost guides ($8-$15/sqft installed for small residential areas)",
       "url": null,
       "checked": "2026-10-14",
-      "note": "60 mil TPO over tapered insulation and cover board. Small residential areas carry a minimum charge."
+      "note": "60 mil TPO over tapered insulation and cover board. Small residential areas carry a minimum charge.",
+      "normalized": "Boise price divided by Boise's cost level (0.92) to give a US-average price."
     },
     "roof-hip-valley": {
       "label": "Extra roofing work at hips and valleys",
       "unit": "linft",
       "material": [
-        2,
-        3.5,
-        5.5
+        2.1739,
+        3.8043,
+        5.9783
       ],
       "labor": [
-        4,
-        6.5,
-        10.5
+        4.3478,
+        7.0652,
+        11.413
       ],
       "source": "Judgment based on roofer cut/flash waste allowances",
       "url": null,
       "checked": "2026-10-14",
-      "note": "Extra for valley metal, ice & water, cut waste and hip/ridge cap beyond a simple gable."
+      "note": "Extra for valley metal, ice & water, cut waste and hip/ridge cap beyond a simple gable.",
+      "normalized": "Boise price divided by Boise's cost level (0.92) to give a US-average price."
     },
     "gutters": {
       "label": "Seamless aluminum gutters + downspouts",
       "unit": "linft",
       "material": [
-        3,
-        4.5,
-        6.5
+        3.2609,
+        4.8913,
+        7.0652
       ],
       "labor": [
-        6,
-        8.5,
-        11.5
+        6.5217,
+        9.2391,
+        12.5
       ],
       "source": "Judgment based on national gutter cost guides (5-6 in seamless aluminum $9-$18/lf installed)",
       "url": null,
       "checked": "2026-10-14",
-      "note": "5 in K-style .027 aluminum, downspouts included in per-lf price. Split ~35/65 as roll-formed on site."
+      "note": "5 in K-style .027 aluminum, downspouts included in per-lf price. Split ~35/65 as roll-formed on site.",
+      "normalized": "Boise price divided by Boise's cost level (0.92) to give a US-average price."
     },
     "window": {
       "label": "Windows (mid-range vinyl/fiberglass)",
       "unit": "sqft",
       "material": [
-        35,
-        50,
-        70
+        38.0435,
+        54.3478,
+        76.087
       ],
       "labor": [
-        8,
-        12,
-        18
+        8.6957,
+        13.0435,
+        19.5652
       ],
       "source": "HomeGuide vinyl windows cost ($250-$1,000 material, $100-$500 labor per window) converted to per-sqft for Andersen 100 / Pella Impervia class",
       "url": "https://homeguide.com/costs/vinyl-windows-cost",
       "checked": "2026-10-14",
-      "note": "Per sqft of rough opening. Assumes ~15 sqft avg window; new-construction flange install is cheaper than replacement. Low-E double-pane, U~0.27-0.30 (Idaho energy code)."
+      "note": "Per sqft of rough opening. Assumes ~15 sqft avg window; new-construction flange install is cheaper than replacement. Low-E double-pane, U~0.27-0.30 (Idaho energy code).",
+      "normalized": "Boise price divided by Boise's cost level (0.92) to give a US-average price."
     },
     "patio-door": {
       "label": "Sliding patio door (6 ft)",
       "unit": "each",
       "material": [
-        1800,
-        2900,
-        4800
+        1956.5217,
+        3152.1739,
+        5217.3913
       ],
       "labor": [
-        700,
-        1100,
-        1700
+        760.8696,
+        1195.6522,
+        1847.8261
       ],
       "source": "Judgment based on Andersen 100/Pella Impervia/Milgard Tuscany retail pricing + install",
       "url": null,
       "checked": "2026-10-14",
-      "note": "6 ft vinyl/composite slider with screen, flashed and trimmed."
+      "note": "6 ft vinyl/composite slider with screen, flashed and trimmed.",
+      "normalized": "Boise price divided by Boise's cost level (0.92) to give a US-average price."
     },
     "entry-door": {
       "label": "Entry door (fiberglass/steel + lockset)",
       "unit": "each",
       "material": [
-        1300,
-        2200,
-        3800
+        1413.0435,
+        2391.3043,
+        4130.4348
       ],
       "labor": [
-        500,
-        800,
-        1200
+        543.4783,
+        869.5652,
+        1304.3478
       ],
       "source": "Judgment based on Therma-Tru/Masonite fiberglass retail pricing + install",
       "url": null,
       "checked": "2026-10-14",
-      "note": "36 in prehung fiberglass with glass lite option, mid-range handleset/deadbolt. Sidelites push to high."
+      "note": "36 in prehung fiberglass with glass lite option, mid-range handleset/deadbolt. Sidelites push to high.",
+      "normalized": "Boise price divided by Boise's cost level (0.92) to give a US-average price."
     },
     "interior-door": {
       "label": "Interior door (prehung shaker)",
       "unit": "each",
       "material": [
-        200,
-        330,
-        520
+        217.3913,
+        358.6957,
+        565.2174
       ],
       "labor": [
-        150,
-        220,
-        330
+        163.0435,
+        239.1304,
+        358.6957
       ],
       "source": "Judgment based on big-box/lumberyard prehung pricing + finish carpenter rates",
       "url": null,
       "checked": "2026-10-14",
-      "note": "Solid-core molded shaker prehung, hinges, passage/privacy lever. Paint in interior-paint."
+      "note": "Solid-core molded shaker prehung, hinges, passage/privacy lever. Paint in interior-paint.",
+      "normalized": "Boise price divided by Boise's cost level (0.92) to give a US-average price."
     },
     "pocket-door": {
       "label": "Pocket door",
       "unit": "each",
       "material": [
-        350,
-        550,
-        850
+        380.4348,
+        597.8261,
+        923.913
       ],
       "labor": [
-        350,
-        550,
-        850
+        380.4348,
+        597.8261,
+        923.913
       ],
       "source": "Judgment based on pocket frame kit + slab + hardware pricing",
       "url": null,
       "checked": "2026-10-14",
-      "note": "Johnson/ similar frame kit, solid-core slab, pocket pull hardware; more framing labor."
+      "note": "Johnson/ similar frame kit, solid-core slab, pocket pull hardware; more framing labor.",
+      "normalized": "Boise price divided by Boise's cost level (0.92) to give a US-average price."
     },
     "barn-door": {
       "label": "Barn door",
       "unit": "each",
       "material": [
-        400,
-        700,
-        1200
+        434.7826,
+        760.8696,
+        1304.3478
       ],
       "labor": [
-        200,
-        300,
-        500
+        217.3913,
+        326.087,
+        543.4783
       ],
       "source": "Judgment based on retail barn door slab + track kit pricing",
       "url": null,
       "checked": "2026-10-14",
-      "note": "Shaker slab + steel track kit, wall blocking."
+      "note": "Shaker slab + steel track kit, wall blocking.",
+      "normalized": "Boise price divided by Boise's cost level (0.92) to give a US-average price."
     },
     "garage-door": {
       "label": "Garage door (insulated steel + opener)",
       "unit": "linft",
       "material": [
-        120,
-        175,
-        245
+        130.4348,
+        190.2174,
+        266.3043
       ],
       "labor": [
-        40,
-        55,
-        75
+        43.4783,
+        59.7826,
+        81.5217
       ],
       "source": "Judgment based on Boise garage door dealer typical pricing (16x7 insulated steel w/ opener ~$3,000-$4,500)",
       "url": null,
       "checked": "2026-10-14",
-      "note": "Per linear foot of door width. Includes belt-drive opener. Carriage-style/glass toward high."
+      "note": "Per linear foot of door width. Includes belt-drive opener. Carriage-style/glass toward high.",
+      "normalized": "Boise price divided by Boise's cost level (0.92) to give a US-average price."
     },
     "siding": {
       "label": "Fiber cement siding (painted)",
       "unit": "sqft",
       "material": [
-        3.8,
-        4.8,
-        6.8
+        4.1304,
+        5.2174,
+        7.3913
       ],
       "labor": [
-        4,
-        5.2,
-        7.2
+        4.3478,
+        5.6522,
+        7.8261
       ],
       "source": "HomeGuide Hardie board siding cost ($18-$30/sqft replacement incl tear-off, labor 50-65%) adjusted down for new construction",
       "url": "https://homeguide.com/costs/hardie-board-siding-cost",
       "checked": "2026-10-14",
-      "note": "Per sqft of wall. HardiePlank lap or panel + battens, primed and field-painted (or ColorPlus). New construction skips tear-off/prep, so well below HomeGuide replacement range. Lowered by about 25% after checking whole-house totals against published Boise cost per sq ft."
+      "note": "Per sqft of wall. HardiePlank lap or panel + battens, primed and field-painted (or ColorPlus). New construction skips tear-off/prep, so well below HomeGuide replacement range. Lowered by about 25% after checking whole-house totals against published Boise cost per sq ft.",
+      "normalized": "Boise price divided by Boise's cost level (0.92) to give a US-average price."
     },
     "ext-trim": {
       "label": "Exterior trim (soffit, fascia, corners)",
       "unit": "linft",
       "material": [
-        6,
-        9,
-        14
+        6.5217,
+        9.7826,
+        15.2174
       ],
       "labor": [
-        9,
-        13,
-        20
+        9.7826,
+        14.1304,
+        21.7391
       ],
       "source": "Judgment based on fiber cement/aluminum soffit-fascia pricing per lf of perimeter",
       "url": null,
       "checked": "2026-10-14",
-      "note": "Per linear foot of building perimeter. Vented soffit, fascia, corner boards, window trim allowance, paint. Lowered by about 25% after checking whole-house totals against published Boise cost per sq ft."
+      "note": "Per linear foot of building perimeter. Vented soffit, fascia, corner boards, window trim allowance, paint. Lowered by about 25% after checking whole-house totals against published Boise cost per sq ft.",
+      "normalized": "Boise price divided by Boise's cost level (0.92) to give a US-average price."
     },
     "wall-insulation": {
       "label": "Wall insulation R-21",
       "unit": "sqft",
       "material": [
-        0.7,
-        1,
-        1.4
+        0.7609,
+        1.087,
+        1.5217
       ],
       "labor": [
-        0.7,
-        1,
-        1.4
+        0.7609,
+        1.087,
+        1.5217
       ],
       "source": "Judgment based on insulation sub pricing (R-21 batts $1.40-$2.80/sqft installed)",
       "url": null,
       "checked": "2026-10-14",
-      "note": "Per sqft exterior wall. Fiberglass batts or BIBS; includes air sealing basics. Spray foam would be 2-3x."
+      "note": "Per sqft exterior wall. Fiberglass batts or BIBS; includes air sealing basics. Spray foam would be 2-3x.",
+      "normalized": "Boise price divided by Boise's cost level (0.92) to give a US-average price."
     },
     "attic-insulation": {
       "label": "Attic insulation R-49 blown",
       "unit": "sqft",
       "material": [
-        0.9,
-        1.2,
-        1.6
+        0.9783,
+        1.3043,
+        1.7391
       ],
       "labor": [
-        0.7,
-        1,
-        1.4
+        0.7609,
+        1.087,
+        1.5217
       ],
       "source": "Judgment based on insulation sub pricing",
       "url": null,
       "checked": "2026-10-14",
-      "note": "Per sqft of ceiling, blown fiberglass/cellulose ~14-16 in, baffles."
+      "note": "Per sqft of ceiling, blown fiberglass/cellulose ~14-16 in, baffles.",
+      "normalized": "Boise price divided by Boise's cost level (0.92) to give a US-average price."
     },
     "drywall": {
       "label": "Drywall (hang, tape, texture)",
       "unit": "sqft",
       "material": [
-        0.7,
-        0.95,
-        1.25
+        0.7609,
+        1.0326,
+        1.3587
       ],
       "labor": [
-        1.9,
-        2.55,
-        3.35
+        2.0652,
+        2.7717,
+        3.6413
       ],
       "source": "HomeGuide drywall installation cost ($1.50-$3.50/sqft hang+finish; texture +$0.80-$2.00)",
       "url": "https://homeguide.com/costs/drywall-installation-cost",
       "checked": "2026-10-14",
-      "note": "Per sqft of wall+ceiling surface. 1/2 in walls, 5/8 ceilings/garage firewall, Level 4, orange peel/knockdown typical in Boise. ~27/73 material/labor."
+      "note": "Per sqft of wall+ceiling surface. 1/2 in walls, 5/8 ceilings/garage firewall, Level 4, orange peel/knockdown typical in Boise. ~27/73 material/labor.",
+      "normalized": "Boise price divided by Boise's cost level (0.92) to give a US-average price."
     },
     "curved-wall-drywall": {
       "label": "Curved walls: extra drywall",
       "unit": "linft",
       "material": [
-        1.2,
-        2.4,
-        4.5
+        1.3043,
+        2.6087,
+        4.8913
       ],
       "labor": [
-        2.8,
-        5.6,
-        10.5
+        3.0435,
+        6.087,
+        11.413
       ],
       "source": "Judgment: no published curved-wall price; thin 1/4 in or 3/8 in flexible board, often two layers, plus slower labor, from HomeGuide drywall baselines",
       "url": "https://homeguide.com/costs/drywall-installation-cost",
       "checked": "2026-10-16",
-      "note": "Extra cost per foot of curved wall along the curve (both faces), added to the straight drywall rate. Ballpark: confirm with local bids."
+      "note": "Extra cost per foot of curved wall along the curve (both faces), added to the straight drywall rate. Ballpark: confirm with local bids.",
+      "normalized": "Boise price divided by Boise's cost level (0.92) to give a US-average price."
     },
     "plumbing-fixture-rough": {
       "label": "Plumbing lines per fixture",
       "unit": "each",
       "material": [
-        450,
-        700,
-        1000
+        489.1304,
+        760.8696,
+        1086.9565
       ],
       "labor": [
-        750,
-        1100,
-        1600
+        815.2174,
+        1195.6522,
+        1739.1304
       ],
       "source": "Judgment based on plumber per-fixture pricing in new construction (whole-house plumbing typically $15k-$30k for 2,400 sqft)",
       "url": null,
       "checked": "2026-10-14",
-      "note": "Supply (PEX), DWV, venting, gas piping share, and setting the fixture. Fixtures themselves in toilet/sink/shower lines."
+      "note": "Supply (PEX), DWV, venting, gas piping share, and setting the fixture. Fixtures themselves in toilet/sink/shower lines.",
+      "normalized": "Boise price divided by Boise's cost level (0.92) to give a US-average price."
     },
     "water-heater": {
       "label": "Water heater",
       "unit": "each",
       "material": [
-        1100,
-        1800,
-        3000
+        1195.6522,
+        1956.5217,
+        3260.8696
       ],
       "labor": [
-        700,
-        1000,
-        1500
+        760.8696,
+        1086.9565,
+        1630.4348
       ],
       "source": "Judgment based on retail 50 gal gas / tankless pricing + install",
       "url": null,
       "checked": "2026-10-14",
-      "note": "50 gal gas power-vent tank at low/likely; gas tankless or heat-pump water heater at high."
+      "note": "50 gal gas power-vent tank at low/likely; gas tankless or heat-pump water heater at high.",
+      "normalized": "Boise price divided by Boise's cost level (0.92) to give a US-average price."
     },
     "water-service": {
       "label": "Water service line to house",
       "unit": "each",
       "material": [
-        400,
-        800,
-        1500
+        434.7826,
+        869.5652,
+        1630.4348
       ],
       "labor": [
-        1100,
-        2200,
-        4000
+        1195.6522,
+        2391.3043,
+        4347.8261
       ],
       "source": "Judgment based on Veolia tariff (customer installs line from meter box to house) + plumber pricing",
       "url": null,
       "checked": "2026-10-14",
-      "note": "1 in PEX/poly from meter box to house, ~50-120 ft, incl. trench. Veolia furnishes and installs meter; customer owns meter-to-house line."
+      "note": "1 in PEX/poly from meter box to house, ~50-120 ft, incl. trench. Veolia furnishes and installs meter; customer owns meter-to-house line.",
+      "normalized": "Boise price divided by Boise's cost level (0.92) to give a US-average price."
     },
     "electrical": {
       "label": "Electrical (rough, devices, recessed lights)",
       "unit": "sqft",
       "material": [
-        2.4,
-        3.7,
-        5.4
+        2.6087,
+        4.0217,
+        5.8696
       ],
       "labor": [
-        3.5,
-        5,
-        6.5
+        3.8043,
+        5.4348,
+        7.0652
       ],
       "source": "HomeGuide electrical wiring cost (new construction $4-$9/sqft) plus mid-range lighting allowance",
       "url": "https://homeguide.com/costs/electrical-wiring-cost",
       "checked": "2026-10-14",
-      "note": "Per sqft finished floor. Includes AFCI/GFCI devices, low-voltage prewire basics and recessed lights. Decorative light fixtures are their own line (lighting-fixtures) since milestone 9."
+      "note": "Per sqft finished floor. Includes AFCI/GFCI devices, low-voltage prewire basics and recessed lights. Decorative light fixtures are their own line (lighting-fixtures) since milestone 9.",
+      "normalized": "Boise price divided by Boise's cost level (0.92) to give a US-average price."
     },
     "electrical-service": {
       "label": "Electrical panel and service (200 amp)",
       "unit": "each",
       "material": [
-        1600,
-        2500,
-        3800
+        1739.1304,
+        2717.3913,
+        4130.4348
       ],
       "labor": [
-        1900,
-        3000,
-        4700
+        2065.2174,
+        3260.8696,
+        5108.6957
       ],
       "source": "Judgment based on HomeGuide panel ($850-$2,500) and upgrade ($1,400-$2,800) figures plus underground service lateral",
       "url": "https://homeguide.com/costs/electrical-wiring-cost",
       "checked": "2026-10-14",
-      "note": "200A meter-main, panel, grounding, ~50-100 ft underground conductor. Idaho Power line-extension charges (if any) excluded."
+      "note": "200A meter-main, panel, grounding, ~50-100 ft underground conductor. Idaho Power line-extension charges (if any) excluded.",
+      "normalized": "Boise price divided by Boise's cost level (0.92) to give a US-average price."
     },
     "lighting-fixtures": {
       "label": "Light fixtures (mid-range)",
       "unit": "each",
       "material": [
-        60,
-        120,
-        280
+        65.2174,
+        130.4348,
+        304.3478
       ],
       "labor": [
-        40,
-        65,
-        100
+        43.4783,
+        70.6522,
+        108.6957
       ],
       "source": "Judgment: mid-range pendants, flush mounts and vanity lights at Home Depot/Lowe's run about $60-$300; electrician hangs one in about an hour",
       "url": null,
       "checked": "2026-10-15",
-      "note": "Each decorative ceiling or wall light (pendants, chandeliers, vanity lights, flush mounts). Moved out of the electrical rate in milestone 9 (about $1.20/sqft taken off electrical)."
+      "note": "Each decorative ceiling or wall light (pendants, chandeliers, vanity lights, flush mounts). Moved out of the electrical rate in milestone 9 (about $1.20/sqft taken off electrical).",
+      "normalized": "Boise price divided by Boise's cost level (0.92) to give a US-average price."
     },
     "hvac": {
       "label": "Heating and cooling (furnace, AC or heat pump, ducts)",
       "unit": "sqft",
       "material": [
-        3.8,
-        5.3,
-        7.5
+        4.1304,
+        5.7609,
+        8.1522
       ],
       "labor": [
-        3.7,
-        5.2,
-        7.5
+        4.0217,
+        5.6522,
+        8.1522
       ],
       "source": "Judgment based on Boise new-construction HVAC bids; HomeGuide's $1.75-$2.50/sqft new-construction figure is far below current local practice",
       "url": "https://homeguide.com/costs/hvac-cost",
       "checked": "2026-10-14",
-      "note": "Per sqft conditioned. 96% gas furnace + 2.5-4 ton AC or cold-climate heat pump, sealed ductwork, bath/kitchen exhaust, ERV not included. Boise: 5,700+ HDD and hot dry summers."
+      "note": "Per sqft conditioned. 96% gas furnace + 2.5-4 ton AC or cold-climate heat pump, sealed ductwork, bath/kitchen exhaust, ERV not included. Boise: 5,700+ HDD and hot dry summers.",
+      "normalized": "Boise price divided by Boise's cost level (0.92) to give a US-average price."
     },
     "flooring": {
       "label": "Flooring (blended LVP/carpet/eng. wood)",
       "unit": "sqft",
       "material": [
-        3.5,
-        5.3,
-        7.8
+        3.8043,
+        5.7609,
+        8.4783
       ],
       "labor": [
-        2.5,
-        3.7,
-        5.2
+        2.7174,
+        4.0217,
+        5.6522
       ],
       "source": "Judgment based on blended mid-range LVP ($6-$9 inst), carpet ($4-$7), engineered wood ($9-$14) allowance",
       "url": null,
       "checked": "2026-10-14",
-      "note": "Per sqft of floor that gets these finishes (excl. tiled areas). Mix ~60% LVP/hard, 40% carpet."
+      "note": "Per sqft of floor that gets these finishes (excl. tiled areas). Mix ~60% LVP/hard, 40% carpet.",
+      "normalized": "Boise price divided by Boise's cost level (0.92) to give a US-average price."
     },
     "tile": {
       "label": "Tile (floors + shower walls)",
       "unit": "sqft",
       "material": [
-        5,
-        8,
-        12
+        5.4348,
+        8.6957,
+        13.0435
       ],
       "labor": [
-        11,
-        16,
-        23
+        11.9565,
+        17.3913,
+        25
       ],
       "source": "Judgment based on tile installer pricing in Boise, porcelain mid-range",
       "url": null,
       "checked": "2026-10-14",
-      "note": "Porcelain tile on backer/membrane (Schluter-type for showers), grout, trim. Shower walls are labor-heavy."
+      "note": "Porcelain tile on backer/membrane (Schluter-type for showers), grout, trim. Shower walls are labor-heavy.",
+      "normalized": "Boise price divided by Boise's cost level (0.92) to give a US-average price."
     },
     "interior-paint": {
       "label": "Interior paint",
       "unit": "sqft",
       "material": [
-        0.6,
-        0.85,
-        1.2
+        0.6522,
+        0.9239,
+        1.3043
       ],
       "labor": [
-        2.4,
-        3.4,
-        4.8
+        2.6087,
+        3.6957,
+        5.2174
       ],
       "source": "Judgment based on new-construction paint sub pricing per sqft of floor",
       "url": null,
       "checked": "2026-10-14",
-      "note": "Per sqft of floor area: walls, ceilings, doors and trim, 1 prime + 2 finish coats."
+      "note": "Per sqft of floor area: walls, ceilings, doors and trim, 1 prime + 2 finish coats.",
+      "normalized": "Boise price divided by Boise's cost level (0.92) to give a US-average price."
     },
     "trim-millwork": {
       "label": "Trim, closet shelves and millwork",
       "unit": "sqft",
       "material": [
-        1.6,
-        2.5,
-        3.9
+        1.7391,
+        2.7174,
+        4.2391
       ],
       "labor": [
-        1.9,
-        3,
-        4.6
+        2.0652,
+        3.2609,
+        5
       ],
       "source": "Judgment based on finish carpentry package pricing per sqft of floor",
       "url": null,
       "checked": "2026-10-14",
-      "note": "MDF/paint-grade baseboard and casing, window sills/returns, wire or melamine closet shelving."
+      "note": "MDF/paint-grade baseboard and casing, window sills/returns, wire or melamine closet shelving.",
+      "normalized": "Boise price divided by Boise's cost level (0.92) to give a US-average price."
     },
     "kitchen-cabinets": {
       "label": "Kitchen cabinets (mid-range)",
       "unit": "linft",
       "material": [
-        320,
-        480,
-        720
+        347.8261,
+        521.7391,
+        782.6087
       ],
       "labor": [
-        80,
-        120,
-        180
+        86.9565,
+        130.4348,
+        195.6522
       ],
       "source": "HomeGuide kitchen cabinets cost (semi-custom $150-$700/lf installed; install $75-$150/lf)",
       "url": "https://homeguide.com/costs/kitchen-cabinets-cost",
       "checked": "2026-10-14",
-      "note": "Per linear foot of run with base + uppers (semi-custom, plywood boxes, soft-close). Islands count by base length."
+      "note": "Per linear foot of run with base + uppers (semi-custom, plywood boxes, soft-close). Islands count by base length.",
+      "normalized": "Boise price divided by Boise's cost level (0.92) to give a US-average price."
     },
     "countertops": {
       "label": "Quartz countertops",
       "unit": "sqft",
       "material": [
-        50,
-        67,
-        90
+        54.3478,
+        72.8261,
+        97.8261
       ],
       "labor": [
-        15,
-        18,
-        25
+        16.3043,
+        19.5652,
+        27.1739
       ],
       "source": "HomeGuide quartz countertops cost (mid-quality $75-$110/sqft installed; labor $10-$30)",
       "url": "https://homeguide.com/costs/quartz-countertops-cost",
       "checked": "2026-10-14",
-      "note": "Mid-range quartz, eased edge, undermount sink cutout. Backsplash separate (tile)."
+      "note": "Mid-range quartz, eased edge, undermount sink cutout. Backsplash separate (tile).",
+      "normalized": "Boise price divided by Boise's cost level (0.92) to give a US-average price."
     },
     "cabinet-hardware": {
       "label": "Cabinet pulls and knobs",
       "unit": "each",
       "material": [
-        3,
-        8,
-        18
+        3.2609,
+        8.6957,
+        19.5652
       ],
       "labor": [
-        2,
-        3,
-        4
+        2.1739,
+        3.2609,
+        4.3478
       ],
       "source": "Judgment: mid-range pulls (Amerock, Liberty) run about $3-$18 each; installer time a few minutes each",
       "url": null,
       "checked": "2026-10-15",
-      "note": "About 1.5 per linear foot of kitchen cabinets and 4 per bath vanity."
+      "note": "About 1.5 per linear foot of kitchen cabinets and 4 per bath vanity.",
+      "normalized": "Boise price divided by Boise's cost level (0.92) to give a US-average price."
     },
     "vanity": {
       "label": "Bath vanity with top",
       "unit": "each",
       "material": [
-        700,
-        1300,
-        2350
+        760.8696,
+        1413.0435,
+        2554.3478
       ],
       "labor": [
-        200,
-        300,
-        450
+        217.3913,
+        326.087,
+        489.1304
       ],
       "source": "Judgment based on retail/semi-custom vanity pricing",
       "url": null,
       "checked": "2026-10-14",
-      "note": "36-48 in vanity with quartz/cultured top and undermount sink(s) included; faucet in bath-sink-faucet."
+      "note": "36-48 in vanity with quartz/cultured top and undermount sink(s) included; faucet in bath-sink-faucet.",
+      "normalized": "Boise price divided by Boise's cost level (0.92) to give a US-average price."
     },
     "toilet": {
       "label": "Toilet",
       "unit": "each",
       "material": [
-        300,
-        500,
-        850
+        326.087,
+        543.4783,
+        923.913
       ],
       "labor": [
-        150,
-        200,
-        250
+        163.0435,
+        217.3913,
+        271.7391
       ],
       "source": "Judgment based on retail pricing (Toto/Kohler/American Standard mid-line) + set",
       "url": null,
       "checked": "2026-10-14",
-      "note": "Elongated, comfort height, soft-close seat."
+      "note": "Elongated, comfort height, soft-close seat.",
+      "normalized": "Boise price divided by Boise's cost level (0.92) to give a US-average price."
     },
     "bath-sink-faucet": {
       "label": "Bath faucet + drain",
       "unit": "each",
       "material": [
-        180,
-        330,
-        600
+        195.6522,
+        358.6957,
+        652.1739
       ],
       "labor": [
-        70,
-        120,
-        200
+        76.087,
+        130.4348,
+        217.3913
       ],
       "source": "Judgment based on retail Moen/Delta mid-line pricing",
       "url": null,
       "checked": "2026-10-14",
-      "note": "Faucet, pop-up drain, supplies. Sink bowl included with vanity top."
+      "note": "Faucet, pop-up drain, supplies. Sink bowl included with vanity top.",
+      "normalized": "Boise price divided by Boise's cost level (0.92) to give a US-average price."
     },
     "shower-tub": {
       "label": "Tub/shower or shower (valve + trim)",
       "unit": "each",
       "material": [
-        1100,
-        2000,
-        3500
+        1195.6522,
+        2173.913,
+        3804.3478
       ],
       "labor": [
-        900,
-        1500,
-        2500
+        978.2609,
+        1630.4348,
+        2717.3913
       ],
       "source": "Judgment based on retail tub/pan + valve pricing",
       "url": null,
       "checked": "2026-10-14",
-      "note": "Alloy/acrylic tub or shower pan, pressure-balance valve and trim, glass door/curtain rod allowance. Tile walls in 'tile'."
+      "note": "Alloy/acrylic tub or shower pan, pressure-balance valve and trim, glass door/curtain rod allowance. Tile walls in 'tile'.",
+      "normalized": "Boise price divided by Boise's cost level (0.92) to give a US-average price."
     },
     "kitchen-sink-faucet": {
       "label": "Kitchen sink + faucet",
       "unit": "each",
       "material": [
-        500,
-        900,
-        1500
+        543.4783,
+        978.2609,
+        1630.4348
       ],
       "labor": [
-        200,
-        300,
-        500
+        217.3913,
+        326.087,
+        543.4783
       ],
       "source": "Judgment based on retail pricing",
       "url": null,
       "checked": "2026-10-14",
-      "note": "Stainless undermount or composite sink, pull-down faucet, disposal."
+      "note": "Stainless undermount or composite sink, pull-down faucet, disposal.",
+      "normalized": "Boise price divided by Boise's cost level (0.92) to give a US-average price."
     },
     "appliance-package": {
       "label": "Appliance package (mid-range)",
       "unit": "each",
       "material": [
-        6000,
-        9000,
-        14000
+        6521.7391,
+        9782.6087,
+        15217.3913
       ],
       "labor": [
-        300,
-        500,
-        900
+        326.087,
+        543.4783,
+        978.2609
       ],
       "source": "Judgment based on retail pricing for mid-range Whirlpool/GE/LG/Bosch suites",
       "url": null,
       "checked": "2026-10-14",
-      "note": "Range (gas or induction), fridge, dishwasher, microwave, vented hood. Labor = delivery/hookup."
+      "note": "Range (gas or induction), fridge, dishwasher, microwave, vented hood. Labor = delivery/hookup.",
+      "normalized": "Boise price divided by Boise's cost level (0.92) to give a US-average price."
     },
     "laundry-hookup": {
       "label": "Laundry hookup",
       "unit": "each",
       "material": [
-        120,
-        200,
-        320
+        130.4348,
+        217.3913,
+        347.8261
       ],
       "labor": [
-        280,
-        500,
-        780
+        304.3478,
+        543.4783,
+        847.8261
       ],
       "source": "Judgment based on plumber/electrician pricing",
       "url": null,
       "checked": "2026-10-14",
-      "note": "Washer box, drain, 240V dryer circuit or gas stub, dryer vent run. Appliances not included."
+      "note": "Washer box, drain, 240V dryer circuit or gas stub, dryer vent run. Appliances not included.",
+      "normalized": "Boise price divided by Boise's cost level (0.92) to give a US-average price."
     },
     "sewer-connection": {
       "label": "Boise sewer connection fee",
       "unit": "each",
       "material": [
-        5100,
-        6200,
-        12000
+        5543.4783,
+        6739.1304,
+        13043.4783
       ],
       "labor": [
         0,
@@ -1152,15 +1215,16 @@
       "source": "City of Boise Public Works connection fee memo (treatment + trunk fees phased in FY2025-FY2027)",
       "url": "https://www.cityofboise.org/media/18851/council-memo-connection-fee-memo-final-05_24-v2-1.pdf",
       "checked": "2026-10-14",
-      "note": "Fees only (material column = fee, labor 0). FY2027 (from 10/1/2026) estimate: $5,133 for 701-2,100 sqft low-density SFR; >2,800 sqft ~$7,357; 'likely' interpolated for ~2,400 sqft. High includes a sewer assessment fee for lots never previously assessed. Lateral install is in utility-trench/plumbing. FY2027 numbers were 'estimates to be re-evaluated' in the memo; verify with Boise Sewer Rating 208-608-7150."
+      "note": "Fees only (material column = fee, labor 0). FY2027 (from 10/1/2026) estimate: $5,133 for 701-2,100 sqft low-density SFR; >2,800 sqft ~$7,357; 'likely' interpolated for ~2,400 sqft. High includes a sewer assessment fee for lots never previously assessed. Lateral install is in utility-trench/plumbing. FY2027 numbers were 'estimates to be re-evaluated' in the memo; verify with Boise Sewer Rating 208-608-7150.",
+      "normalized": "Boise price divided by Boise's cost level (0.92) to give a US-average price."
     },
     "water-connection": {
       "label": "Veolia water connection",
       "unit": "each",
       "material": [
         0,
-        500,
-        6000
+        543.4783,
+        6521.7391
       ],
       "labor": [
         0,
@@ -1170,51 +1234,54 @@
       "source": "Veolia Water Idaho tariff on file with Idaho PUC (eff. 6/1/2025)",
       "url": "https://puc.idaho.gov:443/Fileroom/PublicFiles/WATER/VEO/General/0Tariff/Veolia Water Idaho Inc.pdf",
       "checked": "2026-10-14",
-      "note": "Tariff shows no tap/meter hookup fee for a lot fronting an existing main: Veolia furnishes meter and service to meter box; connection in business hours is free. Cost arises only when a main extension is needed (applicant deposits cost minus $500 free footage). Low=$0 subdivision lot; likely=small allowance; high=short main extension. Judgment for likely/high."
+      "note": "Tariff shows no tap/meter hookup fee for a lot fronting an existing main: Veolia furnishes meter and service to meter box; connection in business hours is free. Cost arises only when a main extension is needed (applicant deposits cost minus $500 free footage). Low=$0 subdivision lot; likely=small allowance; high=short main extension. Judgment for likely/high.",
+      "normalized": "Boise price divided by Boise's cost level (0.92) to give a US-average price."
     },
     "well": {
       "label": "Well (200 to 300 ft, with pump)",
       "unit": "each",
       "material": [
-        7000,
-        11000,
-        18000
+        7608.6957,
+        11956.5217,
+        19565.2174
       ],
       "labor": [
-        11000,
-        17000,
-        27000
+        11956.5217,
+        18478.2609,
+        29347.8261
       ],
       "source": "Judgment based on askdoss Idaho well cost guide (Treasure Valley $30-$55/ft drilling, pump $800-$3,000) scaled to 200-300 ft with 6 in steel casing, pressure tank, wiring",
       "url": "https://askdoss.com/how-much-does-a-well-water-system-cost-in-idaho-in-2026/",
       "checked": "2026-10-14",
-      "note": "Total ~$18k-$45k. Includes drilling, casing, seal, submersible pump, pressure tank, wire, pitless adapter, IDWR start card. Water treatment excluded."
+      "note": "Total ~$18k-$45k. Includes drilling, casing, seal, submersible pump, pressure tank, wire, pitless adapter, IDWR start card. Water treatment excluded.",
+      "normalized": "Boise price divided by Boise's cost level (0.92) to give a US-average price."
     },
     "septic": {
       "label": "Septic system (with health district permit)",
       "unit": "each",
       "material": [
-        5000,
-        7500,
-        12000
+        5434.7826,
+        8152.1739,
+        13043.4783
       ],
       "labor": [
-        7000,
-        10500,
-        18000
+        7608.6957,
+        11413.0435,
+        19565.2174
       ],
       "source": "Judgment based on CDH fee page (new permit $1,070 incl. test hole, July 2026) + Ada County installer pricing; HomeGuide's national $3,500-$8,500 conventional range is low for new Idaho installs",
       "url": "https://cdh.idaho.gov/environmental-health/water-wastewater-septic/septic-applications-fees-resources/",
       "checked": "2026-10-14",
-      "note": "Standard gravity system, 1,000-1,250 gal tank, drainfield. CDH permit $1,070 included in material. Pressure/alternative systems (common on shallow-groundwater or rocky Ada County lots) run $25k-$45k."
+      "note": "Standard gravity system, 1,000-1,250 gal tank, drainfield. CDH permit $1,070 included in material. Pressure/alternative systems (common on shallow-groundwater or rocky Ada County lots) run $25k-$45k.",
+      "normalized": "Boise price divided by Boise's cost level (0.92) to give a US-average price."
     },
     "impact-fees": {
       "label": "Impact fees (roads, parks, fire, police)",
       "unit": "each",
       "material": [
-        10100,
-        17600,
-        22100
+        10978.2609,
+        19130.4348,
+        24021.7391
       ],
       "labor": [
         0,
@@ -1224,15 +1291,16 @@
       "source": "City of Boise FY2026 impact fee schedule (eff. 10/1/2026); ACHD adopted single-area fee via BoiseDev",
       "url": "https://www.cityofboise.org/media/20458/fy-2026-impact-fee-schedule_final.pdf",
       "checked": "2026-10-14",
-      "note": "Within Boise city limits: fees scale by house size and planning area, +1% surcharge. 2,101-2,800 sqft: regional parks $2,296.88 + local parks $0-$6,683.62 (West Bench $5,900.55) + fire $2,744.50 + police $715.14. ACHD $5,803/SFR (eff. 3/1/2026, https://boisedev.com/news/2025/12/08/achd-impact-fees-raise-errors-one-service-area/). Low = ~1,500-2,100 sqft in Airport/Downtown (no local parks fee); likely = 2,400 sqft West Bench; high = >2,800 sqft South. Area of City Impact (unincorporated) is only ~$1,179 parks + ACHD. Other cities (Meridian, Eagle) differ."
+      "note": "Within Boise city limits: fees scale by house size and planning area, +1% surcharge. 2,101-2,800 sqft: regional parks $2,296.88 + local parks $0-$6,683.62 (West Bench $5,900.55) + fire $2,744.50 + police $715.14. ACHD $5,803/SFR (eff. 3/1/2026, https://boisedev.com/news/2025/12/08/achd-impact-fees-raise-errors-one-service-area/). Low = ~1,500-2,100 sqft in Airport/Downtown (no local parks fee); likely = 2,400 sqft West Bench; high = >2,800 sqft South. Area of City Impact (unincorporated) is only ~$1,179 parks + ACHD. Other cities (Meridian, Eagle) differ.",
+      "normalized": "Boise price divided by Boise's cost level (0.92) to give a US-average price."
     },
     "trade-permits": {
       "label": "Electrical, plumbing and mechanical permits",
       "unit": "each",
       "material": [
-        400,
-        600,
-        900
+        434.7826,
+        652.1739,
+        978.2609
       ],
       "labor": [
         0,
@@ -1242,547 +1310,578 @@
       "source": "Boise City plumbing, electrical (7/17/19) and mechanical (10/1/21) code fee schedules",
       "url": "https://www.cityofboise.org/media/4308/plumbing-fees.pdf",
       "checked": "2026-10-14",
-      "note": "Flat per-dwelling by sqft: plumbing $180 (1,501-2,500) / $250 (2,501-3,500); mechanical same; electrical $135 (<=2,500) / $155. ~$495-$655 for 1,500-3,500 sqft. Schedules are several years old; range padded for updates. Electrical: https://www.cityofboise.org/media/8322/final-electrical-code-fee-schedule-7-17-19.pdf ; Mechanical: https://www.cityofboise.org/media/8323/final-mechanical-code-and-fuel-gas-code-fee-schedule-10-1-21.pdf"
+      "note": "Flat per-dwelling by sqft: plumbing $180 (1,501-2,500) / $250 (2,501-3,500); mechanical same; electrical $135 (<=2,500) / $155. ~$495-$655 for 1,500-3,500 sqft. Schedules are several years old; range padded for updates. Electrical: https://www.cityofboise.org/media/8322/final-electrical-code-fee-schedule-7-17-19.pdf ; Mechanical: https://www.cityofboise.org/media/8323/final-mechanical-code-and-fuel-gas-code-fee-schedule-10-1-21.pdf",
+      "normalized": "Boise price divided by Boise's cost level (0.92) to give a US-average price."
     },
     "roof-metal": {
       "label": "Standing-seam metal roof",
       "unit": "sqft",
       "material": [
-        5.5,
-        7,
-        9
+        5.9783,
+        7.6087,
+        9.7826
       ],
       "labor": [
-        5,
-        6.5,
-        8.5
+        5.4348,
+        7.0652,
+        9.2391
       ],
       "source": "Roof Observations standing seam cost guide 2026 (steel $12.75/sq ft basic, $15.90 Kynar, installed)",
       "url": "https://roofobservations.com/standing-seam-metal-roof-cost-guide/",
       "checked": "2026-10-15",
-      "note": "Painted steel panels with clips, underlayment, trim and flashing. Split about 52/48 material/labor (judgment; the guide gives installed totals only). Used when a metal roof is picked."
+      "note": "Painted steel panels with clips, underlayment, trim and flashing. Split about 52/48 material/labor (judgment; the guide gives installed totals only). Used when a metal roof is picked.",
+      "normalized": "Boise price divided by Boise's cost level (0.92) to give a US-average price."
     },
     "siding-stucco": {
       "label": "Stucco (three-coat)",
       "unit": "sqft",
       "material": [
-        3,
-        4.5,
-        6.5
+        3.2609,
+        4.8913,
+        7.0652
       ],
       "labor": [
-        6,
-        8.5,
-        11
+        6.5217,
+        9.2391,
+        11.9565
       ],
       "source": "Bob Vila stucco vs siding cost (stucco averages $14.50/sq ft installed)",
       "url": "https://www.bobvila.com/articles/cost-of-stucco-vs-siding/",
       "checked": "2026-10-15",
-      "note": "Lath, scratch, brown and finish coats over house wrap. Mostly labor; split is judgment. Used when stucco siding is picked."
+      "note": "Lath, scratch, brown and finish coats over house wrap. Mostly labor; split is judgment. Used when stucco siding is picked.",
+      "normalized": "Boise price divided by Boise's cost level (0.92) to give a US-average price."
     },
     "siding-brick": {
       "label": "Brick veneer",
       "unit": "sqft",
       "material": [
-        5,
-        7,
-        10
+        5.4348,
+        7.6087,
+        10.8696
       ],
       "labor": [
-        8,
-        11,
-        15
+        8.6957,
+        11.9565,
+        16.3043
       ],
       "source": "HomeServe stone veneer siding cost (citing HomeGuide: $10-$45/sq ft installed) and Bob Vila brick veneer notes",
       "url": "https://www.homeserve.com/en-us/blog/cost-guide/stone-veneer-siding/",
       "checked": "2026-10-15",
-      "note": "Full-size brick on a ledge with ties, weep screed and mortar. Judgment within the masonry veneer ranges; brick is laid by a mason, so labor is over half. Used when brick siding is picked."
+      "note": "Full-size brick on a ledge with ties, weep screed and mortar. Judgment within the masonry veneer ranges; brick is laid by a mason, so labor is over half. Used when brick siding is picked.",
+      "normalized": "Boise price divided by Boise's cost level (0.92) to give a US-average price."
     },
     "stone-veneer": {
       "label": "Stone or thin brick veneer",
       "unit": "sqft",
       "material": [
-        4,
-        8,
-        14
+        4.3478,
+        8.6957,
+        15.2174
       ],
       "labor": [
-        6,
-        10,
-        16
+        6.5217,
+        10.8696,
+        17.3913
       ],
       "source": "HomeServe stone veneer siding cost (citing HomeGuide: materials $4-$21, labor $6-$24 per sq ft)",
       "url": "https://www.homeserve.com/en-us/blog/cost-guide/stone-veneer-siding/",
       "checked": "2026-10-15",
-      "note": "Manufactured stone or thin brick over lath and scratch coat. Used for a stone or brick accent."
+      "note": "Manufactured stone or thin brick over lath and scratch coat. Used for a stone or brick accent.",
+      "normalized": "Boise price divided by Boise's cost level (0.92) to give a US-average price."
     },
     "pavers": {
       "label": "Paver patio or walk",
       "unit": "sqft",
       "material": [
-        4,
-        6,
-        10
+        4.3478,
+        6.5217,
+        10.8696
       ],
       "labor": [
-        4,
-        6,
-        10
+        4.3478,
+        6.5217,
+        10.8696
       ],
       "source": "Bob Vila paver patio cost ($8-$25/sq ft installed, labor about half)",
       "url": "https://www.bobvila.com/articles/paver-patio-cost/",
       "checked": "2026-10-15",
-      "note": "Concrete pavers on compacted gravel and sand with edge restraint. Used when pavers are picked for the patio or the front walk."
+      "note": "Concrete pavers on compacted gravel and sand with edge restraint. Used when pavers are picked for the patio or the front walk.",
+      "normalized": "Boise price divided by Boise's cost level (0.92) to give a US-average price."
     },
     "front-walk": {
       "label": "Concrete front walk",
       "unit": "sqft",
       "material": [
-        3,
-        4,
-        5.5
+        3.2609,
+        4.3478,
+        5.9783
       ],
       "labor": [
-        3,
-        4.5,
-        6
+        3.2609,
+        4.8913,
+        6.5217
       ],
       "source": "HomeGuide concrete slab cost (walkways about $6-$12/sq ft installed)",
       "url": "https://homeguide.com/costs/concrete-slab-cost",
       "checked": "2026-10-15",
-      "note": "4 in broom-finish concrete on gravel, from the front door to the driveway. Judgment based on the driveway rate; walks are narrower so labor runs a little higher."
+      "note": "4 in broom-finish concrete on gravel, from the front door to the driveway. Judgment based on the driveway rate; walks are narrower so labor runs a little higher.",
+      "normalized": "Boise price divided by Boise's cost level (0.92) to give a US-average price."
     },
     "driveway-pavers": {
       "label": "Paver driveway",
       "unit": "sqft",
       "material": [
-        5,
-        7,
-        11
+        5.4348,
+        7.6087,
+        11.9565
       ],
       "labor": [
-        5,
-        7.5,
-        11
+        5.4348,
+        8.1522,
+        11.9565
       ],
       "source": "Bob Vila paver patio cost ($8-$25/sq ft installed), raised for a driveway's deeper base",
       "url": "https://www.bobvila.com/articles/paver-patio-cost/",
       "checked": "2026-10-15",
-      "note": "Driveway-rated pavers (80 mm) on about 8 in of compacted base. Judgment: patio rates plus about 20% for the thicker base. Used when driveway pavers are picked."
+      "note": "Driveway-rated pavers (80 mm) on about 8 in of compacted base. Judgment: patio rates plus about 20% for the thicker base. Used when driveway pavers are picked.",
+      "normalized": "Boise price divided by Boise's cost level (0.92) to give a US-average price."
     },
     "driveway-gravel": {
       "label": "Gravel driveway",
       "unit": "sqft",
       "material": [
-        1,
-        1.6,
-        2.5
+        1.087,
+        1.7391,
+        2.7174
       ],
       "labor": [
-        0.5,
-        1,
-        2
+        0.5435,
+        1.087,
+        2.1739
       ],
       "source": "HomeServe gravel driveway cost ($1.25-$3/sq ft installed)",
       "url": "https://homeserve.com/en-us/blog/cost-guide/gravel-driveway",
       "checked": "2026-10-15",
-      "note": "About 4 in of crushed rock over a graded base and fabric. Used when gravel is picked for the driveway."
+      "note": "About 4 in of crushed rock over a graded base and fabric. Used when gravel is picked for the driveway.",
+      "normalized": "Boise price divided by Boise's cost level (0.92) to give a US-average price."
     },
     "lawn": {
       "label": "Lawn (sod and sprinklers)",
       "unit": "sqft",
       "material": [
-        0.6,
-        0.95,
-        1.4
+        0.6522,
+        1.0326,
+        1.5217
       ],
       "labor": [
-        1,
-        1.5,
-        2.2
+        1.087,
+        1.6304,
+        2.3913
       ],
       "source": "HomeServe sod installation cost (sod $0.31-$0.82/sq ft, install and soil prep $1-$2/sq ft); sprinkler parts are judgment",
       "url": "https://homeserve.com/en-us/blog/cost-guide/sod-installation",
       "checked": "2026-10-15",
-      "note": "Soil prep, sod and an in-ground sprinkler system (needed in Boise's dry summers). The sod is about half the material; a seed or sod pick replaces that half."
+      "note": "Soil prep, sod and an in-ground sprinkler system (needed in Boise's dry summers). The sod is about half the material; a seed or sod pick replaces that half.",
+      "normalized": "Boise price divided by Boise's cost level (0.92) to give a US-average price."
     },
     "planting-beds": {
       "label": "Planting beds (mulch, edging, drip)",
       "unit": "sqft",
       "material": [
-        1,
-        1.5,
-        2.5
+        1.087,
+        1.6304,
+        2.7174
       ],
       "labor": [
-        1.5,
-        2.5,
-        3.5
+        1.6304,
+        2.7174,
+        3.8043
       ],
       "source": "Judgment based on landscaping cost guides (mulch about $0.50-$1/sq ft installed, plus edging and drip lines)",
       "url": null,
       "checked": "2026-10-15",
-      "note": "Beds about 4 ft deep along the house: soil, edging, drip irrigation and 3 in of bark or rock mulch. A mulch pick replaces the mulch part (about 40%)."
+      "note": "Beds about 4 ft deep along the house: soil, edging, drip irrigation and 3 in of bark or rock mulch. A mulch pick replaces the mulch part (about 40%).",
+      "normalized": "Boise price divided by Boise's cost level (0.92) to give a US-average price."
     },
     "shrub": {
       "label": "Shrubs (3 or 5 gallon)",
       "unit": "each",
       "material": [
-        20,
-        35,
-        60
+        21.7391,
+        38.0435,
+        65.2174
       ],
       "labor": [
-        15,
-        25,
-        40
+        16.3043,
+        27.1739,
+        43.4783
       ],
       "source": "Bob Vila cost to plant a tree (shrub planting averages about $40)",
       "url": "https://www.bobvila.com/articles/cost-to-plant-a-tree/",
       "checked": "2026-10-15",
-      "note": "One shrub every 6 ft or so along the beds. A shrub pick replaces the plant price."
+      "note": "One shrub every 6 ft or so along the beds. A shrub pick replaces the plant price.",
+      "normalized": "Boise price divided by Boise's cost level (0.92) to give a US-average price."
     },
     "tree": {
       "label": "Trees (15 gallon)",
       "unit": "each",
       "material": [
-        120,
-        180,
-        300
+        130.4348,
+        195.6522,
+        326.087
       ],
       "labor": [
-        60,
-        80,
-        130
+        65.2174,
+        86.9565,
+        141.3043
       ],
       "source": "Bob Vila cost to plant a tree (a tree up to 10 ft about $255 planted, labor about 30%)",
       "url": "https://www.bobvila.com/articles/cost-to-plant-a-tree/",
       "checked": "2026-10-15",
-      "note": "About four trees, front and back. A tree pick replaces the tree price."
+      "note": "About four trees, front and back. A tree pick replaces the tree price.",
+      "normalized": "Boise price divided by Boise's cost level (0.92) to give a US-average price."
     },
     "exterior-lights": {
       "label": "Outdoor wall lights",
       "unit": "each",
       "material": [
-        60,
-        120,
-        250
+        65.2174,
+        130.4348,
+        271.7391
       ],
       "labor": [
-        60,
-        90,
-        130
+        65.2174,
+        97.8261,
+        141.3043
       ],
       "source": "Judgment based on light fixture installation cost guides (a fixture hung on an existing box is about $60-$130 of electrician time)",
       "url": null,
       "checked": "2026-10-15",
-      "note": "One light by each outside door and one each side of a garage door. The wiring is in the electrical line."
+      "note": "One light by each outside door and one each side of a garage door. The wiring is in the electrical line.",
+      "normalized": "Boise price divided by Boise's cost level (0.92) to give a US-average price."
     },
     "built-in-cabinetry": {
       "label": "Built-ins (bookcase, desk, bench, window seat, lockers)",
       "unit": "linft",
       "material": [
-        110,
-        210,
-        330
+        119.5652,
+        228.2609,
+        358.6957
       ],
       "labor": [
-        90,
-        170,
-        270
+        97.8261,
+        184.7826,
+        293.4783
       ],
       "source": "Angi built-in cabinets cost ($200-$600/lf installed; split 55/45 material/labor by judgment)",
       "url": "https://angi.com/articles/built-in-cabinets-cost.htm",
       "checked": "2026-10-16",
-      "note": "Per linear foot along the wall of each built-in placed in Furnish."
+      "note": "Per linear foot along the wall of each built-in placed in Furnish.",
+      "normalized": "Boise price divided by Boise's cost level (0.92) to give a US-average price."
     },
     "wall-shelving": {
       "label": "Wall shelves",
       "unit": "linft",
       "material": [
-        10,
-        25,
-        60
+        10.8696,
+        27.1739,
+        65.2174
       ],
       "labor": [
-        12,
-        25,
-        50
+        13.0435,
+        27.1739,
+        54.3478
       ],
       "source": "Estimate: no Boise price found, based on typical Mountain West installed prices (Boise runs about national average)",
       "url": null,
       "checked": "2026-10-16",
-      "note": "Per linear foot of shelf placed in Furnish."
+      "note": "Per linear foot of shelf placed in Furnish.",
+      "normalized": "Boise price divided by Boise's cost level (0.92) to give a US-average price."
     },
     "ceiling-fan": {
       "label": "Ceiling fan",
       "unit": "each",
       "material": [
-        100,
-        250,
-        600
+        108.6957,
+        271.7391,
+        652.1739
       ],
       "labor": [
-        150,
-        250,
-        400
+        163.0435,
+        271.7391,
+        434.7826
       ],
       "source": "Estimate: no Boise price found, based on typical Mountain West installed prices (Boise runs about national average)",
       "url": null,
       "checked": "2026-10-16",
-      "note": "Fan, fan-rated box and wiring."
+      "note": "Fan, fan-rated box and wiring.",
+      "normalized": "Boise price divided by Boise's cost level (0.92) to give a US-average price."
     },
     "bath-accessory": {
       "label": "Mirror and bath accessories",
       "unit": "each",
       "material": [
-        15,
-        40,
-        100
+        16.3043,
+        43.4783,
+        108.6957
       ],
       "labor": [
-        15,
-        30,
-        60
+        16.3043,
+        32.6087,
+        65.2174
       ],
       "source": "Estimate: no Boise price found, based on typical Mountain West installed prices (Boise runs about national average)",
       "url": null,
       "checked": "2026-10-16",
-      "note": "One blended price for a mirror, towel bar, grab bar, medicine cabinet or set of coat hooks."
+      "note": "One blended price for a mirror, towel bar, grab bar, medicine cabinet or set of coat hooks.",
+      "normalized": "Boise price divided by Boise's cost level (0.92) to give a US-average price."
     },
     "fireplace": {
       "label": "Gas fireplace",
       "unit": "each",
       "material": [
-        2000,
-        3200,
-        5500
+        2173.913,
+        3478.2609,
+        5978.2609
       ],
       "labor": [
-        1000,
-        1800,
-        3000
+        1086.9565,
+        1956.5217,
+        3260.8696
       ],
       "source": "Fixr gas fireplace cost (gas hookup $391-$711, new-construction framing and venting adds over $1,500); material/labor split by judgment",
       "url": "https://www.fixr.com/costs/gas-fireplace",
       "checked": "2026-10-16",
-      "note": "Direct-vent gas fireplace with its gas line. Mantle and surround not included."
+      "note": "Direct-vent gas fireplace with its gas line. Mantle and surround not included.",
+      "normalized": "Boise price divided by Boise's cost level (0.92) to give a US-average price."
     },
     "extra-water-run": {
       "label": "Extra water supply run",
       "unit": "each",
       "material": [
-        25,
-        50,
-        100
+        27.1739,
+        54.3478,
+        108.6957
       ],
       "labor": [
-        100,
-        180,
-        300
+        108.6957,
+        195.6522,
+        326.087
       ],
       "source": "Estimate: no Boise price found, based on typical Mountain West installed prices (Boise runs about national average)",
       "url": null,
       "checked": "2026-10-16",
-      "note": "A hot and cold stub-out placed by hand beyond what fixtures bring."
+      "note": "A hot and cold stub-out placed by hand beyond what fixtures bring.",
+      "normalized": "Boise price divided by Boise's cost level (0.92) to give a US-average price."
     },
     "extra-drain-run": {
       "label": "Extra drain run",
       "unit": "each",
       "material": [
-        30,
-        60,
-        120
+        32.6087,
+        65.2174,
+        130.4348
       ],
       "labor": [
-        120,
-        220,
-        400
+        130.4348,
+        239.1304,
+        434.7826
       ],
       "source": "Estimate: no Boise price found, based on typical Mountain West installed prices (Boise runs about national average)",
       "url": null,
       "checked": "2026-10-16",
-      "note": "A drain and vent stub-out placed by hand beyond what fixtures bring."
+      "note": "A drain and vent stub-out placed by hand beyond what fixtures bring.",
+      "normalized": "Boise price divided by Boise's cost level (0.92) to give a US-average price."
     },
     "gas-line-run": {
       "label": "Extra gas line run",
       "unit": "each",
       "material": [
-        60,
-        150,
-        250
+        65.2174,
+        163.0435,
+        271.7391
       ],
       "labor": [
-        240,
-        450,
-        650
+        260.8696,
+        489.1304,
+        706.5217
       ],
       "source": "HomeAdvisor gas pipe cost ($20/ft, 20-30 ft typical), discounted for new-construction rough-in; about 25% material by judgment",
       "url": "https://www.homeadvisor.com/cost/plumbing/install-or-repair-gas-pipes",
       "checked": "2026-10-16",
-      "note": "A gas stub-out placed by hand beyond what fixtures bring."
+      "note": "A gas stub-out placed by hand beyond what fixtures bring.",
+      "normalized": "Boise price divided by Boise's cost level (0.92) to give a US-average price."
     },
     "circuit-240": {
       "label": "240V circuit",
       "unit": "each",
       "material": [
-        75,
-        110,
-        200
+        81.5217,
+        119.5652,
+        217.3913
       ],
       "labor": [
-        150,
-        300,
-        500
+        163.0435,
+        326.087,
+        543.4783
       ],
       "source": "ContractorPlus dryer circuit materials ($75-$150, material only); labor is an estimate",
       "url": "https://contractorplus.app/resources/construction-costs/install-electric-dryer-hookup/boise-city-id",
       "checked": "2026-10-16",
-      "note": "A 240V outlet placed by hand beyond the range and dryer ones the code rules add."
+      "note": "A 240V outlet placed by hand beyond the range and dryer ones the code rules add.",
+      "normalized": "Boise price divided by Boise's cost level (0.92) to give a US-average price."
     },
     "dryer-vent-run": {
       "label": "Extra dryer vent run",
       "unit": "each",
       "material": [
-        30,
-        50,
-        90
+        32.6087,
+        54.3478,
+        97.8261
       ],
       "labor": [
-        60,
-        120,
-        200
+        65.2174,
+        130.4348,
+        217.3913
       ],
       "source": "Estimate: no Boise price found, based on typical Mountain West installed prices (Boise runs about national average)",
       "url": null,
       "checked": "2026-10-16",
-      "note": "Vent duct and wall cap placed by hand beyond the dryer's own."
+      "note": "Vent duct and wall cap placed by hand beyond the dryer's own.",
+      "normalized": "Boise price divided by Boise's cost level (0.92) to give a US-average price."
     },
     "extra-device": {
       "label": "Extra outlet, switch or light box",
       "unit": "each",
       "material": [
-        4,
-        10,
-        25
+        4.3478,
+        10.8696,
+        27.1739
       ],
       "labor": [
-        35,
-        65,
-        110
+        38.0435,
+        70.6522,
+        119.5652
       ],
       "source": "Estimate: no Boise price found, based on typical Mountain West installed prices (Boise runs about national average)",
       "url": null,
       "checked": "2026-10-16",
-      "note": "Electrical devices added by hand beyond the code-rule ones."
+      "note": "Electrical devices added by hand beyond the code-rule ones.",
+      "normalized": "Boise price divided by Boise's cost level (0.92) to give a US-average price."
     },
     "tall-cabinet": {
       "label": "Tall (pantry) cabinets",
       "unit": "each",
       "material": [
-        350,
-        650,
-        1200
+        380.4348,
+        706.5217,
+        1304.3478
       ],
       "labor": [
-        75,
-        150,
-        250
+        81.5217,
+        163.0435,
+        271.7391
       ],
       "source": "Estimate: no Boise price found, based on typical Mountain West installed prices (Boise runs about national average)",
       "url": null,
       "checked": "2026-10-16",
-      "note": "Each 84 in tall or pantry cabinet, on top of the run's base and upper cabinets."
+      "note": "Each 84 in tall or pantry cabinet, on top of the run's base and upper cabinets.",
+      "normalized": "Boise price divided by Boise's cost level (0.92) to give a US-average price."
     },
     "cabinet-specialty": {
       "label": "Specialty cabinets (lazy susan, wine rack, appliance garage, open shelves)",
       "unit": "each",
       "material": [
-        150,
-        350,
-        700
+        163.0435,
+        380.4348,
+        760.8696
       ],
       "labor": [
-        20,
-        50,
-        100
+        21.7391,
+        54.3478,
+        108.6957
       ],
       "source": "Estimate: no Boise price found, based on typical Mountain West installed prices (Boise runs about national average)",
       "url": null,
       "checked": "2026-10-16",
-      "note": "Extra cost over a standard box, per specialty box in the layout."
+      "note": "Extra cost over a standard box, per specialty box in the layout.",
+      "normalized": "Boise price divided by Boise's cost level (0.92) to give a US-average price."
     },
     "stair-guard-wood": {
       "label": "Stair railings: wood with white balusters",
       "unit": "linft",
       "material": [
-        35,
-        60,
-        95
+        38.0435,
+        65.2174,
+        103.2609
       ],
       "labor": [
-        25,
-        35,
-        55
+        27.1739,
+        38.0435,
+        59.7826
       ],
       "source": "Estimate: HomeAdvisor national stair-railing ranges (wood $10-40/LF, metal $25-120/LF, glass $100-500/LF material) with installation labor, nudged up for stair complexity; Boise-specific data was thin (ContractorPlus modeled Boise railing average $30-59/LF). Installed about $60 / $95 / $150 per foot.",
       "url": "https://www.homeadvisor.com/cost/stairs-and-railings/install-stair-railings-balusters/",
       "checked": "2026-10-16",
-      "note": "Per foot along the guard: wood cap rail, wood posts and painted square balusters, 34\" to 36\" high. Ballpark: confirm with local bids."
+      "note": "Per foot along the guard: wood cap rail, wood posts and painted square balusters, 34\" to 36\" high. Ballpark: confirm with local bids.",
+      "normalized": "Boise price divided by Boise's cost level (0.92) to give a US-average price."
     },
     "stair-guard-metal": {
       "label": "Stair railings: black metal balusters",
       "unit": "linft",
       "material": [
-        45,
-        70,
-        115
+        48.913,
+        76.087,
+        125
       ],
       "labor": [
-        25,
-        40,
-        65
+        27.1739,
+        43.4783,
+        70.6522
       ],
       "source": "Estimate: HomeAdvisor national stair-railing ranges (wood $10-40/LF, metal $25-120/LF, glass $100-500/LF material) with installation labor, nudged up for stair complexity; Boise-specific data was thin (ContractorPlus modeled Boise railing average $30-59/LF). Installed about $70 / $110 / $180 per foot.",
       "url": "https://www.homeadvisor.com/cost/stairs-and-railings/install-stair-railings-balusters/",
       "checked": "2026-10-16",
-      "note": "Per foot along the guard: powder-coated metal balusters with a wood or metal cap rail. Ballpark: confirm with local bids."
+      "note": "Per foot along the guard: powder-coated metal balusters with a wood or metal cap rail. Ballpark: confirm with local bids.",
+      "normalized": "Boise price divided by Boise's cost level (0.92) to give a US-average price."
     },
     "stair-guard-glass": {
       "label": "Stair railings: glass panels",
       "unit": "linft",
       "material": [
-        100,
-        180,
-        330
+        108.6957,
+        195.6522,
+        358.6957
       ],
       "labor": [
-        50,
-        95,
-        170
+        54.3478,
+        103.2609,
+        184.7826
       ],
       "source": "Estimate: HomeAdvisor national stair-railing ranges (wood $10-40/LF, metal $25-120/LF, glass $100-500/LF material) with installation labor, nudged up for stair complexity; Boise-specific data was thin (ContractorPlus modeled Boise railing average $30-59/LF). Installed about $150 / $275 / $500 per foot.",
       "url": "https://www.homeadvisor.com/cost/stairs-and-railings/install-stair-railings-balusters/",
       "checked": "2026-10-16",
-      "note": "Per foot along the guard: glass panels with a wood cap. Ballpark: confirm with local bids."
+      "note": "Per foot along the guard: glass panels with a wood cap. Ballpark: confirm with local bids.",
+      "normalized": "Boise price divided by Boise's cost level (0.92) to give a US-average price."
     },
     "stair-half-wall": {
       "label": "Stair half walls (framed, drywalled, capped)",
       "unit": "linft",
       "material": [
-        15,
-        24,
-        40
+        16.3043,
+        26.087,
+        43.4783
       ],
       "labor": [
-        20,
-        36,
-        60
+        21.7391,
+        39.1304,
+        65.2174
       ],
       "source": "Estimate from HomeAdvisor framed-and-drywalled wall baselines ($20-30/LF) raised for a sloped stair half wall with a wood cap and paint; Boise-specific data was thin. Installed about $35 / $60 / $100 per foot.",
       "url": "https://www.homeadvisor.com/cost/walls-and-ceilings/install-a-wall/",
       "checked": "2026-10-16",
-      "note": "Per foot along the stair. A full wall beside stairs is priced as two half walls per foot. Ballpark: confirm with local bids."
+      "note": "Per foot along the stair. A full wall beside stairs is priced as two half walls per foot. Ballpark: confirm with local bids.",
+      "normalized": "Boise price divided by Boise's cost level (0.92) to give a US-average price."
     }
   },
   "percents": {
@@ -1825,57 +1924,126 @@
   },
   "calibration": {
     "costPerSqft": [
-      215,
-      265,
-      340
+      233.6957,
+      288.0435,
+      369.5652
     ],
-    "label": "Boise new custom/semi-custom single-family home, mid-range finishes, total build cost excluding land",
+    "label": "US-average new custom/semi-custom single-family home, mid-range finishes, total build cost excluding land",
     "source": "Block Renovation Boise custom-home guide ($200-$350/sqft standard to mid-range; $400+ high-end); BuildIdaho Mar 2026 (Ada County luxury permit values $192-$345/sqft); judgment",
     "url": "https://www.blockrenovation.com/guides/boise-id-new-house-custom-build-cost-local",
     "note": "Includes hard costs, builder O&P, permits and impact/connection fees on a flat serviced lot; excludes land, design fees, financing, landscaping. Boise permit valuation ($162/sqft living) and costtobuildhouse.com ($127/sqft 'standard') are well below real contract prices and should not be used for calibration. Production-builder tract homes run ~$150-$190/sqft. Second source: https://www.buildidaho.com/blog/what-does-it-cost-to-build-a-luxury-home-in-boise/",
-    "checked": "2026-10-14"
+    "checked": "2026-10-14",
+    "normalized": "Boise range divided by Boise's cost level (0.92)."
   },
   "permit": {
     "valuationPerSqft": {
-      "living": 161.85,
-      "garage": 59.7,
-      "porch": 25
+      "living": 175.92,
+      "garage": 64.9,
+      "porch": 27.2
     },
     "brackets": [
       {
+        "upTo": 500,
+        "base": 23,
+        "over": 0,
+        "per1000": 0
+      },
+      {
         "upTo": 2000,
-        "base": 26.37,
+        "base": 23.5,
         "over": 500,
-        "per1000": 29.5
+        "per1000": 30.5
       },
       {
         "upTo": 25000,
-        "base": 70.76,
+        "base": 69.25,
         "over": 2000,
-        "per1000": 12.71
+        "per1000": 14
       },
       {
         "upTo": 50000,
-        "base": 362.8,
+        "base": 391.25,
         "over": 25000,
-        "per1000": 9.3
+        "per1000": 10.1
       },
       {
         "upTo": 100000,
-        "base": 595.3,
+        "base": 643.75,
         "over": 50000,
-        "per1000": 6.35
+        "per1000": 7
+      },
+      {
+        "upTo": 500000,
+        "base": 993.75,
+        "over": 100000,
+        "per1000": 5.6
+      },
+      {
+        "upTo": 1000000,
+        "base": 3233.75,
+        "over": 500000,
+        "per1000": 4.75
       },
       {
         "upTo": null,
-        "base": 913.09,
-        "over": 100000,
-        "per1000": 5.17
+        "base": 5608.75,
+        "over": 1000000,
+        "per1000": 3.15
       }
     ],
-    "source": "Boise City Building Code Fee Schedule (eff. 10/1/2023, latest found) and Boise Residential Building Permit Valuation Policy (5/6/22)",
-    "url": "https://www.cityofboise.org/media/17652/final-boise-city-building-code-fee-schedule-10-1-23.pdf",
-    "checked": "2026-10-14",
-    "note": "Boise values a new house at about $162 per sq ft of living space and $60 per sq ft of garage (ICC building valuation data times Boise's regional factor), then applies its fee table. Porches and decks use about $25 per sq ft (judgment; Boise's own figure for them wasn't published online)."
+    "source": "Typical fee table: 1997 UBC Table 1-A building permit fees (still used by many cities); building value from the ICC Building Valuation Data, Feb 2026, R-3 type V-B $175.92/sq ft times the place's cost level. Garage and porch values are scaled from Boise's ratios.",
+    "url": "https://dli.mn.gov/sites/default/files/pdf/bc_gi026_permit_schedule_97ubc.pdf",
+    "checked": "2026-10-17",
+    "note": "A typical fee. Type your city's real fee in the box to replace it."
+  },
+  "costLevelBase": {
+    "cityId": "boise-id",
+    "index": 0.92,
+    "source": "PNNL/Faithful+Gould 2011 composite residential index (as used by the place list); not re-verified because the report's table could not be retrieved, and the paywalled RSMeans is not used"
+  },
+  "permitSchedules": {
+    "boise-id": {
+      "valuationPerSqft": {
+        "living": 161.85,
+        "garage": 59.7,
+        "porch": 25
+      },
+      "brackets": [
+        {
+          "upTo": 2000,
+          "base": 26.37,
+          "over": 500,
+          "per1000": 29.5
+        },
+        {
+          "upTo": 25000,
+          "base": 70.76,
+          "over": 2000,
+          "per1000": 12.71
+        },
+        {
+          "upTo": 50000,
+          "base": 362.8,
+          "over": 25000,
+          "per1000": 9.3
+        },
+        {
+          "upTo": 100000,
+          "base": 595.3,
+          "over": 50000,
+          "per1000": 6.35
+        },
+        {
+          "upTo": null,
+          "base": 913.09,
+          "over": 100000,
+          "per1000": 5.17
+        }
+      ],
+      "source": "Boise City Building Code Fee Schedule (eff. 10/1/2023, latest found) and Boise Residential Building Permit Valuation Policy (5/6/22)",
+      "url": "https://www.cityofboise.org/media/17652/final-boise-city-building-code-fee-schedule-10-1-23.pdf",
+      "checked": "2026-10-14",
+      "note": "Boise values a new house at about $162 per sq ft of living space and $60 per sq ft of garage (ICC building valuation data times Boise's regional factor), then applies its fee table. Porches and decks use about $25 per sq ft (judgment; Boise's own figure for them wasn't published online)."
+    }
   }
 }

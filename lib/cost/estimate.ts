@@ -4,11 +4,12 @@ import { exteriorCategory, paintable, rateFor } from "@/lib/catalog/exterior";
 import { ACCENT_BAND_FT, accentPlaceFor } from "@/lib/exterior/picks";
 import { productTitle } from "@/lib/interior/picks";
 import { measureHouse, type Quantities } from "./quantities";
-import { rates as loadRates, type Range, type RateId, type RatesFile } from "./rates";
+import { rates as loadRates, scaleRates, type Range, type RateId, type RatesFile } from "./rates";
+import { locationOf } from "@/lib/location/current";
 import { flatProject } from "@/lib/plan/flatten";
 
 /**
- * The cost estimate: the measured house times the Boise rates, in the 16
+ * The cost estimate: the measured house times the US-average rates at the place's cost level, in the 16
  * categories from the spec, each with a low, likely and high number. Worked
  * out from the project every time and never saved, so it can't go stale.
  * Land is always $0.
@@ -71,6 +72,9 @@ export type Estimate = {
   land: 0;
   drivers: { text: string; amount: number }[];
   utilities: CostSettings["utilities"];
+  /** Where the prices are for, and how the building permit was worked out. */
+  place: { name: string; state: string; costIndex: number };
+  permitBasis: "city" | "typed" | "typical";
 };
 
 const ZERO: Money = { low: 0, likely: 0, high: 0 };
@@ -90,16 +94,18 @@ export function accentArea(ext: Pick<DesignChoices, "selections" | "accentPlace"
   return Math.min(area, (q.extWallSqft + q.gableSqft) * 0.5);
 }
 
-/** Boise's building permit fee for a building value. */
+/** A building permit fee for a building value. */
 export function permitFee(value: number, permit: RatesFile["permit"]): number {
   const b = permit.brackets.find((x) => x.upTo === null || value <= x.upTo) ?? permit.brackets[permit.brackets.length - 1];
   return b.base + (Math.max(0, value - b.over) / 1000) * b.per1000;
 }
 
 export function estimate(
-  p: Pick<Project, "levels" | "plot" | "sketch" | "bubbles" | "floorPlans" | "house3d" | "plan" | "discovery" | "brief" | "cost" | "interior" | "exterior">,
-  file: RatesFile = loadRates(),
+  p: Pick<Project, "levels" | "plot" | "sketch" | "bubbles" | "floorPlans" | "house3d" | "plan" | "discovery" | "brief" | "cost" | "interior" | "exterior"> & { location?: Project["location"] },
+  baseFile: RatesFile = loadRates(),
 ): Estimate | null {
+  const place = locationOf({ location: p.location ?? null });
+  const file = scaleRates(baseFile, place.costIndex);
   p = flatProject(p);
   const q = measureHouse(p);
   if (!q) return null;
@@ -248,10 +254,14 @@ export function estimate(
   applyExterior(lines, p.exterior.selections, file);
 
   // Permits and fees
-  const permit = file.permit;
+  const citySchedule = file.permitSchedules[place.cityId];
+  const permit = citySchedule ?? file.permit;
+  // A city's own schedule gives its real values; the typical table's values follow the place's cost level.
+  const level = citySchedule ? 1 : place.costIndex;
   const value =
-    q.livingSqft * permit.valuationPerSqft.living + q.garageSqft * permit.valuationPerSqft.garage + (q.porchSqft + q.deckSqft) * permit.valuationPerSqft.porch;
-  const fee = permitFee(value, permit);
+    (q.livingSqft * permit.valuationPerSqft.living + q.garageSqft * permit.valuationPerSqft.garage + (q.porchSqft + q.deckSqft) * permit.valuationPerSqft.porch) * level;
+  const permitBasis: Estimate["permitBasis"] = place.permitFee !== null ? "typed" : citySchedule ? "city" : "typical";
+  const fee = place.permitFee !== null ? place.permitFee : permitFee(value, permit);
   lines.push({
     id: "building-permit",
     category: "permits",
@@ -261,10 +271,10 @@ export function estimate(
     material: null,
     labor: null,
     cost: { low: fee, likely: fee, high: fee },
-    source: permit.source,
-    url: permit.url,
+    source: permitBasis === "typed" ? "The permit fee you typed" : permit.source,
+    url: permitBasis === "typed" ? null : permit.url,
     checked: permit.checked,
-    note: permit.note ?? `Based on a building value of $${Math.round(value).toLocaleString("en-US")}.`,
+    note: permitBasis === "typed" ? "Your fee, typed in the cost panel." : permit.note ?? `Based on a building value of $${Math.round(value).toLocaleString("en-US")}.`,
   });
   const review = file.percents["plan-review"];
   lines.push({
@@ -309,7 +319,7 @@ export function estimate(
   const total = spread(lines.map((l) => l.cost));
   const area = Math.max(1, q.livingSqft);
   const perSqft = { low: total.low / area, likely: total.likely / area, high: total.high / area };
-  return { source: q.source, quantities: q, categories, total, perSqft, land: 0, drivers: drivers(q, lines, file, utilities), utilities };
+  return { source: q.source, quantities: q, categories, total, perSqft, land: 0, drivers: drivers(q, lines, file, utilities), utilities, place: { name: place.name, state: place.state, costIndex: place.costIndex }, permitBasis };
 }
 
 /**

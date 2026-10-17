@@ -11,7 +11,7 @@ import { windowWells } from "@/lib/plan/wells";
 import { lotOffsetFor, siteFor, type Site } from "@/lib/house3d/site";
 import { rockCuyd, rocksUnder } from "@/lib/land/onLot";
 import { yardAmounts, yardLayout } from "@/lib/exterior/yard";
-import { type Quantities, sqft, ft, FROST_DEPTH_IN, JOIST_DEPTH_IN, OVERDIG_IN, SHALLOW_DIG_IN, ringLength, samplesAround, type Ctx, empty, siteFacts, toRoad, type MeasuredRoom, roomFixtures, centerOf, applyRoof } from "./quantityBasics";
+import { type Quantities, sqft, ft, frostDepthIn, JOIST_DEPTH_IN, OVERDIG_IN, SHALLOW_DIG_IN, ringLength, samplesAround, type Ctx, empty, siteFacts, toRoad, type MeasuredRoom, roomFixtures, centerOf, applyRoof } from "./quantityBasics";
 import { measureRoof } from "./measureRoof";
 import { railingLengths, railingsOn } from "@/lib/plan/railings";
 import { riseFromHeights } from "@/lib/house3d/railings";
@@ -99,6 +99,7 @@ export function measurePlan(p: Ctx): Quantities | null {
   const garagePolys = groundLevels.flatMap((l) => planOf(plans, l.id).rooms.filter((r) => areaKind(r) === "garage").map((r) => r.polygon));
   const garageSqft = sqft(garagePolys.reduce((s, poly) => s + polygonArea(poly), 0));
   const onSlab = q.foundation === "slab";
+  const frostIn = frostDepthIn(p);
   for (const r of groundRegions) {
     const area = sqft(regionArea(r));
     q.groundSqft += area;
@@ -108,7 +109,7 @@ export function measurePlan(p: Ctx): Quantities | null {
     q.footingLf += ft(pts.length * step);
     for (const pt of pts) {
       const drop = -site.groundAt(pt); // floor is at 0, the ground below it
-      const h = drop + FROST_DEPTH_IN - (onSlab ? 4 : JOIST_DEPTH_IN);
+      const h = drop + frostIn - (onSlab ? 4 : JOIST_DEPTH_IN);
       q.stemWallSqft += sqft(step * Math.max(12, h));
     }
     q.excavationCuyd += (polygonArea(r.outline) * SHALLOW_DIG_IN) / 46656;
