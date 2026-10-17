@@ -11,6 +11,12 @@ export function downloadAllProjects(projects: Project[]) {
   downloadJson(exportAllJson(projects), exportAllFileName());
 }
 
+/** A house's saved data exactly as stored (it may not open), for "Download its saved data". */
+export function downloadSavedData(raw: unknown, name: string) {
+  const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+  downloadJson(JSON.stringify(raw, null, 2), `${slug || "house"}.saved-data.json`);
+}
+
 function downloadJson(text: string, fileName: string) {
   const blob = new Blob([text], { type: "application/json" });
   const url = URL.createObjectURL(blob);

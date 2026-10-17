@@ -27,6 +27,11 @@ export function createProject(name: string, profile: Partial<Profile> = {}): Pro
  * Each future schema change adds a step here so old projects keep opening.
  */
 export function migrateProject(raw: unknown): Project {
+  return Project.parse(migrateRaw(raw));
+}
+
+/** The migration steps of `migrateProject`, without the final check. Throws for data from a newer app. */
+export function migrateRaw(raw: unknown): Record<string, unknown> {
   const data = (raw ?? {}) as Record<string, unknown>;
   const version = typeof data.schemaVersion === "number" ? data.schemaVersion : 1;
   if (version > SCHEMA_VERSION) {
@@ -92,7 +97,7 @@ export function migrateProject(raw: unknown): Project {
   // Version 30 to 31 added faucet changes on fixtures (`Fixture.faucet`, optional), so no change beyond the version.
   if (version < 32) migrated = migrateV31(migrated);
   // Version 32 to 33 added pinned tape measurements (`FloorPlan.pins`, optional; `house3d.walkPins`, default none), so no change beyond the version.
-  return Project.parse(repairProject({ ...migrated, schemaVersion: SCHEMA_VERSION }));
+  return repairProject({ ...migrated, schemaVersion: SCHEMA_VERSION });
 }
 
 /** The longest house name the saved file allows. */
