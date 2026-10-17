@@ -61,6 +61,13 @@ describe("aiming at placed things in the walkthrough", () => {
     expect(bare.kind).toBe("none");
   });
 
+  it("puts ceiling lights at the floor's own ceiling height", () => {
+    const { plan } = twoRooms();
+    const p = placeItem(plan, "device:light", { x: 190, y: 72 }).plan;
+    expect(layerItems(p).find((i) => i.entryId === "device:light")?.bottomIn).toBe(96);
+    expect(layerItems(p, {}, 108).find((i) => i.entryId === "device:light")?.bottomIn).toBe(108);
+  });
+
   it("still finds furniture by the part that was hit", () => {
     const { plan } = twoRooms();
     const p = placeItem(plan, "furniture:sofa", { x: 190, y: 80 }).plan;

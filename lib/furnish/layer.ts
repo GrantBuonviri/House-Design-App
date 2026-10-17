@@ -101,24 +101,25 @@ const fromCabinet = (c: Cabinet, auto: boolean): LayerItem => {
   const e = entryFor("cabinet", c.kind);
   return { kind: "cabinet", id: c.id, entryId: e?.id ?? `cabinet:${c.kind}`, label: e?.label ?? c.kind, x: c.x, y: c.y, rotation: c.rotation, widthIn: c.widthIn, depthIn: c.depthIn, heightIn: c.heightIn, bottomIn: c.bottomIn, mount: c.bottomIn > 24 ? "wall" : "floor", roomId: c.roomId, auto };
 };
-const fromDevice = (d: Device, auto: boolean): LayerItem => {
+const fromDevice = (d: Device, auto: boolean, ceilingIn = CEILING_IN): LayerItem => {
   const e = entryFor("device", d.kind);
   const info = DEVICE_INFO[d.kind];
-  return { kind: "device", id: d.id, entryId: e?.id ?? `device:${d.kind}`, label: info.label, x: d.x, y: d.y, rotation: d.rotation, widthIn: 4, depthIn: 2, heightIn: 4, bottomIn: info.wall ? (info.mountIn ?? 16) : CEILING_IN, mount: info.wall ? "wall" : "ceiling", roomId: d.roomId, auto };
+  return { kind: "device", id: d.id, entryId: e?.id ?? `device:${d.kind}`, label: info.label, x: d.x, y: d.y, rotation: d.rotation, widthIn: 4, depthIn: 2, heightIn: 4, bottomIn: info.wall ? (info.mountIn ?? 16) : ceilingIn, mount: info.wall ? "wall" : "ceiling", roomId: d.roomId, auto };
 };
 
 /**
  * Everything on the layer as one list. Pass the floor's cabinet and device
  * layouts to include the app's own (auto) ones; without them only
- * hand-placed cabinets and devices are listed.
+ * hand-placed cabinets and devices are listed. Ceiling lights and alarms sit
+ * at `ceilingIn` (the floor's ceiling height).
  */
-export function layerItems(plan: FloorPlan, layouts: { cabinets?: PlacedCabinet[]; devices?: PlacedDevice[] } = {}): LayerItem[] {
+export function layerItems(plan: FloorPlan, layouts: { cabinets?: PlacedCabinet[]; devices?: PlacedDevice[] } = {}, ceilingIn = CEILING_IN): LayerItem[] {
   const l = furnishOf(plan);
   return [
     ...l.fixtures.map(fromFixture),
     ...l.addOns.map(fromAddOn),
     ...(layouts.cabinets ? layouts.cabinets.map((c) => fromCabinet(c, c.auto)) : l.cabinets.added.map((c) => fromCabinet(c, false))),
-    ...(layouts.devices ? layouts.devices.map((d) => fromDevice(d, d.auto)) : l.devices.added.map((d) => fromDevice(d, false))),
+    ...(layouts.devices ? layouts.devices.map((d) => fromDevice(d, d.auto, ceilingIn)) : l.devices.added.map((d) => fromDevice(d, false, ceilingIn))),
     ...l.furniture.map(fromFurniture),
   ];
 }

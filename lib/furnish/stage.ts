@@ -28,15 +28,15 @@ export function furnishLayouts(project: Project, level: Pick<Level, "id" | "kind
  * Everything on the floor as one list. The layouts come from the saved
  * project, so while an item is dragged the plan being shown decides which of
  * the app's own cabinets and devices are hidden and which hand-placed copies
- * are there.
+ * are there. `ceilingIn` is the floor's ceiling height, for ceiling lights and alarms.
  */
-export function stageItems(plan: FloorPlan, layouts?: Layouts): LayerItem[] {
-  if (!layouts) return layerItems(plan);
+export function stageItems(plan: FloorPlan, layouts?: Layouts, ceilingIn?: number): LayerItem[] {
+  if (!layouts) return layerItems(plan, {}, ceilingIn);
   const hiddenC = new Set(plan.cabinets?.hidden ?? []);
   const hiddenD = new Set(plan.devices?.hidden ?? []);
   const cabinets = [...layouts.cabinets.filter((c) => c.auto && !hiddenC.has(c.id)), ...(plan.cabinets?.added ?? []).map((c) => ({ ...c, auto: false }) as PlacedCabinet)];
   const devices = [...layouts.devices.filter((d) => d.auto && !hiddenD.has(d.id)), ...(plan.devices?.added ?? []).map((d) => ({ ...d, auto: false }) as PlacedDevice)];
-  return layerItems(plan, { cabinets, devices });
+  return layerItems(plan, { cabinets, devices }, ceilingIn);
 }
 
 /** A hand-placed copy gets a new id when an app-placed cabinet or device is touched: find it. */
