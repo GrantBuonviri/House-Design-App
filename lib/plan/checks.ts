@@ -1,4 +1,4 @@
-import type { DesignBrief, FloorPlan, Level, PlanBasics, PlanRoom, Plot, Point } from "@/lib/model/schema";
+import type { DesignBrief, FloorPlan, Level, Opening, PlanBasics, PlanRoom, Plot, Point } from "@/lib/model/schema";
 import { landUnder } from "@/lib/land/onLot";
 import { placeName } from "@/lib/land/implications";
 import { formatFeetInches } from "@/lib/model/units";
@@ -6,7 +6,7 @@ import { MAIN_LEVEL_ID } from "@/lib/brief/levels";
 import { INTERIOR_WALL_IN, ceilingFor, levelAbove, levelBelow, riseBetween } from "./basics";
 import { OUTSIDE, openingRooms, reachable, roleOf, roomLinks } from "./connect";
 import { planOf, type Plans } from "./edit";
-import { dist, edgesOf, isRectangle, polygonCenter, polygonsOverlap, scale, add } from "./geometry";
+import { dist, edgesOf, isRectangle, polygonCenter, polygonsOverlap, scale, add, sub } from "./geometry";
 import { areaKind, roomSqft } from "./measure";
 import { MIN_STAIRS_WIDTH_IN, stackedHeadroom } from "./stairs";
 import { codeNum, codeSetKey } from "@/lib/codes/data";
@@ -20,7 +20,7 @@ import { flatPlans } from "./flatten";
 import { overruns, type SetbackLimit } from "./setbacks";
 import { tooWideForCurve } from "./bend";
 import { pointOnEdge } from "./arcs";
-import { hostSegment, openingGeometry } from "./walls";
+import { hostSegment, openingGeometry, type OpeningGeometry } from "./walls";
 import { listHits, swingClear, swingRoom, type SwingExtras } from "./swing";
 import { cabinetCorners, cabinetLayout } from "./cabinets";
 import { fixtureType, openingType } from "./catalog";
@@ -31,14 +31,19 @@ import { leftoverClosets } from "@/lib/furnish/closets";
 /**
  * Friendly checks on a floor plan: rooms you can't get into, bedrooms without
  * a window, narrow hallways, missing stairs, rooms far from the size the
- * brief asked for. They're general guidelines for a comfortable house, not
- * building code.
+ * brief asked for. Each is tagged "code" (something a building inspector
+ * checks) or "comfort" (a guideline for a house that works well, or a drawing
+ * to tidy up).
  */
+
+export type WarningTag = "code" | "comfort";
 
 export type PlanWarning = {
   id: string;
   levelId: string;
   text: string;
+  /** "code": an inspector checks it. "comfort": a guideline for a comfortable house. */
+  tag: WarningTag;
   /** Rooms to select when the warning is clicked. */
   roomIds: string[];
   /** Where to look on the drawing, if anywhere in particular. */
@@ -91,6 +96,14 @@ export const MIN_HALL_CLEAR_IN = 36;
 const TOO_SMALL = 0.75;
 const TOO_BIG = 1.4;
 
+/** Warning kinds (the part of the id after the floor) that a building inspector checks. Everything else is "comfort". */
+const CODE_KINDS = new Set(["egress", "egress-basement", "setback", "light", "code-area", "code-width", "headroom", "stairwidth", "narrow", "overhang", "nofront", "land:lot"]);
+/** The tag for a warning, from its key (its id without the floor). */
+export function tagOf(key: string): WarningTag {
+  const [kind, sub] = key.split(":");
+  return CODE_KINDS.has(kind) || CODE_KINDS.has(`${kind}:${sub}`) ? "code" : "comfort";
+}
+
 type Ctx = {
   levels: Level[];
   brief: DesignBrief | null;
@@ -116,7 +129,7 @@ export function planWarnings(plans: Plans, ctx: Ctx): PlanWarning[] {
     for (const b of ctx.brief.rooms) {
       if (drawn.has(b.id)) continue;
       const levelId = b.levelId && levels.some((l) => l.id === b.levelId) ? b.levelId : MAIN_LEVEL_ID;
-      out.push({ id: `${levelId}:missing:${b.id}`, levelId, text: `${b.name} from your brief isn't in the plan yet.`, roomIds: [], at: null });
+      out.push({ id: `${levelId}:missing:${b.id}`, levelId, tag: "comfort", text: `${b.name} from your brief isn't in the plan yet.`, roomIds: [], at: null });
     }
   }
   return out;
@@ -172,7 +185,7 @@ function cachedLevelWarnings(saved: Plans, plans: Plans, ctx: Ctx, levels: Level
 function levelWarnings(saved: Plans, plans: Plans, ctx: Ctx, levels: Level[], level: Level): PlanWarning[] {
   const out: PlanWarning[] = [];
   const add_ = (levelId: string, key: string, text: string, rooms: PlanRoom[] = [], at?: Point | null) =>
-    out.push({ id: `${levelId}:${key}`, levelId, text, roomIds: rooms.map((r) => r.id), at: at === undefined ? (rooms[0] ? polygonCenter(rooms[0].polygon) : null) : at });
+    out.push({ id: `${levelId}:${key}`, levelId, tag: tagOf(key), text, roomIds: rooms.map((r) => r.id), at: at === undefined ? (rooms[0] ? polygonCenter(rooms[0].polygon) : null) : at });
   const plan = planOf(plans, level.id);
   if (!plan.rooms.length) return out;
   const links = roomLinks(plan);
@@ -205,6 +218,12 @@ function levelWarnings(saved: Plans, plans: Plans, ctx: Ctx, levels: Level[], le
     const label = openingType(o.style).label;
     const fix = w.fits >= 12 ? `Try one ${formatFeetInches(w.fits)} wide or less` : "Make the curve gentler";
     add_(level.id, `curvewide:${o.id}`, `${label} too wide for this curve: it's ${formatFeetInches(o.widthIn)} across but the wall bends away from it. ${fix}.`, host ? [host] : [], at);
+  }
+
+  // Doors and windows that run into each other, past the end of their wall, or up through the ceiling.
+  for (const p of openingProblems(planOf(saved, level.id), ceilingFor(ctx.basics, level))) {
+    const host = p.roomId ? byId.get(p.roomId) : undefined;
+    add_(level.id, p.key, p.text, host ? [host] : [], p.at);
   }
 
   // Rooms hanging past the outside walls of the floor below.
@@ -333,7 +352,7 @@ function levelWarnings(saved: Plans, plans: Plans, ctx: Ctx, levels: Level[], le
   for (const r of plan.rooms.filter((x) => x.type === "hall")) {
     if (!isRectangle(r.polygon)) continue;
     const clear = Math.min(...edgesOf(r.polygon).map((e) => dist(e.a, e.b))) - INTERIOR_WALL_IN;
-    if (clear < MIN_HALL_CLEAR_IN - 0.5) add_(level.id, `narrow:${r.id}`, `${r.name} is ${formatFeetInches(Math.round(clear))} wide inside. Hallways are more comfortable at 3' or wider.`, [r]);
+    if (clear < MIN_HALL_CLEAR_IN - 0.5) add_(level.id, `narrow:${r.id}`, `${r.name} is ${formatFeetInches(Math.round(clear))} wide inside. Code wants hallways at least 3' wide.`, [r]);
   }
 
   // Stairs: some up to the next floor, and wide enough.
@@ -353,6 +372,7 @@ function levelWarnings(saved: Plans, plans: Plans, ctx: Ctx, levels: Level[], le
       out.push({
         id: `${level.id}:headroom:${s.id}:${u.id}`,
         levelId: level.id,
+        tag: "code",
         text: `Not enough headroom over the stairs from ${level.name}: ${both} about ${formatFeetInches(Math.max(0, Math.round(room)))} over them (${formatFeetInches(codeNum("stairs.minHeadroom"))} is the minimum).${canFix ? " U-shaped stairs stack without this problem." : ""}`,
         roomIds: [],
         at: { x: s.x, y: s.y },
@@ -368,24 +388,24 @@ function levelWarnings(saved: Plans, plans: Plans, ctx: Ctx, levels: Level[], le
     if (!want) continue;
     const have = roomSqft(r);
     const f = (n: number) => Math.round(n).toLocaleString("en-US");
-    if (have < want * TOO_SMALL && want - have >= 20) add_(level.id, `size:${r.id}`, `${r.name} is ${f(have)} sq ft, much smaller than the ${f(want)} your brief asked for.`, [r]);
-    else if (have > want * TOO_BIG && have - want >= 30) add_(level.id, `size:${r.id}`, `${r.name} is ${f(have)} sq ft, much bigger than the ${f(want)} your brief asked for.`, [r]);
+    if (have < want * TOO_SMALL && want - have >= 20) add_(level.id, `too-small:${r.id}`, `${r.name} is ${f(have)} sq ft, much smaller than the ${f(want)} your brief asked for.`, [r]);
+    else if (have > want * TOO_BIG && have - want >= 30) add_(level.id, `too-big:${r.id}`, `${r.name} is ${f(have)} sq ft, much bigger than the ${f(want)} your brief asked for.`, [r]);
   }
 
   // Furnish items outside their room, off their wall, or in a doorway.
   for (const fp of furnishProblems(planOf(saved, level.id))) {
-    out.push({ id: `${level.id}:${fp.key}`, levelId: level.id, text: fp.text, roomIds: fp.item.roomId ? [fp.item.roomId] : [], at: fp.at, furnish: { kind: fp.item.kind, id: fp.item.id, canMoveInside: fp.canMoveInside } });
+    out.push({ id: `${level.id}:${fp.key}`, levelId: level.id, tag: "comfort", text: fp.text, roomIds: fp.item.roomId ? [fp.item.roomId] : [], at: fp.at, furnish: { kind: fp.item.kind, id: fp.item.id, canMoveInside: fp.canMoveInside } });
   }
   // A sink, tub or shower whose faucet was taken off.
   for (const fx of planOf(saved, level.id).fixtures) {
     if (!fx.faucet?.removed || !FAUCET_KIND[fx.kind]) continue;
     const what = fixtureType(fx.kind).label.toLowerCase();
-    out.push({ id: `${level.id}:no-faucet:${fx.id}`, levelId: level.id, text: `This ${what} has no faucet.`, roomIds: fx.roomId ? [fx.roomId] : [], at: { x: fx.x, y: fx.y }, noFaucet: { fixtureId: fx.id } });
+    out.push({ id: `${level.id}:no-faucet:${fx.id}`, levelId: level.id, tag: "comfort", text: `This ${what} has no faucet.`, roomIds: fx.roomId ? [fx.roomId] : [], at: { x: fx.x, y: fx.y }, noFaucet: { fixtureId: fx.id } });
   }
   // Closet walls and doors left after the closet's rod and shelf were deleted.
   for (const lc of leftoverClosets(planOf(saved, level.id))) {
     const what = lc.roomId ? "The walk-in closet's walls and door are" : "The closet's walls and door are";
-    out.push({ id: `${level.id}:closet-left:${lc.stem}`, levelId: level.id, text: `${what} still there after its rod and shelf were deleted.`, roomIds: lc.roomId ? [lc.roomId] : [], at: lc.at, closetWalls: { stem: lc.stem } });
+    out.push({ id: `${level.id}:closet-left:${lc.stem}`, levelId: level.id, tag: "comfort", text: `${what} still there after its rod and shelf were deleted.`, roomIds: lc.roomId ? [lc.roomId] : [], at: lc.at, closetWalls: { stem: lc.stem } });
   }
 
   return out;
@@ -435,7 +455,61 @@ function landWarnings(plans: Plans, levels: Level[], plot: Plot, offset: Point):
       // One warning per thing per floor, on the first room that touches it.
       if (seen.has(`${level.id}:${key}`)) continue;
       seen.add(`${level.id}:${key}`);
-      out.push({ id: `${level.id}:land:${key}`, levelId: level.id, text, roomIds: [room.id], at });
+      out.push({ id: `${level.id}:land:${key}`, levelId: level.id, tag: tagOf(`land:${key}`), text, roomIds: [room.id], at });
+    }
+  }
+  return out;
+}
+
+export type OpeningProblem = { key: string; text: string; roomId: string | null; at: Point };
+
+const openingName = (o: Opening) => (o.kind === "opening" ? "Opening" : openingType(o.style).label);
+const lower = (s: string) => s.charAt(0).toLowerCase() + s.slice(1);
+/** How far apart two lines can be and still be the same wall (both sides of a shared wall), inches. */
+const SAME_WALL_IN = 8;
+
+/**
+ * Doors and windows that can't be built as drawn: two that overlap on the
+ * same wall, one running past the end of its wall, and one whose top is
+ * above the ceiling. Curved walls are left to `tooWideForCurve`.
+ */
+export function openingProblems(plan: FloorPlan, ceilingIn: number): OpeningProblem[] {
+  const out: OpeningProblem[] = [];
+  const roomOf = (o: Opening) => ("roomId" in o.host ? o.host.roomId : (openingRooms(plan, o).find((id) => id) ?? null));
+  const straight: { o: Opening; g: OpeningGeometry }[] = [];
+  for (const o of plan.openings) {
+    const seg = hostSegment(plan, o.host);
+    const g = openingGeometry(plan, o);
+    if (!seg || !g) continue;
+    const name = openingName(o);
+    if (!seg.bulge) {
+      straight.push({ o, g });
+      if (o.widthIn > seg.length + 0.5) {
+        out.push({ key: `opening-wide:${o.id}`, text: `${name} is ${formatFeetInches(o.widthIn)} wide, but its wall is only ${formatFeetInches(Math.round(seg.length))} long.`, roomId: roomOf(o), at: g.center });
+      } else if (o.offsetIn - o.widthIn / 2 < -0.5 || o.offsetIn + o.widthIn / 2 > seg.length + 0.5) {
+        out.push({ key: `opening-wide:${o.id}`, text: `${name} runs past the end of its wall. Slide it along the wall or make it narrower.`, roomId: roomOf(o), at: g.center });
+      }
+    }
+    const top = (o.kind === "window" ? (o.sillIn ?? openingType(o.style).sillIn ?? 0) : 0) + o.heightIn;
+    if (top > ceilingIn + 0.5) {
+      const what = o.kind === "window" ? `${name}'s top is ${formatFeetInches(Math.round(top))} up` : `${name} is ${formatFeetInches(Math.round(top))} tall`;
+      out.push({ key: `opening-tall:${o.id}`, text: `${what}, above the ${formatFeetInches(ceilingIn)} ceiling. Make it shorter${o.kind === "window" ? " or lower its sill" : ""}.`, roomId: roomOf(o), at: g.center });
+    }
+  }
+  // Two openings in the same stretch of wall (either side of a shared wall counts).
+  for (let i = 0; i < straight.length; i++) {
+    for (let j = i + 1; j < straight.length; j++) {
+      const a = straight[i].g;
+      const b = straight[j].g;
+      if (Math.abs(a.u.x * b.u.y - a.u.y * b.u.x) > 0.01) continue;
+      const off = sub(b.center, a.center);
+      if (Math.abs(off.x * a.n.x + off.y * a.n.y) > SAME_WALL_IN) continue;
+      const t = (p: Point) => (p.x - a.a.x) * a.u.x + (p.y - a.a.y) * a.u.y;
+      const [b0, b1] = [t(b.a), t(b.b)].sort((x, y) => x - y);
+      const lap = Math.min(dist(a.a, a.b), b1) - Math.max(0, b0);
+      if (lap <= 0.5) continue;
+      const [oa, ob] = [straight[i].o, straight[j].o];
+      out.push({ key: `opening-overlap:${oa.id}:${ob.id}`, text: `${openingName(oa)} and ${lower(openingName(ob))} overlap on the same wall by ${formatFeetInches(Math.round(lap))}. Slide one along the wall.`, roomId: roomOf(oa), at: scale(add(a.center, b.center), 0.5) });
     }
   }
   return out;

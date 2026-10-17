@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import type { Level } from "@/lib/model/schema";
-import type { PlanWarning } from "@/lib/plan/checks";
+import type { PlanWarning, WarningTag } from "@/lib/plan/checks";
 
 /**
  * "Things to check": the plan's friendly warnings, all floors at once.
@@ -45,6 +45,7 @@ export default function PlanChecks({ warnings, fresh = [], dismissed = [], level
                           new
                         </span>
                       )}
+                      <TagChip tag={w.tag} />
                       {multi && <span className="font-medium text-muted">{name(w.levelId)}: </span>}
                       {w.text}
                     </button>
@@ -120,6 +121,7 @@ export default function PlanChecks({ warnings, fresh = [], dismissed = [], level
                   {sortedDismissed.map((w) => (
                     <li key={w.id} className="flex items-start">
                       <button className="min-w-0 flex-1 rounded px-2 py-1.5 text-left text-xs leading-snug text-muted hover:bg-amber-50" onClick={() => onPick(w)}>
+                        <TagChip tag={w.tag} />
                         {multi && <span className="font-medium">{name(w.levelId)}: </span>}
                         {w.text}
                       </button>
@@ -141,9 +143,24 @@ export default function PlanChecks({ warnings, fresh = [], dismissed = [], level
               )}
             </div>
           )}
-          <p className="mt-2 border-t border-line pt-2 text-[11px] text-muted">General guidelines for a comfortable house, not building code.</p>
+          <p className="mt-2 border-t border-line pt-2 text-[11px] text-muted">
+            <b>Code</b>: something a building inspector checks. <b>Comfort</b>: a guideline for a house that works well.
+          </p>
         </>
       )}
     </div>
+  );
+}
+
+/** The "Code" or "Comfort" label in front of a warning. */
+function TagChip({ tag }: { tag: WarningTag }) {
+  return tag === "code" ? (
+    <span className="mr-1 rounded bg-rose-100 px-1 py-px text-[10px] font-semibold uppercase text-rose-900" data-testid="check-tag">
+      Code
+    </span>
+  ) : (
+    <span className="mr-1 rounded bg-slate-100 px-1 py-px text-[10px] font-semibold uppercase text-slate-600" data-testid="check-tag">
+      Comfort
+    </span>
   );
 }
