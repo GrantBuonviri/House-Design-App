@@ -316,8 +316,9 @@ export default function PlanCanvas(props: Props) {
   const pieces = useMemo(() => wallPieces(fp, exteriorIn), [fp, exteriorIn]);
   const geos = useMemo(() => openingGeometries(fp), [fp]);
   const layouts = furnish?.layouts;
-  const baseItems = useMemo(() => stageItems(plan, layouts), [plan, layouts]);
-  const shownItems = useMemo(() => (preview ? stageItems(preview, layouts) : baseItems), [preview, layouts, baseItems]);
+  const ceilingIn = furnish?.ceilingIn;
+  const baseItems = useMemo(() => stageItems(plan, layouts, ceilingIn), [plan, layouts, ceilingIn]);
+  const shownItems = useMemo(() => (preview ? stageItems(preview, layouts, ceilingIn) : baseItems), [preview, layouts, ceilingIn, baseItems]);
   const solids = useMemo(() => solidWalls(pieces, geos), [pieces, geos]);
   const thicknessAt = useCallback(
     (g: OpeningGeometry) => {

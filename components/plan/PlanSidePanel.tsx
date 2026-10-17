@@ -633,7 +633,7 @@ function Static({ label, value }: { label: string; value: string }) {
 }
 
 /** A length typed in feet and inches (12' 6", 12.5, 150"), applied on Enter or when you click away. */
-export function LengthField({ label, value, onCommit, disabled }: { label: string; value: number; onCommit: (inches: number) => void; disabled?: boolean }) {
+export function LengthField({ label, value, onCommit, disabled, allowZero }: { label: string; value: number; onCommit: (inches: number) => void; disabled?: boolean; allowZero?: boolean }) {
   const shown = formatFeetInches(value);
   const [text, setText] = useState(shown);
   const [bad, setBad] = useState(false);
@@ -643,7 +643,7 @@ export function LengthField({ label, value, onCommit, disabled }: { label: strin
   }, [shown]);
   const commit = () => {
     const v = parseFeetInches(text);
-    if (v === null || v <= 0) {
+    if (v === null || v < 0 || (v === 0 && !allowZero)) {
       setBad(true);
       return;
     }

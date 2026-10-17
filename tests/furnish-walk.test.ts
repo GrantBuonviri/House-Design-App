@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import type { FloorPlan } from "@/lib/model/schema";
 import { catalogEntry } from "@/lib/furnish/catalog";
 import { layerItems, placeItem } from "@/lib/furnish/layer";
-import { addWall, clampLift, itemAt, liftable, openingOnWall, slideOpening, walkGhost, walkMove, wallPoint, withOpening } from "@/lib/furnish/walk";
+import { addWall, clampLift, itemAt, liftable, openingInTheWay, openingOnWall, slideOpening, walkGhost, walkMove, wallPoint, withOpening } from "@/lib/furnish/walk";
 import { aimAt } from "@/lib/interior/surfaces";
 import { emptyPlan, makeRoom } from "@/lib/plan/edit";
 import { defaultBasics } from "@/lib/plan/basics";
@@ -61,6 +61,13 @@ describe("aiming at placed things in the walkthrough", () => {
     expect(bare.kind).toBe("none");
   });
 
+  it("puts ceiling lights at the floor's own ceiling height", () => {
+    const { plan } = twoRooms();
+    const p = placeItem(plan, "device:light", { x: 190, y: 72 }).plan;
+    expect(layerItems(p).find((i) => i.entryId === "device:light")?.bottomIn).toBe(96);
+    expect(layerItems(p, {}, 108).find((i) => i.entryId === "device:light")?.bottomIn).toBe(108);
+  });
+
   it("still finds furniture by the part that was hit", () => {
     const { plan } = twoRooms();
     const p = placeItem(plan, "furniture:sofa", { x: 190, y: 80 }).plan;
@@ -108,6 +115,16 @@ describe("placing from where you look", () => {
     expect(turned.rotation).toBe(items[0].rotation);
     expect(liftable(items[0])).toBe(false);
   });
+
+  it("turns a carried item with R out in the room too, not only when it backs onto a wall", () => {
+    const { plan } = twoRooms();
+    const p = placeItem(plan, "addon:bookcase", { x: 200, y: 10 }, { rotation: 0 }).plan;
+    const items = layerItems(p);
+    const mid = { floor: { x: 192, y: 72 } };
+    expect(walkMove(p, items[0], mid, 0, items).rotation).toBe(items[0].rotation);
+    expect(walkMove(p, items[0], mid, 90, items).rotation).toBe((items[0].rotation + 90) % 360);
+    expect(walkMove(p, items[0], mid, -15, items).rotation).toBe((items[0].rotation + 345) % 360);
+  });
 });
 
 describe("doors, windows and walls in the walkthrough", () => {
@@ -124,6 +141,25 @@ describe("doors, windows and walls in the walkthrough", () => {
     // Off along a different wall: it stays where it is.
     expect(slideOpening(p, o.id, { x: 200, y: 142 })).toBeNull();
     expect(withOpening(p, slid).openings).toHaveLength(1);
+  });
+
+  it("slides a new door off a window it's aimed at, or names the window when there's no room beside it", () => {
+    const { plan } = twoRooms();
+    const win = openingOnWall(plan, { x: 262, y: 72 }, "window")!;
+    const p = withOpening(plan, win);
+    const door = openingOnWall(p, { x: 262, y: 72 }, "door-hinged")!;
+    expect(door.host).toEqual(win.host);
+    expect(Math.abs(door.offsetIn - win.offsetIn)).toBeGreaterThanOrEqual((door.widthIn + win.widthIn) / 2);
+    expect(openingInTheWay(p, door)).toBeNull();
+    // Right on top of it: in the way.
+    expect(openingInTheWay(p, { ...door, offsetIn: win.offsetIn })?.id).toBe(win.id);
+    // A wall only a little wider than the window: nowhere to slide to.
+    const small = makeRoom([{ x: 0, y: 0 }, { x: win.widthIn + 12, y: 0 }, { x: win.widthIn + 12, y: 96 }, { x: 0, y: 96 }], "Closet", { type: "closet" });
+    const q = { ...emptyPlan(), rooms: [small] };
+    const w2 = openingOnWall(q, { x: (win.widthIn + 12) / 2, y: 2 }, "window")!;
+    const q2 = withOpening(q, w2);
+    const d2 = openingOnWall(q2, { x: (win.widthIn + 12) / 2, y: 2 }, "door-hinged")!;
+    expect(openingInTheWay(q2, d2)?.id).toBe(w2.id);
   });
 
   it("draws a wall between two spots, snapping to corners, and splits a room crossed end to end", () => {

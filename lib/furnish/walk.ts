@@ -1,7 +1,7 @@
 import type { FloorPlan, Opening, Point, WallHeight } from "@/lib/model/schema";
-import { add, round1, scale, sub } from "@/lib/plan/geometry";
+import { add, collinearOverlap, round1, scale, sub } from "@/lib/plan/geometry";
 import { openingHeight, openingType } from "@/lib/plan/catalog";
-import { clampOffset, HALF_WALL_IN, nearestHost, openingGeometry, type OpeningGeometry } from "@/lib/plan/walls";
+import { clampOffset, HALF_WALL_IN, hostSegment, nearestHost, openingGeometry, sameHost, type HostSegment, type OpeningGeometry } from "@/lib/plan/walls";
 import { newPlanId } from "@/lib/plan/edit";
 import { snapPoint, snapTargets } from "@/lib/plan/snap";
 import { splitRoom } from "@/lib/plan/partitions";
@@ -91,7 +91,7 @@ export function walkMove(plan: FloorPlan, item: LayerItem, spot: WalkSpot, turn:
   const cursor = cursorFor(item.mount, spot);
   const snap = item.mount === "ceiling" ? null : snapToWall(plan, cursor, { widthIn: item.widthIn, depthIn: item.depthIn, mount: item.mount }, 12);
   const at = snap ?? { x: round1(cursor.x), y: round1(cursor.y), rotation: item.rotation };
-  const rotation = (((at.rotation + (snap ? turn : 0)) % 360) + 360) % 360;
+  const rotation = (((at.rotation + turn) % 360) + 360) % 360;
   const bottomIn = liftable(item) ? clampLift(item.bottomIn + lift, item.heightIn, ceilingIn) : item.bottomIn;
   const moved = { ...item, x: at.x, y: at.y, rotation, bottomIn };
   const check = placeCheck(plan, moved, items.filter((i) => i.id !== item.id));
@@ -103,16 +103,61 @@ export function walkMove(plan: FloorPlan, item: LayerItem, spot: WalkSpot, turn:
 /** How close to a wall the dot must be to put a door or window on it. */
 const OPENING_REACH_IN = 30;
 
-/** A new door or window of `style` on the wall at `p` (null when no wall is near). */
+/** Wall kept between a new door or window and one already there, for framing. */
+const OPENING_GAP_IN = 4;
+
+/** The other doors and windows along a wall, as stretches of inches along it (any wall on the same line counts). */
+function takenAlong(plan: FloorPlan, seg: HostSegment, skipId?: string): { t0: number; t1: number; o: Opening }[] {
+  const out: { t0: number; t1: number; o: Opening }[] = [];
+  for (const o of plan.openings) {
+    if (o.id === skipId) continue;
+    if (seg.bulge) {
+      // On a curve, offsets are inches along it: only openings on this same wall count.
+      if (sameHost(o.host, seg.host)) out.push({ t0: o.offsetIn - o.widthIn / 2, t1: o.offsetIn + o.widthIn / 2, o });
+      continue;
+    }
+    const g = openingGeometry(plan, o);
+    const span = g && collinearOverlap(seg.a, seg.b, g.a, g.b, 4);
+    if (span) out.push({ t0: span[0], t1: span[1], o });
+  }
+  return out;
+}
+
+const blocking = (taken: { t0: number; t1: number; o: Opening }[], t: number, widthIn: number) =>
+  taken.find((s) => Math.min(s.t1, t + widthIn / 2) - Math.max(s.t0, t - widthIn / 2) > 1)?.o ?? null;
+
+/** The door or window already where `o` would go on its wall, if any (`o` itself left out). */
+export function openingInTheWay(plan: FloorPlan, o: Opening): Opening | null {
+  const seg = hostSegment(plan, o.host);
+  return seg ? blocking(takenAlong(plan, seg, o.id), o.offsetIn, o.widthIn) : null;
+}
+
+/**
+ * A new door or window of `style` on the wall at `p` (null when no wall is
+ * near). Aimed at another door or window, it slides to the nearest free
+ * stretch of that wall it fits in; with none, it stays where aimed and
+ * `openingInTheWay` names what's there.
+ */
 export function openingOnWall(plan: FloorPlan, p: Point, style: string, doorHeightIn?: number): Opening | null {
   const near = nearestHost(plan, p, OPENING_REACH_IN);
   if (!near) return null;
   const t = openingType(style);
   const widthIn = t.widths[0];
+  const len = near.seg.length;
+  const want = clampOffset(near.t, widthIn, len);
+  const taken = takenAlong(plan, near.seg);
+  let at = want;
+  if (blocking(taken, want, widthIn)) {
+    const tries = taken
+      .flatMap((s) => [s.t0 - widthIn / 2 - OPENING_GAP_IN, s.t1 + widthIn / 2 + OPENING_GAP_IN])
+      .filter((x) => x >= widthIn / 2 && x <= len - widthIn / 2 && !blocking(taken, x, widthIn))
+      .sort((a, b) => Math.abs(a - want) - Math.abs(b - want));
+    if (tries.length) at = tries[0];
+  }
   return {
     id: newPlanId("o"),
     host: near.seg.host,
-    offsetIn: round1(clampOffset(near.t, widthIn, near.seg.length)),
+    offsetIn: round1(at),
     kind: t.kind,
     style: t.id,
     widthIn,

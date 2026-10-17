@@ -392,6 +392,7 @@ export function Ground({
       }),
     [site, frame],
   );
+  useEffect(() => () => water.forEach((w) => w.geometry.dispose()), [water]);
   const lines = useMemo(() => {
     const plot = site.plot;
     if (!plot) return null;
@@ -512,6 +513,8 @@ function useDrag(props: DragProps) {
   const session = useRef<Session | null>(null);
   const latest = useRef(props);
   latest.current = props;
+  // The window listeners of the drag in progress (this hook's functions are new each render, so keep the ones added).
+  const listening = useRef<{ move: (e: PointerEvent) => void; up: () => void } | null>(null);
 
   function planPoint(clientX: number, clientY: number, planeY: number): Point | null {
     const rect = gl.domElement.getBoundingClientRect();
@@ -540,8 +543,13 @@ function useDrag(props: DragProps) {
   }
 
   function onUp() {
-    window.removeEventListener("pointermove", onMove);
-    window.removeEventListener("pointerup", onUp);
+    const l = listening.current;
+    listening.current = null;
+    if (l) {
+      window.removeEventListener("pointermove", l.move);
+      window.removeEventListener("pointerup", l.up);
+      window.removeEventListener("pointercancel", l.up);
+    }
     const s = session.current;
     session.current = null;
     if (controls) (controls as unknown as { enabled: boolean }).enabled = true;
@@ -549,7 +557,9 @@ function useDrag(props: DragProps) {
     if (s?.moved) latest.current.onDragging(false);
   }
 
-  useEffect(() => () => onUp(), []); // eslint-disable-line react-hooks/exhaustive-deps
+  const end = useRef(onUp);
+  end.current = onUp;
+  useEffect(() => () => end.current(), []);
 
   return (picks: (Pick | undefined)[]) => ({
     onPointerDown: (e: ThreeEvent<PointerEvent>) => {
@@ -596,8 +606,11 @@ function useDrag(props: DragProps) {
       };
       if (controls) (controls as unknown as { enabled: boolean }).enabled = false;
       gl.domElement.style.cursor = "grabbing";
+      listening.current = { move: onMove, up: onUp };
       window.addEventListener("pointermove", onMove);
       window.addEventListener("pointerup", onUp);
+      // A touch or pen the system takes over ends the drag like letting go.
+      window.addEventListener("pointercancel", onUp);
     },
     onPointerMove: (e: ThreeEvent<PointerEvent>) => {
       if (session.current) return;

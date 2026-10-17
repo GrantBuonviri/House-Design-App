@@ -69,7 +69,7 @@ export default function FurnishItemPanel({
           <LengthField label="Width" value={item.widthIn} onCommit={(v) => patch({ widthIn: Math.max(2, v) })} />
           {item.kind !== "device" && <LengthField label="Depth" value={Math.max(item.depthIn, 1)} onCommit={(v) => patch({ depthIn: Math.max(1, v) })} />}
           {tall && <LengthField label="Height" value={item.heightIn} onCommit={(v) => patch({ heightIn: Math.max(1, v) })} />}
-          {item.mount === "wall" && tall && <LengthField label="Off the floor" value={Math.max(item.bottomIn, 1)} onCommit={(v) => patch({ bottomIn: Math.max(0, v) })} />}
+          {item.mount === "wall" && tall && <LengthField label="Off the floor" value={item.bottomIn} allowZero onCommit={(v) => patch({ bottomIn: Math.max(0, v) })} />}
         </div>
       )}
       <TurnButtons onTurn={(deg) => patch({ rotation: item.rotation + deg })} />

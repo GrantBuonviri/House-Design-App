@@ -95,10 +95,26 @@ export function TopLabelBoxes({
   bridge.current.spots = items.map((it) => toScene(frame, at(it), floorIn + 2));
   bridge.current.els.length = items.length;
 
+  // The label being renamed: clicking away keeps what was typed (the menu closes on that click, before the box would blur).
+  const renaming = useRef<{ id: string; input: HTMLInputElement; was: string } | null>(null);
+  const commitRename = () => {
+    const r = renaming.current;
+    renaming.current = null;
+    if (!r) return;
+    const text = r.input.value.trim();
+    if (text === r.was) return;
+    if (text) setRoom(r.id, { text });
+    else dropKey(r.id, "text");
+  };
+  const commitRef = useRef(commitRename);
+  commitRef.current = commitRename;
+
   useEffect(() => {
     if (!menu) return;
     const close = (e: PointerEvent) => {
-      if (!(e.target as Element).closest("[data-label-menu]")) setMenu(null);
+      if ((e.target as Element).closest("[data-label-menu]")) return;
+      commitRef.current();
+      setMenu(null);
     };
     window.addEventListener("pointerdown", close, true);
     return () => window.removeEventListener("pointerdown", close, true);
@@ -198,13 +214,21 @@ export function TopLabelBoxes({
                     aria-label="Label text"
                     placeholder={it.room.name}
                     defaultValue={mine?.text ?? ""}
+                    ref={(el) => {
+                      if (el && renaming.current?.input !== el) renaming.current = { id, input: el, was: mine?.text ?? "" };
+                    }}
+                    onBlur={() => {
+                      commitRename();
+                      setMenu(null);
+                    }}
                     onKeyDown={(e) => {
                       if (e.key === "Enter") {
-                        const text = e.currentTarget.value.trim();
-                        if (text) setRoom(id, { text });
-                        else dropKey(id, "text");
+                        commitRename();
                         setMenu(null);
-                      } else if (e.key === "Escape") setMenu(null);
+                      } else if (e.key === "Escape") {
+                        renaming.current = null;
+                        setMenu(null);
+                      }
                       e.stopPropagation();
                     }}
                   />
