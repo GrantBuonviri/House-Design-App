@@ -34,6 +34,8 @@ export type City = {
   iceBarrier: boolean;
   costIndex: number;
   sources?: Record<string, string>;
+  /** Fields no source confirmed when the data was checked. */
+  unverified?: string[];
 };
 
 const LISTED = data.cities as City[];

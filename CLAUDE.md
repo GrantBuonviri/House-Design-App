@@ -6,7 +6,7 @@ Read this file first, then open only the files for the feature you're changing. 
 
 ## Saving tokens (please follow)
 
-- **Don't read these whole:** `package-lock.json`, `data/catalog/*.json` (look at one entry with `head -40`, or use `jq`), `lib/cost/data/cost-rates.json` (`jq '.rates | keys'`, or grep for one rate), `lib/codes/data/boise-2018.json` (grep for the key you need), `app/favicon.ico`.
+- **Don't read these whole:** `package-lock.json`, `data/catalog/*.json` (look at one entry with `head -40`, or use `jq`), `lib/cost/data/cost-rates.json` (`jq '.rates | keys'`, or grep for one rate), `lib/codes/data/boise-2018.json` (grep for the key you need), `lib/location/data/cities.json` (grep for one city id), `app/favicon.ico`.
 - **Big files** (open the part you need with a line range or grep, not the whole file): `lib/plan/devices.ts`, `components/plan/PlanCanvas.tsx`, `lib/codes/rules.ts`, `lib/model/schema.ts`, `components/bubbles/SketchCanvas.tsx`, `components/plan/PlanStage.tsx`, `components/house3d/House3DView.tsx`, `lib/plans/sheets/floorPlan.ts`, `components/plan/PlanSidePanel.tsx`, `components/bubbles/BubbleStage.tsx`, `lib/plans/scene.ts`, `lib/plan/cabinets.ts`.
 - **Tests:** while working, run only the related file, e.g. `npx vitest run tests/plan.test.ts`. Run the full `npm test` once before opening a PR, and print only the summary (`npm test 2>&1 | tail -15`).
 - **Build and lint:** `npm run build 2>&1 | tail -20`, `npm run lint 2>&1 | tail -20`. Run them once near the end, not after every edit.
@@ -31,6 +31,7 @@ Read this file first, then open only the files for the feature you're changing. 
 | Feature | Logic (`lib/`) | UI (`components/`) | Tests |
 |---|---|---|---|
 | Home screen, project shell, stage bar, undo buttons, Fast/Pretty | `store/`, `stages.ts`, `graphics.ts` | `home/`, `project/ProjectWorkspace.tsx`, `project/*` | `undo.test.ts` |
+| Where you'll build (place picker on step one) | `location/` (`cities.ts` list, search, `placeFromCity`; `current.ts` `locationOf(project)` (Boise's numbers until one is picked), edit/reset a number; `solar.ts` clock offset; `fields.ts` labels and hints; `usePlace` hook for the sun and clock in components; data in `location/data/cities.json` with sources and per-city `unverified`) | `project/PlaceBox.tsx` in `SetupForm.tsx` | `location` |
 | Data model, saving, export/import | `model/schema.ts`, `model/project.ts`, `storage/db.ts`, `storage/exchange.ts` | | `model`, `storage`, `units` |
 | Guided tour | `tour/steps.ts` | `tour/Tour.tsx` | |
 | Land plots | `land/` (`generate.ts` seed→plot, `terrain.ts`, `sun.ts`, `implications.ts`, `mesh.ts`, `custom.ts` designer settings→plot, `designer.ts` shape/size editing helpers, `featureTools.ts` + `groundTools.ts` feature and ground editing, contour lines, `onLot.ts` driveway access + what the house sits on: rocks, water, banks, lot line) | `land/` (`LandStage.tsx` carousel + My land, `LandDesigner.tsx` designer page with `DesignerCanvas.tsx`, `DesignerPanel.tsx`, `DesignerGround.tsx` + `GroundPanel.tsx` the Ground tool, `Dial.tsx`; its `DESIGNER_TOOLS` list is where feature/ground tools go) | `land`, `mesh`, `land-designer` |

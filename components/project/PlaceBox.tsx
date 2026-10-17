@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { LOCATION_FIELDS, type Location, type LocationField } from "@/lib/model/schema";
-import { placeFromCity, placeLabel, searchCities, type City } from "@/lib/location/cities";
+import { cityById, placeFromCity, placeLabel, searchCities, type City } from "@/lib/location/cities";
 import { cityValue, editPlace, resetPlaceField } from "@/lib/location/current";
 import { FIELD_INFO, placeSummary } from "@/lib/location/fields";
 import { useProjectStore } from "@/lib/store/projectStore";
@@ -91,6 +91,9 @@ export default function PlaceBox() {
 
 function PlaceCard({ location, editing, onToggleEdit, onChange }: { location: Location; editing: boolean; onToggleEdit: () => void; onChange: (loc: Location, coalesce?: string) => void }) {
   const elsewhere = location.cityId.startsWith("elsewhere-");
+  const unsure = (cityById(location.cityId)?.unverified ?? [])
+    .filter((f): f is LocationField => f in FIELD_INFO && !location.edited.includes(f as LocationField))
+    .map((f) => FIELD_INFO[f].label.toLowerCase());
   return (
     <div className="mt-3 rounded-md border border-line bg-stone-50 p-3" data-testid="place-card">
       <div className="flex items-start justify-between gap-3">
@@ -103,7 +106,11 @@ function PlaceCard({ location, editing, onToggleEdit, onChange }: { location: Lo
           {editing ? "Done" : "Edit numbers"}
         </button>
       </div>
-      {elsewhere && <p className="mt-1 text-xs text-muted">These are a typical city&apos;s numbers for the state. Check them with your building department.</p>}
+      {elsewhere ? (
+        <p className="mt-1 text-xs text-muted">These are a typical city&apos;s numbers for the state. Check them with your building department.</p>
+      ) : unsure.length > 0 ? (
+        <p className="mt-1 text-xs text-muted">Not yet confirmed from a published source: {unsure.join(", ")}. Check them with your building department.</p>
+      ) : null}
       {editing && (
         <div className="mt-3 grid gap-3 sm:grid-cols-2">
           {LOCATION_FIELDS.map((f) => (
