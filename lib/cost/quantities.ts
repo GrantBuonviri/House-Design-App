@@ -3,7 +3,6 @@ import { measurePlan } from "./measurePlan";
 import { measureRough } from "./measureRough";
 import { flatProject } from "@/lib/plan/flatten";
 export type { Quantities, RoomFinish } from "./quantityBasics";
-export { FROST_DEPTH_IN } from "./quantityBasics";
 export { foldLength, measureRoof } from "./measureRoof";
 export { measurePlan } from "./measurePlan";
 export { measureRough } from "./measureRough";
@@ -17,7 +16,7 @@ export { measureRough } from "./measureRough";
 
 // The measuring lives in measurePlan.ts, measureRough.ts and measureRoof.ts, sharing quantityBasics.ts.
 
-const CTX_KEYS = ["levels", "plot", "sketch", "bubbles", "floorPlans", "house3d", "plan", "discovery", "brief"] as const;
+const CTX_KEYS = ["levels", "plot", "sketch", "bubbles", "floorPlans", "house3d", "plan", "discovery", "brief", "location"] as const;
 let last: { p: Ctx; q: Quantities | null } | null = null;
 
 /**

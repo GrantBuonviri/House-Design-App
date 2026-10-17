@@ -221,7 +221,9 @@ export default function ProjectWorkspace({ id }: { id: string }) {
       {touring && <Tour onStage={setStage} onDone={endTour} />}
     </main>
       {costOpen && cost && (
-        <CostPanel estimate={cost} onClose={() => setCostOpen(false)} onUtilities={(utilities) => update((p) => ({ ...p, cost: { ...p.cost, utilities } }))} />
+        <CostPanel estimate={cost} onClose={() => setCostOpen(false)} onUtilities={(utilities) => update((p) => ({ ...p, cost: { ...p.cost, utilities } }))}
+          onPermitFee={(permitFee) => update((p) => ({ ...p, location: { ...locationOf(p), permitFee } }), { coalesce: "permit-fee" })}
+        />
       )}
     </div>
   );

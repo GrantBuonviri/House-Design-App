@@ -1,5 +1,6 @@
 import type { Point, Project } from "@/lib/model/schema";
 import { houseSpot } from "@/lib/house3d/site";
+import { locationOf } from "@/lib/location/current";
 import { isHeated } from "@/lib/brief/rooms";
 import { plotImplications, type FoundationType } from "@/lib/land/implications";
 import { nearestAccess } from "@/lib/land/onLot";
@@ -142,8 +143,8 @@ export type RoomFinish = {
 export const sqft = (sqIn: number) => sqIn / SQ_IN_PER_SQ_FT;
 export const ft = (inches: number) => inches / 12;
 
-/** Footings go below the frost line: 24 in in Boise. */
-export const FROST_DEPTH_IN = 24;
+/** Footings go below the frost line, at least 12 in. */
+export const frostDepthIn = (p: { location?: Project["location"] }) => Math.max(12, locationOf({ location: p.location ?? null }).frostDepthIn);
 /** Floor joists sit this far below the floor over a crawlspace. */
 export const JOIST_DEPTH_IN = 12;
 /** Space dug around a basement so the walls can be built and waterproofed. */
@@ -171,7 +172,7 @@ export function samplesAround(ring: Point[], step = 24): Point[] {
   return out;
 }
 
-export type Ctx = Pick<Project, "levels" | "plot" | "sketch" | "bubbles" | "floorPlans" | "house3d" | "plan" | "discovery" | "brief">;
+export type Ctx = Pick<Project, "levels" | "plot" | "sketch" | "bubbles" | "floorPlans" | "house3d" | "plan" | "discovery" | "brief"> & { location?: Project["location"] };
 
 export function empty(source: Quantities["source"]): Quantities {
   return {

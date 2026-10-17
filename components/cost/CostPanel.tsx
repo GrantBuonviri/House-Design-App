@@ -109,14 +109,64 @@ const UTILITIES: { id: CostSettings["utilities"]; label: string }[] = [
   { id: "well-septic", label: "Well and septic" },
 ];
 
+const PERMIT_BASIS = {
+  typical: "A typical fee table. Type your city's real fee to replace it.",
+  city: "This city's own fee schedule. Type a fee to replace it.",
+  typed: "Your fee.",
+} as const;
+
+function PermitFeeBox({ estimate, onChange }: { estimate: Estimate; onChange: (fee: number | null) => void }) {
+  const line = estimate.categories.flatMap((c) => c.lines).find((l) => l.id === "building-permit");
+  const typed = estimate.permitBasis === "typed";
+  const [text, setText] = useState(typed && line ? String(Math.round(line.cost.likely)) : "");
+  const commit = () => {
+    const n = Number(text.replace(/[$,\s]/g, ""));
+    if (text.trim() === "") onChange(null);
+    else if (Number.isFinite(n) && n >= 0) onChange(Math.round(n));
+  };
+  return (
+    <div className="mt-4" data-testid="permit-fee-box">
+      <div className="text-sm font-medium">Permit fee</div>
+      <div className="mt-1 flex items-center gap-2 text-sm">
+        <span className="text-muted">$</span>
+        <input
+          className="w-28 rounded-md border border-line px-2 py-1 tabular-nums"
+          inputMode="numeric"
+          placeholder={line ? String(Math.round(line.cost.likely)) : "typical"}
+          value={text}
+          onChange={(e) => setText(e.target.value)}
+          onBlur={commit}
+          onKeyDown={(e) => e.key === "Enter" && (e.target as HTMLInputElement).blur()}
+          aria-label="Building permit fee in dollars"
+        />
+        {typed && (
+          <button
+            className="text-xs text-accent underline"
+            onClick={() => {
+              setText("");
+              onChange(null);
+            }}
+          >
+            Use the {estimate.place.name} estimate
+          </button>
+        )}
+      </div>
+      <p className="mt-1 text-xs text-muted">{PERMIT_BASIS[estimate.permitBasis]}</p>
+    </div>
+  );
+}
+
 export default function CostPanel({
   estimate,
   onClose,
   onUtilities,
+  onPermitFee,
 }: {
   estimate: Estimate;
   onClose: () => void;
   onUtilities: (u: CostSettings["utilities"]) => void;
+  /** The person's own permit fee in dollars, or null to go back to the typical fee table. */
+  onPermitFee: (fee: number | null) => void;
 }) {
   const [openCat, setOpenCat] = useState<string | null>(null);
   const t = estimate.total;
@@ -165,6 +215,8 @@ export default function CostPanel({
           </div>
         </div>
 
+        <PermitFeeBox estimate={estimate} onChange={onPermitFee} />
+
         {estimate.drivers.length > 0 && (
           <div className="mt-4">
             <div className="text-sm font-medium">Biggest drivers</div>
@@ -188,7 +240,7 @@ export default function CostPanel({
           where each rate came from.
         </p>
         <p className="mt-2 text-xs text-muted">
-          This is an estimate for Boise, Idaho in 2026, not a bid. Real prices vary by builder and change over time.
+          This is an estimate for {estimate.place.name}, {estimate.place.state} in 2026 (cost level {estimate.place.costIndex.toFixed(2)}), not a bid. Real prices vary by builder and change over time.
         </p>
       </div>
     </aside>
