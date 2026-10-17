@@ -10,7 +10,8 @@ import { WINDOW_OPERATIONS, type WindowOperation } from "@/lib/model/schema";
 import { defaultOperation, operationOf, OPERATION_HINT, OPERATION_LABEL } from "@/lib/codes/openings";
 import type { DesignBrief, FloorPlan, Level, PlanBasics, PlanStairs, WallHeight } from "@/lib/model/schema";
 import { formatFeetInches, lengthPreview, parseFeetInches } from "@/lib/model/units";
-import { ceilingFor, riseBetween, STAIRS_LABEL } from "@/lib/plan/basics";
+import { ceilingFor, exteriorWallIn, riseBetween, STAIRS_LABEL } from "@/lib/plan/basics";
+import { cornerDistances, nearestCorner, setCornerDistance } from "@/lib/plan/corners";
 import { OPENING_TYPES, fixtureType, openingHeight, openingType } from "@/lib/plan/catalog";
 import { centerOfMany, insertCorner, removeMany, rotateMany, setEdgeLength, setWallLength, updateOpening, updateRoom } from "@/lib/plan/edit";
 import { roomHasCurves, wallLength } from "@/lib/plan/arcs";
@@ -385,6 +386,7 @@ export default function PlanSidePanel(props: Props) {
             </option>
           ))}
         </select>
+        <CornerField plan={plan} id={o.id} exteriorIn={exteriorWallIn(basics)} what={o.kind === "window" ? "window" : o.kind === "door" ? "door" : "opening"} onChange={onChange} />
         <div className="mt-4 grid grid-cols-2 gap-2">
           <LengthField label="Height" value={o.heightIn} onCommit={(v) => set({ heightIn: Math.max(12, v) })} />
           {o.kind === "window" && <LengthField label="Off the floor" value={o.sillIn ?? 30} onCommit={(v) => set({ sillIn: Math.max(0, v) })} />}
@@ -633,6 +635,22 @@ function Static({ label, value }: { label: string; value: string }) {
 }
 
 /** A length typed in feet and inches (12' 6", 12 6, 12.5 = feet, 150" = inches), applied on Enter or when you click away. */
+/** How far a door or window sits from the nearest corner of its wall; typing a length slides it along the wall. */
+function CornerField({ plan, id, exteriorIn, what, onChange }: { plan: FloorPlan; id: string; exteriorIn: number; what: string; onChange: (plan: FloorPlan) => void }) {
+  const o = plan.openings.find((x) => x.id === id);
+  const near = o && nearestCorner(plan, o, exteriorIn);
+  if (!o || !near) return null;
+  const other = cornerDistances(plan, o, exteriorIn).find((d) => d.side !== near.side);
+  return (
+    <div className="mt-4" data-testid="corner-distance">
+      <LengthField label="From the corner" value={Math.max(0, near.inches)} allowZero onCommit={(v) => onChange(setCornerDistance(plan, id, v, exteriorIn, near.side))} />
+      <p className="field-hint">
+        From the face of the nearest wall to the edge of the {what}.{other ? ` The other corner is ${formatFeetInches(Math.max(0, other.inches))} away.` : ""}
+      </p>
+    </div>
+  );
+}
+
 export function LengthField({ label, value, onCommit, disabled, allowZero }: { label: string; value: number; onCommit: (inches: number) => void; disabled?: boolean; allowZero?: boolean }) {
   const shown = formatFeetInches(value);
   const [text, setText] = useState(shown);
