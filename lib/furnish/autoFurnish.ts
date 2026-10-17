@@ -1,5 +1,5 @@
 import type { FloorPlan, PlanRoom, Point } from "@/lib/model/schema";
-import { add, angleOf, dist, edgesOf, leftNormal, pointInPolygon, rectangle, rotate, round1, scale, sub, unit } from "@/lib/plan/geometry";
+import { add, angleOf, dist, edgesOf, leftNormal, pointInPolygon, polygonCenter, rectangle, rotate, round1, scale, sub, unit } from "@/lib/plan/geometry";
 import { openingGeometries } from "@/lib/plan/walls";
 import { overlaps } from "@/lib/plan/furniture";
 import { isCurved } from "@/lib/plan/arcs";
@@ -19,7 +19,22 @@ import { BEDROOMS_FOR_CLOSETS, closetOnEdge, hasCloset, placeCloset, type Closet
  * the same fit check as placing by hand. Cabinets, outlets and hookups
  * follow on their own from the fixtures. Sensible defaults, not a designer's
  * layout.
+ *
+ * Two choices: Minimal is just that; Full adds furniture too (beds with
+ * nightstands and a dresser, a sofa with a coffee table and a TV stand, a
+ * dining table, a desk and chair). Either can be previewed first: the result
+ * lists what it would add (`added`) before anything is saved.
  */
+
+export type FurnishPreset = "minimal" | "full";
+
+export const FURNISH_PRESETS: { id: FurnishPreset; label: string; hint: string }[] = [
+  { id: "minimal", label: "Minimal", hint: "What each room needs: kitchen counters and appliances, bath fixtures, laundry, bedroom closets, the water heater and furnace, coat hooks." },
+  { id: "full", label: "Full", hint: "All of that, plus furniture: beds with nightstands and a dresser, a sofa, coffee table and TV stand, a dining table, a desk and chair." },
+];
+
+/** One thing Furnish for me put in (or would, in a preview). */
+export type FurnishAdded = { id: string; label: string; room: string; roomId: string };
 
 export type FurnishResult = {
   plan: FloorPlan;
@@ -29,12 +44,17 @@ export type FurnishResult = {
   rooms: string[];
   /** What didn't fit and what it got instead. */
   notes: string[];
+  /** Each thing put in, in order. */
+  added: FurnishAdded[];
 };
 
 /** Room types Furnish for me knows what to put in. */
 const KNOWN = new Set(["kitchen", "bathroom", "primary-bath", "half-bath", "laundry", "mechanical", "entry", "mudroom", ...BEDROOMS_FOR_CLOSETS]);
 
-export const canAutoFurnish = (room: Pick<PlanRoom, "type">) => KNOWN.has(room.type ?? "");
+/** Rooms that only get something with Full: their furniture. */
+const FURNITURE_ONLY = new Set(["living", "family", "bonus", "dining", "office"]);
+
+export const canAutoFurnish = (room: Pick<PlanRoom, "type">, preset: FurnishPreset = "minimal") => KNOWN.has(room.type ?? "") || (preset === "full" && FURNITURE_ONLY.has(room.type ?? ""));
 
 /** From the wall's line to an item's back, as the snap does. */
 const OFF_WALL_IN = 2.5;
@@ -47,6 +67,7 @@ class Filler {
   plan: FloorPlan;
   placed = 0;
   notes: string[] = [];
+  added: FurnishAdded[] = [];
   private items: LayerItem[];
 
   constructor(
@@ -59,7 +80,8 @@ class Filler {
   }
 
   has(...kinds: string[]): boolean {
-    return this.plan.fixtures.some((f) => f.roomId === this.room.id && kinds.includes(f.kind)) || (this.plan.addOns ?? []).some((a) => a.roomId === this.room.id && kinds.includes(a.kind));
+    const here = (x: { roomId?: string; kind: string }) => x.roomId === this.room.id && kinds.includes(x.kind);
+    return this.plan.fixtures.some(here) || (this.plan.addOns ?? []).some(here) || this.plan.furniture.some(here);
   }
 
   fixtures(kind: string) {
@@ -67,7 +89,7 @@ class Filler {
   }
 
   /** Whether an item stands clear of doors, inside the room and (for tall ones) not across a window. */
-  private fits(entryId: string, c: Fit): boolean {
+  fits(entryId: string, c: Fit): boolean {
     const check = placeCheck(this.plan, { entryId, ...c }, this.items);
     if (!check.ok || check.roomId !== this.room.id || check.blocksDoors.length) return false;
     if (TALL.has(entryId)) {
@@ -84,7 +106,7 @@ class Filler {
    * The best spot with its back on a wall: closest to `near` when given,
    * otherwise tucked toward a corner. Tries each width in turn.
    */
-  spot(entryId: string, widths: number[], depthIn: number, near?: Point): Fit | null {
+  spot(entryId: string, widths: number[], depthIn: number, near?: Point | "middle"): Fit | null {
     for (const W of widths) {
       const spots: (Fit & { score: number })[] = [];
       for (const e of edgesOf(this.room.polygon)) {
@@ -98,13 +120,14 @@ class Filler {
         const rotation = (((Math.round(angleOf(n) - 90) % 360) + 360) % 360);
         for (let t = W / 2 + 3; t <= L - W / 2 - 3 + 0.01; t += 6) {
           const c = add(add(e.a, scale(u, t)), scale(n, depthIn / 2 + OFF_WALL_IN));
-          const score = near ? -dist(c, near) : -Math.min(t - W / 2, L - t - W / 2);
+          // "middle": the middle of the longest wall it fits on (a bed or a sofa).
+          const score = near === "middle" ? L - Math.abs(t - L / 2) * 2 : near ? -dist(c, near) : -Math.min(t - W / 2, L - t - W / 2);
           spots.push({ x: round1(c.x), y: round1(c.y), rotation, widthIn: W, depthIn, score });
         }
         // The far corner exactly.
         const t = L - W / 2 - 3;
         const c = add(add(e.a, scale(u, t)), scale(n, depthIn / 2 + OFF_WALL_IN));
-        spots.push({ x: round1(c.x), y: round1(c.y), rotation, widthIn: W, depthIn, score: near ? -dist(c, near) : 0 });
+        spots.push({ x: round1(c.x), y: round1(c.y), rotation, widthIn: W, depthIn, score: near === "middle" ? L - Math.abs(t - L / 2) * 2 : near ? -dist(c, near) : 0 });
       }
       spots.sort((a, b) => b.score - a.score);
       const hit = spots.find((s) => this.fits(entryId, s));
@@ -119,11 +142,17 @@ class Filler {
     this.plan = out.plan;
     this.items = layerItems(this.plan);
     this.placed++;
+    this.added.push({ id: out.id, label: catalogEntry(entryId)?.label ?? entryId, room: this.room.name, roomId: this.room.id });
     return out.id;
   }
 
+  /** Put an item at an exact spot if it fits there. */
+  putIfFits(entryId: string, f: Fit): string | null {
+    return this.fits(entryId, f) ? this.put(entryId, f) : null;
+  }
+
   /** Put an item against a wall, at the first width that fits. */
-  place(entryId: string, widths?: number[], near?: Point): boolean {
+  place(entryId: string, widths?: number[], near?: Point | "middle"): boolean {
     const e = catalogEntry(entryId)!;
     const f = this.spot(entryId, widths ?? [e.widthIn], e.depthIn, near);
     return f ? Boolean(this.put(entryId, f)) : false;
@@ -242,6 +271,7 @@ function bedroom(f: Filler) {
   if (out.id) {
     f.plan = out.plan;
     f.placed++;
+    f.added.push({ id: out.id, label: "Reach-in closet", room: f.room.name, roomId: f.room.id });
   }
 }
 
@@ -258,6 +288,73 @@ function closetFor(f: Filler): ClosetSpot | null {
     }
   }
   return null;
+}
+
+type Host = { x: number; y: number; rotation: number; widthIn: number; depthIn: number };
+
+/**
+ * A spot measured from another item: `along` its width from its middle, and
+ * `out` from its back toward its front, to the new item's middle. `turn`
+ * turns the new item (180 faces it back toward the host).
+ */
+function fromHost(entryId: string, host: Host, along: number, out: number, turn = 0): Fit {
+  const e = catalogEntry(entryId)!;
+  const u = rotate({ x: 1, y: 0 }, host.rotation);
+  const v = rotate({ x: 0, y: 1 }, host.rotation);
+  const back = add({ x: host.x, y: host.y }, scale(v, -host.depthIn / 2));
+  const c = add(add(back, scale(u, along)), scale(v, out));
+  return { x: round1(c.x), y: round1(c.y), rotation: (((host.rotation + turn) % 360) + 360) % 360, widthIn: e.widthIn, depthIn: e.depthIn };
+}
+
+/** Try each entry in turn against a wall; the first that fits goes in. */
+function firstOf(f: Filler, entryIds: string[], near?: Point | "middle"): Host | null {
+  for (const id of entryIds) {
+    const e = catalogEntry(id)!;
+    const fit = f.spot(id, [e.widthIn], e.depthIn, near);
+    if (fit && f.put(id, fit)) return fit;
+  }
+  return null;
+}
+
+const furnitureIn = (f: Filler, kind: string) => f.plan.furniture.find((x) => x.roomId === f.room.id && x.kind === kind);
+const anyFurniture = (f: Filler, kinds: string[]) => kinds.some((k) => furnitureIn(f, k));
+const BEDS = ["bed-king", "bed-queen", "bed-full", "bed-twin"];
+const SOFAS = ["sectional", "sofa", "loveseat"];
+
+/** Full only: the furniture a room is used with. Nothing goes in a room that already has its main piece. */
+function furnish(f: Filler) {
+  const t = f.room.type ?? "";
+  if (BEDROOMS_FOR_CLOSETS.includes(t)) {
+    if (anyFurniture(f, BEDS)) return;
+    const bed = firstOf(f, t === "primary-bedroom" ? ["furniture:bed-king", "furniture:bed-queen"] : ["furniture:bed-queen", "furniture:bed-full", "furniture:bed-twin"], "middle");
+    if (!bed) return f.missing("a bed");
+    for (const s of [-1, 1]) f.putIfFits("furniture:nightstand", fromHost("furniture:nightstand", bed, s * (bed.widthIn / 2 + 2 + 11), 9));
+    // The dresser across from the foot of the bed.
+    const foot = add({ x: bed.x, y: bed.y }, scale(rotate({ x: 0, y: 1 }, bed.rotation), bed.depthIn / 2 + 120));
+    f.place("furniture:dresser", [60, 48, 36], foot);
+  } else if (t === "living" || t === "family" || t === "bonus") {
+    if (anyFurniture(f, SOFAS)) return;
+    const sofa = firstOf(f, ["furniture:sofa", "furniture:loveseat"], "middle");
+    if (!sofa) return f.missing("a sofa");
+    // 18" of floor between the sofa and the coffee table.
+    f.putIfFits("furniture:coffee-table", fromHost("furniture:coffee-table", sofa, 0, sofa.depthIn + 18 + 12));
+    const across = add({ x: sofa.x, y: sofa.y }, scale(rotate({ x: 0, y: 1 }, sofa.rotation), 240));
+    f.place("furniture:tv-stand", undefined, across);
+  } else if (t === "dining") {
+    if (furnitureIn(f, "dining-table")) return;
+    // In the middle of the room, long side along the room's longest wall.
+    const c = polygonCenter(f.room.polygon);
+    const longest = edgesOf(f.room.polygon).reduce((a, b) => (dist(b.a, b.b) > dist(a.a, a.b) ? b : a));
+    const rotation = (((Math.round(angleOf(sub(longest.b, longest.a))) % 180) + 180) % 180);
+    const e = catalogEntry("furniture:dining-table")!;
+    const fit = { x: round1(c.x), y: round1(c.y), widthIn: e.widthIn, depthIn: e.depthIn };
+    if (!f.putIfFits("furniture:dining-table", { ...fit, rotation }) && !f.putIfFits("furniture:dining-table", { ...fit, rotation: (rotation + 90) % 180 })) f.missing("a dining table");
+  } else if (t === "office") {
+    if (furnitureIn(f, "desk")) return;
+    const desk = firstOf(f, ["furniture:desk"], "middle");
+    if (!desk) return f.missing("a desk");
+    f.putIfFits("furniture:desk-chair", fromHost("furniture:desk-chair", desk, 0, desk.depthIn + 13, 180));
+  }
 }
 
 function fillRoom(f: Filler) {
@@ -279,26 +376,40 @@ function fillRoom(f: Filler) {
 }
 
 /** Furnish one room. */
-export function furnishRoom(plan: FloorPlan, roomId: string, ceilingIn = 96): FurnishResult {
+export function furnishRoom(plan: FloorPlan, roomId: string, ceilingIn = 96, preset: FurnishPreset = "minimal"): FurnishResult {
   const room = plan.rooms.find((r) => r.id === roomId);
-  if (!room || !canAutoFurnish(room) || areaKind(room) === "outdoor") return { plan, placed: 0, rooms: [], notes: [] };
+  if (!room || !canAutoFurnish(room, preset) || areaKind(room) === "outdoor") return { plan, placed: 0, rooms: [], notes: [], added: [] };
   const f = new Filler(plan, room, ceilingIn);
   fillRoom(f);
-  return { plan: f.plan, placed: f.placed, rooms: f.placed ? [room.name] : [], notes: f.notes };
+  // Furniture last, so it works around the fixtures and closet.
+  if (preset === "full") furnish(f);
+  return { plan: f.plan, placed: f.placed, rooms: f.placed ? [room.name] : [], notes: f.notes, added: f.added };
 }
 
 /** Furnish every room on a floor. */
-export function furnishLevel(plan: FloorPlan, ceilingIn = 96): FurnishResult {
+export function furnishLevel(plan: FloorPlan, ceilingIn = 96, preset: FurnishPreset = "minimal"): FurnishResult {
   let p = plan;
-  const out: FurnishResult = { plan, placed: 0, rooms: [], notes: [] };
-  for (const r of plan.rooms.filter(canAutoFurnish)) {
-    const res = furnishRoom(p, r.id, ceilingIn);
+  const out: FurnishResult = { plan, placed: 0, rooms: [], notes: [], added: [] };
+  for (const r of plan.rooms.filter((x) => canAutoFurnish(x, preset))) {
+    const res = furnishRoom(p, r.id, ceilingIn, preset);
     p = res.plan;
     out.placed += res.placed;
     out.rooms.push(...res.rooms);
     out.notes.push(...res.notes);
+    out.added.push(...res.added);
   }
   return { ...out, plan: p };
+}
+
+/** The preview's list: what would go in each room, with counts ("Kitchen: Counter, Sink, 2 Nightstands"). */
+export function previewLines(added: FurnishAdded[]): { room: string; items: string }[] {
+  const rooms = new Map<string, { room: string; m: Map<string, number> }>();
+  for (const a of added) {
+    const r = rooms.get(a.roomId) ?? { room: a.room, m: new Map<string, number>() };
+    r.m.set(a.label, (r.m.get(a.label) ?? 0) + 1);
+    rooms.set(a.roomId, r);
+  }
+  return [...rooms.values()].map(({ room, m }) => ({ room, items: [...m].map(([label, n]) => (n > 1 ? `${n} ${label.toLowerCase()}s` : label)).join(", ") }));
 }
 
 /** One line saying what Furnish for me did. */

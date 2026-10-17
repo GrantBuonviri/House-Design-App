@@ -15,7 +15,7 @@ import { OPENING_TYPES } from "@/lib/plan/catalog";
 import { catalogEntry, type CatalogEntry } from "@/lib/furnish/catalog";
 import { furnishLayouts, deleteItem, patchItem, stageItems } from "@/lib/furnish/stage";
 import { CLOSET_SIZES, clampClosetSize, isClosetRod, type ClosetSize, type ClosetType } from "@/lib/furnish/closets";
-import { canAutoFurnish, furnishLevel, furnishRoom, furnishSummary } from "@/lib/furnish/autoFurnish";
+import { canAutoFurnish, FURNISH_PRESETS, furnishLevel, furnishRoom, furnishSummary, previewLines, type FurnishPreset, type FurnishResult } from "@/lib/furnish/autoFurnish";
 import { formatFeetInches } from "@/lib/model/units";
 import { Note } from "@/components/brief/bits";
 import LevelTabs from "@/components/bubbles/LevelTabs";
@@ -93,6 +93,9 @@ export default function FurnishStage({
   const [closetSize, setClosetSize] = useState<ClosetSize>(CLOSET_SIZES["reach-in"]);
   const [autoRoom, setAutoRoom] = useState("all");
   const [autoNotes, setAutoNotes] = useState<string[]>([]);
+  const [autoPreset, setAutoPreset] = useState<FurnishPreset>("minimal");
+  // Furnish for me's preview: what it would put in, shown on the plan before anything is saved.
+  const [preview, setPreview] = useState<{ base: FloorPlan; res: FurnishResult } | null>(null);
 
   // From the walkthrough: center on where you were standing, once the canvas has its size.
   useEffect(() => {
@@ -343,16 +346,29 @@ export default function FurnishStage({
   const pickedEntry = pick ? catalogEntry(pick) : undefined;
   const roomName = item?.roomId ? plan.rooms.find((r) => r.id === item.roomId)?.name : undefined;
   const closetType = tool === "place" && pickedEntry?.kind === "closet" ? (pickedEntry.type as ClosetType) : null;
-  const autoRooms = plan.rooms.filter(canAutoFurnish);
+  const autoRooms = plan.rooms.filter((r) => canAutoFurnish(r, autoPreset));
   const autoPick = autoRooms.some((r) => r.id === autoRoom) ? autoRoom : "all";
+  // A preview is of the plan as it was: an undo or another floor drops it.
+  const shownPreview = preview && preview.base === plan ? preview : null;
+  const previewSel: PlanSelection = shownPreview ? shownPreview.res.added.map((a) => ({ kind: "furnish", id: a.id })) : [];
 
-  /** Furnish for me: the picked room, or every room on this floor, in one step. */
-  function furnishForMe() {
-    const res = autoPick === "all" ? furnishLevel(plan, ceilingIn) : furnishRoom(plan, autoPick, ceilingIn);
-    if (res.placed) setLevelPlan(res.plan);
+  /** Furnish for me's preview: the picked room, or every room on this floor, worked out but not saved. */
+  function previewFurnish() {
+    const res = autoPick === "all" ? furnishLevel(plan, ceilingIn, autoPreset) : furnishRoom(plan, autoPick, ceilingIn, autoPreset);
     setSelection([]);
     setAutoNotes(res.notes);
-    setFlash(furnishSummary(res));
+    if (!res.placed) {
+      setPreview(null);
+      setFlash(furnishSummary(res));
+    } else setPreview({ base: plan, res });
+  }
+
+  /** Put in what the preview shows, in one step. */
+  function furnishForMe() {
+    if (!shownPreview) return;
+    setLevelPlan(shownPreview.res.plan);
+    setPreview(null);
+    setFlash(furnishSummary(shownPreview.res));
   }
 
   return (
@@ -421,7 +437,7 @@ export default function FurnishStage({
 
         <div className="relative min-w-0">
           <PlanCanvas
-            plan={plan}
+            plan={shownPreview?.res.plan ?? plan}
             level={level}
             levels={levels}
             basics={basics}
@@ -431,7 +447,7 @@ export default function FurnishStage({
             sketch={null}
             tool={tool}
             placeOpening={placeOpening}
-            selection={sel}
+            selection={shownPreview ? previewSel : sel}
             snap={snap}
             labels={labels}
             tape={tape}
@@ -443,8 +459,8 @@ export default function FurnishStage({
             furnish={{ faucets, railings: stairRails.railings, bareRailings: stairRails.bare, layouts, pick, turn, wallHeight, ceilingIn, closetSize, here: walk && walk.here.levelId === level.id ? walk.here : undefined }}
             focus={focus}
             onLotMove={() => {}}
-            onSelect={setSelection}
-            onChange={setLevelPlan}
+            onSelect={shownPreview ? () => {} : setSelection}
+            onChange={shownPreview ? () => {} : setLevelPlan}
             onToolDone={() => setTool("select")}
             onDrafting={setDrafting}
             onMessage={setFlash}
@@ -528,8 +544,34 @@ export default function FurnishStage({
           )}
           <div className="card space-y-2 p-4 text-sm" data-testid="furnish-for-me">
             <h3 className="text-sm font-semibold">Furnish for me</h3>
-            <p className="text-xs text-muted">Fills in what each room needs: kitchen counters and appliances, bath fixtures, laundry, bedroom closets, the water heater and furnace, coat hooks. It skips anything already there.</p>
-            <select className="input w-full" value={autoPick} onChange={(e) => setAutoRoom(e.target.value)} aria-label="Room to furnish" data-testid="furnish-for-me-room">
+            <div className="flex overflow-hidden rounded-md border border-line" role="radiogroup" aria-label="How much to put in">
+              {FURNISH_PRESETS.map((pr) => (
+                <button
+                  key={pr.id}
+                  role="radio"
+                  aria-checked={autoPreset === pr.id}
+                  className={`flex-1 px-2 py-1 text-xs ${autoPreset === pr.id ? "bg-accent font-medium text-white" : "hover:bg-black/5"}`}
+                  onClick={() => {
+                    setAutoPreset(pr.id);
+                    setPreview(null);
+                  }}
+                  data-testid={`furnish-preset-${pr.id}`}
+                >
+                  {pr.label}
+                </button>
+              ))}
+            </div>
+            <p className="text-xs text-muted">{FURNISH_PRESETS.find((pr) => pr.id === autoPreset)!.hint} It skips anything already there.</p>
+            <select
+              className="input w-full"
+              value={autoPick}
+              onChange={(e) => {
+                setAutoRoom(e.target.value);
+                setPreview(null);
+              }}
+              aria-label="Room to furnish"
+              data-testid="furnish-for-me-room"
+            >
               <option value="all">Every room on {level.name.toLowerCase()}</option>
               {autoRooms.map((r) => (
                 <option key={r.id} value={r.id}>
@@ -537,9 +579,30 @@ export default function FurnishStage({
                 </option>
               ))}
             </select>
-            <button className="btn-primary w-full" onClick={furnishForMe} disabled={!autoRooms.length} data-testid="furnish-for-me-go">
-              Furnish for me
-            </button>
+            {shownPreview ? (
+              <div className="space-y-2 rounded-md bg-accent/5 p-2" data-testid="furnish-preview">
+                <p className="text-xs font-medium">The plan shows what it would put in (picked in blue). Nothing is saved yet.</p>
+                <ul className="space-y-1 text-xs">
+                  {previewLines(shownPreview.res.added).map((l, i) => (
+                    <li key={i}>
+                      <span className="font-medium">{l.room}:</span> {l.items}
+                    </li>
+                  ))}
+                </ul>
+                <div className="flex gap-2">
+                  <button className="btn-primary flex-1 justify-center" onClick={furnishForMe} data-testid="furnish-for-me-go">
+                    Put these in
+                  </button>
+                  <button className="btn flex-1 justify-center" onClick={() => setPreview(null)} data-testid="furnish-preview-cancel">
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <button className="btn-primary w-full" onClick={previewFurnish} disabled={!autoRooms.length} data-testid="furnish-for-me-preview">
+                Preview
+              </button>
+            )}
             {autoNotes.length > 0 && (
               <ul className="list-disc space-y-1 pl-4 text-xs text-amber-900" data-testid="furnish-for-me-notes">
                 {autoNotes.map((n) => (

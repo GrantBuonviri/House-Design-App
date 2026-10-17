@@ -1,6 +1,7 @@
 "use client";
 
 import type { CatalogEntry } from "@/lib/furnish/catalog";
+import { FURNISH_PRESETS, type FurnishPreset } from "@/lib/furnish/autoFurnish";
 import FurnishCatalog from "@/components/furnish/FurnishCatalog";
 
 export type DesignTab = "finishes" | "place";
@@ -41,9 +42,25 @@ export function FinishesHelp({ onOpenWindow }: { onOpenWindow?: (kind: "interior
 
 /**
  * The Place tab: everything Furnish can put in the house, by group with a
- * search box (furniture too), and Furnish for me for the room you're in.
+ * search box (furniture too), and Furnish for me for the room you're in
+ * (Minimal or Full, shown see-through in the house before it's put in).
  */
-export function PlaceTab({ picked, onPick, roomName, canFurnish, onFurnishForMe, notes, onAddRailing }: { picked: string | null; onPick: (e: CatalogEntry) => void; roomName: string | null; canFurnish: boolean; onFurnishForMe: () => void; notes: string[]; onAddRailing?: () => void }) {
+export function PlaceTab(props: {
+  picked: string | null;
+  onPick: (e: CatalogEntry) => void;
+  roomName: string | null;
+  canFurnish: boolean;
+  preset: FurnishPreset;
+  onPreset: (p: FurnishPreset) => void;
+  /** What the preview would put in, by room, while one is shown. */
+  preview: { room: string; items: string }[] | null;
+  onPreview: () => void;
+  onFurnishForMe: () => void;
+  onCancelPreview: () => void;
+  notes: string[];
+  onAddRailing?: () => void;
+}) {
+  const { picked, onPick, roomName, canFurnish, preset, onPreset, preview, onPreview, onFurnishForMe, onCancelPreview, notes, onAddRailing } = props;
   return (
     <div className="space-y-3" data-testid="place-tab">
       <p className="text-xs text-muted">
@@ -61,10 +78,38 @@ export function PlaceTab({ picked, onPick, roomName, canFurnish, onFurnishForMe,
       )}
       <div className="card space-y-2 p-3 text-sm" data-testid="walk-furnish-for-me">
         <h3 className="text-sm font-semibold">Furnish for me</h3>
-        <p className="text-xs text-muted">{roomName ? `Fills in what the ${roomName.toLowerCase()} needs, skipping anything already there.` : "Walk into a room first."}</p>
-        <button className="btn-primary w-full" disabled={!canFurnish} onClick={onFurnishForMe} data-testid="walk-furnish-for-me-go">
-          {roomName ? `Furnish the ${roomName.toLowerCase()} for me` : "Furnish for me"}
-        </button>
+        <div className="flex overflow-hidden rounded-md border border-line" role="radiogroup" aria-label="How much to put in">
+          {FURNISH_PRESETS.map((pr) => (
+            <button key={pr.id} role="radio" aria-checked={preset === pr.id} className={`flex-1 px-2 py-1 text-xs ${preset === pr.id ? "bg-ink font-medium text-white" : "hover:bg-stone-100"}`} onClick={() => onPreset(pr.id)} data-testid={`walk-furnish-preset-${pr.id}`}>
+              {pr.label}
+            </button>
+          ))}
+        </div>
+        <p className="text-xs text-muted">{roomName ? `${FURNISH_PRESETS.find((pr) => pr.id === preset)!.hint} It skips anything already in the ${roomName.toLowerCase()}.` : "Walk into a room first."}</p>
+        {preview ? (
+          <div className="space-y-2 rounded-md bg-sky-50 p-2" data-testid="walk-furnish-preview">
+            <p className="text-xs font-medium">Shown see-through in blue in the room. Nothing is saved yet.</p>
+            <ul className="space-y-1 text-xs">
+              {preview.map((l, i) => (
+                <li key={i}>
+                  <span className="font-medium">{l.room}:</span> {l.items}
+                </li>
+              ))}
+            </ul>
+            <div className="flex gap-2">
+              <button className="btn-primary flex-1 justify-center" onClick={onFurnishForMe} data-testid="walk-furnish-for-me-go">
+                Put these in
+              </button>
+              <button className="btn flex-1 justify-center" onClick={onCancelPreview}>
+                Cancel
+              </button>
+            </div>
+          </div>
+        ) : (
+          <button className="btn-primary w-full" disabled={!canFurnish} onClick={onPreview} data-testid="walk-furnish-for-me-preview">
+            {roomName ? `Preview: furnish the ${roomName.toLowerCase()}` : "Furnish for me"}
+          </button>
+        )}
         {notes.length > 0 && (
           <ul className="list-disc space-y-1 pl-4 text-xs text-amber-900">
             {notes.map((n) => (
