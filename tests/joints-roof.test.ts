@@ -137,7 +137,7 @@ type Tri3 = [number, number, number][];
 /** Wall triangles (scene units) from every floor. */
 function wallTris(parts: Part[], layer: Part["layer"] = "walls"): { t: Tri3; key: string }[] {
   const out: { t: Tri3; key: string }[] = [];
-  for (const p of parts.filter((x) => x.layer === layer)) {
+  for (const p of parts.filter((x) => x.layer === layer && !x.quality)) {
     const m = p.mesh;
     for (let i = 0; i < m.count; i++) {
       const t: Tri3 = [0, 1, 2].map((k) => {

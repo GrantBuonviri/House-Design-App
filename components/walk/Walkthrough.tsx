@@ -285,6 +285,11 @@ export default function Walkthrough({ project, cost, onClose, startWindow }: { p
     () => (design ? Object.fromEntries(levels.map((l) => [l.id, stageItems(planOf(project.floorPlans, l.id), furnishLayouts(project, l), ceilingOf(l.id))])) : {}),
     [design, project, levels, ceilingOf],
   );
+  // With Pretty, outlet and switch plates show on the walls outside Design too (nothing is aimed at them there).
+  const plateItems = useMemo<Record<string, LayerItem[]>>(
+    () => (design ? itemsOn : quality === "pretty" ? Object.fromEntries(levels.map((l) => [l.id, stageItems(planOf(project.floorPlans, l.id), furnishLayouts(project, l), ceilingOf(l.id))])) : {}),
+    [design, itemsOn, quality, project, levels, ceilingOf],
+  );
   const site = useMemo(() => siteFor(project.plot, offset, plans), [project.plot, offset, plans]);
   const ctx: HouseContext = useMemo(
     () => ({ levels, basics, house3d: project.house3d, site, frame, interior: project.interior.selections, exterior: project.exterior, systems: project.plans.systems }),
@@ -998,9 +1003,9 @@ export default function Walkthrough({ project, cost, onClose, startWindow }: { p
         {aimedItem && aim?.kind === "furnish" && <ItemHighlight item={aimedItem} floorIn={heights[aim.levelId]?.floorIn ?? 0} ceilingIn={ceilingOf(aim.levelId)} frame={frame} />}
         {railHint && <RailingHighlight a={railHint.a} b={railHint.b} za={railHint.za} zb={railHint.zb} heightIn={railHint.heightIn} floorIn={heights[railHint.levelId]?.floorIn ?? 0} frame={frame} />}
         {aimedOpening && aim?.kind === "opening" && <OpeningGhost g={aimedOpening} floorIn={heights[aim.levelId]?.floorIn ?? 0} frame={frame} ok highlight />}
-        {design &&
+        {(design || quality === "pretty") &&
           levels.map((l) =>
-            itemsOn[l.id]?.length && heights[l.id] ? <DevicePlates key={l.id} items={itemsOn[l.id]} floorIn={heights[l.id].floorIn} ceilingIn={ceilingOf(l.id)} frame={frame} /> : null,
+            plateItems[l.id]?.length && heights[l.id] ? <DevicePlates key={l.id} items={plateItems[l.id]} floorIn={heights[l.id].floorIn} ceilingIn={ceilingOf(l.id)} frame={frame} /> : null,
           )}
         <Player
           walker={walker}

@@ -55,7 +55,7 @@ function run(states: ReturnType<typeof newDoorStates>, d: DoorInfo, who: { p: Po
 describe("door leaves in the 3D parts", () => {
   it("come out as their own parts, drawn closed across the doorway", () => {
     const ps = parts(door());
-    const leaf = ps.filter((p) => p.door);
+    const leaf = ps.filter((p) => p.door && p.quality !== "pretty");
     expect(leaf).toHaveLength(1);
     expect(leaf[0].pick).toEqual({ kind: "opening", id: "d", levelId: MAIN_LEVEL_ID });
     expect(leaf[0].door!.motion.kind).toBe("swing");
@@ -82,7 +82,7 @@ describe("door leaves in the 3D parts", () => {
   });
 
   it("gives each kind of door its own motion", () => {
-    const kinds = Object.fromEntries(["door-hinged", "door-double", "door-slider", "door-pocket", "door-barn", "door-garage"].map((s) => [s, parts(door(s)).filter((p) => p.door).map((p) => p.door!.motion.kind)]));
+    const kinds = Object.fromEntries(["door-hinged", "door-double", "door-slider", "door-pocket", "door-barn", "door-garage"].map((s) => [s, parts(door(s)).filter((p) => p.door && p.quality !== "pretty").map((p) => p.door!.motion.kind)]));
     expect(kinds["door-hinged"]).toEqual(["swing"]);
     expect(kinds["door-double"]).toEqual(["swing", "swing"]);
     expect(new Set(kinds["door-slider"])).toEqual(new Set(["slide"]));
