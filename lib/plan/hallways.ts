@@ -1,4 +1,5 @@
 import type { FloorPlan, PlanRoom, Point } from "@/lib/model/schema";
+import { worstOverrun, type SetbackLimit } from "./setbacks";
 import { isCirculation, neighbors, openingRooms, roleOf, sharedWall } from "./connect";
 import { keepOpeningsInPlace, makeRoom, moveMany } from "./edit";
 import { roomHasCurves } from "./arcs";
@@ -255,7 +256,7 @@ export function bridgeStairHalls(plan: FloorPlan, regions: Region[] = []): { pla
 }
 
 /** Add hallways, one at a time, until every bedroom and bathroom opens onto one (or no cut helps). */
-export function addHallways(plan: FloorPlan, stairObstacles: Bounds[] = [], max = 3): { plan: FloorPlan; added: number } {
+export function addHallways(plan: FloorPlan, stairObstacles: Bounds[] = [], max = 3, limits: SetbackLimit[] = []): { plan: FloorPlan; added: number } {
   let added = 0;
   for (let k = 0; k < max; k++) {
     // An anchored stair hall never slides or stretches, so a hallway cut can't pass through or push it: it stays with the stairs.
@@ -263,16 +264,20 @@ export function addHallways(plan: FloorPlan, stairObstacles: Bounds[] = [], max 
     const needy = new Set(roomsNeedingHall(plan).map((r) => r.id));
     if (!needy.size) break;
     const name = plan.rooms.some((r) => r.type === "hall") ? `Hall ${plan.rooms.filter((r) => r.type === "hall").length + 1}` : "Hall";
-    let best: CutResult | null = null;
+    const found: CutResult[] = [];
     for (const axis of ["x", "y"] as const) {
       const lines = [...new Set(plan.rooms.flatMap((r) => r.polygon.map((p) => round1(axis === "x" ? p.x : p.y))))];
       for (const c of lines) {
         for (const dir of [1, -1] as const) {
           const res = tryCut(plan, { axis, c, dir }, needy, obstacles, name);
-          if (res && (!best || res.score > best.score)) best = res;
+          if (res) found.push(res);
         }
       }
     }
+    found.sort((a, b) => b.score - a.score);
+    // A cut that pushes rooms past a setback is skipped. If every cut does, the best one stays and Things to check says so.
+    const already = worstOverrun(plan, limits);
+    const best = found.find((res) => worstOverrun(res.plan, limits) <= already + 0.5) ?? found[0] ?? null;
     if (!best) break;
     plan = best.plan;
     added++;

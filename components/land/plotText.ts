@@ -1,12 +1,12 @@
-import type { Plot } from "@/lib/model/schema";
+import type { Plot, Point } from "@/lib/model/schema";
 import { describeSlope, plotAcres } from "@/lib/land/generate";
 import { plotImplications } from "@/lib/land/implications";
 import { compassName } from "@/lib/land/sun";
 
 /** Short, readable facts about a plot for cards and the detail panel. */
-export function plotFacts(plot: Plot) {
+export function plotFacts(plot: Plot, spot?: Point) {
   const acres = plotAcres(plot);
-  const imp = plotImplications(plot);
+  const imp = plotImplications(plot, spot);
   return {
     size: `${acres < 1 ? acres.toFixed(2) : acres.toFixed(1)} acres`,
     dims: `${Math.round(plot.widthIn / 12)}′ × ${Math.round(plot.depthIn / 12)}′`,

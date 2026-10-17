@@ -1,4 +1,5 @@
 import type { Point, Project } from "@/lib/model/schema";
+import { houseSpot } from "@/lib/house3d/site";
 import { isHeated } from "@/lib/brief/rooms";
 import { plotImplications, type FoundationType } from "@/lib/land/implications";
 import { nearestAccess } from "@/lib/land/onLot";
@@ -258,7 +259,7 @@ export function empty(source: Quantities["source"]): Quantities {
 /** Site facts that don't depend on the plan. */
 export function siteFacts(p: Ctx, q: Quantities) {
   if (!p.plot) return;
-  const imp = plotImplications(p.plot);
+  const imp = plotImplications(p.plot, houseSpot(p));
   q.foundation = imp.foundation.type;
   q.slopePercent = p.plot.slope.percent;
   q.drainage = imp.drainageWork;

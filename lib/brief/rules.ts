@@ -1,4 +1,4 @@
-import type { Adjacency, ChosenRoom, DesignBrief, DiscoveryAnswers, Plot, Profile } from "@/lib/model/schema";
+import type { Adjacency, ChosenRoom, DesignBrief, DiscoveryAnswers, Plot, Point, Profile } from "@/lib/model/schema";
 import { plotImplications } from "@/lib/land/implications";
 import { compassName } from "@/lib/land/sun";
 import { GARAGE_SQFT, roomType, sqftFromDims } from "./rooms";
@@ -9,6 +9,8 @@ export type BriefContext = {
   answers: DiscoveryAnswers;
   profile: Profile;
   plot: Plot | null;
+  /** Where the house sits on the land (plot inches), when it is placed. */
+  spot?: Point;
 };
 
 type Room = DesignBrief["rooms"][number];
@@ -138,14 +140,14 @@ export function feelWords(feel: string): string[] {
 }
 
 function rulePriorities(ctx: BriefContext): string[] {
-  const { answers: a, plot } = ctx;
+  const { answers: a, plot, spot } = ctx;
   const out: string[] = [];
   if (/\bentertain|\bhost|\bparties|\bparty\b|\bguests/i.test(a.feel)) out.push("Room to host and entertain");
   if (/\bprivacy|\bprivate/i.test(a.feel)) out.push("Privacy between spaces");
   if (/\bstorage/i.test(a.feel)) out.push("Plenty of storage");
   if (/\boutdoor|\bpatio|\bdeck|\bgarden|\byard/i.test(a.feel)) out.push("Easy indoor-outdoor living");
   if (plot) {
-    const imp = plotImplications(plot);
+    const imp = plotImplications(plot, spot);
     if (imp.sun.rating === "excellent" || imp.sun.rating === "good") out.push("Living spaces on the sunny south side");
     else out.push("Bring in winter light with high south windows");
     for (const w of plot.waterFeatures) {

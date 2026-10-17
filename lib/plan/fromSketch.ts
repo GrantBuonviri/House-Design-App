@@ -1,4 +1,5 @@
 import type { BubbleDiagram, DesignBrief, FloorPlan, Level, Opening, PlanBasics, PlanRoom, PlanStairs, Plot, Point } from "@/lib/model/schema";
+import type { SetbackLimit } from "./setbacks";
 import { isDrawn, type Bubble } from "@/lib/bubbles/shapes";
 import { roomType } from "@/lib/brief/rooms";
 import { exteriorWallIn, levelAbove, levelBelow, riseBetween } from "./basics";
@@ -21,7 +22,14 @@ import { sameHost, wallPieces } from "./walls";
  * floor below it, so nothing hangs in the air.
  */
 
-export type PlanContext = { brief: DesignBrief | null; plot: Plot | null; levels: Level[]; basics: PlanBasics | null };
+export type PlanContext = {
+  brief: DesignBrief | null;
+  plot: Plot | null;
+  levels: Level[];
+  basics: PlanBasics | null;
+  /** How far inside the lot lines the house has to stay (lib/plans/lot.ts `setbackLimits`); hallways and "grow" ideas keep inside them. */
+  limits?: SetbackLimit[];
+};
 
 export type FromSketchResult = {
   plans: Plans;

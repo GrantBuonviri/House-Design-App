@@ -1,7 +1,7 @@
 import type { FloorPlan, Plot, Point, Project } from "@/lib/model/schema";
 import { MAIN_LEVEL_ID } from "@/lib/brief/levels";
 import { diagramOf } from "@/lib/bubbles/edit";
-import { defaultLotOffset, lotCenter } from "@/lib/bubbles/land";
+import { defaultLotOffset, houseCenter, lotCenter } from "@/lib/bubbles/land";
 import { createTerrain, type HeightFn } from "@/lib/land/terrain";
 import { planOf } from "@/lib/plan/edit";
 import { boundsOf, pointInPolygon } from "@/lib/plan/geometry";
@@ -26,6 +26,20 @@ export function lotOffsetFor(p: Pick<Project, "plot" | "sketch" | "bubbles" | "f
   const bb = planBounds(p.floorPlans, true);
   const lot = lotCenter(p.plot);
   return bb ? { x: Math.round(lot.x - (bb.x0 + bb.x1) / 2), y: Math.round(lot.y - (bb.y0 + bb.y1) / 2) } : { x: 0, y: 0 };
+}
+
+/**
+ * Where the middle of the house sits on the land (plot inches), for the notes that depend on
+ * the ground under it (foundation, slope). Undefined until there is a house to place.
+ */
+export function houseSpot(p: Pick<Project, "plot" | "sketch" | "bubbles" | "floorPlans">): Point | undefined {
+  if (!p.plot) return undefined;
+  const bubbles = diagramOf(p.bubbles, MAIN_LEVEL_ID).bubbles;
+  const bb = bubbles.length ? null : planBounds(p.floorPlans, true);
+  if (!bubbles.length && !bb) return undefined;
+  const mid = bubbles.length ? houseCenter(bubbles) : { x: (bb!.x0 + bb!.x1) / 2, y: (bb!.y0 + bb!.y1) / 2 };
+  const off = lotOffsetFor(p);
+  return { x: mid.x + off.x, y: mid.y + off.y };
 }
 
 /** The box around the house's rooms (the main floor's when `mainFirst` and it has any). */

@@ -4,6 +4,7 @@ import { applyChanges, edgeFacing, mirrorAxis, type PlanChange } from "./changes
 import { planOf, type Plans } from "./edit";
 import type { PlanContext } from "./fromSketch";
 import { roomSqft } from "./measure";
+import { overruns, type SetbackLimit } from "./setbacks";
 
 /** One of the floor plan's "Show me alternatives" designs. */
 export type PlanAlternative = {
@@ -49,10 +50,22 @@ function wideOpening(plan: FloorPlan, a: PlanRoom, b: PlanRoom): boolean {
   });
 }
 
+const TOWARD = { N: { x: 0, y: -1 }, E: { x: 1, y: 0 }, S: { x: 0, y: 1 }, W: { x: -1, y: 0 } } as const;
+
+/** Would moving this wall out by `feet` reach farther past a setback than it does now? */
+function growsPastSetback(room: PlanRoom, edge: number, side: (typeof SIDES)[number], feet: number, limits: SetbackLimit[]): boolean {
+  if (!limits.length) return false;
+  const pts = [room.polygon[edge], room.polygon[(edge + 1) % room.polygon.length]];
+  const v = TOWARD[side];
+  const moved = pts.map((p) => ({ x: p.x + v.x * feet * 12, y: p.y + v.y * feet * 12 }));
+  const was = Math.max(0, ...overruns(pts, limits).map((o) => o.byIn));
+  return Math.max(0, ...overruns(moved, limits).map((o) => o.byIn)) > was + 0.5;
+}
+
 /** Ways to push a room's wall out: away from the road first, then into living spaces with room to spare. */
-function growOptions(plan: FloorPlan, room: PlanRoom, feet: number, ctx: PlanContext): { change: PlanChange; into: string }[] {
+export function growOptions(plan: FloorPlan, room: PlanRoom, feet: number, ctx: PlanContext): { change: PlanChange; into: string }[] {
   const road = ctx.plot?.roadSide;
-  const out: { change: PlanChange; into: string; score: number }[] = [];
+  const out: { change: PlanChange; into: string; score: number; crosses: boolean }[] = [];
   for (const side of SIDES) {
     const edge = edgeFacing(room, side);
     if (edge === null) continue;
@@ -61,9 +74,13 @@ function growOptions(plan: FloorPlan, room: PlanRoom, feet: number, ctx: PlanCon
     const roomy = across.every((r) => LIVING.has(r.type ?? "") || r.type === "hall" || r.type === "other");
     if (!roomy) continue;
     const score = (into === OUTSIDE ? 10 : 5) + (side === road ? -8 : 0) + (side === "S" ? 1 : 0);
-    out.push({ change: change("grow", room.id, { side, feet }), into, score });
+    // Pushing a wall out past a setback or the lot line is the last resort.
+    const crosses = into === OUTSIDE && growsPastSetback(room, edge, side, feet, ctx.limits ?? []);
+    out.push({ change: change("grow", room.id, { side, feet }), into, score, crosses });
   }
-  return out.sort((a, b) => b.score - a.score);
+  // Choices that stay inside the setbacks only; if every choice crosses, the best one stays (Things to check then names it).
+  const inside = out.filter((o) => !o.crosses);
+  return (inside.length ? inside : out).sort((a, b) => b.score - a.score);
 }
 
 /**

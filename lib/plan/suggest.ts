@@ -88,7 +88,7 @@ export function suggestPlans(diagrams: Record<string, BubbleDiagram>, ctx: PlanC
       const obstacles = stairsBoxes(base.plans, ctx, level);
       const sh = addStairHalls(plan, obstacles, stairFits(base.plans, ctx, level));
       stairHalls += sh.added;
-      const h = addHallways(sh.plan, obstacles);
+      const h = addHallways(sh.plan, obstacles, 3, ctx.limits);
       halls += h.added;
       plan = h.plan;
       const support = supportOf(plans, ctx.levels, level);

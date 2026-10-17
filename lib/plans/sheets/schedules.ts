@@ -103,6 +103,9 @@ function sideOf(plan: FloorPlan, o: Opening): Where {
   return "inside";
 }
 
+/** Overhang depth is about this share of the drop from the overhang to the sill (Boise summer noon sun, 70 degrees). */
+const SUN_SHADE_RATIO = 0.36;
+
 const productText = (p: Product | undefined) => (p ? `${productTitle(p)}${p.sku ? ` (${p.sku})` : ""}` : "Owner's pick");
 
 /** Rows for the door and window schedules, in tag order. */
@@ -115,6 +118,9 @@ export function doorWindowRows(project: Project): { doors: string[][]; windows: 
   const fall = codeNum("windowFall.heightAboveGrade");
   const fallSill = codeNum("windowFall.minSillHeight");
   let exteriorDoorCount = 0;
+  const overhang = project.house3d.roof.overhangIn;
+  const aboveGround = h.levels.filter((l) => l.kind !== "basement");
+  const topLevel = aboveGround[aboveGround.length - 1] ?? h.levels[h.levels.length - 1];
   for (const level of h.levels) {
     const plan = h.plan(level.id);
     for (const g of openingGeometries(plan)) {
@@ -170,6 +176,8 @@ export function doorWindowRows(project: Project): { doors: string[][]; windows: 
         const notes: string[] = [];
         if (curved) notes.push(`Set in a curved wall (${radiusLabel(curved)})`);
         if (safety) notes.push(`Tempered: ${safety.join("; ")}`);
+        // Summer noon sun in Boise is about 70 degrees high: an overhang shades a south window when it is no more than about 1/0.36 times its depth above the sill.
+        if (g.n.y >= 0.6 && where === "outside" && level.id === topLevel.id && overhang > 0) notes.push(`Faces south: the ${inchText(overhang)} roof overhang shades it at summer noon when the eave is within about ${inchText(Math.round(overhang / SUN_SHADE_RATIO))} above the sill`);
         if (!basement && level.kind !== "main" && level.elevationIn + sill > fall && sill < fallSill) notes.push(`Opening limit device or sill at ${inchText(fallSill)} (${codeRef("windowFall.minSillHeight")})`);
         windows.push({
           tag,

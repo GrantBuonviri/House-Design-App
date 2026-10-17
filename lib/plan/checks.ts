@@ -10,13 +10,14 @@ import { dist, edgesOf, isRectangle, polygonCenter, polygonsOverlap, scale, add 
 import { areaKind, roomSqft } from "./measure";
 import { MIN_STAIRS_WIDTH_IN, stackedHeadroom } from "./stairs";
 import { codeNum } from "@/lib/codes/data";
-import { escapeCheck, operationOf } from "@/lib/codes/openings";
+import { escapeCheck, glassSqft, openableSqft, operationOf } from "@/lib/codes/openings";
 import { clearSqft, clearWidthIn, isHabitable } from "@/lib/codes/rules";
 import { windowWells } from "./wells";
 import { findGaps, type Gap } from "./overlaps";
 import { isWayIn, stairsBoxes, stairsFootprints, wayInRooms } from "./suggest";
 import { CANTILEVER_MAX_IN, overhangsOf, pulledBack, supportOf } from "./support";
 import { flatPlans } from "./flatten";
+import { overruns, type SetbackLimit } from "./setbacks";
 import { tooWideForCurve } from "./bend";
 import { pointOnEdge } from "./arcs";
 import { hostSegment, openingGeometry } from "./walls";
@@ -93,6 +94,8 @@ type Ctx = {
   basics: PlanBasics | null;
   /** The land and where the house sits on it (plot point = plan point + offset), for the land checks. */
   land?: { plot: Plot | null; offset: Point } | null;
+  /** How far inside the lot lines the house has to stay (see lib/plans/lot.ts `setbackLimits`). */
+  limits?: SetbackLimit[];
 };
 
 export function planWarnings(plans: Plans, ctx: Ctx): PlanWarning[] {
@@ -207,6 +210,32 @@ export function planWarnings(plans: Plans, ctx: Ctx): PlanWarning[] {
       const big = [...plan.rooms].filter((r) => isHabitable(r) && areaKind(r) === "living").sort((a, b) => roomSqft(b) - roomSqft(a))[0];
       add_(level.id, "egress-basement", `The ${level.name.toLowerCase()} has no emergency escape window or door outside.`, [big]);
       out[out.length - 1].escape = { roomId: big.id };
+    }
+
+    // Rooms reaching past a setback or the lot line.
+    for (const r of plan.rooms) {
+      if (areaKind(r) === "outdoor") continue;
+      const worst = overruns(r.polygon, ctx.limits ?? []).sort((a, b) => b.byIn - a.byIn)[0];
+      if (!worst) continue;
+      const side = worst.name.toLowerCase();
+      add_(level.id, `setback:${r.id}`, worst.pastLine ? `${r.name} is ${formatFeetInches(worst.byIn)} past the ${side} lot line.` : `${r.name} is ${formatFeetInches(worst.byIn)} past the ${side} setback.`, [r], worst.point);
+    }
+
+    // Light and air (R303): glass of 8% of the floor and 4% opening. A soft note, since the code allows electric light and Idaho's fresh-air fan instead.
+    if (plan.openings.some((o) => o.kind === "window")) {
+      for (const r of plan.rooms) {
+        if (areaKind(r) !== "living" || !isHabitable(r)) continue;
+        const mine = plan.openings.filter((o) => openingRooms(plan, o).includes(r.id));
+        const glass = mine.reduce((n, o) => n + glassSqft(o), 0);
+        const open = mine.reduce((n, o) => n + openableSqft(o), 0);
+        const floor = clearSqft(r);
+        const needGlass = (floor * codeNum("light.glazingPctOfFloor")) / 100;
+        const needOpen = (floor * codeNum("light.ventOpenablePctOfFloor")) / 100;
+        const short: string[] = [];
+        if (glass < needGlass) short.push(`${Math.round(glass)} sq ft of glass (it wants ${Math.round(needGlass)}, which is ${codeNum("light.glazingPctOfFloor")}% of the floor)`);
+        if (open < needOpen) short.push(`${Math.round(open)} sq ft that opens (it wants ${Math.round(needOpen)}, which is ${codeNum("light.ventOpenablePctOfFloor")}%)`);
+        if (short.length) add_(level.id, `light:${r.id}`, `${r.name} has ${short.join(" and ")}. More or bigger windows give it light and fresh air (R303).`, [r]);
+      }
     }
 
     // Doors that hit something when they open: another door, a fixture or cabinet, the stairs, a closet or the far wall.

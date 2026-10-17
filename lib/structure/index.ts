@@ -1,5 +1,6 @@
 import type { Level, Point, Project } from "@/lib/model/schema";
 import { floorFootprint, joinRooms, type Region } from "@/lib/house3d/footprint";
+import { houseSpot } from "@/lib/house3d/site";
 import { roofTop } from "@/lib/house3d/roof";
 import { FLOOR_STRUCTURE_IN, ceilingFor } from "@/lib/plan/basics";
 import { stairsDrawing } from "@/lib/plan/stairs";
@@ -79,7 +80,7 @@ export function structureOf(project: Project): Structure {
   out.floors = above.map((l) => framing.get(l.id)).filter((f): f is FloorFraming => !!f);
 
   const upperRegions = upper.map((level) => ({ level, regions: floorFootprint(h.plan(level.id)) }));
-  const hillside = project.plot ? ["walkout", "stepped"].includes(plotImplications(project.plot).foundation.type) : false;
+  const hillside = project.plot ? ["walkout", "stepped"].includes(plotImplications(project.plot, houseSpot(project)).foundation.type) : false;
   out.foundation = foundationOf({
     main,
     ...zonesInput,

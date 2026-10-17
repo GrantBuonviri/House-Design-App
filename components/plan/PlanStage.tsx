@@ -1,5 +1,6 @@
 "use client";
 
+import { setbackLimits } from "@/lib/plans/lot";
 import { DEFAULT_ROUND_ROOM_IN } from "@/lib/plan/shapes";
 import dynamic from "next/dynamic";
 import { useCallback, useEffect, useMemo, useState } from "react";
@@ -277,7 +278,8 @@ export default function PlanStage({ onContinue, onGoToSketch, onGoToFurnish }: {
   const offsetKey = JSON.stringify(lotOffsetFor(project));
   const offset = useMemo<Point>(() => JSON.parse(offsetKey), [offsetKey]);
   /** What Things to check and the re-check after each fix look at. */
-  const checkCtx = useMemo(() => ({ levels, brief, basics, land: { plot, offset } }), [levels, brief, basics, plot, offset]);
+  const limits = useMemo(() => setbackLimits(project), [project]);
+  const checkCtx = useMemo(() => ({ levels, brief, basics, land: { plot, offset }, limits }), [levels, brief, basics, plot, offset, limits]);
 
   const chooseDisplay = (d: Display) => {
     if (d !== display) {
@@ -395,7 +397,7 @@ export default function PlanStage({ onContinue, onGoToSketch, onGoToFurnish }: {
 
   /** The sketch as a plan, plus hallways, closets, windows and doors from the built-in rules. */
   function suggest() {
-    const res = suggestPlans(sketches, { brief, plot, levels, basics });
+    const res = suggestPlans(sketches, { brief, plot, levels, basics, limits });
     const placed = new Map(Object.values(res.plans).flatMap((pl) => pl.openings.map((o) => [o.id, o] as const)));
     setDoorNotes(new Map([...res.doorReasons].flatMap(([id, reason]) => (placed.get(id) ? [[id, { reason, was: doorKey(placed.get(id)!) }] as const] : []))));
     const next = keepFurnish(plans, { ...blankPlans(levels), ...res.plans });
@@ -470,7 +472,7 @@ export default function PlanStage({ onContinue, onGoToSketch, onGoToFurnish }: {
       return;
     }
     setError(undefined);
-    const res = suggestPlanAlternatives(plans, { brief, plot, levels, basics }, again ? compare?.alternatives.map((a) => a.title) : undefined);
+    const res = suggestPlanAlternatives(plans, { brief, plot, levels, basics, limits }, again ? compare?.alternatives.map((a) => a.title) : undefined);
     if (res.alternatives.length === 0) {
       setError(res.note ?? "There were no alternatives to show. Try adding a few more rooms first.");
       return;

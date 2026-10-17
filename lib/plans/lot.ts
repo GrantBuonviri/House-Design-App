@@ -6,6 +6,9 @@ import { plotRoadEdges } from "@/lib/land/custom";
 import { bearingVector } from "@/lib/land/generate";
 import { houseFacts } from "./house";
 import { flatProject } from "@/lib/plan/flatten";
+import { areaKind } from "@/lib/plan/measure";
+import { overruns, type Overrun, type SetbackLimit } from "@/lib/plan/setbacks";
+import type { Plans } from "@/lib/plan/edit";
 
 /**
  * The lot the site plan is drawn on, in plan inches (x east, y south): the
@@ -92,6 +95,10 @@ function layout(project: Project): SiteLayout | null {
   const house = houseOutlines(project);
   const lot = project.plans.lot;
   if (realLotOk(lot)) return realLayout(lot, house);
+  return madeUpLayout(project, house);
+}
+
+function madeUpLayout(project: Project, house: Point[][]): SiteLayout | null {
   const plot = project.plot;
   if (!plot) return null;
   const offset = lotOffsetFor(project);
@@ -121,6 +128,44 @@ function layout(project: Project): SiteLayout | null {
   });
   const problems = project.plans.lot ? [lotProblem(project.plans.lot)].filter((x): x is string => !!x) : [];
   return { real: false, outline, lines, streetSide: street, areaSqft: polygonArea(outline) / 144, house, checks: [], easements: [], offset, problems };
+}
+
+/**
+ * Typical Boise R-1C setbacks, in feet, for the made-up lot: 20 front, 5 sides, 20 back.
+ * These are typical numbers, not checked against the city's code; a real lot uses its own.
+ */
+export const DEFAULT_SETBACKS_FT = { front: 20, side: 5, rear: 20 } as const;
+
+/**
+ * How far inside the lot lines the house has to stay, in plan inches. A real lot uses its own
+ * setbacks (lines with none are left out); the made-up land uses DEFAULT_SETBACKS_FT. Empty when
+ * there is no lot at all. Cheap for made-up land: it doesn't need the house's outline.
+ */
+export function setbackLimits(project: Project): SetbackLimit[] {
+  const lot = project.plans.lot;
+  const site = realLotOk(lot) ? siteLayout(project) : madeUpLayout(project, []);
+  if (!site) return [];
+  const mid = scale(site.outline.reduce((sum, q) => add(sum, q), { x: 0, y: 0 }), 1 / site.outline.length);
+  const out: SetbackLimit[] = [];
+  for (const l of site.lines) {
+    const ft = site.real ? l.setbackFt : l.side === "front" ? DEFAULT_SETBACKS_FT.front : l.side === "rear" ? DEFAULT_SETBACKS_FT.rear : DEFAULT_SETBACKS_FT.side;
+    if (ft === null) continue;
+    const u = unit(sub(l.b, l.a));
+    let inward = { x: -u.y, y: u.x };
+    if (dot(sub(mid, l.a), inward) < 0) inward = scale(inward, -1);
+    out.push({ name: site.real ? l.setbackName : l.side === "front" ? "Front" : l.side === "rear" ? "Rear" : l.side === "left" ? "Left side" : "Right side", a: l.a, b: l.b, bufferIn: ft * FT, inward });
+  }
+  return out;
+}
+
+/**
+ * Where the house's outline crosses a setback or the lot line, and by how much (inches), worst
+ * place per side. `plans` defaults to the project's own floor plans.
+ */
+export function insideSetbacks(project: Project, plans: Plans = project.floorPlans): (Overrun & { levelId: string })[] {
+  const limits = setbackLimits(project);
+  if (!limits.length) return [];
+  return Object.entries(plans).flatMap(([levelId, plan]) => overruns(plan.rooms.filter((r) => areaKind(r) !== "outdoor").flatMap((r) => r.polygon), limits).map((o) => ({ ...o, levelId })));
 }
 
 function lotProblem(lot: RealLot): string | null {
