@@ -189,3 +189,18 @@ describe("the plan's cut line", () => {
     expect(Math.hypot(cut.down[0].x - top.x, cut.down[0].y - top.y)).toBeLessThan(1);
   });
 });
+
+describe("stacked stairs at odd angles", () => {
+  // These pairs made polygon-clipping throw "Unable to complete output ring" (Show alternatives crashed on a plan like this).
+  const pairs: [Partial<PlanStairs>, Partial<PlanStairs>][] = [
+    [{ x: 156.4, y: 22.1, rotation: 45, widthIn: 36, shape: "straight", flip: false }, { x: 156.5, y: 32.1, rotation: 90, widthIn: 36, shape: "l", flip: true }],
+    [{ x: -10, y: 5.4, rotation: 45, widthIn: 40, shape: "u", flip: false }, { x: -9.9, y: 45.5, rotation: 270, widthIn: 40, shape: "u", flip: false }],
+    [{ x: -7.7, y: 50.5, rotation: 45, widthIn: 38, shape: "l", flip: true }, { x: -7.7, y: 50.5, rotation: 270, widthIn: 38, shape: "u", flip: false }],
+  ];
+  it("measures headroom instead of crashing", () => {
+    for (const [a, b] of pairs) {
+      const room = stackedHeadroom(a as PlanStairs, 108, b as PlanStairs, 108);
+      expect(Number.isFinite(room)).toBe(true);
+    }
+  });
+});
