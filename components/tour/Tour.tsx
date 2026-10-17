@@ -2,7 +2,7 @@
 
 import { useEffect, useLayoutEffect, useState } from "react";
 import type { Stage } from "@/lib/model/schema";
-import { TOUR } from "@/lib/tour/steps";
+import { TOUR, type TourStep } from "@/lib/tour/steps";
 
 const CARD_W = 340;
 const GAP = 12;
@@ -12,11 +12,11 @@ const PAD = 6;
  * The guided tour: the page dims except for the thing being explained, with
  * a card next to it. Arrow keys move through the steps; Esc ends it.
  */
-export default function Tour({ onStage, onDone }: { onStage: (s: Stage) => void; onDone: () => void }) {
-  const [i, setI] = useState(0);
+export default function Tour({ onStage, onDone, steps = TOUR, startAt = 0 }: { onStage: (s: Stage) => void; onDone: () => void; steps?: TourStep[]; startAt?: number }) {
+  const [i, setI] = useState(startAt);
   const [rect, setRect] = useState<DOMRect | null>(null);
-  const step = TOUR[i];
-  const last = i === TOUR.length - 1;
+  const step = steps[i];
+  const last = i === steps.length - 1;
 
   useEffect(() => {
     if (step.stage) onStage(step.stage);
@@ -92,7 +92,7 @@ export default function Tour({ onStage, onDone }: { onStage: (s: Stage) => void;
       )}
       <div className="card fixed p-5 shadow-xl" style={{ ...cardStyle, width: CARD_W }}>
         <p className="text-xs text-muted">
-          {i + 1} of {TOUR.length}
+          {i + 1} of {steps.length}
         </p>
         <h2 className="mt-1 text-base font-semibold">{step.title}</h2>
         <p className="mt-2 text-sm leading-relaxed text-ink">{step.body}</p>
@@ -108,7 +108,7 @@ export default function Tour({ onStage, onDone }: { onStage: (s: Stage) => void;
             </button>
           )}
           <button className="btn-primary" onClick={() => (last ? onDone() : setI(i + 1))} data-testid="tour-next">
-            {last ? "Start designing" : "Next"}
+            {last ? (steps === TOUR ? "Start designing" : "Done") : "Next"}
           </button>
         </div>
       </div>

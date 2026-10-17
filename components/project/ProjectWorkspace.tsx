@@ -11,7 +11,9 @@ import StageBar from "./StageBar";
 import NeedsFirst from "./NeedsFirst";
 import GraphicsToggle from "./GraphicsToggle";
 import Tour from "@/components/tour/Tour";
-import { TOUR_SEEN_KEY } from "@/lib/tour/steps";
+import { TOUR_SEEN_KEY, type TourStep } from "@/lib/tour/steps";
+import { tourStartFor, type MiniTour } from "@/lib/tour/help";
+import PageHelp from "./PageHelp";
 import { readStorage, writeStorage } from "@/lib/browserStorage";
 import UndoButtons, { UndoNotice } from "./UndoButtons";
 import SetupForm from "./SetupForm";
@@ -59,14 +61,15 @@ export default function ProjectWorkspace({ id }: { id: string }) {
   }, [deferred]);
 
   // The guided tour: on its own the first time a house opens in this browser, then from "Take the tour".
-  const [touring, setTouring] = useState<{ from: Stage } | null>(null);
+  const [touring, setTouring] = useState<{ from: Stage; steps?: TourStep[]; startAt?: number } | null>(null);
   const ready = !!project;
   useEffect(() => {
     if (ready && readStorage(() => localStorage, TOUR_SEEN_KEY) === null) {
       setTouring({ from: useProjectStore.getState().project!.stage });
     }
   }, [ready]);
-  const startTour = () => project && setTouring({ from: project.stage });
+  const startTour = () => project && setTouring({ from: project.stage, startAt: tourStartFor(project.stage) });
+  const startMini = (t: MiniTour) => project && setTouring({ from: project.stage, steps: t.steps });
   const endTour = useCallback(() => {
     writeStorage(() => localStorage, TOUR_SEEN_KEY, "yes");
     // Back to the page the tour started on.
@@ -201,6 +204,7 @@ export default function ProjectWorkspace({ id }: { id: string }) {
           <button className="text-xs text-muted underline-offset-2 hover:text-ink hover:underline" onClick={startTour} data-tour="tour" data-testid="tour-start">
             Take the tour
           </button>
+          <PageHelp stage={stageShown} onMiniTour={startMini} />
           <GraphicsToggle />
         </div>
       </div>
@@ -239,7 +243,7 @@ export default function ProjectWorkspace({ id }: { id: string }) {
       )}
       {walk && canWalk && <Walkthrough project={project} cost={cost} startWindow={walk.window} onClose={() => setWalk(null)} />}
       <UndoNotice />
-      {touring && <Tour onStage={setStage} onDone={endTour} />}
+      {touring && <Tour key={touring.steps ? "mini" : "tour"} onStage={setStage} onDone={endTour} steps={touring.steps} startAt={touring.startAt} />}
     </main>
       {costOpen && cost && (
         <CostPanel estimate={cost} onClose={() => setCostOpen(false)} onUtilities={(utilities) => update((p) => ({ ...p, cost: { ...p.cost, utilities } }))}
