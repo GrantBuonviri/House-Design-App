@@ -12,7 +12,7 @@ import {
 } from "@/lib/storage/db";
 import { importProjectJson } from "@/lib/storage/exchange";
 import { downloadProject } from "@/lib/download";
-import { STAGE_INFO } from "@/lib/stages";
+import { STAGE_INFO, shownStage } from "@/lib/stages";
 
 function formatDate(iso: string) {
   return new Date(iso).toLocaleDateString("en-US", {
@@ -199,7 +199,7 @@ export default function HomeScreen() {
                 </button>
               )}
               <p className="mt-1 text-xs text-muted">
-                {STAGE_INFO.find((s) => s.id === p.stage)?.label} · edited {formatDate(p.updatedAt)}
+                {STAGE_INFO.find((s) => s.id === shownStage(p.stage))?.label} · edited {formatDate(p.updatedAt)}
               </p>
               <div className="mt-5 flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted">
                 <button className="font-medium text-accent hover:underline" onClick={() => router.push(`/project/${p.id}`)}>

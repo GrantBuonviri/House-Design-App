@@ -1,3 +1,4 @@
+import { STAGE_INFO, shownStage } from "@/lib/stages";
 import "fake-indexeddb/auto";
 import { afterEach, describe, expect, it } from "vitest";
 import { createProject } from "@/lib/model/project";
@@ -66,6 +67,14 @@ describe("undo and redo", () => {
     useProjectStore.getState().redo();
     expect(useProjectStore.getState().project!.name).toBe("Two");
     expect(useProjectStore.getState().canRedo).toBe(false);
+  });
+
+  it("shows old Interior / Exterior saves on Furnish and drops them from the stage bar", () => {
+    expect(shownStage("interior")).toBe("furnish");
+    expect(shownStage("exterior")).toBe("furnish");
+    expect(shownStage("plan")).toBe("plan");
+    expect(STAGE_INFO.map((x) => x.id)).not.toContain("interior");
+    expect(STAGE_INFO.map((x) => x.id)).not.toContain("exterior");
   });
 
   it("doesn't count switching stages as a step, and undo stays on the page", async () => {

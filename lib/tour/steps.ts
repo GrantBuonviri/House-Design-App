@@ -61,16 +61,9 @@ export const TOUR: TourStep[] = [
     body: "Real walls, doors, windows, stairs and fixtures. Pick a room and drag the + on a wall to reshape it, or the diamond to bend a wall into a curve (Shift-click walls that meet to bend them together). Press C for the Curve tool, pick Round room in the Room tool, or right-click a corner or an outside wall to round it or add a half-round bay. Start from your sketch or a blank page, then switch to 3D to see the whole house on the land.",
   },
   {
-    target: "stage-interior",
-    stage: "interior",
-    title: "6. Interior",
-    body: "Answer a few style questions, get a mood board, then pick real floors, paint, cabinets and more, for the whole house or room by room.",
-  },
-  {
-    target: "stage-exterior",
-    stage: "exterior",
-    title: "7. Exterior",
-    body: "The same for the outside: roof, siding, windows, doors, deck, driveway and yard.",
+    target: "walkthrough",
+    title: "6. Walk through and design",
+    body: "Walk through your house in first person. Press I for Interior design (style questions, a mood board, then real floors, paint and cabinets, room by room) and X for Exterior design (roof, siding, windows, doors and yard). The house changes as you pick, and E lets you click any surface to change it.",
   },
   {
     target: "cost",

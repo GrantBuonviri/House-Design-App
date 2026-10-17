@@ -6,6 +6,7 @@ import dynamic from "next/dynamic";
 import type { Stage } from "@/lib/model/schema";
 import { useProjectStore, type SaveState } from "@/lib/store/projectStore";
 import { downloadProject } from "@/lib/download";
+import { shownStage } from "@/lib/stages";
 import StageBar from "./StageBar";
 import NeedsFirst from "./NeedsFirst";
 import GraphicsToggle from "./GraphicsToggle";
@@ -18,9 +19,7 @@ import LandStage from "@/components/land/LandStage";
 import BriefStage from "@/components/brief/BriefStage";
 import BubbleStage from "@/components/bubbles/BubbleStage";
 import PlanStage from "@/components/plan/PlanStage";
-import InteriorStage from "@/components/interior/InteriorStage";
 import FurnishStage from "@/components/furnish/FurnishStage";
-import ExteriorStage from "@/components/exterior/ExteriorStage";
 import CostPanel, { CostBadge } from "@/components/cost/CostPanel";
 import { estimate as estimateCost } from "@/lib/cost/estimate";
 import { locationOf } from "@/lib/location/current";
@@ -38,7 +37,7 @@ const SAVE_LABEL: Record<SaveState, string> = {
 
 export default function ProjectWorkspace({ id }: { id: string }) {
   const { project, loading, notFound, saveState, open, close, update, undo, redo, setStage } = useProjectStore();
-  const [walking, setWalking] = useState(false);
+  const [walk, setWalk] = useState<null | { window?: "interior" | "exterior" }>(null);
   const [costOpen, setCostOpen] = useState(false);
   const [plansOpen, setPlansOpen] = useState(false);
   const [furnishLevel, setFurnishLevel] = useState<string>();
@@ -117,6 +116,7 @@ export default function ProjectWorkspace({ id }: { id: string }) {
     );
   }
 
+  const stageShown = shownStage(project.stage);
   const canWalk = !!project.plan.basics && Object.values(project.floorPlans).some((pl) => pl.rooms.length > 0);
 
   return (
@@ -155,7 +155,7 @@ export default function ProjectWorkspace({ id }: { id: string }) {
           </span>
           <span data-tour="walkthrough">
           {canWalk ? (
-            <button className="btn btn-primary" onClick={() => setWalking(true)} title="Walk through the house in first person">
+            <button className="btn btn-primary" onClick={() => setWalk({})} title="Walk through the house in first person">
               Walkthrough
             </button>
           ) : (
@@ -174,7 +174,7 @@ export default function ProjectWorkspace({ id }: { id: string }) {
       </div>
 
       <div className="mb-8 flex items-center justify-between gap-4 border-b border-line pb-3">
-        <StageBar current={project.stage} onSelect={setStage} nudges={project.location ? {} : { setup: "Pick where you’ll build" }} />
+        <StageBar current={shownStage(project.stage)} onSelect={setStage} nudges={project.location ? {} : { setup: "Pick where you’ll build" }} />
         <div className="flex shrink-0 items-center gap-3">
           <button className="text-xs text-muted underline-offset-2 hover:text-ink hover:underline" onClick={startTour} data-tour="tour" data-testid="tour-start">
             Take the tour
@@ -183,22 +183,18 @@ export default function ProjectWorkspace({ id }: { id: string }) {
         </div>
       </div>
 
-      {project.stage === "setup" ? (
+      {stageShown === "setup" ? (
         <SetupForm onContinue={() => setStage("land")} />
-      ) : project.stage === "land" ? (
+      ) : stageShown === "land" ? (
         <LandStage onContinue={() => setStage("brief")} />
-      ) : project.stage === "brief" ? (
+      ) : stageShown === "brief" ? (
         <BriefStage onContinue={() => setStage("bubbles")} onPickLand={() => setStage("land")} />
-      ) : project.stage === "bubbles" ? (
+      ) : stageShown === "bubbles" ? (
         <BubbleStage onContinue={() => setStage("plan")} onGoToRooms={() => setStage("brief")} />
-      ) : project.stage === "plan" ? (
+      ) : stageShown === "plan" ? (
         <PlanStage onContinue={() => setStage("furnish")} onGoToSketch={() => setStage("bubbles")} onGoToFurnish={() => setStage("furnish")} />
-      ) : project.stage === "furnish" ? (
-        <FurnishStage key={furnishLevel} initialLevelId={furnishLevel} onContinue={() => setStage("interior")} onGoToPlan={() => setStage("plan")} />
-      ) : project.stage === "interior" ? (
-        <InteriorStage onContinue={() => setStage("exterior")} onGoToPlan={() => setStage("plan")} />
-      ) : project.stage === "exterior" ? (
-        <ExteriorStage onGoToPlan={() => setStage("plan")} onWalk={canWalk ? () => setWalking(true) : undefined} />
+      ) : stageShown === "furnish" ? (
+        <FurnishStage key={furnishLevel} initialLevelId={furnishLevel} onContinue={() => (canWalk ? setWalk({ window: "interior" }) : setStage("plan"))} onGoToPlan={() => setStage("plan")} />
       ) : null}
 
       {plansOpen && (
@@ -207,7 +203,10 @@ export default function ProjectWorkspace({ id }: { id: string }) {
           onClose={() => setPlansOpen(false)}
           onGo={(stage) => {
             setPlansOpen(false);
-            setStage(stage);
+            if (stage === "interior" || stage === "exterior") {
+              if (canWalk) setWalk({ window: stage });
+              else setStage("plan");
+            } else setStage(stage);
           }}
           onEditInFurnish={(levelId) => {
             setPlansOpen(false);
@@ -216,7 +215,7 @@ export default function ProjectWorkspace({ id }: { id: string }) {
           }}
         />
       )}
-      {walking && canWalk && <Walkthrough project={project} cost={cost} onClose={() => setWalking(false)} />}
+      {walk && canWalk && <Walkthrough project={project} cost={cost} startWindow={walk.window} onClose={() => setWalk(null)} />}
       <UndoNotice />
       {touring && <Tour onStage={setStage} onDone={endTour} />}
     </main>
