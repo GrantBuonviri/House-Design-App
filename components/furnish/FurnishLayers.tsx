@@ -63,13 +63,13 @@ function ItemShape({ it, selected, s, names, bad, ghost }: { it: LayerItem; sele
 }
 
 /** Everything placed on the floor. `faded` is the floor plan's quiet copy, which doesn't answer to the mouse. */
-export function FurnishItems({ items, selectedId, badId, s, faded = false, names = true }: { items: LayerItem[]; selectedId?: string; badId?: string; s: number; faded?: boolean; names?: boolean }) {
+export function FurnishItems({ items, selectedIds, badId, s, faded = false, names = true }: { items: LayerItem[]; selectedIds?: Set<string>; badId?: string; s: number; faded?: boolean; names?: boolean }) {
   // The floor plan shows the big things; outlets and lights stay on the Furnish page and the PDF sheets.
   const shown = faded ? items.filter((it) => it.kind === "fixture" || it.kind === "addon" || it.kind === "furniture") : items;
   return (
     <Group opacity={faded ? 0.38 : 1} listening={!faded}>
       {shown.map((it) => (
-        <ItemShape key={it.id} it={it} selected={it.id === selectedId} bad={it.id === badId} s={s} names={names} />
+        <ItemShape key={it.id} it={it} selected={!!selectedIds?.has(it.id)} bad={it.id === badId} s={s} names={names} />
       ))}
     </Group>
   );

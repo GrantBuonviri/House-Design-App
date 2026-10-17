@@ -581,7 +581,7 @@ export default function FurnishStage({
             </select>
             {shownPreview ? (
               <div className="space-y-2 rounded-md bg-accent/5 p-2" data-testid="furnish-preview">
-                <p className="text-xs font-medium">The plan shows what it would put in (picked in blue). Nothing is saved yet.</p>
+                <p className="text-xs font-medium">The plan shows what it would put in, outlined. Nothing is saved yet.</p>
                 <ul className="space-y-1 text-xs">
                   {previewLines(shownPreview.res.added).map((l, i) => (
                     <li key={i}>
