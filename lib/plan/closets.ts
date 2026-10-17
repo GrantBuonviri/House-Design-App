@@ -1,5 +1,5 @@
 import type { DesignBrief, Fixture, FloorPlan, PlanRoom, Point } from "@/lib/model/schema";
-import { addDoor, neighbors, roleOf, roomLinks, sharedWall } from "./connect";
+import { placeDoor, neighbors, roleOf, roomLinks, sharedWall } from "./connect";
 import { makeRoom, newPlanId, reshapeRoom } from "./edit";
 import { add, angleOf, dist, edgesOf, isRectangle, leftNormal, pointInPolygon, polygonArea, round1, scale, sub, unit } from "./geometry";
 import { openingGeometry, wallPieces } from "./walls";
@@ -14,7 +14,7 @@ const REACH_IN_IN = 26;
 const WALK_IN_IN = 66;
 
 /** A closet in the corner of a bedroom, against an inside wall and clear of doors. */
-export function addClosets(plan: FloorPlan, exteriorIn: number, brief: DesignBrief | null = null): { plan: FloorPlan; added: number } {
+export function addClosets(plan: FloorPlan, exteriorIn: number, brief: DesignBrief | null = null, reasons?: Map<string, string>): { plan: FloorPlan; added: number } {
   let p = plan;
   let added = 0;
   const briefHasCloset = Boolean(brief?.rooms.some((r) => r.type === "primary-closet"));
@@ -69,7 +69,11 @@ export function addClosets(plan: FloorPlan, exteriorIn: number, brief: DesignBri
     const closet = makeRoom(best.closet, walkIn ? "Walk-in closet" : "Closet", { type: "closet" });
     p = { ...p, rooms: [...p.rooms, closet] };
     const bedNow = p.rooms.find((r) => r.id === now.id)!;
-    p = addDoor(p, closet, bedNow, walkIn ? { widthIn: 28, swingInto: bedNow.id } : best.L >= 60 ? { style: "door-double", widthIn: 48, swingInto: bedNow.id } : { widthIn: 24, swingInto: bedNow.id }) ?? p;
+    const door = placeDoor(p, closet, bedNow, walkIn ? { widthIn: 28, swingInto: closet.id } : best.L >= 60 ? { style: "door-double", widthIn: 48, swingInto: bedNow.id } : { widthIn: 24, swingInto: bedNow.id });
+    if (door) {
+      p = { ...p, openings: [...p.openings, door.opening] };
+      reasons?.set(door.opening.id, door.opening.style === "door-double" ? `Double doors across the front of the closet, opening into ${bedNow.name}.` : door.reason);
+    }
     const mid = scale(add(best.back[0], best.back[1]), 0.5);
     const shelf = walkIn ? 24 : 20;
     const at = add(mid, scale(best.n, 3 + shelf / 2));

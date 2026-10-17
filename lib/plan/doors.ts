@@ -1,5 +1,5 @@
-import type { FloorPlan, PlanRoom } from "@/lib/model/schema";
-import { OUTSIDE, addDoor, isCirculation, neighbors, reachable, roleOf, roomLinks, sharedWall, type DoorOptions } from "./connect";
+import type { DesignBrief, FloorPlan, PlanRoom } from "@/lib/model/schema";
+import { OUTSIDE, isCirculation, neighbors, openingRooms, placeDoor, reachable, roleOf, roomLinks, sharedWall, swingIntoOf, typeLabel, type DoorOptions } from "./connect";
 import { polygonArea, polygonsOverlap, type Bounds } from "./geometry";
 import { areaKind } from "./measure";
 import { DOOR_ROOM_IN, boxCorners, isWayIn } from "./hallways";
@@ -13,16 +13,85 @@ const pick = (types: string[]) => (r: PlanRoom) => {
   return i === -1 ? null : i;
 };
 
+export type ConnectOptions = {
+  /** Filled with a short reason for each door placed, by opening id (shown when it's selected, never saved). */
+  reasons?: Map<string, string>;
+  /** For 36" doors into rooms the brief lists as accessibility needs. */
+  brief?: DesignBrief | null;
+  /** Whether this is the main floor (accessibility widths apply there). */
+  main?: boolean;
+};
+
+/** Accessibility tags that mean the whole main floor, not one room. */
+const WHOLE_FLOOR = /wheelchair|walker|mobility|whole|every|single[- ]level|one[- ]level|aging|universal|ada\b|accessible/i;
+
+/** A room on the main floor the brief's accessibility list asks to be easy to get into. */
+export function accessibleRoom(brief: DesignBrief | null | undefined, room: PlanRoom): boolean {
+  const tags = (brief?.accessibility ?? []).map((t) => t.toLowerCase());
+  if (!tags.length || ["closet", "pantry", "outdoor", "garage"].includes(roleOf(room)) || room.type === "primary-closet") return false;
+  const names = [room.name.toLowerCase(), typeLabel(room).toLowerCase()];
+  return tags.some((t) => names.some((n) => n && t.includes(n))) || tags.some((t) => WHOLE_FLOOR.test(t));
+}
+
+const isClosetish = (r: PlanRoom) => roleOf(r) === "closet" || roleOf(r) === "pantry" || r.type === "primary-closet";
+
+/**
+ * How wide a door between two rooms should be: 36" into the primary bedroom
+ * from a hall or living space, and into rooms the brief lists as
+ * accessibility needs on the main floor; otherwise at least 30" (closets and
+ * pantries may be 24"). Openings, sliders and double doors keep their size.
+ */
+export function doorSize(r: PlanRoom, n: PlanRoom, o: DoorOptions, ctx: Pick<ConnectOptions, "brief" | "main"> = {}): DoorOptions {
+  if (o.style && o.style !== "door-hinged") return o;
+  const primary = [r, n].find((x) => x.type === "primary-bedroom");
+  const other = primary === r ? n : r;
+  if (primary && isCirculation(other)) return { ...o, widthIn: 36, minWidthIn: 30, widthWhy: `36" wide for the primary bedroom.` };
+  if (ctx.main && (accessibleRoom(ctx.brief, r) || accessibleRoom(ctx.brief, n))) return { ...o, widthIn: 36, minWidthIn: 30, widthWhy: `36" wide for the accessibility needs in the brief.` };
+  const closet = isClosetish(r) || isClosetish(n);
+  return { ...o, widthIn: Math.max(o.widthIn ?? 32, closet ? 0 : 30), minWidthIn: closet ? 24 : 30 };
+}
+
+/**
+ * Doors already drawn between two rooms (from the flow sketch) moved to where
+ * `placeDoor` would put them: by a corner, swinging the right way, at least
+ * 30" wide. One that can't be that wide on its wall is taken out, so
+ * `connectAll` can find another way in.
+ */
+export function settleDoors(plan: FloorPlan, obstacles: Bounds[] = [], opts: ConnectOptions = {}): FloorPlan {
+  let p = plan;
+  const near = { stairs: obstacles.map(boxCorners) };
+  for (const o of plan.openings) {
+    if (o.style !== "door-hinged" || !("roomId" in o.host)) continue;
+    const [x, y] = openingRooms(p, o);
+    if (!x || !y || x === y) continue;
+    const hostId = o.host.roomId;
+    const a = p.rooms.find((r) => r.id === hostId);
+    const b = p.rooms.find((r) => r.id === (x === hostId ? y : x));
+    if (!a || !b) continue;
+    const without = { ...p, openings: p.openings.filter((q) => q.id !== o.id) };
+    const placed = placeDoor(without, a, b, { ...doorSize(a, b, { widthIn: o.widthIn, swingInto: swingIntoOf(a, b) }, opts), near });
+    if (placed) {
+      p = { ...without, openings: [...without.openings, { ...placed.opening, id: o.id }] };
+      opts.reasons?.set(o.id, placed.reason);
+    } else if (o.widthIn < (isClosetish(a) || isClosetish(b) ? 24 : 30)) p = without;
+  }
+  return p;
+}
+
 /**
  * Doors so every room can be reached: private rooms off a hallway or living
  * space, suite rooms off the primary bedroom, the pantry off the kitchen,
  * the garage into the house, porches and decks off living spaces. Then any
- * room still cut off gets a door to a neighbor that can be reached.
+ * room still cut off gets a door to a neighbor that can be reached. Doors
+ * already there are settled first (see `settleDoors`), and every door goes
+ * where `placeDoor` says.
  */
-export function connectAll(plan: FloorPlan, obstacles: Bounds[] = [], openKitchen = false): FloorPlan {
-  let p = plan;
+export function connectAll(plan: FloorPlan, obstacles: Bounds[] = [], openKitchen = false, opts: ConnectOptions = {}): FloorPlan {
+  let p = settleDoors(plan, obstacles, opts);
+  const near = { stairs: obstacles.map(boxCorners) };
   const links = () => roomLinks(p);
   const room = (id: string) => p.rooms.find((r) => r.id === id)!;
+  const connectOpts = opts;
 
   /** A door to the best-ranked neighbor (lowest rank first, then the longest wall). */
   const doorTo = (r: PlanRoom, rank: (n: PlanRoom) => number | null, opts: (n: PlanRoom) => DoorOptions = () => ({})) => {
@@ -31,9 +100,10 @@ export function connectAll(plan: FloorPlan, obstacles: Bounds[] = [], openKitche
       .filter((n): n is typeof n & { rank: number } => n.rank !== null)
       .sort((a, b) => a.rank - b.rank || b.length - a.length);
     for (const n of ranked) {
-      const next = addDoor(p, r, n.room, opts(n.room));
-      if (next) {
-        p = next;
+      const placed = placeDoor(p, r, n.room, { ...doorSize(r, n.room, opts(n.room), connectOpts), near });
+      if (placed) {
+        p = { ...p, openings: [...p.openings, placed.opening] };
+        connectOpts.reasons?.set(placed.opening.id, placed.reason);
         return true;
       }
     }

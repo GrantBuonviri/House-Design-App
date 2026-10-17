@@ -1,4 +1,5 @@
 import type { BubbleDiagram, Level, Point } from "@/lib/model/schema";
+import { MAIN_LEVEL_ID } from "@/lib/brief/levels";
 import { exteriorWallIn, levelBelow, riseBetween } from "./basics";
 import { roomLinks } from "./connect";
 import { emptyPlan, type Plans } from "./edit";
@@ -60,7 +61,12 @@ function stairFits(plans: Plans, ctx: Pick<PlanContext, "levels" | "basics">, le
   });
 }
 
-export type SuggestResult = { plans: Plans; notes: string[] };
+export type SuggestResult = {
+  plans: Plans;
+  notes: string[];
+  /** Why each door went where it did, by opening id: shown when the door is selected, never saved. */
+  doorReasons: Map<string, string>;
+};
 
 export function suggestPlans(diagrams: Record<string, BubbleDiagram>, ctx: PlanContext): SuggestResult {
   const sketched = plansFromSketch(diagrams, ctx);
@@ -73,6 +79,8 @@ export function suggestPlans(diagrams: Record<string, BubbleDiagram>, ctx: PlanC
   let closets = 0;
   let windows = 0;
   const stuck: string[] = [];
+  const doorReasons = new Map<string, string>();
+  const doorOpts = (level: Level) => ({ reasons: doorReasons, brief: ctx.brief, main: level.kind === "main" || level.id === MAIN_LEVEL_ID });
   // From the bottom up, so hallways that push upper rooms out can be pulled back over the finished floor below.
   for (const level of [...ctx.levels].sort((a, b) => a.elevationIn - b.elevationIn)) {
     let plan = base.plans[level.id] ?? emptyPlan();
@@ -89,8 +97,8 @@ export function suggestPlans(diagrams: Record<string, BubbleDiagram>, ctx: PlanC
       const bridge = bridgeStairHalls(plan, support?.regions);
       halls += bridge.added;
       plan = bridge.plan;
-      plan = connectAll(plan, obstacles, ctx.brief?.openKitchen ?? false);
-      const c = addClosets(plan, exteriorIn, ctx.brief);
+      plan = connectAll(plan, obstacles, ctx.brief?.openKitchen ?? false, doorOpts(level));
+      const c = addClosets(plan, exteriorIn, ctx.brief, doorReasons);
       closets += c.added;
       // A basement's walls under the main floor are buried: no windows there.
       const w = addWindows(c.plan, level, level.kind === "basement" ? coveredAbove(base.plans, ctx.levels) : []);
@@ -119,7 +127,7 @@ export function suggestPlans(diagrams: Record<string, BubbleDiagram>, ctx: PlanC
     stairHalls += missing.length;
     for (const id of floors) {
       const level = ctx.levels.find((l) => l.id === id)!;
-      plans[id] = connectAll(plans[id], stairsBoxes(plans, ctx, level), ctx.brief?.openKitchen ?? false);
+      plans[id] = connectAll(plans[id], stairsBoxes(plans, ctx, level), ctx.brief?.openKitchen ?? false, doorOpts(level));
     }
   }
   const count = (n: number, one: string, many: string) => `${n} ${n === 1 ? one : many}`;
@@ -128,5 +136,8 @@ export function suggestPlans(diagrams: Record<string, BubbleDiagram>, ctx: PlanC
   ];
   notes.push(...base.notes);
   if (stuck.length) notes.push(`${stuck.join("; ")}. Push rooms around, or draw a hallway with the Room tool, if you'd rather they had their own way in.`);
-  return { plans, notes };
+  // Reasons only for doors that made it into the final plans.
+  const kept = new Set(Object.values(plans).flatMap((p) => p.openings.map((o) => o.id)));
+  for (const id of [...doorReasons.keys()]) if (!kept.has(id)) doorReasons.delete(id);
+  return { plans, notes, doorReasons };
 }
