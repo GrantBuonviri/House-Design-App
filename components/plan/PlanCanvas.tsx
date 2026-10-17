@@ -37,7 +37,9 @@ import { Grid, ScaleBar, SideLabels, useSpacePan, type View } from "@/components
 import { ACCENT, OpeningSymbol, StairsSymbol } from "./PlanShapes";
 import { dedupe, flat, ghostOpeningAt, roomFill, type Box } from "./canvasHelpers";
 import { BendHandles, BendTip, RUN_HANDLE_ID, RunHandle, DraftPreview, GuidesAndBox, MidNodes, NodeReadout, OverhangLayer, PlanWalls, RailingLines, FaucetSymbols, ReferenceLayer, ZoomButtons } from "./PlanCanvasLayers";
-import { DistanceGuides, OutsideDims, RoomLabels, TapeLine, ThingLabels } from "./PlanMeasureLayers";
+import { addPin, PIN_HIT_PX, pinAt, removePin } from "@/lib/plan/pins";
+import { newId } from "@/lib/model/project";
+import { DistanceGuides, OutsideDims, PinnedTape, RoomLabels, TapeLine, ThingLabels } from "./PlanMeasureLayers";
 import { edgeId, isPicked, parseEdgeId, runTargets, type PlanItem, type PlanSelection, type PlanTool } from "./types";
 
 /**
@@ -174,6 +176,7 @@ export default function PlanCanvas(props: Props) {
   const [dragGuides, setDragGuides] = useState<Guide[]>([]);
   const [tapePts, setTapePts] = useState<Point[]>([]);
   const [tapeEnd, setTapeEnd] = useState<Point | null>(null);
+  const [pinMenu, setPinMenu] = useState<{ id: string; x: number; y: number } | null>(null);
   const [dragCorner, setDragCorner] = useState<{ roomId: string; i: number } | null>(null);
   const [badId, setBadId] = useState<string | null>(null);
   const { spaceDown, hovering } = useSpacePan();
@@ -226,6 +229,30 @@ export default function PlanCanvas(props: Props) {
       e.stopPropagation();
       setTapePts([]);
       setTapeEnd(null);
+    };
+    window.addEventListener("keydown", onKey, true);
+    return () => window.removeEventListener("keydown", onKey, true);
+  }, [tape, tapePts.length]);
+
+  /** Pin the finished tape line: it stays after the tape is turned off. */
+  function pinTape() {
+    if (tapePts.length !== 2) return;
+    onChange(addPin(plan, { id: newId(), a: tapePts[0], b: tapePts[1] }));
+    setTapePts([]);
+    setTapeEnd(null);
+    props.onMessage("Pinned. Click it to delete.");
+  }
+  const pinRef = useRef(pinTape);
+  pinRef.current = pinTape;
+  useEffect(() => {
+    if (!tape || tapePts.length !== 2) return;
+    const onKey = (e: KeyboardEvent) => {
+      if ((e.key !== "p" && e.key !== "P") || e.metaKey || e.ctrlKey || e.altKey) return;
+      const t = e.target as HTMLElement | null;
+      if (t && (t.tagName === "INPUT" || t.tagName === "TEXTAREA" || t.isContentEditable)) return;
+      e.preventDefault();
+      e.stopPropagation();
+      pinRef.current();
     };
     window.addEventListener("keydown", onKey, true);
     return () => window.removeEventListener("keydown", onKey, true);
@@ -620,6 +647,14 @@ export default function PlanCanvas(props: Props) {
     if (lotMode) {
       gesture.current = { type: "lot", start: p };
       return;
+    }
+    setPinMenu(null);
+    if (tape || tool === "select") {
+      const hit = pinAt(plan, p, PIN_HIT_PX / s);
+      if (hit) {
+        setPinMenu({ id: hit.id, x: e.evt.clientX, y: e.evt.clientY });
+        return;
+      }
     }
     if (tape) {
       const sp = snapFrom(tapePts.length === 1 ? tapePts[0] : null, p, pickTargets([]), tol, snap, shift).p;
@@ -1051,7 +1086,8 @@ export default function PlanCanvas(props: Props) {
 
   // ---- Drawing ----
   const panning = tool === "pan" || spaceDown;
-  const cursorStyle = panning ? "grab" : lotMode ? "move" : tape || tool !== "select" ? "crosshair" : "default";
+  const overPin = !!cursor && (tape || tool === "select") && !!pinAt(plan, cursor, PIN_HIT_PX / s);
+  const cursorStyle = panning ? "grab" : lotMode ? "move" : overPin ? "pointer" : tape || tool !== "select" ? "crosshair" : "default";
   const hoverSeg = hoverWall ? hostSegment(shown, hoverWall) : null;
   const selectedEdge = single?.kind === "edge" ? parseEdgeId(single.id) : null;
   const ghostOpening = tool === "door" && cursor ? ghostOpeningAt(plan, cursor, placeOpening, s) : null;
@@ -1147,6 +1183,7 @@ export default function PlanCanvas(props: Props) {
             <OutsideDims plan={shown} labels={labels} s={s} />
             <ThingLabels plan={shown} geos={geos} labels={labels} s={s} />
             <RoomLabels plan={shown} labels={labels} selectedEdge={selectedEdge} selectedRoomId={selRoom?.id} hoverWall={hoverSeg ? { a: hoverSeg.a, b: hoverSeg.b, bulge: hoverSeg.bulge } : null} s={s} />
+            {!!shown.pins?.length && <PinnedTape pins={shown.pins} labels={labels} s={s} />}
             {dragGuides.length > 0 && <DistanceGuides guides={dragGuides} labels={labels} s={s} />}
             {tape && tapePts.length > 0 && <TapeLine a={tapePts[0]} b={tapePts[1] ?? tapeEnd} labels={labels} s={s} />}
 
@@ -1215,6 +1252,31 @@ export default function PlanCanvas(props: Props) {
       )}
 
       <SideLabels sides={sides} />
+      {tape && tapePts.length === 2 && (
+        <button
+          className="absolute z-10 -translate-x-1/2 rounded border border-[var(--color-accent)] bg-white px-2 py-0.5 text-xs font-medium text-[var(--color-accent)] shadow hover:bg-stone-50"
+          style={{ left: ((tapePts[0].x + tapePts[1].x) / 2) * s + view.x, top: ((tapePts[0].y + tapePts[1].y) / 2) * s + view.y + 24 }}
+          onMouseDown={(e) => e.stopPropagation()}
+          onClick={pinTape}
+          title="Keep this measurement after the tape is off (key P)"
+          data-testid="pin-tape"
+        >
+          Pin (P)
+        </button>
+      )}
+      {pinMenu && (
+        <div className="fixed z-50 rounded border border-line bg-white py-1 text-sm shadow-lg" style={{ left: pinMenu.x, top: pinMenu.y }} onMouseDown={(e) => e.stopPropagation()} data-testid="pin-menu">
+          <button
+            className="block w-full px-4 py-1 text-left text-red-700 hover:bg-stone-50"
+            onClick={() => {
+              onChange(removePin(plan, pinMenu.id));
+              setPinMenu(null);
+            }}
+          >
+            Delete
+          </button>
+        </div>
+      )}
       {(below || sketch || (above && labels.aboveOutlines)) && (
         <p className="pointer-events-none absolute top-2 left-3 rounded bg-white/80 px-2 py-0.5 text-xs text-muted">
           {[sketch ? "Faint bubbles: your flow sketch" : null, below ? `Dashed: ${below.name}` : null, support ? `Solid: its outside walls` : null, above && labels.aboveOutlines ? `Dotted: ${above.name}` : null].filter(Boolean).join(" · ")}

@@ -48,7 +48,7 @@ const TOOLS: { id: FurnishTool | "window" | "measure"; label: string; key: strin
   { id: "wall", label: "Wall", key: "W", hint: "Click to start a wall, click again at each turn, and double-click or press Enter to finish. Walls you add here show up on the floor plan too. You can't remove a wall from here." },
   { id: "door", label: "Door", key: "D", hint: "Pick a door in the list, then click a wall to put it there." },
   { id: "window", label: "Window", key: "N", hint: "Pick a window in the list, then click a wall to put it there." },
-  { id: "measure", label: "Measure", key: "M", hint: "Click two points to measure the distance. Escape clears it." },
+  { id: "measure", label: "Measure", key: "M", hint: "Click two points to measure the distance. P pins it so it stays. Escape clears it." },
 ];
 
 /**

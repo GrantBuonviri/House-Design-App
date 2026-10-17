@@ -800,7 +800,7 @@ export default function PlanStage({ onContinue, onGoToSketch, onGoToFurnish }: {
           extra={
             <>
               <LabelSettings hasAbove={!!above} hasBelow={!!support} labels={labels} onChange={(l) => setView({ labels: l })} />
-              <button className={`flex items-center gap-1.5 rounded border px-2 py-0.5 ${tape ? "border-[var(--color-accent)] bg-[var(--color-accent)] text-white" : "border-line bg-white hover:bg-stone-50"}`} onClick={() => setTape(!tape)} title="Click two points to measure the distance (key M). Escape clears it.">
+              <button className={`flex items-center gap-1.5 rounded border px-2 py-0.5 ${tape ? "border-[var(--color-accent)] bg-[var(--color-accent)] text-white" : "border-line bg-white hover:bg-stone-50"}`} onClick={() => setTape(!tape)} title="Click two points to measure the distance (key M). P pins it so it stays. Escape clears it.">
                 <span aria-hidden>📏</span>
                 Measure{tape ? " (click two points)" : ""}
               </button>

@@ -9,7 +9,7 @@ import { z } from "zod";
  * Angles are degrees clockwise from north (0 = N, 90 = E).
  */
 
-export const SCHEMA_VERSION = 32;
+export const SCHEMA_VERSION = 33;
 
 export const Point = z.object({ x: z.number(), y: z.number() });
 export type Point = z.infer<typeof Point>;
@@ -594,6 +594,10 @@ export const AddOn = z.object({
 });
 export type AddOn = z.infer<typeof AddOn>;
 
+/** A measurement pinned on the floor plan (the Measure tool's line, kept after the tape is off). */
+export const PlanPin = z.object({ id: z.string(), a: Point, b: Point });
+export type PlanPin = z.infer<typeof PlanPin>;
+
 export const FloorPlan = z.object({
   rooms: z.array(PlanRoom).default([]),
   walls: z.array(PlanWall).default([]),
@@ -609,6 +613,8 @@ export const FloorPlan = z.object({
   devices: DeviceEdits.optional(),
   /** Built-ins and extras placed in Furnish. Left out means none. */
   addOns: z.array(AddOn).optional(),
+  /** Pinned tape measurements. Left out means none. */
+  pins: z.array(PlanPin).optional(),
 });
 export type FloorPlan = z.infer<typeof FloorPlan>;
 
@@ -728,12 +734,18 @@ export const TopLabels = WalkLabels.extend({
 });
 export type TopLabels = z.infer<typeof TopLabels>;
 
+/** A spot in the house for the walkthrough tape: plan x east, y south, z up from the main floor, inches. */
+export const TapePin3D = z.object({ id: z.string(), a: z.object({ x: z.number(), y: z.number(), z: z.number() }), b: z.object({ x: z.number(), y: z.number(), z: z.number() }) });
+export type TapePin3D = z.infer<typeof TapePin3D>;
+
 export const House3D = z.object({
   roof: Roof.prefault({}),
   /** Room labels on the floor in the walkthrough. */
   walkLabels: WalkLabels.prefault({}),
   /** Room labels in the 3D Top view. */
   topLabels: TopLabels.prefault({}),
+  /** Walkthrough tape measurements that were pinned. */
+  walkPins: z.array(TapePin3D).default([]),
 });
 export type House3D = z.infer<typeof House3D>;
 

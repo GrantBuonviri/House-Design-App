@@ -11,7 +11,7 @@ const OTHER: [string, string][] = [
   ["Option", "Hold while dragging a corner or wall to pull it away from neighbors; hold while finishing a wall or curve to keep it a divider; hold while bending a wall to curve only one room's side"],
   ["F", "Go to Furnish (fixtures, cabinets, outlets, built-ins, furniture and stair railings)"],
   ["L", "Show or hide all labels"],
-  ["M", "Measuring tape"],
+  ["M", "Measuring tape (P pins the measurement)"],
   ["Space + drag", "Move around the drawing"],
   ["Escape", "Let go of a tool or selection"],
   ["⌘Z / ⇧⌘Z", "Undo and redo"],
