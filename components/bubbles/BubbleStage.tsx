@@ -21,6 +21,7 @@ import { houseSpot } from "@/lib/house3d/site";
 import ViewOptions, { type Overlay } from "./ViewOptions";
 import { TOOLS, type LandView, type Selection, type Side, type Tool } from "./types";
 import { locationOf } from "@/lib/location/current";
+import { keyIsForPage } from "@/lib/keys";
 
 const SketchCanvas = dynamic(() => import("./SketchCanvas"), {
   ssr: false,
@@ -141,8 +142,7 @@ export default function BubbleStage({ onContinue, onGoToRooms }: { onContinue: (
   useEffect(() => {
     if (comparing || choosing) return;
     function onKey(e: KeyboardEvent) {
-      const t = e.target as HTMLElement;
-      if (e.metaKey || e.ctrlKey || e.altKey || t.closest("input, textarea, select, [contenteditable]")) return;
+      if (e.metaKey || e.ctrlKey || e.altKey || !keyIsForPage(e)) return;
       if ((e.key === "Delete" || e.key === "Backspace") && sel.length) {
         e.preventDefault();
         setLevelDiagram(removeMany(diagram, sel.map((s) => s.id)));

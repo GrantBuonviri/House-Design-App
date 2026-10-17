@@ -863,7 +863,7 @@ export default function Walkthrough({ project, cost, onClose, startWindow }: { p
   const levelOf = (id: string) => levels.find((l) => l.id === id);
 
   return (
-    <div className="fixed inset-0 z-50 bg-black" data-testid="walkthrough">
+    <div className="fixed inset-0 z-50 bg-black" data-testid="walkthrough" data-over-page>
       <Canvas
         key={quality}
         {...canvasSettings(quality, 1.5)}

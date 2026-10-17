@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import type { HouseStructure, HouseSystems, PlansSettings, Project, Stage } from "@/lib/model/schema";
 import { useProjectStore } from "@/lib/store/projectStore";
 import { canDraw, LABEL_REVIEW, readiness, SHEET_GROUPS, STATUS_LABEL, type Reason, type SheetEntry, type SheetStatus } from "@/lib/plans/catalog";
@@ -12,6 +12,7 @@ import SheetSvg from "./SheetSvg";
 import RealLotForm from "./RealLotForm";
 import { codeEditions } from "@/lib/codes/data";
 import { localFacts } from "@/lib/plans/local";
+import { keyIsForPage } from "@/lib/keys";
 
 /**
  * The Plans page: every sheet a house permit asks for, with its status and
@@ -37,6 +38,7 @@ const RESULT_LABEL: Record<RuleStatus, string> = { pass: "Pass", fail: "Fail", m
 export default function PlansPage({ project, onClose, onGo, onEditInFurnish }: { project: Project; onClose: () => void; onGo: (stage: Stage) => void; onEditInFurnish: (levelId?: string) => void }) {
   const update = useProjectStore((s) => s.update);
   const r = readiness(project);
+  const rootRef = useRef<HTMLDivElement>(null);
   const [tab, setTab] = useState<"sheets" | "code">("sheets");
   const [preview, setPreview] = useState<string>(() => r.sheets.find((s) => s.id.startsWith("floor:"))?.id ?? "cover");
   const [details, setDetails] = useState(false);
@@ -49,7 +51,7 @@ export default function PlansPage({ project, onClose, onGo, onEditInFurnish }: {
   const half = project.plans.sheetSize === "half";
 
   useEffect(() => {
-    const esc = (e: KeyboardEvent) => e.key === "Escape" && !details && !lotOpen && onClose();
+    const esc = (e: KeyboardEvent) => e.key === "Escape" && !details && !lotOpen && keyIsForPage(e, { here: rootRef.current }) && onClose();
     window.addEventListener("keydown", esc);
     return () => window.removeEventListener("keydown", esc);
   }, [onClose, details, lotOpen]);
@@ -99,7 +101,7 @@ export default function PlansPage({ project, onClose, onGo, onEditInFurnish }: {
   const counts = reportCounts(r.report);
 
   return (
-    <div className="fixed inset-0 z-50 flex flex-col bg-paper" data-testid="plans-page">
+    <div ref={rootRef} className="fixed inset-0 z-50 flex flex-col bg-paper" data-testid="plans-page" data-over-page>
       <header className="flex items-center gap-3 whitespace-nowrap border-b border-line bg-white px-5 py-3">
         <div className="min-w-0">
           <h2 className="text-lg font-semibold">Building plans</h2>

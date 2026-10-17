@@ -15,6 +15,7 @@ import PlotCard from "./PlotCard";
 import PlotDetails from "./PlotDetails";
 import { LandViewModeContext, ViewModeSwitch, type LandViewMode } from "./PlotView";
 import { readStorage, writeStorage } from "@/lib/browserStorage";
+import { keyIsForPage } from "@/lib/keys";
 
 const PER_PAGE = 3;
 
@@ -103,7 +104,7 @@ export default function LandStage({ onContinue }: { onContinue: () => void }) {
         if (e.key === "Escape") setOpen(null);
         return;
       }
-      if (!browsing || designing || (e.target as HTMLElement).closest("input, textarea")) return;
+      if (!browsing || designing || !keyIsForPage(e)) return;
       if (e.key === "ArrowRight") goNext();
       if (e.key === "ArrowLeft") goPrev();
     };

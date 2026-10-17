@@ -24,6 +24,7 @@ import CostPanel, { CostBadge } from "@/components/cost/CostPanel";
 import { estimate as estimateCost } from "@/lib/cost/estimate";
 import { locationOf } from "@/lib/location/current";
 import { placeLabel } from "@/lib/location/cities";
+import { keyIsForPage } from "@/lib/keys";
 
 const Walkthrough = dynamic(() => import("@/components/walk/Walkthrough"), { ssr: false });
 const PlansPage = dynamic(() => import("@/components/plans/PlansPage"), { ssr: false });
@@ -92,11 +93,9 @@ export default function ProjectWorkspace({ id }: { id: string }) {
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
       if (!(e.metaKey || e.ctrlKey) || e.key.toLowerCase() !== "z") return;
-      const t = e.target as HTMLElement;
       // Checkboxes, radios and sliders keep focus after a click, but have no undo of their own.
-      if (t.closest('input:not([type="checkbox"], [type="radio"], [type="range"], [type="button"]), textarea, [contenteditable]')) return;
-      // A window over the page (like the land designer) has its own undo.
-      if (document.querySelector('[aria-modal="true"]')) return;
+      // A window over the page (like the land designer) has its own undo; the walkthrough passes undo on.
+      if (!keyIsForPage(e, { toggles: true, covers: '[aria-modal="true"]' })) return;
       e.preventDefault();
       if (e.shiftKey) redo();
       else undo();
