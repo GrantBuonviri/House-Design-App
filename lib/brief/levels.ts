@@ -1,4 +1,4 @@
-import type { DesignBrief, Level } from "@/lib/model/schema";
+import type { DesignBrief, Level, Project } from "@/lib/model/schema";
 
 /**
  * Floors of the house, made from two counts: floors above ground (1 to 5)
@@ -103,4 +103,32 @@ export function newExtraLevel(kind: ExtraLevelKind, levels: Level[]): Level | nu
   if (levels.some((l) => l.elevationIn === elevationIn)) return null;
   const id = `${kind === "loft" ? "loft" : "split"}-${Math.random().toString(36).slice(2, 8)}`;
   return { id, name: kind === "loft" ? "Loft" : kind === "split-up" ? "Split level (up)" : "Split level (down)", kind: kind === "loft" ? "loft" : "split", elevationIn };
+}
+
+/** Level ids the project has now that this brief's floors would leave out. */
+export function removedLevelIds(project: Pick<Project, "levels">, brief: Pick<DesignBrief, "floors" | "floorsBelow">): string[] {
+  const kept = new Set(syncLevels(project.levels, brief).map((l) => l.id));
+  return project.levels.filter((l) => !kept.has(l.id)).map((l) => l.id);
+}
+
+/** Rooms drawn on these levels, in the flow sketch and in the floor plans (a level with both counts the larger). */
+export function roomsOnLevels(project: Pick<Project, "bubbles" | "floorPlans">, ids: string[]): number {
+  return ids.reduce((n, id) => n + Math.max(project.bubbles[id]?.bubbles.length ?? 0, project.floorPlans[id]?.rooms.length ?? 0), 0);
+}
+
+/** The project without the sketch and floor plan of these levels. */
+export function dropLevelRooms<T extends Pick<Project, "bubbles" | "floorPlans">>(project: T, ids: string[]): T {
+  const bubbles = { ...project.bubbles };
+  const floorPlans = { ...project.floorPlans };
+  for (const id of ids) {
+    delete bubbles[id];
+    delete floorPlans[id];
+  }
+  return { ...project, bubbles, floorPlans };
+}
+
+/** The question asked before floors with rooms go away. */
+export function removeRoomsQuestion(n: number, names: string[]): string {
+  const floor = names.length === 1 ? `The ${names[0].toLowerCase()} has` : `Those floors have`;
+  return `${floor} ${n} room${n === 1 ? "" : "s"}. Remove ${n === 1 ? "it" : "them"}?`;
 }
