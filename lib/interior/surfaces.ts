@@ -44,6 +44,8 @@ export type Aim =
   | { kind: "furnish"; levelId: string; id: string; label: string; item: LayerKind }
   /** A stair railing (`id` is its key), in the Place tab or when nothing else is under the dot: click to change, replace or remove it. `levelId` is the floor it stands on. */
   | { kind: "railing"; levelId: string; id: string; label: string }
+  /** A faucet, tub spout or shower head (`id` is its fixture's id): click to change its shape or product, or take it off. */
+  | { kind: "faucet"; levelId: string; id: string; label: string }
   /** A door or window, in the Place tab: click to slide it along its wall or change it. */
   | { kind: "opening"; levelId: string; id: string; label: string }
   | { kind: "none"; label?: string; hint?: string };
@@ -142,6 +144,8 @@ export function aimAt(
   const found = part.layer === "yard" || part.layer === "roof" ? null : itemAt(furnish.items, hit);
   const item: Aim | null = found ? { kind: "furnish", levelId: L, id: found.id, label: found.label, item: found.kind } : null;
   const rail: Aim | null = part.pick?.railing ? { kind: "railing", levelId: L, id: part.pick.railing, label: "Stair railing" } : null;
+  const faucet: Aim | null = part.pick?.faucet ? { kind: "faucet", levelId: L, id: part.pick.faucet, label: "Faucet" } : null;
+  if (faucet) return faucet;
   if (furnish.tab === "place") {
     if (item) return item;
     if (rail) return rail;

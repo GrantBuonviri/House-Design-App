@@ -23,8 +23,9 @@ import { pointOnEdge } from "./arcs";
 import { hostSegment, openingGeometry } from "./walls";
 import { listHits, swingClear, swingRoom, type SwingExtras } from "./swing";
 import { cabinetCorners, cabinetLayout } from "./cabinets";
-import { openingType } from "./catalog";
+import { fixtureType, openingType } from "./catalog";
 import { furnishProblems, type LayerKind } from "@/lib/furnish/layer";
+import { FAUCET_KIND } from "@/lib/furnish/faucets";
 import { leftoverClosets } from "@/lib/furnish/closets";
 
 /**
@@ -54,6 +55,8 @@ export type PlanWarning = {
   escape?: { roomId: string };
   /** A closet piece whose rod and shelf were deleted in Furnish: "Remove the closet walls" (on the floor plan). */
   closetWalls?: { stem: string };
+  /** A sink, tub or shower whose faucet was taken off in Furnish: "Put the faucet back". */
+  noFaucet?: { fixtureId: string };
   /** A door whose swing hits something: "Flip the swing" and "Switch to a pocket door". */
   swing?: { openingId: string };
 };
@@ -309,6 +312,12 @@ export function planWarnings(plans: Plans, ctx: Ctx): PlanWarning[] {
     // Furnish items outside their room, off their wall, or in a doorway.
     for (const fp of furnishProblems(planOf(saved, level.id))) {
       out.push({ id: `${level.id}:${fp.key}`, levelId: level.id, text: fp.text, roomIds: fp.item.roomId ? [fp.item.roomId] : [], at: fp.at, furnish: { kind: fp.item.kind, id: fp.item.id, canMoveInside: fp.canMoveInside } });
+    }
+    // A sink, tub or shower whose faucet was taken off.
+    for (const fx of planOf(saved, level.id).fixtures) {
+      if (!fx.faucet?.removed || !FAUCET_KIND[fx.kind]) continue;
+      const what = fixtureType(fx.kind).label.toLowerCase();
+      out.push({ id: `${level.id}:no-faucet:${fx.id}`, levelId: level.id, text: `This ${what} has no faucet.`, roomIds: fx.roomId ? [fx.roomId] : [], at: { x: fx.x, y: fx.y }, noFaucet: { fixtureId: fx.id } });
     }
     // Closet walls and doors left after the closet's rod and shelf were deleted.
     for (const lc of leftoverClosets(planOf(saved, level.id))) {

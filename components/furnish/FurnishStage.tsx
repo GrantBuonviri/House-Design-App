@@ -2,10 +2,10 @@
 
 import dynamic from "next/dynamic";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import type { FloorPlan, Level, Point, WallHeight } from "@/lib/model/schema";
+import type { FloorPlan, Level, Point, Product, WallHeight } from "@/lib/model/schema";
 import { useProjectStore } from "@/lib/store/projectStore";
 import { MAIN_LEVEL_ID } from "@/lib/brief/levels";
-import { ceilingFor } from "@/lib/plan/basics";
+import { ceilingFor, exteriorWallIn } from "@/lib/plan/basics";
 import { planOf, planHasContent } from "@/lib/plan/edit";
 import { dismissWarning, planWarnings, restoreWarning, splitDismissed, type PlanWarning } from "@/lib/plan/checks";
 import { cabinetsEdited, resetCabinets } from "@/lib/plan/cabinets";
@@ -25,6 +25,10 @@ import type { PlanSelection } from "@/components/plan/types";
 import FurnishCatalog from "./FurnishCatalog";
 import FurnishItemPanel from "./FurnishItemPanel";
 import RailingPanel from "./RailingPanel";
+import FaucetPanel from "./FaucetPanel";
+import { faucetsOn } from "@/lib/furnish/faucets";
+import { applyFaucetChange, isRange, pickFaucetProduct, potFillerAbove, usedFor } from "@/lib/furnish/faucetPick";
+import { fixtureType } from "@/lib/plan/catalog";
 import { changeRailingIn, railingTarget, stageRailings, type RailingChange } from "@/lib/furnish/railings";
 
 const PlanCanvas = dynamic(() => import("@/components/plan/PlanCanvas"), {
@@ -108,21 +112,56 @@ export default function FurnishStage({
   const layouts = useMemo(() => furnishLayouts(project, level), [project, level]);
   const items = useMemo(() => stageItems(plan, layouts), [plan, layouts]);
   const stairRails = useMemo(() => stageRailings(plans, levels, basics, level.id), [plans, levels, basics, level.id]);
+  const selections = project.interior.selections;
+  const exteriorIn = exteriorWallIn(basics);
+  const faucets = useMemo(() => faucetsOn(plan, level.id, selections, { exteriorIn, removed: true }), [plan, level.id, selections, exteriorIn]);
   const counts = Object.fromEntries(levels.map((l) => [l.id, plans[l.id]?.rooms.length ?? 0]));
 
   // What's picked and still there (Undo can take things away).
-  const live = new Set([...items.map((i) => i.id), ...plan.openings.map((o) => o.id), ...stairRails.railings.map((r) => r.key), ...stairRails.bare.map((x) => x.key)]);
+  const live = new Set([...items.map((i) => i.id), ...plan.openings.map((o) => o.id), ...stairRails.railings.map((r) => r.key), ...stairRails.bare.map((x) => x.key), ...faucets.map((f) => f.fixtureId)]);
   const sel = selection.filter((s) => live.has(s.id));
   const single = sel.length === 1 ? sel[0] : null;
   const item = single?.kind === "furnish" ? items.find((i) => i.id === single.id) : undefined;
 
   const railTarget = single?.kind === "railing" ? railingTarget(stairRails, single.id) : null;
+  const faucetFx = single?.kind === "faucet" ? plan.fixtures.find((f) => f.id === single.id) : undefined;
+  const faucet = faucetFx ? faucets.find((f) => f.fixtureId === faucetFx.id) : undefined;
+  const changeFaucetHere = (change: Parameters<typeof applyFaucetChange>[2], id = faucetFx?.id) => {
+    if (!id) return;
+    setLevelPlan(applyFaucetChange(plan, id, change), typeof change === "object" ? "faucet" : undefined);
+    if (change === "remove") setFlash("Took the faucet off. Undo puts it back, or use Put the faucet back.");
+  };
+  const pickFaucet = (product: Product | null) => {
+    if (!faucetFx || !faucet) return;
+    update((p) => ({ ...p, interior: { ...p.interior, selections: pickFaucetProduct(plan, faucetFx, faucet.kind, p.interior.selections, product) } }));
+  };
   const changeRail = (change: RailingChange) => {
     if (!railTarget) return;
     const pl = changeRailingIn(plans, railTarget, change);
     if (pl) setPlansFor(railTarget.stairsLevelId, pl);
     // Pick the same side again: its key stays the same unless it was removed.
     if (change === "remove") setFlash("Removed the railing. Undo puts it back, or pick the dotted line to add one.");
+  };
+
+  /** The sink, tub or shower's Faucet line, and the range's pot filler button. */
+  const faucetProps = (it: { entryId: string; id: string; x: number; y: number; rotation: number; depthIn: number; widthIn: number }) => {
+    const f = it.entryId.startsWith("fixture:") ? faucets.find((x) => x.fixtureId === it.id) : undefined;
+    return {
+      ...(f ? { faucet: { removed: Boolean(f.removed) }, onFaucet: (a: "edit" | "restore") => (a === "edit" ? setSelection([{ kind: "faucet", id: it.id }]) : changeFaucetHere("restore", it.id)) } : {}),
+      ...(isRange(it.entryId)
+        ? {
+            onPotFiller: () => {
+              const out = potFillerAbove(plan, it);
+              if (!out) setFlash("There's no wall behind the range to put a pot filler on.");
+              else if ("already" in out) setFlash("There's already a pot filler over this range.");
+              else {
+                setLevelPlan(out.plan);
+                setSelection([{ kind: "furnish", id: out.id }]);
+              }
+            },
+          }
+        : {}),
+    };
   };
 
   const setLevelPlan = useCallback(
@@ -184,6 +223,8 @@ export default function FurnishStage({
           setLevelPlan(deleteItem(plan, item));
           setSelection([]);
           if (isClosetRod(item.id)) setFlash(CLOSET_DELETED);
+        } else if (single.kind === "faucet") {
+          changeFaucetHere("remove");
         } else if (single.kind === "railing") {
           const t = railingTarget(stairRails, single.id);
           if (t?.railing) {
@@ -228,7 +269,7 @@ export default function FurnishStage({
   }, [single, item, plan, tool, tape, drafting, sel.length, walk]);
 
   // Things to check: the ones about furnishings (the floor plan lists the rest). Picking one jumps to its floor.
-  const warnings = useMemo(() => (basics ? planWarnings(plans, { levels, brief: project.brief, basics }).filter((w) => w.furnish || w.closetWalls) : []), [plans, levels, project.brief, basics]);
+  const warnings = useMemo(() => (basics ? planWarnings(plans, { levels, brief: project.brief, basics }).filter((w) => w.furnish || w.closetWalls || w.noFaucet) : []), [plans, levels, project.brief, basics]);
   const split = useMemo(() => splitDismissed(warnings, project.plan.dismissed), [warnings, project.plan.dismissed]);
   const checkProps = {
     warnings: split.active,
@@ -243,12 +284,17 @@ export default function FurnishStage({
   function pickWarning(w: PlanWarning) {
     setLevelId(w.levelId);
     setTool("select");
-    setSelection(w.furnish ? [{ kind: "furnish", id: w.furnish.id }] : []);
+    setSelection(w.furnish ? [{ kind: "furnish", id: w.furnish.id }] : w.noFaucet ? [{ kind: "faucet", id: w.noFaucet.fixtureId }] : []);
     if (w.at) setFocus({ at: w.at, key: Date.now() });
   }
   function fixWarning(w: PlanWarning, action?: FixAction) {
     if (action === "plan") return onGoToPlan();
     const p = planOf(plans, w.levelId);
+    if (w.noFaucet) {
+      setPlansFor(w.levelId, applyFaucetChange(p, w.noFaucet.fixtureId, "restore"));
+      setFlash("Put the faucet back. Undo takes it off again.");
+      return;
+    }
     const it = w.furnish && layerItems(p).find((x) => x.id === w.furnish!.id);
     if (!it) return;
     setPlansFor(w.levelId, action === "delete" ? deleteItem(p, it) : moveInside(p, it));
@@ -380,7 +426,7 @@ export default function FurnishStage({
             land={null}
             lotMode={false}
             mode="furnish"
-            furnish={{ railings: stairRails.railings, bareRailings: stairRails.bare, layouts, pick, turn, wallHeight, ceilingIn, closetSize, here: walk && walk.here.levelId === level.id ? walk.here : undefined }}
+            furnish={{ faucets, railings: stairRails.railings, bareRailings: stairRails.bare, layouts, pick, turn, wallHeight, ceilingIn, closetSize, here: walk && walk.here.levelId === level.id ? walk.here : undefined }}
             focus={focus}
             onLotMove={() => {}}
             onSelect={setSelection}
@@ -424,7 +470,9 @@ export default function FurnishStage({
               </p>
             </div>
           ) : item ? (
-            <FurnishItemPanel plan={plan} item={item} ceilingIn={ceilingIn} roomName={roomName} onApply={apply} onDelete={(pl) => { setLevelPlan(pl); setSelection([]); if (isClosetRod(item.id)) setFlash(CLOSET_DELETED); }} onMessage={setFlash} />
+            <FurnishItemPanel plan={plan} item={item} ceilingIn={ceilingIn} roomName={roomName} onApply={apply} onDelete={(pl) => { setLevelPlan(pl); setSelection([]); if (isClosetRod(item.id)) setFlash(CLOSET_DELETED); }} onMessage={setFlash} {...faucetProps(item)} />
+          ) : faucetFx && faucet ? (
+            <FaucetPanel faucet={faucet} fixtureLabel={fixtureType(faucetFx.kind).label} usedFor={usedFor(plan, faucetFx, faucet.kind)} onChange={changeFaucetHere} onPick={pickFaucet} />
           ) : railTarget ? (
             <RailingPanel target={railTarget} edited={!!plans[railTarget.stairsLevelId]?.stairs.find((x) => x.id === railTarget.stairsId)?.railings?.some((e) => e.edge === railTarget.edge)} onChange={changeRail} />
           ) : single?.kind === "opening" ? (
@@ -446,7 +494,7 @@ export default function FurnishStage({
           ) : (
             <div className="card p-4 text-sm text-muted" data-testid="furnish-empty-panel">
               <h3 className="mb-2 text-sm font-semibold text-ink">Nothing picked</h3>
-              <p>Pick something in the list to place it, or click a toilet, cabinet, outlet or other item on the plan to change its size, turn it, move it away from a wall, swap it or delete it. Stair railings are there too: click one to change its kind or look, or a dotted line along the stairs to add one.</p>
+              <p>Pick something in the list to place it, or click a toilet, cabinet, outlet or other item on the plan to change its size, turn it, move it away from a wall, swap it or delete it. Faucets and shower heads are there too: click one to change its shape or product. Stair railings: click one to change its kind or look, or a dotted line along the stairs to add one.</p>
               <p className="mt-2">{items.length} {items.length === 1 ? "item" : "items"} on {level.name.toLowerCase()}, counting the cabinets and outlets the app placed.</p>
               {(cabinetsEdited(plan) || devicesEdited(plan)) && (
                 <div className="mt-3 space-y-1">

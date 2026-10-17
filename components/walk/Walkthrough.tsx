@@ -17,8 +17,8 @@ import { DOOR_MODES, aimDoor, newDoorStates, stepDoors, toggleDoor, type DoorInf
 import { DoorLeaves } from "@/components/house3d/DoorLeaves";
 import { planOf } from "@/lib/plan/edit";
 import { defaultFurnitureColor } from "@/lib/plan/furniture";
-import { ceilingFor } from "@/lib/plan/basics";
-import { openingType } from "@/lib/plan/catalog";
+import { ceilingFor, exteriorWallIn } from "@/lib/plan/basics";
+import { fixtureType, openingType } from "@/lib/plan/catalog";
 import { catalogEntry, type CatalogEntry } from "@/lib/furnish/catalog";
 import { placeCheck, removeItem, roomAt, type LayerItem } from "@/lib/furnish/layer";
 import { deleteItem, furnishLayouts, patchItem, placeGhost, stageItems, type Ghost } from "@/lib/furnish/stage";
@@ -34,6 +34,8 @@ import { Player, type Look } from "./Player";
 import { DesignTabs, FinishesHelp, PlaceTab, type DesignTab } from "./PlaceTab";
 import { DevicePlates, ItemGhost, ItemHighlight, OpeningGhost, RailingHighlight, WallGhost } from "./WalkGhosts";
 import RailingPanel from "@/components/furnish/RailingPanel";
+import FaucetPanel, { type FaucetChangeIn } from "@/components/furnish/FaucetPanel";
+import { applyFaucetChange, faucetById, pickFaucetProduct, usedFor } from "@/lib/furnish/faucetPick";
 import { addRailingIn, changeRailingIn, railingTarget, stageRailings, type RailingChange, type RailingTarget } from "@/lib/furnish/railings";
 import { project as projectOnto } from "@/lib/plan/geometry";
 import TopDown from "./TopDown";
@@ -72,6 +74,7 @@ type Panel =
   | { kind: "item"; levelId: string; id: string }
   | { kind: "opening"; levelId: string; id: string }
   | { kind: "railing"; levelId: string; key: string }
+  | { kind: "faucet"; levelId: string; id: string }
   | { kind: "design" }
   | { kind: "labels" };
 
@@ -404,6 +407,17 @@ export default function Walkthrough({ project, cost, onClose }: { project: Proje
     }
   };
 
+  /** Change, remove or put back the faucet on the fixture with this id (on `levelId`). */
+  const changeFaucetAimed = (levelId: string, fixtureId: string, change: FaucetChangeIn) => {
+    const pl = planOf(latest.current.plans, levelId);
+    if (!pl.fixtures.some((f) => f.id === fixtureId)) return;
+    setLevelPlan(levelId, applyFaucetChange(pl, fixtureId, change), typeof change === "object" ? "faucet" : undefined);
+    if (change === "remove") {
+      setPanel(null);
+      say("Took the faucet off. Undo puts it back.");
+    }
+  };
+
   const setDesignOn = (on: boolean) => {
     setDesign(on);
     if (!on) {
@@ -605,6 +619,8 @@ export default function Walkthrough({ project, cost, onClose }: { project: Proje
         else if (!c && a?.kind === "furnish") turnAimed(a.levelId, a.id, by);
       } else if ((e.code === "Delete" || e.code === "Backspace") && a?.kind === "furnish" && !c) {
         removeThis(a.levelId, a.id);
+      } else if ((e.code === "Delete" || e.code === "Backspace") && a?.kind === "faucet" && !c) {
+        changeFaucetAimed(a.levelId, a.id, "remove");
       } else if ((e.code === "Delete" || e.code === "Backspace") && a?.kind === "railing" && !c) {
         changeRailingAimed(a.levelId, a.id, "remove");
       }
@@ -645,6 +661,9 @@ export default function Walkthrough({ project, cost, onClose }: { project: Proje
         stopWalking();
       } else if (a.kind === "railing") {
         setPanel({ kind: "railing", levelId: a.levelId, key: a.id });
+        stopWalking();
+      } else if (a.kind === "faucet") {
+        setPanel({ kind: "faucet", levelId: a.levelId, id: a.id });
         stopWalking();
       } else if (a.hint) say(a.hint);
     };
@@ -889,6 +908,24 @@ export default function Walkthrough({ project, cost, onClose }: { project: Proje
                 />
               </div>
             )}
+            {panel.kind === "faucet" && (() => {
+              const pl = planOf(project.floorPlans, panel.levelId);
+              const fx = pl.fixtures.find((f) => f.id === panel.id);
+              const fc = fx && faucetById(pl, panel.levelId, fx.id, project.interior.selections, exteriorWallIn(basics));
+              if (!fx || !fc) return <p className="text-sm text-muted">That faucet is gone.</p>;
+              return (
+                <div className="space-y-3" data-testid="walk-faucet-panel">
+                  <FaucetPanel
+                    faucet={fc}
+                    fixtureLabel={fixtureType(fx.kind).label}
+                    usedFor={usedFor(pl, fx, fc.kind)}
+                    onChange={(c) => changeFaucetAimed(panel.levelId, fx.id, c)}
+                    onPick={(prod) => setSelections(pickFaucetProduct(pl, fx, fc.kind, project.interior.selections, prod))}
+                  />
+                  <p className="text-xs text-muted">While walking: aim at it and press Delete to take it off.</p>
+                </div>
+              );
+            })()}
             {panel.kind === "railing" && (() => {
               const t = railingTarget(stageRailings(project.floorPlans, levels, basics, panel.levelId), panel.key);
               if (!t) return <p className="text-sm text-muted">That railing is gone.</p>;

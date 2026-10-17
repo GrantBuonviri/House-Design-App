@@ -9,7 +9,7 @@ import type { PlanWarning } from "@/lib/plan/checks";
  * Clicking one goes to its floor, selects the room and centers it.
  */
 /** Which button of a warning was pressed, for warnings with more than one. */
-export type FixAction = "inside" | "delete" | "plan" | "flip" | "pocket";
+export type FixAction = "inside" | "delete" | "plan" | "flip" | "pocket" | "faucet";
 
 export default function PlanChecks({ warnings, fresh = [], dismissed = [], levels, levelId, onPick, onFix, onDismiss, onRestore, onRestoreAll, inFurnish = false }: { warnings: PlanWarning[]; /** Ids of warnings the last fix brought up, tagged "new". */ fresh?: string[]; dismissed?: PlanWarning[]; levels: Level[]; levelId: string; onPick: (w: PlanWarning) => void; onFix?: (w: PlanWarning, action?: FixAction) => void; inFurnish?: boolean; onDismiss?: (w: PlanWarning) => void; onRestore?: (w: PlanWarning) => void; onRestoreAll?: () => void }) {
   const [open, setOpen] = useState(true);
@@ -75,6 +75,11 @@ export default function PlanChecks({ warnings, fresh = [], dismissed = [], level
                         Delete
                       </button>
                     </span>
+                  )}
+                  {w.noFaucet && onFix && (
+                    <button className="btn mx-2 mb-1 px-2 py-0.5 text-xs" onClick={() => onFix(w, "faucet")} data-testid="faucet-put-back">
+                      Put the faucet back
+                    </button>
                   )}
                   {w.closetWalls && onFix && (
                     <button className="btn mx-2 mb-1 px-2 py-0.5 text-xs" onClick={() => onFix(w, inFurnish ? "plan" : undefined)} data-testid="closet-walls-fix">
