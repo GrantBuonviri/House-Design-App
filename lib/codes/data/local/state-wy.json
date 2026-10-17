@@ -1,0 +1,22 @@
+{
+  "jurisdiction": "WY",
+  "adoption": "local-only",
+  "codes": {
+    "nec": {
+      "edition": "2023",
+      "effective": "2023-07-01",
+      "source": "https://www.iaei.org/page/nec-code-adoption"
+    },
+    "plumbing": {
+      "edition": "2021",
+      "model": "IRC",
+      "name": "Locally adopted IRC P chapters / UPC",
+      "source": "https://dfs.wyo.gov/",
+      "unverified": true
+    }
+  },
+  "elsewhere": "No statewide residential code (state NEC only); 2021 IRC model code, check locally.",
+  "checked": "2026-10-17",
+  "values": {},
+  "notes": "Checked 2026-10-17. No statewide building or energy code (ICC); NEC 2023 statewide from 2023-07-01 (IAEI). Plumbing and Cheyenne could not be checked (fetch budget ran out)."
+}

@@ -1,0 +1,157 @@
+{
+  "jurisdiction": "WA",
+  "adoption": "statewide",
+  "codes": {
+    "irc": {
+      "edition": "2021",
+      "effective": "2024-03-15",
+      "source": "https://sbcc.wa.gov/state-codes-regulations-guidelines/state-building-code"
+    },
+    "iecc": {
+      "edition": "2021",
+      "name": "Washington State Energy Code Residential (WAC 51-11R), 2021 edition, own credit-based provisions",
+      "effective": "2024-03-15",
+      "source": "https://app.leg.wa.gov/WAC/default.aspx?cite=51-11R-40213"
+    },
+    "nec": {
+      "edition": "2023",
+      "effective": "2024-04-01",
+      "source": "https://app.leg.wa.gov/WAC/default.aspx?cite=296-46B-010"
+    },
+    "plumbing": {
+      "edition": "2021",
+      "model": "UPC",
+      "name": "2021 UPC with WA amendments (WAC 51-56); IRC P chapters not used",
+      "source": "https://app.leg.wa.gov/WAC/default.aspx?cite=51-56-003"
+    }
+  },
+  "elsewhere": "Washington State Building Code (2021 WRC, WSEC-R, UPC) applies statewide; some cities (Seattle) adopt stricter energy codes.",
+  "checked": "2026-10-17",
+  "values": {
+    "energy.fenestrationU@4C": {
+      "value": 0.3,
+      "code": "IECC 2021",
+      "section": "WSEC-R 2021 Table R402.1.3 (WAC 51-11R-40213)",
+      "amendment": "Prescriptive fenestration U-0.30",
+      "source": "https://app.leg.wa.gov/WAC/default.aspx?cite=51-11R-40213",
+      "checked": "2026-10-17",
+      "secondCheck": {
+        "verdict": "agree",
+        "source": "https://app.leg.wa.gov/WAC/default.aspx?cite=51-11R-40213"
+      }
+    },
+    "energy.ceilingR@4C": {
+      "value": 60,
+      "code": "IECC 2021",
+      "section": "WSEC-R 2021 Table R402.1.3 (WAC 51-11R-40213)",
+      "amendment": "Ceiling R-60",
+      "source": "https://app.leg.wa.gov/WAC/default.aspx?cite=51-11R-40213",
+      "checked": "2026-10-17",
+      "secondCheck": {
+        "verdict": "disagree",
+        "source": "https://app.leg.wa.gov/WAC/default.aspx?cite=51-11R-40213"
+      },
+      "resolved": "Ceiling is R-60 (not R-49) for Climate Zone 5 and Marine 4 in WSEC-R Table R402.1.3"
+    },
+    "energy.floorR@4C": {
+      "value": 30,
+      "code": "IECC 2021",
+      "section": "WSEC-R 2021 Table R402.1.3 (WAC 51-11R-40213)",
+      "amendment": "Floor R-30",
+      "source": "https://app.leg.wa.gov/WAC/default.aspx?cite=51-11R-40213",
+      "checked": "2026-10-17",
+      "secondCheck": {
+        "verdict": "agree",
+        "source": "https://app.leg.wa.gov/WAC/default.aspx?cite=51-11R-40213"
+      }
+    },
+    "energy.fenestrationU@5B": {
+      "value": 0.3,
+      "code": "IECC 2021",
+      "section": "WSEC-R 2021 Table R402.1.3 (WAC 51-11R-40213)",
+      "amendment": "Prescriptive fenestration U-0.30",
+      "source": "https://app.leg.wa.gov/WAC/default.aspx?cite=51-11R-40213",
+      "checked": "2026-10-17",
+      "secondCheck": {
+        "verdict": "agree",
+        "source": "https://app.leg.wa.gov/WAC/default.aspx?cite=51-11R-40213"
+      }
+    },
+    "energy.ceilingR@5B": {
+      "value": 60,
+      "code": "IECC 2021",
+      "section": "WSEC-R 2021 Table R402.1.3 (WAC 51-11R-40213)",
+      "amendment": "Ceiling R-60",
+      "source": "https://app.leg.wa.gov/WAC/default.aspx?cite=51-11R-40213",
+      "checked": "2026-10-17",
+      "secondCheck": {
+        "verdict": "disagree",
+        "source": "https://app.leg.wa.gov/WAC/default.aspx?cite=51-11R-40213"
+      },
+      "resolved": "Ceiling is R-60 (not R-49) for Climate Zone 5 and Marine 4 in WSEC-R Table R402.1.3"
+    },
+    "energy.floorR@5B": {
+      "value": 30,
+      "code": "IECC 2021",
+      "section": "WSEC-R 2021 Table R402.1.3 (WAC 51-11R-40213)",
+      "amendment": "Floor R-30",
+      "source": "https://app.leg.wa.gov/WAC/default.aspx?cite=51-11R-40213",
+      "checked": "2026-10-17",
+      "secondCheck": {
+        "verdict": "agree",
+        "source": "https://app.leg.wa.gov/WAC/default.aspx?cite=51-11R-40213"
+      }
+    },
+    "energy.woodWallR@4C": {
+      "value": "20+5 or 13+10",
+      "code": "IECC 2021",
+      "section": "WSEC-R 2021 Table R402.1.3 (WAC 51-11R-40213)",
+      "amendment": "Wood-frame wall R-20+5ci or R-13+10ci; WSEC also requires R406 energy credits",
+      "source": "https://app.leg.wa.gov/WAC/default.aspx?cite=51-11R-40213",
+      "checked": "2026-10-17",
+      "secondCheck": {
+        "verdict": "disagree",
+        "source": "https://app.leg.wa.gov/WAC/default.aspx?cite=51-11R-40213"
+      },
+      "resolved": "Wood-frame wall is R-20+5 or R-13+10 (not 'R-21 int') in WSEC-R Table R402.1.3; WSEC also requires Table R406.2 credits"
+    },
+    "energy.slabR@4C": {
+      "value": "R-10, 4 ft",
+      "code": "IECC 2021",
+      "section": "WSEC-R 2021 Table R402.1.3 (WAC 51-11R-40213)",
+      "amendment": "Slab R-10 for 4 ft (R-10 under entire heated slab)",
+      "source": "https://app.leg.wa.gov/WAC/default.aspx?cite=51-11R-40213",
+      "checked": "2026-10-17",
+      "secondCheck": {
+        "verdict": "disagree",
+        "source": "https://app.leg.wa.gov/WAC/default.aspx?cite=51-11R-40213"
+      },
+      "resolved": "Slab is R-10 for 4 ft (not 2 ft); heated slabs need R-10 continuous under the whole slab (footnote d)"
+    },
+    "energy.woodWallR@5B": {
+      "value": "20+5 or 13+10",
+      "code": "IECC 2021",
+      "section": "WSEC-R 2021 Table R402.1.3 (WAC 51-11R-40213)",
+      "amendment": "Wood-frame wall R-20+5ci or R-13+10ci; WSEC also requires R406 energy credits",
+      "source": "https://app.leg.wa.gov/WAC/default.aspx?cite=51-11R-40213",
+      "checked": "2026-10-17",
+      "secondCheck": {
+        "verdict": "agree",
+        "source": "https://app.leg.wa.gov/WAC/default.aspx?cite=51-11R-40213"
+      }
+    },
+    "energy.slabR@5B": {
+      "value": "R-10, 4 ft",
+      "code": "IECC 2021",
+      "section": "WSEC-R 2021 Table R402.1.3 (WAC 51-11R-40213)",
+      "amendment": "Slab R-10 for 4 ft (R-10 under entire heated slab)",
+      "source": "https://app.leg.wa.gov/WAC/default.aspx?cite=51-11R-40213",
+      "checked": "2026-10-17",
+      "secondCheck": {
+        "verdict": "agree",
+        "source": "https://app.leg.wa.gov/WAC/default.aspx?cite=51-11R-40213"
+      }
+    }
+  },
+  "notes": "Checked 2026-10-17. WSEC-R Table R402.1.3 has one column for 'Climate Zone 5 and Marine 4' (so 4C and 5B share values): fenestration U-0.30, skylight U-0.50, ceiling R-60, wood wall 20+5 or 13+10, floor R-30, below-grade wall 10/15/21int+5TB, slab R-10 4 ft. 2024-cycle WA codes still at CR-102 stage as of Aug 2026 (sbcc.wa.gov/2024-code-adoption-cycle). 2026 NEC takes effect 2026-12-31."
+}

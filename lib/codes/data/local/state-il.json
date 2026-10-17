@@ -1,0 +1,15 @@
+{
+  "jurisdiction": "IL",
+  "adoption": "local-only",
+  "codes": {
+    "iecc": {
+      "edition": "2024",
+      "effective": "2025-11-30",
+      "source": "https://cdb.illinois.gov/business/codes/illinoisenergyconservationcode.html"
+    }
+  },
+  "elsewhere": "No statewide residential building code; 2021 IRC model code, check locally. Statewide Illinois Energy Conservation Code (2024 IECC) applies except home-rule Chicago.",
+  "checked": "2026-10-17",
+  "values": {},
+  "notes": "Illinois energy amendments to the 2024 IECC prescriptive tables not retrieved."
+}

@@ -1,0 +1,33 @@
+{
+  "jurisdiction": "AR",
+  "adoption": "statewide",
+  "codes": {
+    "irc": {
+      "edition": "2021",
+      "amendments": "Arkansas Fire Prevention Code Vol. III - Residential",
+      "effective": "2023-01-01",
+      "source": "https://www.meltplan.com/buildingcodes/arkansas"
+    },
+    "iecc": {
+      "edition": "2009",
+      "effective": "2015-01-01",
+      "source": "https://www.energycodes.gov/status/states/Arkansas"
+    },
+    "nec": {
+      "edition": "2020",
+      "effective": "2022-07-31",
+      "source": "https://www.meltplan.com/buildingcodes/arkansas"
+    },
+    "plumbing": {
+      "edition": "2018",
+      "model": "IPC",
+      "name": "Arkansas Plumbing Code (2018 IPC)",
+      "effective": "2021-09-01",
+      "source": "https://www.meltplan.com/buildingcodes/arkansas"
+    }
+  },
+  "elsewhere": "Statewide code applies; local jurisdictions may enforce. Rural areas often have no local inspectors.",
+  "checked": "2026-10-17",
+  "values": {},
+  "notes": "State energy code is 2009 IECC with amendments, so energy.* prescriptive values come from the state edition table (not captured here; confirmed false)."
+}

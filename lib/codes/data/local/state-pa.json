@@ -1,0 +1,153 @@
+{
+  "jurisdiction": "PA",
+  "adoption": "statewide",
+  "codes": {
+    "irc": {
+      "edition": "2021",
+      "effective": "2026-01-01",
+      "source": "https://www.yorkcity.org/decd/bureau-of-permits-and-inspections/2021-ucc-code-update-and-implementation/"
+    },
+    "iecc": {
+      "edition": "2021",
+      "effective": "2026-01-01",
+      "source": "https://www.energycodes.gov/status/states/pennsylvania"
+    },
+    "nec": {
+      "edition": "2020",
+      "effective": "2026-01-01",
+      "source": "https://www.yorkcity.org/decd/bureau-of-permits-and-inspections/2021-ucc-code-update-and-implementation/"
+    },
+    "plumbing": {
+      "edition": "2021",
+      "model": "IRC",
+      "name": "2021 IRC plumbing chapters for houses (2021 IPC for other buildings)",
+      "source": "https://www.yorkcity.org/decd/bureau-of-permits-and-inspections/2021-ucc-code-update-and-implementation/",
+      "unverified": true
+    }
+  },
+  "elsewhere": "UCC is statewide but each municipality chooses whether to administer residential permits; where it does not, a third-party agency or L&I applies on request. The 2021 accessibility provisions are enjoined (2018 applies).",
+  "checked": "2026-10-17",
+  "values": {
+    "energy.airLeakageACH50": {
+      "value": 3,
+      "code": "IECC 2021",
+      "section": "PA N1102.4.1.2",
+      "amendment": "Prescriptive path 3 ACH50 in zones 3-8 (same as IECC 2021)",
+      "source": "https://www.phrc.psu.edu/assets/docs/Webinars/PHRC-Webinar_Navigating-the-Ever-Changing-Energy-Code-Landscape-the-2021-IRC-IECC-Edition_HANDOUTS.pdf",
+      "checked": "2026-10-17",
+      "secondCheck": {
+        "verdict": "agree",
+        "source": "https://www.phrc.psu.edu/assets/docs/Webinars/PHRC-Webinar_Navigating-the-Ever-Changing-Energy-Code-Landscape-the-2021-IRC-IECC-Edition_HANDOUTS.pdf"
+      }
+    },
+    "energy.ceilingR@4A": {
+      "value": 49,
+      "code": "IECC 2021",
+      "section": "PA Table N1102.1.3 (R402.1.3)",
+      "amendment": "PA ceiling R-49 in zones 4 to 8 (model 2021 IECC R-60 in zones 4 and 5); R-38 in zones 2-3",
+      "source": "https://www.pa.gov/content/dam/copapwp-pagov/en/dli/documents/ucc/documents/2021%20icc%20code%20adoption%20final%20report.pdf",
+      "checked": "2026-10-17",
+      "secondCheck": {
+        "verdict": "agree",
+        "source": "https://www.pa.gov/content/dam/copapwp-pagov/en/dli/documents/ucc/documents/2021%20icc%20code%20adoption%20final%20report.pdf"
+      }
+    },
+    "energy.ceilingR@5A": {
+      "value": 49,
+      "code": "IECC 2021",
+      "section": "PA Table N1102.1.3 (R402.1.3)",
+      "amendment": "PA ceiling R-49 in zones 4 to 8 (model 2021 IECC R-60 in zones 4 and 5); R-38 in zones 2-3",
+      "source": "https://www.pa.gov/content/dam/copapwp-pagov/en/dli/documents/ucc/documents/2021%20icc%20code%20adoption%20final%20report.pdf",
+      "checked": "2026-10-17",
+      "secondCheck": {
+        "verdict": "agree",
+        "source": "https://www.pa.gov/content/dam/copapwp-pagov/en/dli/documents/ucc/documents/2021%20icc%20code%20adoption%20final%20report.pdf"
+      }
+    },
+    "energy.fenestrationU@4A": {
+      "value": 0.32,
+      "code": "IECC 2021",
+      "section": "PA Table N1102.1.3",
+      "amendment": "Fenestration U-0.32 in zones 3-4",
+      "source": "https://www.pa.gov/content/dam/copapwp-pagov/en/dli/documents/ucc/documents/2021%20icc%20code%20adoption%20final%20report.pdf",
+      "checked": "2026-10-17",
+      "secondCheck": {
+        "verdict": "agree",
+        "source": "https://www.pa.gov/content/dam/copapwp-pagov/en/dli/documents/ucc/documents/2021%20icc%20code%20adoption%20final%20report.pdf"
+      }
+    },
+    "energy.fenestrationU@5A": {
+      "value": 0.3,
+      "code": "IECC 2021",
+      "section": "PA Table N1102.1.3",
+      "amendment": "Fenestration U-0.30 in zones 5-8",
+      "source": "https://www.pa.gov/content/dam/copapwp-pagov/en/dli/documents/ucc/documents/2021%20icc%20code%20adoption%20final%20report.pdf",
+      "checked": "2026-10-17",
+      "secondCheck": {
+        "verdict": "agree",
+        "source": "https://www.pa.gov/content/dam/copapwp-pagov/en/dli/documents/ucc/documents/2021%20icc%20code%20adoption%20final%20report.pdf"
+      }
+    },
+    "energy.floorR@4A": {
+      "value": 19,
+      "code": "IECC 2021",
+      "section": "PA Table N1102.1.3",
+      "amendment": "Floor R-19 in zones 3-4",
+      "source": "https://www.pa.gov/content/dam/copapwp-pagov/en/dli/documents/ucc/documents/2021%20icc%20code%20adoption%20final%20report.pdf",
+      "checked": "2026-10-17",
+      "secondCheck": {
+        "verdict": "agree",
+        "source": "https://www.pa.gov/content/dam/copapwp-pagov/en/dli/documents/ucc/documents/2021%20icc%20code%20adoption%20final%20report.pdf"
+      }
+    },
+    "energy.floorR@5A": {
+      "value": 30,
+      "code": "IECC 2021",
+      "section": "PA Table N1102.1.3",
+      "amendment": "Floor R-30 in zones 5-6",
+      "source": "https://www.pa.gov/content/dam/copapwp-pagov/en/dli/documents/ucc/documents/2021%20icc%20code%20adoption%20final%20report.pdf",
+      "checked": "2026-10-17",
+      "secondCheck": {
+        "verdict": "agree",
+        "source": "https://www.pa.gov/content/dam/copapwp-pagov/en/dli/documents/ucc/documents/2021%20icc%20code%20adoption%20final%20report.pdf"
+      }
+    },
+    "energy.woodWallR@4A": {
+      "value": "20 or 13+5ci",
+      "code": "IECC 2021",
+      "section": "PA Table N1102.1.3",
+      "amendment": "Wood frame wall in zones 3-4",
+      "source": "https://www.pa.gov/content/dam/copapwp-pagov/en/dli/documents/ucc/documents/2021%20icc%20code%20adoption%20final%20report.pdf",
+      "checked": "2026-10-17",
+      "secondCheck": {
+        "verdict": "agree",
+        "source": "https://www.pa.gov/content/dam/copapwp-pagov/en/dli/documents/ucc/documents/2021%20icc%20code%20adoption%20final%20report.pdf"
+      }
+    },
+    "energy.woodWallR@5A": {
+      "value": "23 or 13+7.5ci or 20+3.8ci",
+      "code": "IECC 2021",
+      "section": "PA Table N1102.1.3",
+      "amendment": "Wood frame wall in zone 5 as read from the report text",
+      "source": "https://www.pa.gov/content/dam/copapwp-pagov/en/dli/documents/ucc/documents/2021%20icc%20code%20adoption%20final%20report.pdf",
+      "checked": "2026-10-17",
+      "secondCheck": {
+        "verdict": "agree",
+        "source": "https://www.pa.gov/content/dam/copapwp-pagov/en/dli/documents/ucc/documents/2021%20icc%20code%20adoption%20final%20report.pdf"
+      }
+    },
+    "energy.slabR@4A": {
+      "value": "R-10ci, 2 ft",
+      "code": "IECC 2021",
+      "section": "PA Table N1102.1.3 (R402.1.3)",
+      "amendment": "PA zone 4 slab R-10, 2 ft depth (model 2021 IECC zone 4: R-10ci, 4 ft). PA zone 5 is R-10, 4 ft or R-15, 3 ft.",
+      "source": "https://www.pa.gov/content/dam/copapwp-pagov/en/dli/documents/ucc/documents/2021%20icc%20code%20adoption%20final%20report.pdf",
+      "checked": "2026-10-17",
+      "secondCheck": {
+        "verdict": "agree",
+        "source": "https://www.pa.gov/content/dam/copapwp-pagov/en/dli/documents/ucc/documents/2021%20icc%20code%20adoption%20final%20report.pdf"
+      }
+    }
+  },
+  "notes": "PA changed its climate zone map (two zones in the state) and edited the energy chapter; basement, slab and crawl R-values by zone were only in image tables and could not be read. PA R310.1 requires yard/court 36 in wide for egress openings. Harrisburg is IECC 2021 zone 4A on the national map though the batch lists 5A; PA's amended map should be checked. Checker: PA report table also gives basement and crawl walls 10/13 (zone 4) and 15/19 (zone 5), same as the model."
+}

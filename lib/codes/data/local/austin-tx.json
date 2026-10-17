@@ -1,0 +1,24 @@
+{
+  "jurisdiction": "City of Austin, Travis County, Texas",
+  "permitOffice": "Austin Development Services Department",
+  "zoningCode": "Austin City Code Title 25 (Land Development)",
+  "codes": {
+    "irc": {
+      "edition": "2024"
+    },
+    "iecc": {
+      "edition": "2024"
+    },
+    "nec": {
+      "edition": "2026"
+    },
+    "plumbing": {
+      "edition": "2024",
+      "model": "UPC",
+      "name": "2024 UPC with local amendments"
+    }
+  },
+  "checked": "2026-10-17",
+  "values": {},
+  "notes": "Austin also adopts local amendments to the 2024 IECC (details not captured)."
+}

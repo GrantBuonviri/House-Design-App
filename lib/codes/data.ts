@@ -180,9 +180,13 @@ function locationLayer(loc: Location): Record<string, CodeEntry> {
 /** Apply an overlay's changes on top, marking each with its layer. Numbers the person typed on the place card (`keep`) stay, and numbers nobody could confirm are left out. */
 function applyValues(values: Record<string, CodeEntry>, changes: Record<string, OverlayValue> | undefined, layer: CodeLayer, keep: Set<string>, extra: Partial<CodeEntry> = {}, climateZone?: string) {
   if (!changes) return;
-  for (const [k, { zones, ...change }] of Object.entries(changes)) {
+  const inZone = (z: string) => !!climateZone && (z.toUpperCase() === climateZone.toUpperCase() || (!/[A-C]$/i.test(z) && /^\d/.exec(z)?.[0] === /^\d/.exec(climateZone)?.[0]));
+  // "energy.ceilingR@6" holds a state's own number for climate zone 6 only (a state energy table, zone by zone).
+  for (const [key, { zones, ...change }] of Object.entries(changes)) {
+    const [k, zone] = key.split("@");
     if (keep.has(k) || change.unverified) continue;
-    if (zones && !(climateZone && zones.some((z) => zoneRow(z) === zoneRow(climateZone) || z.toUpperCase() === climateZone.toUpperCase()))) continue;
+    if (zone && !inZone(zone)) continue;
+    if (zones && !zones.some(inZone)) continue;
     values[k] = { ...(values[k] ?? { unit: "", code: "", section: "", amendment: null, source: "", checked: "" }), ...extra, ...change, layer } as CodeEntry;
   }
 }
@@ -273,12 +277,15 @@ export function buildCodeSet(location: Location, overlays?: { state?: CodeOverla
   const iecc = otherEdition(adopted.codes.iecc, "2021");
   const ieccBy = adopted.by.iecc;
   Object.assign(values, zoneLayer(location.climateZone, iecc && ieccBy && !adopted.codes.iecc?.name ? { edition: iecc, ...ieccBy } : undefined), locationLayer(location));
-  // Water heaters are strapped against earthquakes in seismic categories D0 to D2 (IRC P2801.8).
+  // Water heaters are strapped against earthquakes in seismic categories D0 to D2 (IRC P2801.8); the UPC straps them everywhere.
   const strap = values["plumbing.whStrapRequired"];
-  if (strap) values["plumbing.whStrapRequired"] = { ...strap, value: /^D[012]$/.test(location.seismicCategory.toUpperCase()), layer: "location", note: `Seismic design category ${location.seismicCategory}: strapping is required in D0 to D2.` };
+  if (strap && strap.layer === "base") values["plumbing.whStrapRequired"] = { ...strap, value: /^D[012]$/.test(location.seismicCategory.toUpperCase()), layer: "location", note: `Seismic design category ${location.seismicCategory}: strapping is required in D0 to D2.` };
   const keep = new Set(Object.entries(values).filter(([, e]) => e.layer === "location" && e.note === EDITED_NOTE).map(([k]) => k));
   applyValues(values, state?.values, "state", keep, {}, location.climateZone);
   applyValues(values, city?.values, "city", keep, {}, location.climateZone);
+  // A local roof snow load is a minimum: a snowier place keeps its own.
+  const roof = values["design.roofSnowLoadMin"];
+  if (roof.layer !== "location" && typeof roof.value === "number" && roof.value < roofSnowFor(location.groundSnowPsf)) values["design.roofSnowLoadMin"] = locationLayer(location)["design.roofSnowLoadMin"];
   const elsewhere = location.cityId.startsWith("elsewhere-") ? state?.elsewhere : undefined;
   const editions = city?.editionLines ?? state?.editionLines ?? editionLinesFor(adopted, elsewhere);
   const jurisdiction = city?.jurisdiction ?? `${location.name}, ${location.state}`;

@@ -1,0 +1,31 @@
+{
+  "jurisdiction": "City and County of Honolulu, Hawaii",
+  "permitOffice": "Department of Planning and Permitting (DPP)",
+  "zoningCode": "Revised Ordinances of Honolulu Chapter 21 (Land Use Ordinance)",
+  "codes": {
+    "irc": {
+      "edition": "2018",
+      "amendments": "2018 (State Residential Code with City amendments; interim eff 2022-11-17, City amendments 2024-08-09, Addendum #1 2025-03-11)",
+      "unverified": true
+    },
+    "iecc": {
+      "edition": "2018",
+      "name": "2018 (ROH 16B, eff 2022-12-15, amendments 2023-11-23)",
+      "unverified": true
+    },
+    "nec": {
+      "edition": "2020",
+      "amendments": "2020 (ROH 17-1, eff 2024-03-14)",
+      "unverified": true
+    },
+    "plumbing": {
+      "edition": "2021",
+      "model": "UPC",
+      "name": "UPC 2021 (ROH 19, eff 2024-03-01)",
+      "unverified": true
+    }
+  },
+  "checked": "2026-10-17",
+  "values": {},
+  "notes": "ORD24-015 adopts State Building Code and State Residential Code with local amendments (ADU 5/8 in Type X between ADU and main dwelling; sprinklers R313 allowed in place of hydrant for R-3). No tracked-key changes found."
+}

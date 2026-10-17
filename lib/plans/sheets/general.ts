@@ -93,7 +93,7 @@ export function coverSheet(project: Project, ctx: { sheets: SheetEntry[]; report
     ["Drawn by", designerOf(project)],
     ["Site address", project.plans.address.trim() || "TBD"],
     ["Parcel number", project.plans.parcel.trim() || "TBD"],
-    ["Jurisdiction", "City of Boise, Ada County, Idaho"],
+    ["Jurisdiction", codeSet().local.jurisdiction],
     ["Occupancy", "R-3, single-family house (IRC)"],
     ["Construction type", "V-B, wood frame"],
     ["Stories", `${above} above ground${h.levels.some((l) => l.kind === "basement") ? ", plus a basement" : ""}`],

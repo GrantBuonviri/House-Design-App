@@ -120,7 +120,7 @@ export type DeviceContext = {
   islandOutlet: boolean;
   /** The floor at ground level: outside outlets, lights and hose bibs. */
   grade: boolean;
-  /** Boise wants a heat alarm, wired to the smoke alarms, in an attached garage (R314.7.5). */
+  /** A heat alarm, wired to the smoke alarms, in an attached garage, where a local code asks for one (Boise R314.7.5). */
   garageHeat: boolean;
   /** The floor that gets the panel and the thermostat. */
   panel: boolean;

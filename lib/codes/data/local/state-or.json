@@ -1,0 +1,169 @@
+{
+  "jurisdiction": "OR",
+  "adoption": "statewide",
+  "codes": {
+    "irc": {
+      "edition": "2024",
+      "effective": "2026-10-01",
+      "source": "https://www.oregon.gov/bcd/laws-rules/Documents/20261001-2026orsc-adoption-pr.pdf"
+    },
+    "iecc": {
+      "edition": "2024",
+      "name": "2026 ORSC Chapter 11 (Oregon own prescriptive tables)",
+      "effective": "2026-10-01",
+      "source": "https://www.oregon.gov/bcd/codes-stand/Pages/orsc-adoption.aspx"
+    },
+    "nec": {
+      "edition": "2023",
+      "effective": "2023-10-01",
+      "source": "https://up.codes/viewer/oregon/nfpa-70-2023"
+    },
+    "plumbing": {
+      "edition": "2021",
+      "model": "UPC",
+      "name": "2023 Oregon Plumbing Specialty Code (based on 2021 UPC)",
+      "source": "https://iapmo.org/codes-standards-development/code-development/state-adopted-codes/ospc-2023"
+    }
+  },
+  "elsewhere": "ORSC applies statewide; local governments cannot amend except for administrative items. Frost depth is 12 in west of the Cascades, 18 in at 2,500 to 4,000 ft, 24 in above 4,000 ft.",
+  "checked": "2026-10-17",
+  "values": {
+    "stairs.maxRiser": {
+      "value": 8,
+      "code": "IRC 2024",
+      "section": "ORSC R311.7.5.1",
+      "amendment": "Oregon riser height max 8 in (IRC 7 3/4)",
+      "source": "https://www.lanecounty.org/common/pages/GetFile.ashx?key=nr44AVlA",
+      "checked": "2026-10-17",
+      "secondCheck": {
+        "verdict": "agree",
+        "source": "https://www.portland.gov/ppd/residential-permitting/home-projects/stairs"
+      }
+    },
+    "stairs.minTread": {
+      "value": 9,
+      "code": "IRC 2024",
+      "section": "ORSC R311.7.5.2",
+      "amendment": "Oregon tread depth min 9 in (IRC 10)",
+      "source": "https://www.lanecounty.org/common/pages/GetFile.ashx?key=nr44AVlA",
+      "checked": "2026-10-17",
+      "secondCheck": {
+        "verdict": "agree",
+        "source": "https://www.portland.gov/ppd/residential-permitting/home-projects/stairs"
+      }
+    },
+    "stairs.handrailMinHeight": {
+      "value": 30,
+      "code": "IRC 2024",
+      "section": "ORSC R311.7.8.1",
+      "amendment": "Handrail height 30 to 38 in per Clackamas County summary of the ORSC (Lane County sheet says 30 to 34)",
+      "source": "https://www.portland.gov/ppd/residential-permitting/home-projects/stairs",
+      "checked": "2026-10-17",
+      "secondCheck": {
+        "verdict": "agree",
+        "source": "https://www.portland.gov/ppd/residential-permitting/home-projects/stairs"
+      },
+      "resolved": "Portland and Clackamas County both give 30 to 38 in; the max (38) is unchanged from base."
+    },
+    "energy.fenestrationU@4C": {
+      "value": 0.27,
+      "code": "IECC 2024",
+      "section": "ORSC Table N1101.1(1)",
+      "amendment": "Oregon prescriptive window U-0.27 (zones 4C/5)",
+      "source": "https://www.lanecounty.org/common/pages/GetFile.ashx?key=nr44AVlA",
+      "checked": "2026-10-17",
+      "secondCheck": {
+        "verdict": "agree",
+        "source": "https://www.oregon.gov/bcd/codes-stand/Documents/23orsc/23orsc-ch11-oct2023.pdf"
+      }
+    },
+    "energy.ceilingR@4C": {
+      "value": 49,
+      "code": "IECC 2024",
+      "section": "ORSC Table N1101.1(1)",
+      "amendment": "Flat ceiling R-49 (U-0.021); vaulted R-30",
+      "source": "https://www.lanecounty.org/common/pages/GetFile.ashx?key=nr44AVlA",
+      "checked": "2026-10-17",
+      "secondCheck": {
+        "verdict": "agree",
+        "source": "https://www.oregon.gov/bcd/codes-stand/Documents/23orsc/23orsc-ch11-oct2023.pdf"
+      }
+    },
+    "energy.woodWallR@4C": {
+      "value": "R-21 intermediate framing (U-0.059)",
+      "code": "IECC 2024",
+      "section": "ORSC Table N1101.1(1)",
+      "amendment": "Above-grade wall R-21 intermediate",
+      "source": "https://www.lanecounty.org/common/pages/GetFile.ashx?key=nr44AVlA",
+      "checked": "2026-10-17",
+      "secondCheck": {
+        "verdict": "agree",
+        "source": "https://www.oregon.gov/bcd/codes-stand/Documents/23orsc/23orsc-ch11-oct2023.pdf"
+      }
+    },
+    "energy.floorR@4C": {
+      "value": 30,
+      "code": "IECC 2024",
+      "section": "ORSC Table N1101.1(1)",
+      "amendment": "Underfloor R-30",
+      "source": "https://www.lanecounty.org/common/pages/GetFile.ashx?key=nr44AVlA",
+      "checked": "2026-10-17",
+      "secondCheck": {
+        "verdict": "agree",
+        "source": "https://www.oregon.gov/bcd/codes-stand/Documents/23orsc/23orsc-ch11-oct2023.pdf"
+      }
+    },
+    "energy.basementWallR@4C": {
+      "value": "R-15ci or R-21 cavity (C-0.063)",
+      "code": "IECC 2024",
+      "section": "ORSC Table N1101.1(1)",
+      "amendment": "Below-grade wall R-15ci or R-21",
+      "source": "https://www.lanecounty.org/common/pages/GetFile.ashx?key=nr44AVlA",
+      "checked": "2026-10-17",
+      "secondCheck": {
+        "verdict": "agree",
+        "source": "https://www.oregon.gov/bcd/codes-stand/Documents/23orsc/23orsc-ch11-oct2023.pdf"
+      }
+    },
+    "energy.slabR@4C": {
+      "value": "R-15 slab edge (F-0.52), 24 in total below grade",
+      "code": "IECC 2024",
+      "section": "ORSC Table N1101.1(1)",
+      "amendment": "Slab-edge R-15; R-10 under heated slabs",
+      "source": "https://www.lanecounty.org/common/pages/GetFile.ashx?key=nr44AVlA",
+      "checked": "2026-10-17",
+      "secondCheck": {
+        "verdict": "agree",
+        "source": "https://www.oregon.gov/bcd/codes-stand/Documents/23orsc/23orsc-ch11-oct2023.pdf"
+      }
+    },
+    "energy.crawlWallR@4C": {
+      "value": "R-15ci or R-21 cavity (C-0.063)",
+      "code": "IECC 2024",
+      "section": "ORSC Table N1101.1(1)",
+      "amendment": "Crawl space walls treated as below-grade walls",
+      "source": "https://www.lanecounty.org/common/pages/GetFile.ashx?key=nr44AVlA",
+      "checked": "2026-10-17",
+      "secondCheck": {
+        "verdict": "disagree",
+        "source": "https://www.oregon.gov/bcd/codes-stand/Documents/23orsc/23orsc-ch11-oct2023.pdf"
+      },
+      "resolved": "Table N1101.1(1) has no crawl space wall row; crawl spaces are handled under Underfloors (R-30) rather than below-grade walls. Left unconfirmed.",
+      "unverified": true
+    },
+    "energy.airLeakageACH50@4C": {
+      "value": 3.25,
+      "code": "IECC 2024",
+      "section": "ORSC N1104.8.2",
+      "amendment": "Air barrier per Table N1104.8 sealing checklist, or blower door result not greater than 3.25 ACH50 (2.75 ACH50 only as optional additional measure; 4.5 for small additions)",
+      "source": "https://www.oregon.gov/bcd/codes-stand/Documents/23orsc/23orsc-ch11-oct2023.pdf",
+      "checked": "2026-10-17",
+      "secondCheck": {
+        "verdict": "disagree",
+        "source": "https://www.oregon.gov/bcd/codes-stand/Documents/23orsc/23orsc-ch11-oct2023.pdf"
+      },
+      "resolved": "ORSC N1104.8.2 sets 3.25 ACH50 (test path, alternative to the Table N1104.8 sealing checklist), not 4; the 2026 draft keeps 3.25 (https://www.oregon.gov/bcd/codes-stand/Documents/26orsc-ch11-proposal-draft.pdf)."
+    }
+  },
+  "notes": "Glazed SHGC has no prescriptive requirement found in the ORSC tables. New dwellings must also select one additional energy efficiency measure (Table N1101.1(2)). Sprinklers for one- and two-family are not required. Smoke and CO alarm placement follows IRC R314/R315 with Oregon edits."
+}

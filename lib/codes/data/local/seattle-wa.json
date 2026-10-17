@@ -1,0 +1,25 @@
+{
+  "jurisdiction": "City of Seattle, King County, Washington",
+  "permitOffice": "Seattle Department of Construction and Inspections (SDCI)",
+  "codes": {
+    "irc": {
+      "edition": "2021",
+      "amendments": "2021 Seattle Residential Code"
+    },
+    "iecc": {
+      "edition": "2021",
+      "name": "2021 Seattle Energy Code"
+    },
+    "nec": {
+      "edition": "2023"
+    },
+    "plumbing": {
+      "edition": "2021",
+      "model": "UPC",
+      "name": "2021 UPC (Seattle Plumbing Code)"
+    }
+  },
+  "checked": "2026-10-17",
+  "values": {},
+  "notes": "Seattle Energy Code is stricter than WSEC-R (heat pump requirements); specific R-values not captured."
+}

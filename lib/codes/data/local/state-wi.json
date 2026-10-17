@@ -1,0 +1,48 @@
+{
+  "jurisdiction": "WI",
+  "adoption": "statewide",
+  "codes": {
+    "iecc": {
+      "edition": "2009",
+      "amendments": "UDC SPS 322 (2009 IECC with Wisconsin amendments)",
+      "effective": "2016-01-01",
+      "source": "https://dsps.wi.gov/Pages/Programs/UDC/Default.aspx"
+    },
+    "nec": {
+      "edition": "2017",
+      "effective": "2020-02-01",
+      "source": "https://www.iaei.org/page/nec-code-adoption"
+    }
+  },
+  "elsewhere": "Uniform Dwelling Code applies statewide to 1- and 2-family houses; municipalities enforce it (or the state does).",
+  "checked": "2026-10-17",
+  "values": {
+    "stairs.maxRiser": {
+      "value": 8.25,
+      "code": "IRC 2021",
+      "section": "SPS 321.04",
+      "amendment": "UDC max riser 8-1/4 in",
+      "source": "https://docs.legis.wisconsin.gov/code/admin_code/sps/safety_and_buildings_and_environment/320_325/321",
+      "checked": "2026-10-17",
+      "secondCheck": {
+        "verdict": "could-not-confirm",
+        "source": "https://docs.legis.wisconsin.gov/code/admin_code/sps/safety_and_buildings_and_environment/320_325/321"
+      },
+      "unverified": true
+    },
+    "stairs.minTread": {
+      "value": 9,
+      "code": "IRC 2021",
+      "section": "SPS 321.04",
+      "amendment": "UDC min tread 9 in",
+      "source": "https://docs.legis.wisconsin.gov/code/admin_code/sps/safety_and_buildings_and_environment/320_325/321",
+      "checked": "2026-10-17",
+      "secondCheck": {
+        "verdict": "could-not-confirm",
+        "source": "https://docs.legis.wisconsin.gov/code/admin_code/sps/safety_and_buildings_and_environment/320_325/321"
+      },
+      "unverified": true
+    }
+  },
+  "notes": "Checked 2026-10-17. UDC energy is 2009-IECC-based (SPS 322, 2016), not 2015. NEC per IAEI is 2017. UDC stair and footing values could not be read (site blocks fetch)."
+}

@@ -1,0 +1,13 @@
+{
+  "jurisdiction": "City of Des Moines, Polk County, Iowa",
+  "codes": {
+    "irc": {
+      "edition": "2021",
+      "amendments": "Des Moines Ord. 16,317 (2024); the 2024 IRC adoption wasn't final when checked",
+      "source": "https://www.dsm.city/"
+    }
+  },
+  "checked": "2026-10-17",
+  "values": {},
+  "notes": "Local amendments to IRC (Chapter 26): updated wind and snow loads, additional CO detection requirements, smoke alarms aligned with state code. Values not found. Source https://councildocs.dsm.city/communications/2025/25-441.pdf"
+}

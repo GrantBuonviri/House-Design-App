@@ -1,12 +1,296 @@
 import type { CodeOverlay } from "./types";
-import boise from "./boise-id.json";
+import albany_ny from "./albany-ny.json";
+import albuquerque_nm from "./albuquerque-nm.json";
+import anchorage_ak from "./anchorage-ak.json";
+import atlanta_ga from "./atlanta-ga.json";
+import austin_tx from "./austin-tx.json";
+import baltimore_md from "./baltimore-md.json";
+import baton_rouge_la from "./baton-rouge-la.json";
+import billings_mt from "./billings-mt.json";
+import birmingham_al from "./birmingham-al.json";
+import boise_id from "./boise-id.json";
+import boston_ma from "./boston-ma.json";
+import buffalo_ny from "./buffalo-ny.json";
+import burlington_vt from "./burlington-vt.json";
+import charleston_sc from "./charleston-sc.json";
+import charleston_wv from "./charleston-wv.json";
+import charlotte_nc from "./charlotte-nc.json";
+import cheyenne_wy from "./cheyenne-wy.json";
+import chicago_il from "./chicago-il.json";
+import cincinnati_oh from "./cincinnati-oh.json";
+import cleveland_oh from "./cleveland-oh.json";
+import colorado_springs_co from "./colorado-springs-co.json";
+import columbia_sc from "./columbia-sc.json";
+import columbus_oh from "./columbus-oh.json";
+import dallas_tx from "./dallas-tx.json";
+import denver_co from "./denver-co.json";
+import des_moines_ia from "./des-moines-ia.json";
+import detroit_mi from "./detroit-mi.json";
+import duluth_mn from "./duluth-mn.json";
+import el_paso_tx from "./el-paso-tx.json";
+import eugene_or from "./eugene-or.json";
+import fargo_nd from "./fargo-nd.json";
+import fresno_ca from "./fresno-ca.json";
+import grand_rapids_mi from "./grand-rapids-mi.json";
+import harrisburg_pa from "./harrisburg-pa.json";
+import hartford_ct from "./hartford-ct.json";
+import honolulu_hi from "./honolulu-hi.json";
+import houston_tx from "./houston-tx.json";
+import indianapolis_in from "./indianapolis-in.json";
+import jackson_ms from "./jackson-ms.json";
+import jacksonville_fl from "./jacksonville-fl.json";
+import kansas_city_mo from "./kansas-city-mo.json";
+import las_vegas_nv from "./las-vegas-nv.json";
+import little_rock_ar from "./little-rock-ar.json";
+import los_angeles_ca from "./los-angeles-ca.json";
+import louisville_ky from "./louisville-ky.json";
+import madison_wi from "./madison-wi.json";
+import manchester_nh from "./manchester-nh.json";
+import memphis_tn from "./memphis-tn.json";
+import miami_fl from "./miami-fl.json";
+import milwaukee_wi from "./milwaukee-wi.json";
+import minneapolis_mn from "./minneapolis-mn.json";
+import missoula_mt from "./missoula-mt.json";
+import nashville_tn from "./nashville-tn.json";
+import new_orleans_la from "./new-orleans-la.json";
+import new_york_ny from "./new-york-ny.json";
+import newark_nj from "./newark-nj.json";
+import oklahoma_city_ok from "./oklahoma-city-ok.json";
+import omaha_ne from "./omaha-ne.json";
+import orlando_fl from "./orlando-fl.json";
+import philadelphia_pa from "./philadelphia-pa.json";
+import phoenix_az from "./phoenix-az.json";
+import pittsburgh_pa from "./pittsburgh-pa.json";
+import portland_me from "./portland-me.json";
+import portland_or from "./portland-or.json";
+import providence_ri from "./providence-ri.json";
+import raleigh_nc from "./raleigh-nc.json";
+import reno_nv from "./reno-nv.json";
+import richmond_va from "./richmond-va.json";
+import sacramento_ca from "./sacramento-ca.json";
+import salt_lake_city_ut from "./salt-lake-city-ut.json";
+import san_antonio_tx from "./san-antonio-tx.json";
+import san_diego_ca from "./san-diego-ca.json";
+import san_francisco_ca from "./san-francisco-ca.json";
+import san_jose_ca from "./san-jose-ca.json";
+import savannah_ga from "./savannah-ga.json";
+import seattle_wa from "./seattle-wa.json";
+import sioux_falls_sd from "./sioux-falls-sd.json";
+import spokane_wa from "./spokane-wa.json";
+import springfield_il from "./springfield-il.json";
+import st_louis_mo from "./st-louis-mo.json";
+import state_ak from "./state-ak.json";
+import state_al from "./state-al.json";
+import state_ar from "./state-ar.json";
+import state_az from "./state-az.json";
+import state_ca from "./state-ca.json";
+import state_co from "./state-co.json";
+import state_ct from "./state-ct.json";
+import state_dc from "./state-dc.json";
+import state_de from "./state-de.json";
+import state_fl from "./state-fl.json";
+import state_ga from "./state-ga.json";
+import state_hi from "./state-hi.json";
+import state_ia from "./state-ia.json";
+import state_id from "./state-id.json";
+import state_il from "./state-il.json";
+import state_in from "./state-in.json";
+import state_ks from "./state-ks.json";
+import state_ky from "./state-ky.json";
+import state_la from "./state-la.json";
+import state_ma from "./state-ma.json";
+import state_md from "./state-md.json";
+import state_me from "./state-me.json";
+import state_mi from "./state-mi.json";
+import state_mn from "./state-mn.json";
+import state_mo from "./state-mo.json";
+import state_ms from "./state-ms.json";
+import state_mt from "./state-mt.json";
+import state_nc from "./state-nc.json";
+import state_nd from "./state-nd.json";
+import state_ne from "./state-ne.json";
+import state_nh from "./state-nh.json";
+import state_nj from "./state-nj.json";
+import state_nm from "./state-nm.json";
+import state_nv from "./state-nv.json";
+import state_ny from "./state-ny.json";
+import state_oh from "./state-oh.json";
+import state_ok from "./state-ok.json";
+import state_or from "./state-or.json";
+import state_pa from "./state-pa.json";
+import state_ri from "./state-ri.json";
+import state_sc from "./state-sc.json";
+import state_sd from "./state-sd.json";
+import state_tn from "./state-tn.json";
+import state_tx from "./state-tx.json";
+import state_ut from "./state-ut.json";
+import state_va from "./state-va.json";
+import state_vt from "./state-vt.json";
+import state_wa from "./state-wa.json";
+import state_wi from "./state-wi.json";
+import state_wv from "./state-wv.json";
+import state_wy from "./state-wy.json";
+import tampa_fl from "./tampa-fl.json";
+import tucson_az from "./tucson-az.json";
+import tulsa_ok from "./tulsa-ok.json";
+import virginia_beach_va from "./virginia-beach-va.json";
+import washington_dc from "./washington-dc.json";
+import wichita_ks from "./wichita-ks.json";
+import wilmington_de from "./wilmington-de.json";
+import worcester_ma from "./worcester-ma.json";
 
 export type { CodeOverlay } from "./types";
 
+/**
+ * State and city code changes, layered over the 2021 base (see `lib/codes/data.ts`).
+ * One file per state (`state-<st>.json`) and per listed city (`<cityId>.json`), from the
+ * research checked on the date in each file. Anything marked `unverified` is kept for
+ * the next check but not used.
+ */
+
 /** By two-letter state, lower case ("id"). */
-export const STATE_OVERLAYS: Record<string, CodeOverlay> = {};
+export const STATE_OVERLAYS: Record<string, CodeOverlay> = {
+  ak: state_ak as CodeOverlay,
+  al: state_al as CodeOverlay,
+  ar: state_ar as CodeOverlay,
+  az: state_az as CodeOverlay,
+  ca: state_ca as CodeOverlay,
+  co: state_co as CodeOverlay,
+  ct: state_ct as CodeOverlay,
+  dc: state_dc as CodeOverlay,
+  de: state_de as CodeOverlay,
+  fl: state_fl as CodeOverlay,
+  ga: state_ga as CodeOverlay,
+  hi: state_hi as CodeOverlay,
+  ia: state_ia as CodeOverlay,
+  id: state_id as CodeOverlay,
+  il: state_il as CodeOverlay,
+  in: state_in as CodeOverlay,
+  ks: state_ks as CodeOverlay,
+  ky: state_ky as CodeOverlay,
+  la: state_la as CodeOverlay,
+  ma: state_ma as CodeOverlay,
+  md: state_md as CodeOverlay,
+  me: state_me as CodeOverlay,
+  mi: state_mi as CodeOverlay,
+  mn: state_mn as CodeOverlay,
+  mo: state_mo as CodeOverlay,
+  ms: state_ms as CodeOverlay,
+  mt: state_mt as CodeOverlay,
+  nc: state_nc as CodeOverlay,
+  nd: state_nd as CodeOverlay,
+  ne: state_ne as CodeOverlay,
+  nh: state_nh as CodeOverlay,
+  nj: state_nj as CodeOverlay,
+  nm: state_nm as CodeOverlay,
+  nv: state_nv as CodeOverlay,
+  ny: state_ny as CodeOverlay,
+  oh: state_oh as CodeOverlay,
+  ok: state_ok as CodeOverlay,
+  or: state_or as CodeOverlay,
+  pa: state_pa as CodeOverlay,
+  ri: state_ri as CodeOverlay,
+  sc: state_sc as CodeOverlay,
+  sd: state_sd as CodeOverlay,
+  tn: state_tn as CodeOverlay,
+  tx: state_tx as CodeOverlay,
+  ut: state_ut as CodeOverlay,
+  va: state_va as CodeOverlay,
+  vt: state_vt as CodeOverlay,
+  wa: state_wa as CodeOverlay,
+  wi: state_wi as CodeOverlay,
+  wv: state_wv as CodeOverlay,
+  wy: state_wy as CodeOverlay,
+};
 
 /** By city id ("boise-id"). */
 export const CITY_OVERLAYS: Record<string, CodeOverlay> = {
-  "boise-id": boise as CodeOverlay,
+  "albany-ny": albany_ny as CodeOverlay,
+  "albuquerque-nm": albuquerque_nm as CodeOverlay,
+  "anchorage-ak": anchorage_ak as CodeOverlay,
+  "atlanta-ga": atlanta_ga as CodeOverlay,
+  "austin-tx": austin_tx as CodeOverlay,
+  "baltimore-md": baltimore_md as CodeOverlay,
+  "baton-rouge-la": baton_rouge_la as CodeOverlay,
+  "billings-mt": billings_mt as CodeOverlay,
+  "birmingham-al": birmingham_al as CodeOverlay,
+  "boise-id": boise_id as CodeOverlay,
+  "boston-ma": boston_ma as CodeOverlay,
+  "buffalo-ny": buffalo_ny as CodeOverlay,
+  "burlington-vt": burlington_vt as CodeOverlay,
+  "charleston-sc": charleston_sc as CodeOverlay,
+  "charleston-wv": charleston_wv as CodeOverlay,
+  "charlotte-nc": charlotte_nc as CodeOverlay,
+  "cheyenne-wy": cheyenne_wy as CodeOverlay,
+  "chicago-il": chicago_il as CodeOverlay,
+  "cincinnati-oh": cincinnati_oh as CodeOverlay,
+  "cleveland-oh": cleveland_oh as CodeOverlay,
+  "colorado-springs-co": colorado_springs_co as CodeOverlay,
+  "columbia-sc": columbia_sc as CodeOverlay,
+  "columbus-oh": columbus_oh as CodeOverlay,
+  "dallas-tx": dallas_tx as CodeOverlay,
+  "denver-co": denver_co as CodeOverlay,
+  "des-moines-ia": des_moines_ia as CodeOverlay,
+  "detroit-mi": detroit_mi as CodeOverlay,
+  "duluth-mn": duluth_mn as CodeOverlay,
+  "el-paso-tx": el_paso_tx as CodeOverlay,
+  "eugene-or": eugene_or as CodeOverlay,
+  "fargo-nd": fargo_nd as CodeOverlay,
+  "fresno-ca": fresno_ca as CodeOverlay,
+  "grand-rapids-mi": grand_rapids_mi as CodeOverlay,
+  "harrisburg-pa": harrisburg_pa as CodeOverlay,
+  "hartford-ct": hartford_ct as CodeOverlay,
+  "honolulu-hi": honolulu_hi as CodeOverlay,
+  "houston-tx": houston_tx as CodeOverlay,
+  "indianapolis-in": indianapolis_in as CodeOverlay,
+  "jackson-ms": jackson_ms as CodeOverlay,
+  "jacksonville-fl": jacksonville_fl as CodeOverlay,
+  "kansas-city-mo": kansas_city_mo as CodeOverlay,
+  "las-vegas-nv": las_vegas_nv as CodeOverlay,
+  "little-rock-ar": little_rock_ar as CodeOverlay,
+  "los-angeles-ca": los_angeles_ca as CodeOverlay,
+  "louisville-ky": louisville_ky as CodeOverlay,
+  "madison-wi": madison_wi as CodeOverlay,
+  "manchester-nh": manchester_nh as CodeOverlay,
+  "memphis-tn": memphis_tn as CodeOverlay,
+  "miami-fl": miami_fl as CodeOverlay,
+  "milwaukee-wi": milwaukee_wi as CodeOverlay,
+  "minneapolis-mn": minneapolis_mn as CodeOverlay,
+  "missoula-mt": missoula_mt as CodeOverlay,
+  "nashville-tn": nashville_tn as CodeOverlay,
+  "new-orleans-la": new_orleans_la as CodeOverlay,
+  "new-york-ny": new_york_ny as CodeOverlay,
+  "newark-nj": newark_nj as CodeOverlay,
+  "oklahoma-city-ok": oklahoma_city_ok as CodeOverlay,
+  "omaha-ne": omaha_ne as CodeOverlay,
+  "orlando-fl": orlando_fl as CodeOverlay,
+  "philadelphia-pa": philadelphia_pa as CodeOverlay,
+  "phoenix-az": phoenix_az as CodeOverlay,
+  "pittsburgh-pa": pittsburgh_pa as CodeOverlay,
+  "portland-me": portland_me as CodeOverlay,
+  "portland-or": portland_or as CodeOverlay,
+  "providence-ri": providence_ri as CodeOverlay,
+  "raleigh-nc": raleigh_nc as CodeOverlay,
+  "reno-nv": reno_nv as CodeOverlay,
+  "richmond-va": richmond_va as CodeOverlay,
+  "sacramento-ca": sacramento_ca as CodeOverlay,
+  "salt-lake-city-ut": salt_lake_city_ut as CodeOverlay,
+  "san-antonio-tx": san_antonio_tx as CodeOverlay,
+  "san-diego-ca": san_diego_ca as CodeOverlay,
+  "san-francisco-ca": san_francisco_ca as CodeOverlay,
+  "san-jose-ca": san_jose_ca as CodeOverlay,
+  "savannah-ga": savannah_ga as CodeOverlay,
+  "seattle-wa": seattle_wa as CodeOverlay,
+  "sioux-falls-sd": sioux_falls_sd as CodeOverlay,
+  "spokane-wa": spokane_wa as CodeOverlay,
+  "springfield-il": springfield_il as CodeOverlay,
+  "st-louis-mo": st_louis_mo as CodeOverlay,
+  "tampa-fl": tampa_fl as CodeOverlay,
+  "tucson-az": tucson_az as CodeOverlay,
+  "tulsa-ok": tulsa_ok as CodeOverlay,
+  "virginia-beach-va": virginia_beach_va as CodeOverlay,
+  "washington-dc": washington_dc as CodeOverlay,
+  "wichita-ks": wichita_ks as CodeOverlay,
+  "wilmington-de": wilmington_de as CodeOverlay,
+  "worcester-ma": worcester_ma as CodeOverlay,
 };

@@ -1,0 +1,140 @@
+{
+  "jurisdiction": "NM",
+  "adoption": "statewide",
+  "codes": {
+    "irc": {
+      "edition": "2021",
+      "effective": "2023-07-14",
+      "source": "https://www.icc-nta.org/code-update/2021-new-mexico-residential-building-code-effective-date-july-14-2023/"
+    },
+    "iecc": {
+      "edition": "2021",
+      "effective": "2024-01-30",
+      "source": "https://www.srca.nm.gov/parts/title14/14.007.0006.html"
+    },
+    "nec": {
+      "edition": "2020",
+      "effective": "2023-03-28",
+      "source": "https://www.srca.nm.gov/parts/title14/14.010.0004.html"
+    },
+    "plumbing": {
+      "edition": "2021",
+      "model": "UPC",
+      "name": "New Mexico Plumbing Code, 14.8.2 NMAC (2021 UPC)",
+      "source": "https://www.srca.nm.gov/parts/title14/14.008.0002.html"
+    }
+  },
+  "elsewhere": "Statewide code applies in every jurisdiction; check the city or county for local administrative code. Santa Fe and Taos are zone 5B; Las Cruces and Roswell 3B.",
+  "checked": "2026-10-17",
+  "values": {
+    "stairs.maxRiser": {
+      "value": 8,
+      "code": "IRC 2021",
+      "section": "R311.7.5.1",
+      "amendment": "NM allows riser height up to 8 in",
+      "source": "https://www.rld.nm.gov/wp-content/uploads/2023/07/14.7.3-Residential-Final_APPROVEDdb.pdf",
+      "checked": "2026-10-17",
+      "secondCheck": {
+        "verdict": "agree",
+        "source": "https://www.rld.nm.gov/wp-content/uploads/2023/07/14.7.3-Residential-Final_APPROVEDdb.pdf"
+      }
+    },
+    "stairs.minTread": {
+      "value": 9,
+      "code": "IRC 2021",
+      "section": "R311.7.5.2",
+      "amendment": "NM tread depth not less than 9 in",
+      "source": "https://www.rld.nm.gov/wp-content/uploads/2023/07/14.7.3-Residential-Final_APPROVEDdb.pdf",
+      "checked": "2026-10-17",
+      "secondCheck": {
+        "verdict": "agree",
+        "source": "https://www.rld.nm.gov/wp-content/uploads/2023/07/14.7.3-Residential-Final_APPROVEDdb.pdf"
+      }
+    },
+    "garage.gypsumGarageSide": {
+      "value": 0.625,
+      "code": "IRC 2021",
+      "section": "Table R302.6",
+      "amendment": "Garage side of garage/dwelling walls and ceilings must be 5/8 in Type X gypsum",
+      "source": "https://www.rld.nm.gov/wp-content/uploads/2023/07/14.7.3-Residential-Final_APPROVEDdb.pdf",
+      "checked": "2026-10-17",
+      "secondCheck": {
+        "verdict": "agree",
+        "source": "https://www.rld.nm.gov/wp-content/uploads/2023/07/14.7.3-Residential-Final_APPROVEDdb.pdf"
+      }
+    },
+    "elec.islandReceptacleRequired": {
+      "value": true,
+      "code": "NEC 2020",
+      "section": "NEC 210.52 (NM amendment, 14.10.4 NMAC)",
+      "amendment": "Island countertops need at least one receptacle",
+      "source": "https://www.srca.nm.gov/parts/title14/14.010.0004.html",
+      "checked": "2026-10-17",
+      "secondCheck": {
+        "verdict": "agree",
+        "source": "https://www.srca.nm.gov/parts/title14/14.010.0004.html"
+      }
+    },
+    "energy.ceilingR@3": {
+      "value": 38,
+      "code": "IECC 2021",
+      "section": "IECC Table R402.1.3 (14.7.6 NMAC)",
+      "amendment": "NM amended zone 3 ceiling from R-49 to R-38",
+      "source": "https://www.srca.nm.gov/parts/title14/14.007.0006.html",
+      "checked": "2026-10-17",
+      "secondCheck": {
+        "verdict": "agree",
+        "source": "https://www.srca.nm.gov/parts/title14/14.007.0006.html"
+      }
+    },
+    "energy.ceilingR@4B": {
+      "value": 49,
+      "code": "IECC 2021",
+      "section": "IECC Table R402.1.3 (14.7.6 NMAC)",
+      "amendment": "NM amended zone 4 (except marine) and 5 ceiling from R-60 to R-49",
+      "source": "https://www.srca.nm.gov/parts/title14/14.007.0006.html",
+      "checked": "2026-10-17",
+      "secondCheck": {
+        "verdict": "agree",
+        "source": "https://www.srca.nm.gov/parts/title14/14.007.0006.html"
+      }
+    },
+    "energy.ceilingR@5": {
+      "value": 49,
+      "code": "IECC 2021",
+      "section": "IECC Table R402.1.3 (14.7.6 NMAC)",
+      "amendment": "NM amended zone 4 (except marine) and 5 ceiling from R-60 to R-49",
+      "source": "https://www.srca.nm.gov/parts/title14/14.007.0006.html",
+      "checked": "2026-10-17",
+      "secondCheck": {
+        "verdict": "agree",
+        "source": "https://www.srca.nm.gov/parts/title14/14.007.0006.html"
+      }
+    },
+    "energy.slabR@4B": {
+      "value": "R-10ci, 2 ft",
+      "code": "IECC 2021",
+      "section": "IECC Table R402.1.3 (14.7.6 NMAC)",
+      "amendment": "NM reduced slab-edge insulation depth in zones 4 and 5 from 4 ft to 2 ft",
+      "source": "https://www.srca.nm.gov/parts/title14/14.007.0006.html",
+      "checked": "2026-10-17",
+      "secondCheck": {
+        "verdict": "agree",
+        "source": "https://www.srca.nm.gov/parts/title14/14.007.0006.html"
+      }
+    },
+    "energy.slabR@5": {
+      "value": "R-10ci, 2 ft",
+      "code": "IECC 2021",
+      "section": "IECC Table R402.1.3 (14.7.6 NMAC)",
+      "amendment": "NM reduced slab-edge insulation depth in zones 4 and 5 from 4 ft to 2 ft",
+      "source": "https://www.srca.nm.gov/parts/title14/14.007.0006.html",
+      "checked": "2026-10-17",
+      "secondCheck": {
+        "verdict": "agree",
+        "source": "https://www.srca.nm.gov/parts/title14/14.007.0006.html"
+      }
+    }
+  },
+  "notes": "NM deleted Table R302.1(1) and replaced it with zero-lot-line rules (R302.1.1: 6 ft non-buildable separation, or 10 ft with easements, no rating needed), so fire.ratedWallDistance, fire.noOpeningsDistance and fire.projectionMinDistance do not follow the IRC table. Footing minimum 12 in below grade unchanged. Sprinklers not required up to 3 stories. Duct/blower testing applies only in Bernalillo, Sandoval, San Juan, Santa Fe, Torrance and Dona Ana counties (so Albuquerque is covered). IRC plumbing, mechanical and electrical chapters deleted in favor of NM UPC/UMC/NEC."
+}

@@ -1,0 +1,8 @@
+{
+  "jurisdiction": "City of Atlanta, Fulton County, Georgia",
+  "permitOffice": "City of Atlanta Department of City Planning, Office of Buildings",
+  "zoningCode": "City of Atlanta Zoning Ordinance (Part 16 of the Code of Ordinances)",
+  "checked": "2026-10-17",
+  "values": {},
+  "notes": "Uses Georgia state codes (2024 IRC/IPC, 2023 NEC) for permits submitted from 2026-01-01, cutover Feb 1 2026; no Atlanta residential amendments listed. Source https://www.atlantaga.gov/government/departments/city-planning/ordinances-regulations/construction-codes. Zoning code name confirmed false."
+}

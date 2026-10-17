@@ -1,0 +1,44 @@
+{
+  "jurisdiction": "IA",
+  "adoption": "statewide-local-option",
+  "codes": {
+    "irc": {
+      "edition": "2015",
+      "source": "https://awc.org/priorities/codes-standards/adoption/iowa/"
+    },
+    "iecc": {
+      "edition": "2012",
+      "effective": "2014-03-12",
+      "source": "https://www.law.cornell.edu/regulations/iowa/Iowa-Code-r-661-303.2"
+    },
+    "nec": {
+      "edition": "2023",
+      "effective": "2026-06-02",
+      "source": "https://dial.iowa.gov/electrical-permits-inspections"
+    },
+    "plumbing": {
+      "edition": "2021",
+      "model": "UPC",
+      "name": "Iowa State Plumbing Code (641 IAC 25; 2021 UPC with Iowa amendments)",
+      "effective": "2025-03-26",
+      "source": "https://www.legis.iowa.gov/docs/iac/rule/02-05-2025.641.25.1.pdf"
+    }
+  },
+  "elsewhere": "State building code mandatory statewide, but one/two-family houses are enforced locally and cities may adopt newer I-codes; check the city.",
+  "checked": "2026-10-17",
+  "values": {
+    "energy.airLeakageACH50@5A": {
+      "value": 4,
+      "code": "IECC 2012",
+      "section": "IECC 2012 R402.4.1.2 (Iowa 661-303.2)",
+      "amendment": "Iowa replaced R402.4.1.2: max 4 ACH50 in zones 3-8 (5 in zones 1-2) instead of 3; Iowa Table R402.1.1 zone 5 values otherwise equal 2012 IECC (U .32, SHGC NR, ceiling 49, wall 20 or 13+5, floor 30, bsmt 15/19, slab 10 2ft, crawl 15/19)",
+      "source": "https://www.law.cornell.edu/regulations/iowa/Iowa-Code-r-661-303.2",
+      "checked": "2026-10-17",
+      "secondCheck": {
+        "verdict": "agree",
+        "source": "https://www.law.cornell.edu/regulations/iowa/Iowa-Code-r-661-303.2"
+      },
+      "resolved": "added by checker: real state amendment to a tracked key, sourced"
+    }
+  }
+}

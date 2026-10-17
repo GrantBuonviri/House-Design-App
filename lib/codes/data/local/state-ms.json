@@ -1,0 +1,9 @@
+{
+  "jurisdiction": "MS",
+  "adoption": "local-only",
+  "codes": {},
+  "elsewhere": "2021 IRC model code, check locally (no statewide residential code; the Mississippi Building Code Council runs a voluntary/coastal-county program).",
+  "checked": "2026-10-17",
+  "values": {},
+  "notes": "energycodes.gov: no statewide residential energy code; 2009 IECC equivalent only. Second check: ICC says the Mississippi Building Code Council adopts a state code (IBC/IRC/IECC, 3-year cycle) and the plumbing code; enforcement mandatory only in coastal counties, voluntary elsewhere. Editions not listed."
+}

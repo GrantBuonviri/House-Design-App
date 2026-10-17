@@ -1,5 +1,8 @@
 {
   "jurisdiction": "City of Boise, Ada County, Idaho",
+  "permitOffice": "Boise Planning and Development Services (Building Division)",
+  "zoningCode": "Boise City Code Title 11 (Development Code)",
+  "checked": "2026-10-17",
   "values": {
     "struct.windSpeedBasis": {
       "value": 115,
@@ -21,13 +24,40 @@
       "code": "IRC 2018",
       "section": "R314.7.5",
       "amendment": "Boise City Code 9-1B-42 adds R314.7.5: a listed heat detector, wired to the smoke alarms, in attached garages (and detached ones with power that lack fire separation distance).",
-      "source": "https://cityofboise.org/media/19198/amendments_city_code_1-2_family_dwelling_building_code_articleb_9-20-24.pdf",
-      "checked": "2026-10-15",
-      "note": "Read the Boise PDF 'amendments city code 1-2 family dwelling building code article B', which is marked DRAFT 9/20/24. Confirm against adopted codelibrary.amlegal.com Title 9 (9-1B-42) before relying. Confidence medium. Idaho state rule has no heat alarm amendment (searched IDAPA 24.39.30.600).",
+      "source": "https://codelibrary.amlegal.com/codes/boise_id/latest/boise/0-0-0-37426",
+      "checked": "2026-10-17",
+      "note": "Boise City Code 9-1B-42, re-enacted by Ord. 3-25 (2-4-2025); in the 2026 code supplement.",
       "secondCheck": {
         "verdict": "agree",
-        "source": "https://cityofboise.org/media/19198/amendments_city_code_1-2_family_dwelling_building_code_articleb_9-20-24.pdf"
+        "source": "https://codelibrary.amlegal.com/codes/boise_id/latest/boise/0-0-0-37426"
+      }
+    },
+    "design.roofSnowLoadMin": {
+      "value": 25,
+      "unit": "psf",
+      "code": "Boise design criteria",
+      "section": "Table R301.2(1)",
+      "amendment": "Boise's design criteria table lists a 25 psf roof snow load",
+      "checked": "2026-10-17",
+      "source": "https://www.cityofboise.org/media/18749/currently-adopted-building-codes-4-26-24.pdf",
+      "secondCheck": {
+        "verdict": "agree",
+        "source": "https://www.cityofboise.org/media/18749/currently-adopted-building-codes-4-26-24.pdf"
+      }
+    },
+    "design.floodHazard": {
+      "value": "Floodplain ordinance 12/12/1983; FIS dated 6/19/2020 (panels per Boise sheet)",
+      "unit": "",
+      "code": "Boise design criteria",
+      "section": "Table R301.2(1)",
+      "amendment": null,
+      "source": "https://www.cityofboise.org/media/18749/currently-adopted-building-codes-4-26-24.pdf",
+      "checked": "2026-10-17",
+      "secondCheck": {
+        "verdict": "agree",
+        "source": "https://www.cityofboise.org/media/18749/currently-adopted-building-codes-4-26-24.pdf"
       }
     }
-  }
+  },
+  "notes": "Boise adopts 2018 IBC/IRC/IECC, 2017 Idaho State Plumbing Code, 2023 NEC (4/26/24), applying to projects submitted on or after 2021-01-01 (rev 4/2024 page, still current Oct 2026); 1-2 family mechanical is IRC Parts V-VI. Boise City Code Title 9 chapter 1B = One-and-Two-Family Dwelling Building Code (Ord. 40-20, eff 1-1-2021). R313.2 one/two-family sprinkler requirement deleted by 9-1B-40."
 }

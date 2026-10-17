@@ -1,0 +1,27 @@
+{
+  "jurisdiction": "AK",
+  "adoption": "statewide-local-option",
+  "codes": {
+    "iecc": {
+      "edition": "2018",
+      "effective": "2018-11-28",
+      "source": "https://www.meltplan.com/buildingcodes/alaska"
+    },
+    "nec": {
+      "edition": "2020",
+      "effective": "2022-04-16",
+      "source": "https://www.meltplan.com/buildingcodes/alaska"
+    },
+    "plumbing": {
+      "edition": "2018",
+      "model": "UPC",
+      "name": "Alaska state plumbing (2018 UPC, state amended)",
+      "effective": "2020-04-24",
+      "source": "https://www.meltplan.com/buildingcodes/alaska"
+    }
+  },
+  "elsewhere": "Alaska has no mandatory statewide residential building code outside the AHFC/state-funded cases; the borough or city decides (Mat-Su Borough, Fairbanks, Juneau each adopt their own). Check locally.",
+  "checked": "2026-10-17",
+  "values": {},
+  "notes": "DOE lists AK residential energy as Home Rule / voluntary. AHFC applies 2018 IECC (BEES) to AHFC-financed homes. Anchorage adopted the 2024 I-codes (IRC, IECC, UPC) and 2023 NEC by AO 2026-33 on 2026-04-14 (AMC 23.05.010)."
+}

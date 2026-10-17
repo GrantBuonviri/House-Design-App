@@ -1,0 +1,26 @@
+{
+  "jurisdiction": "TX",
+  "adoption": "local-only",
+  "codes": {
+    "iecc": {
+      "edition": "2015",
+      "effective": "2016-09-01",
+      "source": "https://capitol.texas.gov/tlodocs/89R/analysis/html/SB00783F.htm"
+    },
+    "nec": {
+      "edition": "2023",
+      "effective": "2023-09-01",
+      "source": "https://www.tdlr.texas.gov/news/2022/11/30/2023-national-electrical-code-is-almost-here"
+    },
+    "plumbing": {
+      "edition": "2018",
+      "model": "state",
+      "name": "TSBPE 22 TAC 367.2: 2018 UPC or 2018 IPC (with 2018 IRC), per local choice; applies where no local plumbing code. 2021 editions proposed Aug 2026.",
+      "source": "https://www.sos.state.tx.us/texreg/archive/August142026/Proposed Rules/22.EXAMINING BOARDS.html"
+    }
+  },
+  "elsewhere": "No statewide residential building code: inside city limits the IRC (2012 baseline under Local Gov Code 214.212; most cities adopt 2021 or 2024 IRC), unincorporated areas none. Statewide energy code is the 2015 IECC/IRC Ch. 11; NEC 2023 statewide for licensed electrical work; Tier 1 coastal counties also use TDI windstorm rules.",
+  "checked": "2026-10-17",
+  "values": {},
+  "notes": "Checked 2026-10-17. Correction: the statewide residential energy code is 2015, not 2021. TDLR's Sept 2026 move to the 2024 IRC is for its air-conditioning contractor program only, not a statewide residential code."
+}

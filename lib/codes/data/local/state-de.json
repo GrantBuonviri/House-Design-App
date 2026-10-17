@@ -1,0 +1,27 @@
+{
+  "jurisdiction": "DE",
+  "adoption": "statewide-local-option",
+  "codes": {
+    "iecc": {
+      "edition": "2024",
+      "effective": "2026-04-11",
+      "source": "https://www.energycodes.gov/status/states/Delaware"
+    },
+    "nec": {
+      "edition": "2023",
+      "effective": "2026-01-01",
+      "source": "https://www.meltplan.com/buildingcodes/delaware"
+    },
+    "plumbing": {
+      "edition": "2021",
+      "model": "IPC",
+      "name": "State of Delaware Plumbing Code",
+      "source": "https://www.meltplan.com/buildingcodes/delaware",
+      "unverified": true
+    }
+  },
+  "elsewhere": "No statewide IRC mandate; counties (New Castle, Kent, Sussex) and municipalities adopt IRC. Residential energy code 2024 IECC mandatory statewide from April 11, 2026.",
+  "checked": "2026-10-17",
+  "values": {},
+  "notes": "State energy edition is newer than the IRC edition used locally."
+}

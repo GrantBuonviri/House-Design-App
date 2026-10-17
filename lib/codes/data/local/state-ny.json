@@ -1,0 +1,32 @@
+{
+  "jurisdiction": "NY",
+  "adoption": "statewide",
+  "codes": {
+    "irc": {
+      "edition": "2024",
+      "effective": "2025-12-31",
+      "source": "https://dos.ny.gov/system/files/documents/2025/07/2025rcnys_noa_2025-07-24_compressed.pdf"
+    },
+    "iecc": {
+      "edition": "2024",
+      "amendments": "2025 Energy Conservation Construction Code of New York State",
+      "effective": "2025-12-31",
+      "source": "https://www.energycodes.gov/status/states/new-york"
+    },
+    "nec": {
+      "edition": "2023",
+      "effective": "2026-01-01",
+      "source": "https://www.iaei.org/page/nec-code-adoption"
+    },
+    "plumbing": {
+      "edition": "2024",
+      "model": "IRC",
+      "name": "2025 Residential Code of New York State Part VII Plumbing (Chapters 25-33, derived from 2024 IRC); 2025 Plumbing Code of NYS (2024 IPC base) for other buildings",
+      "source": "https://dos.ny.gov/system/files/documents/2025/07/2025rcnys_noa_2025-07-24_compressed.pdf"
+    }
+  },
+  "elsewhere": "NYS Uniform Code applies statewide except New York City, which has its own construction codes. Frost depth, snow and wind in Table R301.2 are filled in by each municipality.",
+  "checked": "2026-10-17",
+  "values": {},
+  "notes": "No tracked-number amendments found in the RCNYS preface (text of R309-R311 not retrievable). NY keeps its own smoke/CO alarm sections R310/R311."
+}

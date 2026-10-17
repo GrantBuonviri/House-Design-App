@@ -1,0 +1,20 @@
+{
+  "jurisdiction": "City of Billings, Yellowstone County, Montana",
+  "codes": {
+    "irc": {
+      "edition": "2021",
+      "effective": "2022-09-01",
+      "source": "https://www.billingsmt.gov/DocumentCenter/View/47857/AO-150-Adoption-of-2021-Building-Codes",
+      "unverified": true
+    },
+    "nec": {
+      "edition": "2020",
+      "effective": "2022-09-01",
+      "source": "https://www.billingsmt.gov/DocumentCenter/View/47857/AO-150-Adoption-of-2021-Building-Codes",
+      "unverified": true
+    }
+  },
+  "checked": "2026-10-17",
+  "values": {},
+  "notes": "Administrative Order 150 adopted 2021 ICC set effective 2022-09-01 (IBC/IRC/IECC/UPC 2021, NEC 2020). Billings chapter 6 may add exceptions; none itemized."
+}

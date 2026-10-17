@@ -1,0 +1,31 @@
+{
+  "jurisdiction": "ME",
+  "adoption": "statewide",
+  "codes": {
+    "irc": {
+      "edition": "2021",
+      "effective": "2025-04-07",
+      "source": "https://aiamaine.org/aiamainenews/2025/2/27/updated-maine-building-codes"
+    },
+    "iecc": {
+      "edition": "2021",
+      "effective": "2025-04-07",
+      "source": "https://www.energycodes.gov/status/states/maine"
+    },
+    "nec": {
+      "edition": "2026",
+      "effective": "2026-07-01",
+      "source": "https://www.maine.gov/dps/fmo/building-codes"
+    },
+    "plumbing": {
+      "edition": "2021",
+      "model": "UPC",
+      "name": "Maine Internal Plumbing Code (02-395 ch. 4, adopts 2021 UPC with Maine amendments)",
+      "source": "https://www.maine.gov/pfr/professionallicensing/professions/plumbers"
+    }
+  },
+  "elsewhere": "MUBEC (2021 IRC/IECC) is mandatory statewide only in municipalities with population over 4,000 that have a building code enforcement office; elsewhere it is not enforced by the state but applies as the standard in smaller towns that adopt it. Check the town.",
+  "checked": "2026-10-17",
+  "values": {},
+  "notes": "MUBEC 2021 effective 2025-04-07 per AIA Maine; State amendments to tracked keys not itemized. NEC edition for houses unconfirmed (Maine Electricians' Examining Board)."
+}

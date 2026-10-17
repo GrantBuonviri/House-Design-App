@@ -1,0 +1,1113 @@
+{
+  "jurisdiction": "Idaho",
+  "adoption": "statewide",
+  "codes": {
+    "irc": {
+      "edition": "2018",
+      "amendments": "Idaho amendments IDAPA 24.39.30.600 (7-1-24)",
+      "effective": "2024-07-01",
+      "source": "https://regulations.justia.com/states/idaho/24/24-39-30/section-24-39-30-600"
+    },
+    "iecc": {
+      "edition": "2018",
+      "effective": "2021-01-01",
+      "source": "https://www.energycodes.gov/status/states/idaho"
+    },
+    "nec": {
+      "edition": "2023",
+      "effective": "2025-04-04",
+      "source": "https://files.dfm.idaho.gov/dfm-admin-website/rules/current/24/243910.pdf"
+    },
+    "plumbing": {
+      "edition": "2015",
+      "model": "UPC",
+      "name": "Idaho State Plumbing Code 2017 (IDAPA 24.39.20)",
+      "effective": "2023-03-28",
+      "source": "https://regulations.justia.com/states/idaho/24/24-39-20/section-24-39-20-600"
+    }
+  },
+  "elsewhere": "Idaho's statewide codes (2018 IRC and IECC with Idaho amendments, 2023 NEC, Idaho State Plumbing Code) apply; the city or county may add its own changes.",
+  "checked": "2026-10-17",
+  "values": {
+    "fire.ratedWallDistance": {
+      "value": 3,
+      "unit": "ft",
+      "code": "IRC 2018",
+      "section": "Table R302.1(1)",
+      "amendment": "Idaho replaced Table R302.1(1) (IDAPA 24.39.30.600); Boise City Code 9-1B-35 repeats it",
+      "checked": "2026-10-17",
+      "secondCheck": {
+        "verdict": "agree",
+        "source": "https://regulations.justia.com/states/idaho/24/24-39-30/section-24-39-30-600"
+      },
+      "source": "https://regulations.justia.com/states/idaho/24/24-39-30/section-24-39-30-600"
+    },
+    "fire.noOpeningsDistance": {
+      "value": 3,
+      "unit": "ft",
+      "code": "IRC 2018",
+      "section": "Table R302.1(1)",
+      "amendment": "Idaho replaced Table R302.1(1) (IDAPA 24.39.30.600); Boise City Code 9-1B-35 repeats it",
+      "checked": "2026-10-17",
+      "secondCheck": {
+        "verdict": "agree",
+        "source": "https://regulations.justia.com/states/idaho/24/24-39-30/section-24-39-30-600"
+      },
+      "source": "https://regulations.justia.com/states/idaho/24/24-39-30/section-24-39-30-600"
+    },
+    "fire.projectionMinDistance": {
+      "value": 2,
+      "unit": "ft",
+      "code": "IRC 2018",
+      "section": "Table R302.1(1)",
+      "amendment": "Idaho replaced Table R302.1(1) (IDAPA 24.39.30.600); Boise City Code 9-1B-35 repeats it",
+      "checked": "2026-10-17",
+      "secondCheck": {
+        "verdict": "agree",
+        "source": "https://regulations.justia.com/states/idaho/24/24-39-30/section-24-39-30-600"
+      },
+      "source": "https://regulations.justia.com/states/idaho/24/24-39-30/section-24-39-30-600"
+    },
+    "garage.gypsumGarageSide": {
+      "value": 0.625,
+      "unit": "in",
+      "code": "IRC 2018",
+      "section": "Table R302.6",
+      "amendment": "Idaho replaced Table R302.6 with 5/8 in Type X on garage side (base 2018 is 1/2 in)",
+      "checked": "2026-10-17",
+      "secondCheck": {
+        "verdict": "agree",
+        "source": "https://regulations.justia.com/states/idaho/24/24-39-30/section-24-39-30-600"
+      },
+      "source": "https://regulations.justia.com/states/idaho/24/24-39-30/section-24-39-30-600"
+    },
+    "garage.gypsumCeilingUnderHabitable": {
+      "value": 0.625,
+      "unit": "in",
+      "code": "IRC 2018",
+      "section": "Table R302.6",
+      "amendment": "Idaho Table R302.6 replacement: 5/8 in Type X",
+      "checked": "2026-10-17",
+      "secondCheck": {
+        "verdict": "agree",
+        "source": "https://regulations.justia.com/states/idaho/24/24-39-30/section-24-39-30-600"
+      },
+      "source": "https://regulations.justia.com/states/idaho/24/24-39-30/section-24-39-30-600"
+    },
+    "struct.footingMinThickness": {
+      "value": 6,
+      "unit": "in",
+      "code": "IRC 2018",
+      "section": "R403.1.1",
+      "amendment": "Idaho R403.1.1 rewrite",
+      "checked": "2026-10-17",
+      "secondCheck": {
+        "verdict": "agree",
+        "source": "https://regulations.justia.com/states/idaho/24/24-39-30/section-24-39-30-600"
+      },
+      "source": "https://regulations.justia.com/states/idaho/24/24-39-30/section-24-39-30-600"
+    },
+    "struct.footingMinWidth": {
+      "value": 12,
+      "unit": "in",
+      "code": "IRC 2018",
+      "section": "Idaho Table R403.1",
+      "amendment": "Idaho Table R403.1",
+      "source": "https://regulations.justia.com/states/idaho/24/24-39-30/section-24-39-30-600",
+      "secondCheck": {
+        "verdict": "agree",
+        "source": "https://regulations.justia.com/states/idaho/24/24-39-30/section-24-39-30-600"
+      },
+      "checked": "2026-10-17"
+    },
+    "struct.footingProjectionMin": {
+      "value": 2,
+      "unit": "in",
+      "code": "IRC 2018",
+      "section": "R403.1.1",
+      "amendment": "Idaho R403.1.1 rewrite",
+      "source": "https://regulations.justia.com/states/idaho/24/24-39-30/section-24-39-30-600",
+      "secondCheck": {
+        "verdict": "agree",
+        "source": "https://regulations.justia.com/states/idaho/24/24-39-30/section-24-39-30-600"
+      },
+      "checked": "2026-10-17"
+    },
+    "plumbing.wsfu.clothesWasher": {
+      "value": 2,
+      "unit": "WSFU",
+      "code": "ISPC 2017",
+      "section": "UPC Table 610.3",
+      "amendment": "Idaho amends Table 610.3 (and App. A Table A103.1): clothes washer = 2 WSFU public and private (base 2015 UPC private 4.0).",
+      "checked": "2026-10-17",
+      "secondCheck": {
+        "verdict": "agree",
+        "source": "https://regulations.justia.com/states/idaho/24/24-39-20/section-24-39-20-600"
+      },
+      "source": "https://regulations.justia.com/states/idaho/24/24-39-20/section-24-39-20-600"
+    },
+    "plumbing.wsfu.bathtub": {
+      "value": 2,
+      "unit": "WSFU",
+      "code": "ISPC 2017",
+      "section": "UPC Table 610.3",
+      "amendment": "Idaho amends Table 610.3: bathtub or combination bath/shower = 2 WSFU public and private (base 2015 UPC private 4.0).",
+      "checked": "2026-10-17",
+      "secondCheck": {
+        "verdict": "agree",
+        "source": "https://regulations.justia.com/states/idaho/24/24-39-20/section-24-39-20-600"
+      },
+      "source": "https://regulations.justia.com/states/idaho/24/24-39-20/section-24-39-20-600"
+    },
+    "plumbing.dfu.clothesWasher": {
+      "value": 2,
+      "unit": "DFU",
+      "code": "ISPC 2017",
+      "section": "UPC Table 702.1",
+      "amendment": "Idaho amends Table 702.1: clothes washer, domestic, private = 2 DFU (base UPC 3).",
+      "checked": "2026-10-17",
+      "secondCheck": {
+        "verdict": "agree",
+        "source": "https://regulations.justia.com/states/idaho/24/24-39-20/section-24-39-20-600"
+      },
+      "source": "https://regulations.justia.com/states/idaho/24/24-39-20/section-24-39-20-600"
+    },
+    "plumbing.whStrapRequired": {
+      "value": false,
+      "unit": "",
+      "code": "ISPC 2017",
+      "section": "UPC 507.2",
+      "amendment": "Idaho deletes UPC 507.2 (seismic strapping)",
+      "checked": "2026-10-17",
+      "secondCheck": {
+        "verdict": "agree",
+        "source": "https://regulations.justia.com/states/idaho/24/24-39-20/section-24-39-20-600"
+      },
+      "source": "https://regulations.justia.com/states/idaho/24/24-39-20/section-24-39-20-600"
+    },
+    "plumbing.hoseBibBackflow": {
+      "value": "Frost-free, self-draining hose bib with built-in backflow protection (vacuum breaker)",
+      "unit": "",
+      "code": "ISPC 2017",
+      "section": "UPC 603.5.7",
+      "amendment": "Idaho replaces UPC 603.5.7 (adds frost-proof self-draining requirement for freezing climates).",
+      "checked": "2026-10-17",
+      "secondCheck": {
+        "verdict": "agree",
+        "source": "https://regulations.justia.com/states/idaho/24/24-39-20/section-24-39-20-600"
+      },
+      "source": "https://regulations.justia.com/states/idaho/24/24-39-20/section-24-39-20-600"
+    },
+    "elec.afciLocations": {
+      "value": [
+        "bedrooms only (one- and two-family dwellings)"
+      ],
+      "unit": "",
+      "code": "NEC 2023",
+      "section": "210.12(B)",
+      "amendment": "IDAPA 24.39.10.600: AFCI only for bedroom circuits/outlets in 1- and 2-family dwellings",
+      "checked": "2026-10-17",
+      "secondCheck": {
+        "verdict": "agree",
+        "source": "https://files.dfm.idaho.gov/dfm-admin-website/rules/current/24/243910.pdf"
+      },
+      "source": "https://files.dfm.idaho.gov/dfm-admin-website/rules/current/24/243910.pdf"
+    },
+    "elec.gfciLocations": {
+      "value": [
+        "bathrooms",
+        "garages and accessory buildings",
+        "outdoors",
+        "crawl spaces (at/below grade)",
+        "unfinished basements",
+        "kitchens (all receptacles)",
+        "sinks outside kitchens (within 6 ft)",
+        "tub/shower areas (within 6 ft)",
+        "boathouses",
+        "indoor damp/wet locations"
+      ],
+      "unit": "",
+      "code": "NEC 2023",
+      "section": "210.8(A)",
+      "amendment": "IDAPA 24.39.10.600 amends 210.8(A): deletes (7) food-prep sinks and (11) laundry, limits basements to unfinished, drops 250 V",
+      "checked": "2026-10-17",
+      "secondCheck": {
+        "verdict": "disagree",
+        "source": "https://files.dfm.idaho.gov/dfm-admin-website/rules/current/24/243910.pdf"
+      },
+      "source": "https://files.dfm.idaho.gov/dfm-admin-website/rules/current/24/243910.pdf",
+      "resolved": "The first gather listed a narrower list; the rule text (IDAPA 24.39.10.600) matches this list, which the app used before."
+    },
+    "mech.garageIgnitionHeight": {
+      "value": 18,
+      "unit": "in",
+      "code": "IRC 2018",
+      "section": "M1307.3",
+      "amendment": "Idaho ISPC (24.39.20) replaces UPC 507.13: ignition sources in residential garages at least 18 in above floor unless listed flammable-vapor-ignition-resistant (same number).",
+      "checked": "2026-10-17",
+      "secondCheck": {
+        "verdict": "agree",
+        "source": "https://regulations.justia.com/states/idaho/24/24-39-20/section-24-39-20-600"
+      },
+      "source": "https://regulations.justia.com/states/idaho/24/24-39-20/section-24-39-20-600"
+    },
+    "struct.footingsLightFrame": {
+      "value": {
+        "20": {
+          "1500": {
+            "1": {
+              "slab": {
+                "width": 12,
+                "thickness": 6
+              },
+              "crawl": {
+                "width": 12,
+                "thickness": 6
+              },
+              "basement": {
+                "width": 12,
+                "thickness": 6
+              }
+            },
+            "2": {
+              "slab": {
+                "width": 15,
+                "thickness": 6
+              },
+              "crawl": {
+                "width": 15,
+                "thickness": 6
+              },
+              "basement": {
+                "width": 15,
+                "thickness": 6
+              }
+            },
+            "3": {
+              "slab": {
+                "width": 23,
+                "thickness": 6
+              },
+              "crawl": {
+                "width": 23,
+                "thickness": 6
+              },
+              "basement": {
+                "width": 23,
+                "thickness": 6
+              }
+            }
+          },
+          "2000": {
+            "1": {
+              "slab": {
+                "width": 12,
+                "thickness": 6
+              },
+              "crawl": {
+                "width": 12,
+                "thickness": 6
+              },
+              "basement": {
+                "width": 12,
+                "thickness": 6
+              }
+            },
+            "2": {
+              "slab": {
+                "width": 12,
+                "thickness": 6
+              },
+              "crawl": {
+                "width": 12,
+                "thickness": 6
+              },
+              "basement": {
+                "width": 12,
+                "thickness": 6
+              }
+            },
+            "3": {
+              "slab": {
+                "width": 17,
+                "thickness": 6
+              },
+              "crawl": {
+                "width": 17,
+                "thickness": 6
+              },
+              "basement": {
+                "width": 17,
+                "thickness": 6
+              }
+            }
+          },
+          "3000": {
+            "1": {
+              "slab": {
+                "width": 12,
+                "thickness": 6
+              },
+              "crawl": {
+                "width": 12,
+                "thickness": 6
+              },
+              "basement": {
+                "width": 12,
+                "thickness": 6
+              }
+            },
+            "2": {
+              "slab": {
+                "width": 12,
+                "thickness": 6
+              },
+              "crawl": {
+                "width": 12,
+                "thickness": 6
+              },
+              "basement": {
+                "width": 12,
+                "thickness": 6
+              }
+            },
+            "3": {
+              "slab": {
+                "width": 12,
+                "thickness": 6
+              },
+              "crawl": {
+                "width": 12,
+                "thickness": 6
+              },
+              "basement": {
+                "width": 12,
+                "thickness": 6
+              }
+            }
+          },
+          "4000": {
+            "1": {
+              "slab": {
+                "width": 12,
+                "thickness": 6
+              },
+              "crawl": {
+                "width": 12,
+                "thickness": 6
+              },
+              "basement": {
+                "width": 12,
+                "thickness": 6
+              }
+            },
+            "2": {
+              "slab": {
+                "width": 12,
+                "thickness": 6
+              },
+              "crawl": {
+                "width": 12,
+                "thickness": 6
+              },
+              "basement": {
+                "width": 12,
+                "thickness": 6
+              }
+            },
+            "3": {
+              "slab": {
+                "width": 12,
+                "thickness": 6
+              },
+              "crawl": {
+                "width": 12,
+                "thickness": 6
+              },
+              "basement": {
+                "width": 12,
+                "thickness": 6
+              }
+            }
+          }
+        },
+        "30": {
+          "1500": {
+            "1": {
+              "slab": {
+                "width": 12,
+                "thickness": 6
+              },
+              "crawl": {
+                "width": 12,
+                "thickness": 6
+              },
+              "basement": {
+                "width": 12,
+                "thickness": 6
+              }
+            },
+            "2": {
+              "slab": {
+                "width": 15,
+                "thickness": 6
+              },
+              "crawl": {
+                "width": 15,
+                "thickness": 6
+              },
+              "basement": {
+                "width": 15,
+                "thickness": 6
+              }
+            },
+            "3": {
+              "slab": {
+                "width": 23,
+                "thickness": 6
+              },
+              "crawl": {
+                "width": 23,
+                "thickness": 6
+              },
+              "basement": {
+                "width": 23,
+                "thickness": 6
+              }
+            }
+          },
+          "2000": {
+            "1": {
+              "slab": {
+                "width": 12,
+                "thickness": 6
+              },
+              "crawl": {
+                "width": 12,
+                "thickness": 6
+              },
+              "basement": {
+                "width": 12,
+                "thickness": 6
+              }
+            },
+            "2": {
+              "slab": {
+                "width": 12,
+                "thickness": 6
+              },
+              "crawl": {
+                "width": 12,
+                "thickness": 6
+              },
+              "basement": {
+                "width": 12,
+                "thickness": 6
+              }
+            },
+            "3": {
+              "slab": {
+                "width": 17,
+                "thickness": 6
+              },
+              "crawl": {
+                "width": 17,
+                "thickness": 6
+              },
+              "basement": {
+                "width": 17,
+                "thickness": 6
+              }
+            }
+          },
+          "3000": {
+            "1": {
+              "slab": {
+                "width": 12,
+                "thickness": 6
+              },
+              "crawl": {
+                "width": 12,
+                "thickness": 6
+              },
+              "basement": {
+                "width": 12,
+                "thickness": 6
+              }
+            },
+            "2": {
+              "slab": {
+                "width": 12,
+                "thickness": 6
+              },
+              "crawl": {
+                "width": 12,
+                "thickness": 6
+              },
+              "basement": {
+                "width": 12,
+                "thickness": 6
+              }
+            },
+            "3": {
+              "slab": {
+                "width": 12,
+                "thickness": 6
+              },
+              "crawl": {
+                "width": 12,
+                "thickness": 6
+              },
+              "basement": {
+                "width": 12,
+                "thickness": 6
+              }
+            }
+          },
+          "4000": {
+            "1": {
+              "slab": {
+                "width": 12,
+                "thickness": 6
+              },
+              "crawl": {
+                "width": 12,
+                "thickness": 6
+              },
+              "basement": {
+                "width": 12,
+                "thickness": 6
+              }
+            },
+            "2": {
+              "slab": {
+                "width": 12,
+                "thickness": 6
+              },
+              "crawl": {
+                "width": 12,
+                "thickness": 6
+              },
+              "basement": {
+                "width": 12,
+                "thickness": 6
+              }
+            },
+            "3": {
+              "slab": {
+                "width": 12,
+                "thickness": 6
+              },
+              "crawl": {
+                "width": 12,
+                "thickness": 6
+              },
+              "basement": {
+                "width": 12,
+                "thickness": 6
+              }
+            }
+          }
+        },
+        "50": {
+          "1500": {
+            "1": {
+              "slab": {
+                "width": 12,
+                "thickness": 6
+              },
+              "crawl": {
+                "width": 12,
+                "thickness": 6
+              },
+              "basement": {
+                "width": 12,
+                "thickness": 6
+              }
+            },
+            "2": {
+              "slab": {
+                "width": 15,
+                "thickness": 6
+              },
+              "crawl": {
+                "width": 15,
+                "thickness": 6
+              },
+              "basement": {
+                "width": 15,
+                "thickness": 6
+              }
+            },
+            "3": {
+              "slab": {
+                "width": 23,
+                "thickness": 6
+              },
+              "crawl": {
+                "width": 23,
+                "thickness": 6
+              },
+              "basement": {
+                "width": 23,
+                "thickness": 6
+              }
+            }
+          },
+          "2000": {
+            "1": {
+              "slab": {
+                "width": 12,
+                "thickness": 6
+              },
+              "crawl": {
+                "width": 12,
+                "thickness": 6
+              },
+              "basement": {
+                "width": 12,
+                "thickness": 6
+              }
+            },
+            "2": {
+              "slab": {
+                "width": 12,
+                "thickness": 6
+              },
+              "crawl": {
+                "width": 12,
+                "thickness": 6
+              },
+              "basement": {
+                "width": 12,
+                "thickness": 6
+              }
+            },
+            "3": {
+              "slab": {
+                "width": 17,
+                "thickness": 6
+              },
+              "crawl": {
+                "width": 17,
+                "thickness": 6
+              },
+              "basement": {
+                "width": 17,
+                "thickness": 6
+              }
+            }
+          },
+          "3000": {
+            "1": {
+              "slab": {
+                "width": 12,
+                "thickness": 6
+              },
+              "crawl": {
+                "width": 12,
+                "thickness": 6
+              },
+              "basement": {
+                "width": 12,
+                "thickness": 6
+              }
+            },
+            "2": {
+              "slab": {
+                "width": 12,
+                "thickness": 6
+              },
+              "crawl": {
+                "width": 12,
+                "thickness": 6
+              },
+              "basement": {
+                "width": 12,
+                "thickness": 6
+              }
+            },
+            "3": {
+              "slab": {
+                "width": 12,
+                "thickness": 6
+              },
+              "crawl": {
+                "width": 12,
+                "thickness": 6
+              },
+              "basement": {
+                "width": 12,
+                "thickness": 6
+              }
+            }
+          },
+          "4000": {
+            "1": {
+              "slab": {
+                "width": 12,
+                "thickness": 6
+              },
+              "crawl": {
+                "width": 12,
+                "thickness": 6
+              },
+              "basement": {
+                "width": 12,
+                "thickness": 6
+              }
+            },
+            "2": {
+              "slab": {
+                "width": 12,
+                "thickness": 6
+              },
+              "crawl": {
+                "width": 12,
+                "thickness": 6
+              },
+              "basement": {
+                "width": 12,
+                "thickness": 6
+              }
+            },
+            "3": {
+              "slab": {
+                "width": 12,
+                "thickness": 6
+              },
+              "crawl": {
+                "width": 12,
+                "thickness": 6
+              },
+              "basement": {
+                "width": 12,
+                "thickness": 6
+              }
+            }
+          }
+        },
+        "70": {
+          "1500": {
+            "1": {
+              "slab": {
+                "width": 12,
+                "thickness": 6
+              },
+              "crawl": {
+                "width": 12,
+                "thickness": 6
+              },
+              "basement": {
+                "width": 12,
+                "thickness": 6
+              }
+            },
+            "2": {
+              "slab": {
+                "width": 15,
+                "thickness": 6
+              },
+              "crawl": {
+                "width": 15,
+                "thickness": 6
+              },
+              "basement": {
+                "width": 15,
+                "thickness": 6
+              }
+            },
+            "3": {
+              "slab": {
+                "width": 23,
+                "thickness": 6
+              },
+              "crawl": {
+                "width": 23,
+                "thickness": 6
+              },
+              "basement": {
+                "width": 23,
+                "thickness": 6
+              }
+            }
+          },
+          "2000": {
+            "1": {
+              "slab": {
+                "width": 12,
+                "thickness": 6
+              },
+              "crawl": {
+                "width": 12,
+                "thickness": 6
+              },
+              "basement": {
+                "width": 12,
+                "thickness": 6
+              }
+            },
+            "2": {
+              "slab": {
+                "width": 12,
+                "thickness": 6
+              },
+              "crawl": {
+                "width": 12,
+                "thickness": 6
+              },
+              "basement": {
+                "width": 12,
+                "thickness": 6
+              }
+            },
+            "3": {
+              "slab": {
+                "width": 17,
+                "thickness": 6
+              },
+              "crawl": {
+                "width": 17,
+                "thickness": 6
+              },
+              "basement": {
+                "width": 17,
+                "thickness": 6
+              }
+            }
+          },
+          "3000": {
+            "1": {
+              "slab": {
+                "width": 12,
+                "thickness": 6
+              },
+              "crawl": {
+                "width": 12,
+                "thickness": 6
+              },
+              "basement": {
+                "width": 12,
+                "thickness": 6
+              }
+            },
+            "2": {
+              "slab": {
+                "width": 12,
+                "thickness": 6
+              },
+              "crawl": {
+                "width": 12,
+                "thickness": 6
+              },
+              "basement": {
+                "width": 12,
+                "thickness": 6
+              }
+            },
+            "3": {
+              "slab": {
+                "width": 12,
+                "thickness": 6
+              },
+              "crawl": {
+                "width": 12,
+                "thickness": 6
+              },
+              "basement": {
+                "width": 12,
+                "thickness": 6
+              }
+            }
+          },
+          "4000": {
+            "1": {
+              "slab": {
+                "width": 12,
+                "thickness": 6
+              },
+              "crawl": {
+                "width": 12,
+                "thickness": 6
+              },
+              "basement": {
+                "width": 12,
+                "thickness": 6
+              }
+            },
+            "2": {
+              "slab": {
+                "width": 12,
+                "thickness": 6
+              },
+              "crawl": {
+                "width": 12,
+                "thickness": 6
+              },
+              "basement": {
+                "width": 12,
+                "thickness": 6
+              }
+            },
+            "3": {
+              "slab": {
+                "width": 12,
+                "thickness": 6
+              },
+              "crawl": {
+                "width": 12,
+                "thickness": 6
+              },
+              "basement": {
+                "width": 12,
+                "thickness": 6
+              }
+            }
+          }
+        }
+      },
+      "unit": "in",
+      "code": "IRC 2018",
+      "section": "Idaho Table R403.1 (replaces IRC Table R403.1(1)-(3))",
+      "amendment": "IDAPA 24.39.30.600: R403.1(1)-(3) deleted, Table R403.1 added",
+      "checked": "2026-10-17",
+      "secondCheck": {
+        "verdict": "agree",
+        "source": "https://regulations.justia.com/states/idaho/24/24-39-30/section-24-39-30-600"
+      },
+      "source": "https://regulations.justia.com/states/idaho/24/24-39-30/section-24-39-30-600",
+      "note": "Idaho's table doesn't change with snow load, so the same table is listed under each ground snow column the app reads (20, 30, 50 and 70 psf); past 70 psf an engineer designs the footings."
+    },
+    "energy.fenestrationU@5": {
+      "value": 0.32,
+      "unit": "",
+      "code": "IECC 2018",
+      "section": "IECC Table R402.1.2",
+      "amendment": "Idaho's Table R402.1.2 for zone 5 (IDAPA 24.39.30.600)",
+      "checked": "2026-10-17",
+      "secondCheck": {
+        "verdict": "agree",
+        "source": "https://files.dfm.idaho.gov/dfm-admin-website/rules/current/24/243930.pdf"
+      },
+      "source": "https://files.dfm.idaho.gov/dfm-admin-website/rules/current/24/243930.pdf"
+    },
+    "energy.skylightU@5": {
+      "value": 0.55,
+      "unit": "",
+      "code": "IECC 2018",
+      "section": "IECC Table R402.1.2",
+      "amendment": "Idaho's Table R402.1.2 for zone 5 (IDAPA 24.39.30.600)",
+      "checked": "2026-10-17",
+      "secondCheck": {
+        "verdict": "agree",
+        "source": "https://files.dfm.idaho.gov/dfm-admin-website/rules/current/24/243930.pdf"
+      },
+      "source": "https://files.dfm.idaho.gov/dfm-admin-website/rules/current/24/243930.pdf"
+    },
+    "energy.glazedSHGC@5": {
+      "value": "NR",
+      "unit": "",
+      "code": "IECC 2018",
+      "section": "IECC Table R402.1.2",
+      "amendment": "Idaho's Table R402.1.2 for zone 5 (IDAPA 24.39.30.600)",
+      "checked": "2026-10-17",
+      "secondCheck": {
+        "verdict": "agree",
+        "source": "https://files.dfm.idaho.gov/dfm-admin-website/rules/current/24/243930.pdf"
+      },
+      "source": "https://files.dfm.idaho.gov/dfm-admin-website/rules/current/24/243930.pdf"
+    },
+    "energy.ceilingR@5": {
+      "value": 38,
+      "unit": "",
+      "code": "IECC 2018",
+      "section": "IECC Table R402.1.2",
+      "amendment": "Idaho replaced zone 5 ceiling R-49 (base 2018 IECC) with R-38",
+      "checked": "2026-10-17",
+      "secondCheck": {
+        "verdict": "agree",
+        "source": "https://files.dfm.idaho.gov/dfm-admin-website/rules/current/24/243930.pdf"
+      },
+      "source": "https://files.dfm.idaho.gov/dfm-admin-website/rules/current/24/243930.pdf"
+    },
+    "energy.woodWallR@5": {
+      "value": "20 or 13+5",
+      "unit": "",
+      "code": "IECC 2018",
+      "section": "IECC Table R402.1.2",
+      "amendment": "Idaho's Table R402.1.2 for zone 5 (IDAPA 24.39.30.600)",
+      "checked": "2026-10-17",
+      "secondCheck": {
+        "verdict": "agree",
+        "source": "https://files.dfm.idaho.gov/dfm-admin-website/rules/current/24/243930.pdf"
+      },
+      "source": "https://files.dfm.idaho.gov/dfm-admin-website/rules/current/24/243930.pdf"
+    },
+    "energy.massWallR@5": {
+      "value": "13/17",
+      "unit": "",
+      "code": "IECC 2018",
+      "section": "IECC Table R402.1.2",
+      "amendment": "Idaho's Table R402.1.2 for zone 5 (IDAPA 24.39.30.600)",
+      "checked": "2026-10-17",
+      "secondCheck": {
+        "verdict": "agree",
+        "source": "https://files.dfm.idaho.gov/dfm-admin-website/rules/current/24/243930.pdf"
+      },
+      "source": "https://files.dfm.idaho.gov/dfm-admin-website/rules/current/24/243930.pdf"
+    },
+    "energy.floorR@5": {
+      "value": 30,
+      "unit": "",
+      "code": "IECC 2018",
+      "section": "IECC Table R402.1.2",
+      "amendment": "Idaho's Table R402.1.2 for zone 5 (IDAPA 24.39.30.600)",
+      "checked": "2026-10-17",
+      "secondCheck": {
+        "verdict": "agree",
+        "source": "https://files.dfm.idaho.gov/dfm-admin-website/rules/current/24/243930.pdf"
+      },
+      "source": "https://files.dfm.idaho.gov/dfm-admin-website/rules/current/24/243930.pdf"
+    },
+    "energy.basementWallR@5": {
+      "value": "15/19",
+      "unit": "",
+      "code": "IECC 2018",
+      "section": "IECC Table R402.1.2",
+      "amendment": "Idaho's Table R402.1.2 for zone 5 (IDAPA 24.39.30.600)",
+      "checked": "2026-10-17",
+      "secondCheck": {
+        "verdict": "agree",
+        "source": "https://files.dfm.idaho.gov/dfm-admin-website/rules/current/24/243930.pdf"
+      },
+      "source": "https://files.dfm.idaho.gov/dfm-admin-website/rules/current/24/243930.pdf"
+    },
+    "energy.slabR@5": {
+      "value": "R-10, 2 ft",
+      "unit": "",
+      "code": "IECC 2018",
+      "section": "IECC Table R402.1.2",
+      "amendment": "Idaho's Table R402.1.2 for zone 5 (IDAPA 24.39.30.600)",
+      "checked": "2026-10-17",
+      "secondCheck": {
+        "verdict": "agree",
+        "source": "https://files.dfm.idaho.gov/dfm-admin-website/rules/current/24/243930.pdf"
+      },
+      "source": "https://files.dfm.idaho.gov/dfm-admin-website/rules/current/24/243930.pdf"
+    },
+    "energy.crawlWallR@5": {
+      "value": "15/19",
+      "unit": "",
+      "code": "IECC 2018",
+      "section": "IECC Table R402.1.2",
+      "amendment": "Idaho's Table R402.1.2 for zone 5 (IDAPA 24.39.30.600)",
+      "checked": "2026-10-17",
+      "secondCheck": {
+        "verdict": "agree",
+        "source": "https://files.dfm.idaho.gov/dfm-admin-website/rules/current/24/243930.pdf"
+      },
+      "source": "https://files.dfm.idaho.gov/dfm-admin-website/rules/current/24/243930.pdf"
+    }
+  },
+  "notes": "2021 IRC was never adopted statewide; 2024 IRC/IECC adoption failed in the 2026 legislature (not in force). Snapshot discrepancies (second check: (1) agreed, see settledQuestions): (1) boise-2018-snapshot energy.airLeakageACH50=5 is not supported: Idaho only added a visual-inspection option to R402.4.1.2; IECC 2018 base for zone 5 is 3 ACH50 (the '20% of homes tested from 7/1/2021' note was not found in the current rule text). (2) R313.2 one-/two-family sprinklers, R302.13, R301.2.1.2, R322.1.10 deleted; exceptions #2 of R314.2.2/R315.2.2 (alterations) deleted; R303.4 whole-house mechanical ventilation per M1505.4 required; R602.10 allows R602.12 or APA SR-102; none change a tracked number. (3) Snapshot's 'Idaho added NEC 210.52(C)(4)' (receptacle up to 12 in below counter if overhang <=6 in) is confirmed; it does not change elec.counterReceptacleMaxAbove in a fixed way. (4) Idaho Zone 6 differs (U-0.30, ceiling R-49, slab 4 ft) but is not needed here."
+}

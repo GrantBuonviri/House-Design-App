@@ -1,0 +1,21 @@
+{
+  "jurisdiction": "CO",
+  "adoption": "local-only",
+  "codes": {
+    "nec": {
+      "edition": "2023",
+      "effective": "2023-08-01",
+      "source": "https://www.meltplan.com/blogs/finding-the-adopted-building-code-for-any-jurisdiction-in-colorado"
+    },
+    "plumbing": {
+      "edition": "2021",
+      "model": "IRC",
+      "name": "2021 Colorado Plumbing and Fuel Gas Codes (2021 IPC/IFGC and IRC plumbing provisions)",
+      "source": "https://awc.org/priorities/codes-standards/adoption/colorado/"
+    }
+  },
+  "elsewhere": "Colorado is home rule; each city or county adopts its own residential code. Mountain areas often add snow and frost rules. Check locally.",
+  "checked": "2026-10-17",
+  "values": {},
+  "notes": "Denver is on 2024 IRC with 2021 IECC (Denver page). Colorado Springs is served by Pikes Peak Regional Building Department."
+}

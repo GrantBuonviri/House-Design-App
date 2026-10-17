@@ -1,0 +1,23 @@
+{
+  "jurisdiction": "City of El Paso, El Paso County, Texas",
+  "permitOffice": "City of El Paso Planning and Inspections Department - Building Permits and Inspections",
+  "zoningCode": "El Paso City Code Title 20 (Zoning)",
+  "codes": {
+    "irc": {
+      "edition": "2021"
+    },
+    "iecc": {
+      "edition": "2021"
+    },
+    "nec": {
+      "edition": "2020"
+    },
+    "plumbing": {
+      "edition": "2021",
+      "model": "IPC",
+      "name": "2021 IPC with local amendments"
+    }
+  },
+  "checked": "2026-10-17",
+  "values": {}
+}

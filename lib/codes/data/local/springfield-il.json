@@ -1,0 +1,18 @@
+{
+  "jurisdiction": "City of Springfield, Sangamon County, Illinois",
+  "codes": {
+    "irc": {
+      "edition": "2018",
+      "amendments": "2018 (eff 2023-06-01, Ch. 170)",
+      "unverified": true
+    },
+    "nec": {
+      "edition": "2017",
+      "amendments": "2017 (Ch. 172)",
+      "unverified": true
+    }
+  },
+  "checked": "2026-10-17",
+  "values": {},
+  "notes": "Names and editions from memory; unconfirmed."
+}

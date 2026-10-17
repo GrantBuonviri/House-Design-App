@@ -1,0 +1,23 @@
+{
+  "jurisdiction": "City of San Antonio, Bexar County, Texas",
+  "permitOffice": "San Antonio Development Services Department",
+  "zoningCode": "Unified Development Code (Chapter 35, San Antonio City Code)",
+  "codes": {
+    "irc": {
+      "edition": "2024"
+    },
+    "iecc": {
+      "edition": "2021"
+    },
+    "nec": {
+      "edition": "2023"
+    },
+    "plumbing": {
+      "edition": "2024",
+      "model": "IPC",
+      "name": "2024 IPC with local amendments"
+    }
+  },
+  "checked": "2026-10-17",
+  "values": {}
+}

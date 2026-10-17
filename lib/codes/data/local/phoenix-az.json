@@ -1,0 +1,33 @@
+{
+  "jurisdiction": "City of Phoenix, Maricopa County, Arizona",
+  "permitOffice": "City of Phoenix Planning and Development Department",
+  "zoningCode": "Phoenix Zoning Ordinance (Phoenix City Code, Zoning Ordinance)",
+  "codes": {
+    "irc": {
+      "edition": "2024",
+      "amendments": "2024 Phoenix Building Construction Code (Ord. G-7397)",
+      "effective": "2025-08-01",
+      "source": "https://www.phoenix.gov/administration/departments/pdd/tools-resources/codes-ordinance/building-code.html"
+    },
+    "iecc": {
+      "edition": "2024",
+      "effective": "2025-08-01",
+      "source": "https://www.phoenix.gov/administration/departments/pdd/tools-resources/codes-ordinance/building-code.html"
+    },
+    "nec": {
+      "edition": "2023",
+      "effective": "2025-08-01",
+      "source": "https://www.phoenix.gov/administration/departments/pdd/tools-resources/codes-ordinance/building-code.html"
+    },
+    "plumbing": {
+      "edition": "2024",
+      "model": "IRC",
+      "name": "2024 IRC plumbing chapters (IPC and UPC also adopted)",
+      "source": "https://www.phoenix.gov/administration/departments/pdd/tools-resources/codes-ordinance/building-code.html",
+      "unverified": true
+    }
+  },
+  "checked": "2026-10-17",
+  "values": {},
+  "notes": "Amendments live in Ord. G-7397 (2024-irc.pdf on phoenix.gov); not itemized here. Zoning ordinance exact chapter name unconfirmed."
+}

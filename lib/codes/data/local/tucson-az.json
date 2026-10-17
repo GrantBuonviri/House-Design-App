@@ -1,0 +1,31 @@
+{
+  "jurisdiction": "City of Tucson, Pima County, Arizona",
+  "permitOffice": "City of Tucson Planning and Development Services Department (PDSD)",
+  "zoningCode": "Tucson Unified Development Code (UDC)",
+  "codes": {
+    "irc": {
+      "edition": "2024",
+      "effective": "2026-01-01",
+      "source": "https://www.tucsonaz.gov/Departments/Planning-Development-Services/Building-Safety/Building-Codes"
+    },
+    "iecc": {
+      "edition": "2024",
+      "effective": "2026-07-01",
+      "source": "https://www.tucsonaz.gov/Departments/Planning-Development-Services/Building-Safety/Building-Codes"
+    },
+    "nec": {
+      "edition": "2023",
+      "effective": "2026-01-01",
+      "source": "https://www.tucsonaz.gov/Departments/Planning-Development-Services/Building-Safety/Building-Codes"
+    },
+    "plumbing": {
+      "edition": "2024",
+      "model": "IPC",
+      "name": "2024 IPC (local amendments)",
+      "source": "https://www.tucsonaz.gov/Departments/Planning-Development-Services/Building-Safety/Building-Codes"
+    }
+  },
+  "checked": "2026-10-17",
+  "values": {},
+  "notes": "Local amendments exist but were not itemized. Applications on or after 2026-07-01 must meet the 2024 I-codes; earlier ones use codes in effect at submittal."
+}

@@ -1,0 +1,46 @@
+{
+  "jurisdiction": "NV",
+  "adoption": "local-only",
+  "codes": {
+    "iecc": {
+      "edition": "2024",
+      "effective": "2024-08-18",
+      "source": "https://www.energycodes.gov/status/states/nevada"
+    },
+    "nec": {
+      "edition": "2017",
+      "effective": "2018-07-01",
+      "source": "https://www.iaei.org/page/nec-code-adoption"
+    }
+  },
+  "elsewhere": "No statewide residential building code. Carson City, rural counties and smaller cities each adopt their own (2003 to 2024 editions); check locally. Energy code (2024 IECC) is statewide.",
+  "checked": "2026-10-17",
+  "values": {
+    "energy.ceilingR@3B": {
+      "value": 38,
+      "code": "IECC 2024",
+      "section": "IECC Table R402.1.3 (state 2024 adoption)",
+      "amendment": "Nevada's 2024 IECC adoption rolls ceiling levels back to 2018 IECC values: R-38 in zone 3 (relative to the 2024 edition, not an edition difference)",
+      "source": "https://insulationinstitute.org/wp-content/uploads/2025/05/N129-NV-Energy-Code-0425.pdf",
+      "checked": "2026-10-17",
+      "secondCheck": {
+        "verdict": "agree",
+        "source": "https://insulationinstitute.org/wp-content/uploads/2025/05/N129-NV-Energy-Code-0425.pdf"
+      }
+    },
+    "energy.ceilingR@5B": {
+      "value": 49,
+      "code": "IECC 2024",
+      "section": "IECC Table R402.1.3 (state 2024 adoption)",
+      "amendment": "Ceiling levels rolled back to 2018 IECC values: zone 4 R-49 (stated in table); zone 5 = 2018 IECC zone 5 value R-49 (implied by the rollback statement)",
+      "source": "https://insulationinstitute.org/wp-content/uploads/2025/05/N129-NV-Energy-Code-0425.pdf",
+      "checked": "2026-10-17",
+      "secondCheck": {
+        "verdict": "agree",
+        "source": "https://insulationinstitute.org/wp-content/uploads/2025/05/N129-NV-Energy-Code-0425.pdf"
+      },
+      "resolved": "Source says ceiling levels are rolled back to 2018 IECC levels; 2018 IECC zone 5 ceiling is R-49, so R-49 for 5B follows from that statement (zone 5 cell not printed in the fact sheet)."
+    }
+  },
+  "notes": "DOE lists Nevada's code as the 2024 IECC with no state amendments but assesses its stringency as equal to the 2018 IECC; the ceiling rollback is the only amendment found. Southern Nevada Building Officials publishes its own amendments (2024 SNV Residential Code). Clark County lists the 2021 IECC alongside the 2024 IECC with SNV amendments."
+}

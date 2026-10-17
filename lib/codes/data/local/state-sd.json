@@ -1,0 +1,22 @@
+{
+  "jurisdiction": "SD",
+  "adoption": "local-only",
+  "codes": {
+    "nec": {
+      "edition": "2023",
+      "effective": "2024-11-12",
+      "source": "https://dlr.sd.gov/electrical/tool_box.aspx"
+    },
+    "plumbing": {
+      "edition": "2024",
+      "model": "UPC",
+      "name": "South Dakota Plumbing Code: 2024 UPC (SB 25, 2025), statewide",
+      "effective": "2025-07-01",
+      "source": "https://iapmo.org/newsroom/press-releases/south-dakota-updates-plumbing-code-to-2024-uniform-plumbing-code"
+    }
+  },
+  "elsewhere": "No statewide residential building or energy code (home rule); IBC/IPMC default where a jurisdiction has none. 2021 IRC model code, check locally. State Electrical Commission enforces 2023 NEC and the Plumbing Commission the 2024 UPC statewide.",
+  "checked": "2026-10-17",
+  "values": {},
+  "notes": "Live web verification was not possible (outbound access to agency sites blocked); values from recall, treat confirmed:false items as needing a check. "
+}

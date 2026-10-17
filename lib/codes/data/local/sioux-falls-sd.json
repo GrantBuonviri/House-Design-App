@@ -1,0 +1,62 @@
+{
+  "jurisdiction": "City of Sioux Falls, Minnehaha County, South Dakota",
+  "permitOffice": "City of Sioux Falls Planning and Building Services - Building Services",
+  "zoningCode": "Sioux Falls Revised Ordinances Chapter 160 (Zoning)",
+  "codes": {
+    "irc": {
+      "edition": "2024"
+    },
+    "iecc": {
+      "edition": "2024",
+      "name": "2024 (IRC Chapter 11, some testing provisions not adopted)"
+    },
+    "nec": {
+      "edition": "2023"
+    },
+    "plumbing": {
+      "edition": "2024",
+      "model": "UPC",
+      "name": "UPC 2024 (state)"
+    }
+  },
+  "checked": "2026-10-17",
+  "values": {
+    "stairs.maxRiser": {
+      "value": 8,
+      "code": "IRC 2024",
+      "section": "R318.7.5.1 (2024 IRC numbering)",
+      "amendment": "Sioux Falls amends max riser height to 8 in",
+      "source": "https://www.siouxfalls.gov/files/assets/public/v/1/planning-and-development/building-services/adopted-building-codes/2021-irc-with-strikeouts-commentary.pdf",
+      "checked": "2026-10-17",
+      "secondCheck": {
+        "verdict": "agree",
+        "source": "https://www.siouxfalls.gov/files/assets/public/v/1/planning-and-development/building-services/adopted-building-codes/2021-irc-with-strikeouts-commentary.pdf"
+      }
+    },
+    "egress.maxSillHeight": {
+      "value": 48,
+      "code": "IRC 2024",
+      "section": "R319.2.3 (2024 IRC numbering)",
+      "amendment": "Sioux Falls allows bottom of emergency escape opening up to 48 in above floor",
+      "source": "https://www.siouxfalls.gov/files/assets/public/v/1/planning-and-development/building-services/adopted-building-codes/2021-irc-with-strikeouts-commentary.pdf",
+      "checked": "2026-10-17",
+      "secondCheck": {
+        "verdict": "agree",
+        "source": "https://www.siouxfalls.gov/files/assets/public/v/1/planning-and-development/building-services/adopted-building-codes/2021-irc-with-strikeouts-commentary.pdf"
+      }
+    },
+    "egress.windowWellLadderDepth": {
+      "value": 48,
+      "code": "IRC 2024",
+      "section": "R319.4.2 (2024 IRC numbering)",
+      "amendment": "Sioux Falls requires ladder/steps only in area wells deeper than 48 in",
+      "source": "https://www.siouxfalls.gov/files/assets/public/v/1/planning-and-development/building-services/adopted-building-codes/2021-irc-with-strikeouts-commentary.pdf",
+      "checked": "2026-10-17",
+      "secondCheck": {
+        "verdict": "agree",
+        "source": "https://www.siouxfalls.gov/files/assets/public/v/1/planning-and-development/building-services/adopted-building-codes/2021-irc-with-strikeouts-commentary.pdf"
+      }
+    }
+  },
+  "notes": "Sioux Falls is on the 2024 IRC from 2026-07-01 (permits after 2026-10-15). Also requires living rooms of at least 120 sq ft (R312.1, not a tracked key). The city PDF's file name says 2021 but its text adopts the 2024 IRC."
+}

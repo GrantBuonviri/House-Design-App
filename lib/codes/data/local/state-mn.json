@@ -1,0 +1,242 @@
+{
+  "jurisdiction": "MN",
+  "adoption": "statewide",
+  "codes": {
+    "irc": {
+      "edition": "2018",
+      "effective": "2020-03-31",
+      "source": "https://www.dli.mn.gov/business/codes-and-laws/2020-minnesota-state-building-codes"
+    },
+    "iecc": {
+      "edition": "2012",
+      "amendments": "2020 Minnesota Residential Energy Code (Minn. Rules ch. 1322), 2012 IECC with Minnesota amendments",
+      "effective": "2020-03-31",
+      "source": "https://www.dli.mn.gov/business/codes-and-laws/2020-minnesota-state-building-codes"
+    },
+    "nec": {
+      "edition": "2026",
+      "effective": "2026-08-17",
+      "source": "https://www.dli.mn.gov/"
+    },
+    "plumbing": {
+      "edition": "2018",
+      "model": "UPC",
+      "name": "2020 Minnesota Plumbing Code (Minn. Rules ch. 4714), 2018 UPC with MN amendments; replaces IRC P chapters",
+      "effective": "2021-12-17",
+      "source": "https://www.dli.mn.gov/"
+    }
+  },
+  "elsewhere": "The Minnesota State Building Code applies statewide, but municipalities decide whether to enforce it; counties without enforcement have no residential permits. Energy code for residential is the Minnesota-specific chapter 1322, not the plain IECC; an updated residential energy code (2024) was in rulemaking and its status is unconfirmed.",
+  "checked": "2026-10-17",
+  "values": {
+    "energy.fenestrationU@6A": {
+      "value": 0.32,
+      "code": "IECC 2012",
+      "section": "Minn. Rules 1322.0402 (IECC Table R402.1.1 as amended)",
+      "amendment": "Minnesota own prescriptive table",
+      "source": "https://www.revisor.mn.gov/rules/1322.0402/",
+      "checked": "2026-10-17",
+      "secondCheck": {
+        "verdict": "agree",
+        "source": "https://www.revisor.mn.gov/rules/1322.0402/"
+      },
+      "resolved": "Added by second check from Minn. Rules 1322.0402"
+    },
+    "energy.fenestrationU@7": {
+      "value": 0.32,
+      "code": "IECC 2012",
+      "section": "Minn. Rules 1322.0402 (IECC Table R402.1.1 as amended)",
+      "amendment": "Minnesota own prescriptive table",
+      "source": "https://www.revisor.mn.gov/rules/1322.0402/",
+      "checked": "2026-10-17",
+      "secondCheck": {
+        "verdict": "agree",
+        "source": "https://www.revisor.mn.gov/rules/1322.0402/"
+      },
+      "resolved": "Added by second check from Minn. Rules 1322.0402"
+    },
+    "energy.glazedSHGC@6A": {
+      "value": "None",
+      "code": "IECC 2012",
+      "section": "Minn. Rules 1322.0402 (IECC Table R402.1.1 as amended)",
+      "amendment": "Minnesota own prescriptive table (SHGC: no requirement, NR)",
+      "source": "https://www.revisor.mn.gov/rules/1322.0402/",
+      "checked": "2026-10-17",
+      "secondCheck": {
+        "verdict": "agree",
+        "source": "https://www.revisor.mn.gov/rules/1322.0402/"
+      },
+      "resolved": "Added by second check from Minn. Rules 1322.0402"
+    },
+    "energy.glazedSHGC@7": {
+      "value": "None",
+      "code": "IECC 2012",
+      "section": "Minn. Rules 1322.0402 (IECC Table R402.1.1 as amended)",
+      "amendment": "Minnesota own prescriptive table (SHGC: no requirement, NR)",
+      "source": "https://www.revisor.mn.gov/rules/1322.0402/",
+      "checked": "2026-10-17",
+      "secondCheck": {
+        "verdict": "agree",
+        "source": "https://www.revisor.mn.gov/rules/1322.0402/"
+      },
+      "resolved": "Added by second check from Minn. Rules 1322.0402"
+    },
+    "energy.ceilingR@6A": {
+      "value": 49,
+      "code": "IECC 2012",
+      "section": "Minn. Rules 1322.0402 (IECC Table R402.1.1 as amended)",
+      "amendment": "Minnesota own prescriptive table",
+      "source": "https://www.revisor.mn.gov/rules/1322.0402/",
+      "checked": "2026-10-17",
+      "secondCheck": {
+        "verdict": "agree",
+        "source": "https://www.revisor.mn.gov/rules/1322.0402/"
+      },
+      "resolved": "Added by second check from Minn. Rules 1322.0402"
+    },
+    "energy.ceilingR@7": {
+      "value": 49,
+      "code": "IECC 2012",
+      "section": "Minn. Rules 1322.0402 (IECC Table R402.1.1 as amended)",
+      "amendment": "Minnesota own prescriptive table",
+      "source": "https://www.revisor.mn.gov/rules/1322.0402/",
+      "checked": "2026-10-17",
+      "secondCheck": {
+        "verdict": "agree",
+        "source": "https://www.revisor.mn.gov/rules/1322.0402/"
+      },
+      "resolved": "Added by second check from Minn. Rules 1322.0402"
+    },
+    "energy.woodWallR@6A": {
+      "value": "20 or 13+5",
+      "code": "IECC 2012",
+      "section": "Minn. Rules 1322.0402 (IECC Table R402.1.1 as amended)",
+      "amendment": "Minnesota own prescriptive table (13+5 = R-13 cavity + R-5 ci or insulated siding)",
+      "source": "https://www.revisor.mn.gov/rules/1322.0402/",
+      "checked": "2026-10-17",
+      "secondCheck": {
+        "verdict": "agree",
+        "source": "https://www.revisor.mn.gov/rules/1322.0402/"
+      },
+      "resolved": "Added by second check from Minn. Rules 1322.0402"
+    },
+    "energy.woodWallR@7": {
+      "value": "21",
+      "code": "IECC 2012",
+      "section": "Minn. Rules 1322.0402 (IECC Table R402.1.1 as amended)",
+      "amendment": "Minnesota own prescriptive table",
+      "source": "https://www.revisor.mn.gov/rules/1322.0402/",
+      "checked": "2026-10-17",
+      "secondCheck": {
+        "verdict": "agree",
+        "source": "https://www.revisor.mn.gov/rules/1322.0402/"
+      },
+      "resolved": "Added by second check from Minn. Rules 1322.0402"
+    },
+    "energy.floorR@6A": {
+      "value": 30,
+      "code": "IECC 2012",
+      "section": "Minn. Rules 1322.0402 (IECC Table R402.1.1 as amended)",
+      "amendment": "Minnesota own prescriptive table (floor: or fill framing cavity, R-19 min)",
+      "source": "https://www.revisor.mn.gov/rules/1322.0402/",
+      "checked": "2026-10-17",
+      "secondCheck": {
+        "verdict": "agree",
+        "source": "https://www.revisor.mn.gov/rules/1322.0402/"
+      },
+      "resolved": "Added by second check from Minn. Rules 1322.0402"
+    },
+    "energy.floorR@7": {
+      "value": 38,
+      "code": "IECC 2012",
+      "section": "Minn. Rules 1322.0402 (IECC Table R402.1.1 as amended)",
+      "amendment": "Minnesota own prescriptive table (floor: or fill framing cavity, R-19 min)",
+      "source": "https://www.revisor.mn.gov/rules/1322.0402/",
+      "checked": "2026-10-17",
+      "secondCheck": {
+        "verdict": "agree",
+        "source": "https://www.revisor.mn.gov/rules/1322.0402/"
+      },
+      "resolved": "Added by second check from Minn. Rules 1322.0402"
+    },
+    "energy.basementWallR@6A": {
+      "value": "15",
+      "code": "IECC 2012",
+      "section": "Minn. Rules 1322.0402 (IECC Table R402.1.1 as amended)",
+      "amendment": "Minnesota own prescriptive table",
+      "source": "https://www.revisor.mn.gov/rules/1322.0402/",
+      "checked": "2026-10-17",
+      "secondCheck": {
+        "verdict": "agree",
+        "source": "https://www.revisor.mn.gov/rules/1322.0402/"
+      },
+      "resolved": "Added by second check from Minn. Rules 1322.0402"
+    },
+    "energy.basementWallR@7": {
+      "value": "15",
+      "code": "IECC 2012",
+      "section": "Minn. Rules 1322.0402 (IECC Table R402.1.1 as amended)",
+      "amendment": "Minnesota own prescriptive table",
+      "source": "https://www.revisor.mn.gov/rules/1322.0402/",
+      "checked": "2026-10-17",
+      "secondCheck": {
+        "verdict": "agree",
+        "source": "https://www.revisor.mn.gov/rules/1322.0402/"
+      },
+      "resolved": "Added by second check from Minn. Rules 1322.0402"
+    },
+    "energy.slabR@6A": {
+      "value": "R-10, 3.5 ft",
+      "code": "IECC 2012",
+      "section": "Minn. Rules 1322.0402 (IECC Table R402.1.1 as amended)",
+      "amendment": "Minnesota own prescriptive table",
+      "source": "https://www.revisor.mn.gov/rules/1322.0402/",
+      "checked": "2026-10-17",
+      "secondCheck": {
+        "verdict": "agree",
+        "source": "https://www.revisor.mn.gov/rules/1322.0402/"
+      },
+      "resolved": "Added by second check from Minn. Rules 1322.0402"
+    },
+    "energy.slabR@7": {
+      "value": "R-10, 5 ft",
+      "code": "IECC 2012",
+      "section": "Minn. Rules 1322.0402 (IECC Table R402.1.1 as amended)",
+      "amendment": "Minnesota own prescriptive table",
+      "source": "https://www.revisor.mn.gov/rules/1322.0402/",
+      "checked": "2026-10-17",
+      "secondCheck": {
+        "verdict": "agree",
+        "source": "https://www.revisor.mn.gov/rules/1322.0402/"
+      },
+      "resolved": "Added by second check from Minn. Rules 1322.0402"
+    },
+    "energy.crawlWallR@6A": {
+      "value": "15",
+      "code": "IECC 2012",
+      "section": "Minn. Rules 1322.0402 (IECC Table R402.1.1 as amended)",
+      "amendment": "Minnesota own prescriptive table",
+      "source": "https://www.revisor.mn.gov/rules/1322.0402/",
+      "checked": "2026-10-17",
+      "secondCheck": {
+        "verdict": "agree",
+        "source": "https://www.revisor.mn.gov/rules/1322.0402/"
+      },
+      "resolved": "Added by second check from Minn. Rules 1322.0402"
+    },
+    "energy.crawlWallR@7": {
+      "value": "15",
+      "code": "IECC 2012",
+      "section": "Minn. Rules 1322.0402 (IECC Table R402.1.1 as amended)",
+      "amendment": "Minnesota own prescriptive table",
+      "source": "https://www.revisor.mn.gov/rules/1322.0402/",
+      "checked": "2026-10-17",
+      "secondCheck": {
+        "verdict": "agree",
+        "source": "https://www.revisor.mn.gov/rules/1322.0402/"
+      },
+      "resolved": "Added by second check from Minn. Rules 1322.0402"
+    }
+  },
+  "notes": "Energy values for MN own prescriptive tables not retrieved; flag for follow-up (zones 6A and 7). energycodes.gov page is stale (2012 IECC, 2015). SECOND CHECK: energy.* zone 6A/7 values added from 1322.0402; air leakage (ACH50) for MN not confirmed, left out. Minneapolis = zone 6A, Duluth = zone 7."
+}

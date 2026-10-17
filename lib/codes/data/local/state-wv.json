@@ -1,0 +1,68 @@
+{
+  "jurisdiction": "WV",
+  "adoption": "statewide",
+  "codes": {
+    "irc": {
+      "edition": "2018",
+      "effective": "2022-08-01",
+      "source": "https://firemarshal.wv.gov/media/39311/download?inline"
+    },
+    "iecc": {
+      "edition": "2015",
+      "effective": "2022-08-01",
+      "source": "https://firemarshal.wv.gov/media/39311/download?inline"
+    },
+    "nec": {
+      "edition": "2020",
+      "effective": "2022-08-01",
+      "source": "https://firemarshal.wv.gov/media/39311/download?inline"
+    },
+    "plumbing": {
+      "edition": "2018",
+      "model": "IRC",
+      "name": "2018 IRC P chapters for houses; state also adopts the 2018 IPC (87CSR4 4.1.b)",
+      "source": "https://firemarshal.wv.gov/media/39311/download?inline"
+    }
+  },
+  "elsewhere": "The West Virginia State Building Code (87CSR4: 2018 IRC, 2015 IECC, 2020 NEC) is enforced only where a city or county has chosen to enforce codes; elsewhere there is little oversight.",
+  "checked": "2026-10-17",
+  "values": {
+    "stairs.maxRiser": {
+      "value": 8.25,
+      "code": "IRC 2018",
+      "section": "87CSR4 4.1.i.1 (R311.7.5.1)",
+      "amendment": "West Virginia max riser 8-1/4 in",
+      "source": "https://firemarshal.wv.gov/media/39311/download?inline",
+      "checked": "2026-10-17",
+      "secondCheck": {
+        "verdict": "agree",
+        "source": "https://firemarshal.wv.gov/media/39311/download?inline"
+      }
+    },
+    "stairs.minTread": {
+      "value": 9,
+      "code": "IRC 2018",
+      "section": "87CSR4 4.1.i.2 (R311.7.5.2)",
+      "amendment": "West Virginia min tread 9 in",
+      "source": "https://firemarshal.wv.gov/media/39311/download?inline",
+      "checked": "2026-10-17",
+      "secondCheck": {
+        "verdict": "agree",
+        "source": "https://firemarshal.wv.gov/media/39311/download?inline"
+      }
+    },
+    "energy.airLeakageACH50": {
+      "value": 5,
+      "code": "IECC 2015",
+      "section": "87CSR4 4.1.f.1 (IECC 2015 R402.4.1.2)",
+      "amendment": "West Virginia allows air leakage up to 5 ACH50 in climate zones 3-8",
+      "source": "https://firemarshal.wv.gov/media/39311/download?inline",
+      "checked": "2026-10-17",
+      "secondCheck": {
+        "verdict": "agree",
+        "source": "https://firemarshal.wv.gov/media/39311/download?inline"
+      }
+    }
+  },
+  "notes": "Checked 2026-10-17 against the 87CSR4 rule text: effective 2022-08-01, sunsets 2027-08-01. Also requires floor fire protection (membrane, framing or sprinklers) for multi-level houses, basements or crawl-space fuel appliances."
+}

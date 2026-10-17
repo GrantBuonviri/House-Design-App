@@ -1,0 +1,36 @@
+{
+  "jurisdiction": "City of Philadelphia, Philadelphia County, Pennsylvania",
+  "permitOffice": "Philadelphia Department of Licenses and Inspections (L&I)",
+  "zoningCode": "Philadelphia Zoning Code (Title 14, The Philadelphia Code)",
+  "codes": {
+    "irc": {
+      "edition": "2021",
+      "amendments": "2021 IRC as amended (Subcode R); applications on or after 2026-07-01 must use 2021, earlier may use 2018 or 2021"
+    },
+    "iecc": {
+      "edition": "2021",
+      "amendments": "2021 IECC"
+    },
+    "nec": {
+      "edition": "2020",
+      "amendments": "2020 NEC"
+    }
+  },
+  "checked": "2026-10-17",
+  "values": {
+    "elec.islandReceptacleRequired": {
+      "value": true,
+      "code": "NEC 2020",
+      "section": "R-E3901.4.2.1",
+      "amendment": "Restores peninsular countertops and islands to kitchen receptacle requirements as in the 2018 IRC (pending bill 260395)",
+      "source": "https://www.phila.gov/media/20260528125425/2021-Local-Changes-5.2026.pdf",
+      "checked": "2026-10-17",
+      "secondCheck": {
+        "verdict": "could-not-confirm",
+        "source": "https://www.pa.gov/content/dam/copapwp-pagov/en/dli/documents/ucc/documents/philadelphia%20irc%20amendments.pdf"
+      },
+      "unverified": true
+    }
+  },
+  "notes": "Local ceiling heights R-R305.1: 7 ft habitable, 6 ft 8 in bathrooms/laundry (same as base). Cool-roof requirement for low-slope roofs; builder must offer sprinkler option (R-R313.2). Zone 4A."
+}

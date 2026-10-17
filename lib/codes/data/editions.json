@@ -1,1 +1,896 @@
-{"checked":"2026-10-17","iecc":{},"irc":{},"nec":{},"plumbing":{}}
+{
+  "checked": "2026-10-17",
+  "iecc": {
+    "2015": {
+      "source": "https://basc.pnnl.gov/information/2009-2021-iecc-and-irc-minimum-insulation-requirements-new-homes ; https://basc.pnnl.gov/information/table-maximum-fenestration-u-factor-requirements-new-homes-listed-2009-2021-iecc-and",
+      "secondSource": "https://basc.pnnl.gov/information/table-maximum-fenestration-u-factor-requirements-new-homes-listed-2009-2021-iecc-and ; https://basc.pnnl.gov/information/2009-2021-iecc-and-irc-minimum-insulation-requirements-new-homes ; air leakage: https://www.resnet.us/wp-content/uploads/archive/resblog/2016/01/R402-4-1-Building-Thermal-Envelope-Code-Change-Proposal-Final-1112016.pdf",
+      "zones": {
+        "1": {
+          "fenestrationU": "NR",
+          "skylightU": 0.75,
+          "glazedSHGC": 0.25,
+          "ceilingR": 30,
+          "woodWallR": "13",
+          "massWallR": "3/4",
+          "floorR": 13,
+          "basementWallR": "0",
+          "slabR": "0",
+          "crawlWallR": "0",
+          "airLeakageACH50": 5
+        },
+        "2": {
+          "fenestrationU": 0.4,
+          "skylightU": 0.65,
+          "glazedSHGC": 0.25,
+          "ceilingR": 38,
+          "woodWallR": "13",
+          "massWallR": "4/6",
+          "floorR": 13,
+          "basementWallR": "0",
+          "slabR": "0",
+          "crawlWallR": "0",
+          "airLeakageACH50": 5
+        },
+        "3": {
+          "fenestrationU": 0.35,
+          "skylightU": 0.55,
+          "glazedSHGC": 0.25,
+          "ceilingR": 38,
+          "woodWallR": "20 or 13+5",
+          "massWallR": "8/13",
+          "floorR": 19,
+          "basementWallR": "5/13",
+          "slabR": "0",
+          "crawlWallR": "5/13",
+          "airLeakageACH50": 3
+        },
+        "4": {
+          "fenestrationU": 0.35,
+          "skylightU": 0.55,
+          "glazedSHGC": 0.4,
+          "ceilingR": 49,
+          "woodWallR": "20 or 13+5",
+          "massWallR": "8/13",
+          "floorR": 19,
+          "basementWallR": "10/13",
+          "slabR": "R-10, 2 ft",
+          "crawlWallR": "10/13",
+          "airLeakageACH50": 3
+        },
+        "4C": {
+          "fenestrationU": 0.32,
+          "skylightU": 0.55,
+          "glazedSHGC": "NR",
+          "ceilingR": 49,
+          "woodWallR": "20 or 13+5",
+          "massWallR": "13/17",
+          "floorR": 30,
+          "basementWallR": "15/19",
+          "slabR": "R-10, 2 ft",
+          "crawlWallR": "15/19",
+          "airLeakageACH50": 3
+        },
+        "5": {
+          "fenestrationU": 0.32,
+          "skylightU": 0.55,
+          "glazedSHGC": "NR",
+          "ceilingR": 49,
+          "woodWallR": "20 or 13+5",
+          "massWallR": "13/17",
+          "floorR": 30,
+          "basementWallR": "15/19",
+          "slabR": "R-10, 2 ft",
+          "crawlWallR": "15/19",
+          "airLeakageACH50": 3
+        },
+        "6": {
+          "fenestrationU": 0.32,
+          "skylightU": 0.55,
+          "glazedSHGC": "NR",
+          "ceilingR": 49,
+          "woodWallR": "20+5 or 13+10",
+          "massWallR": "15/20",
+          "floorR": 30,
+          "basementWallR": "15/19",
+          "slabR": "R-10, 4 ft",
+          "crawlWallR": "15/19",
+          "airLeakageACH50": 3
+        },
+        "7": {
+          "fenestrationU": 0.32,
+          "skylightU": 0.55,
+          "glazedSHGC": "NR",
+          "ceilingR": 49,
+          "woodWallR": "20+5 or 13+10",
+          "massWallR": "19/21",
+          "floorR": 38,
+          "basementWallR": "15/19",
+          "slabR": "R-10, 4 ft",
+          "crawlWallR": "15/19",
+          "airLeakageACH50": 3
+        },
+        "8": {
+          "fenestrationU": 0.32,
+          "skylightU": 0.55,
+          "glazedSHGC": "NR",
+          "ceilingR": 49,
+          "woodWallR": "20+5 or 13+10",
+          "massWallR": "19/21",
+          "floorR": 38,
+          "basementWallR": "15/19",
+          "slabR": "R-10, 4 ft",
+          "crawlWallR": "15/19",
+          "airLeakageACH50": 3
+        }
+      }
+    },
+    "2018": {
+      "source": "https://basc.pnnl.gov/information/2009-2021-iecc-and-irc-minimum-insulation-requirements-new-homes ; https://basc.pnnl.gov/information/table-maximum-fenestration-u-factor-requirements-new-homes-listed-2009-2021-iecc-and",
+      "secondSource": "https://basc.pnnl.gov/information/table-maximum-fenestration-u-factor-requirements-new-homes-listed-2009-2021-iecc-and ; https://basc.pnnl.gov/information/2009-2021-iecc-and-irc-minimum-insulation-requirements-new-homes ; air leakage: https://www.nahb.org/-/media/NAHB/advocacy/docs/top-priorities/codes/code-adoption/iecc-suggested-amendments-2018.pdf",
+      "zones": {
+        "1": {
+          "fenestrationU": "NR",
+          "skylightU": 0.75,
+          "glazedSHGC": 0.25,
+          "ceilingR": 30,
+          "woodWallR": "13",
+          "massWallR": "3/4",
+          "floorR": 13,
+          "basementWallR": "0",
+          "slabR": "0",
+          "crawlWallR": "0",
+          "airLeakageACH50": 5
+        },
+        "2": {
+          "fenestrationU": 0.4,
+          "skylightU": 0.65,
+          "glazedSHGC": 0.25,
+          "ceilingR": 38,
+          "woodWallR": "13",
+          "massWallR": "4/6",
+          "floorR": 13,
+          "basementWallR": "0",
+          "slabR": "0",
+          "crawlWallR": "0",
+          "airLeakageACH50": 5
+        },
+        "3": {
+          "fenestrationU": 0.32,
+          "skylightU": 0.55,
+          "glazedSHGC": 0.25,
+          "ceilingR": 38,
+          "woodWallR": "20 or 13+5",
+          "massWallR": "8/13",
+          "floorR": 19,
+          "basementWallR": "5/13",
+          "slabR": "0",
+          "crawlWallR": "5/13",
+          "airLeakageACH50": 3
+        },
+        "4": {
+          "fenestrationU": 0.32,
+          "skylightU": 0.55,
+          "glazedSHGC": 0.4,
+          "ceilingR": 49,
+          "woodWallR": "20 or 13+5",
+          "massWallR": "8/13",
+          "floorR": 19,
+          "basementWallR": "10/13",
+          "slabR": "R-10, 2 ft",
+          "crawlWallR": "10/13",
+          "airLeakageACH50": 3
+        },
+        "4C": {
+          "fenestrationU": 0.3,
+          "skylightU": 0.55,
+          "glazedSHGC": "NR",
+          "ceilingR": 49,
+          "woodWallR": "20 or 13+5",
+          "massWallR": "13/17",
+          "floorR": 30,
+          "basementWallR": "15/19",
+          "slabR": "R-10, 2 ft",
+          "crawlWallR": "15/19",
+          "airLeakageACH50": 3
+        },
+        "5": {
+          "fenestrationU": 0.3,
+          "skylightU": 0.55,
+          "glazedSHGC": "NR",
+          "ceilingR": 49,
+          "woodWallR": "20 or 13+5",
+          "massWallR": "13/17",
+          "floorR": 30,
+          "basementWallR": "15/19",
+          "slabR": "R-10, 2 ft",
+          "crawlWallR": "15/19",
+          "airLeakageACH50": 3
+        },
+        "6": {
+          "fenestrationU": 0.3,
+          "skylightU": 0.55,
+          "glazedSHGC": "NR",
+          "ceilingR": 49,
+          "woodWallR": "20+5 or 13+10",
+          "massWallR": "15/20",
+          "floorR": 30,
+          "basementWallR": "15/19",
+          "slabR": "R-10, 4 ft",
+          "crawlWallR": "15/19",
+          "airLeakageACH50": 3
+        },
+        "7": {
+          "fenestrationU": 0.3,
+          "skylightU": 0.55,
+          "glazedSHGC": "NR",
+          "ceilingR": 49,
+          "woodWallR": "20+5 or 13+10",
+          "massWallR": "19/21",
+          "floorR": 38,
+          "basementWallR": "15/19",
+          "slabR": "R-10, 4 ft",
+          "crawlWallR": "15/19",
+          "airLeakageACH50": 3
+        },
+        "8": {
+          "fenestrationU": 0.3,
+          "skylightU": 0.55,
+          "glazedSHGC": "NR",
+          "ceilingR": 49,
+          "woodWallR": "20+5 or 13+10",
+          "massWallR": "19/21",
+          "floorR": 38,
+          "basementWallR": "15/19",
+          "slabR": "R-10, 4 ft",
+          "crawlWallR": "15/19",
+          "airLeakageACH50": 3
+        }
+      },
+      "values": {
+        "energy.highEfficacyLampsPct": {
+          "value": 90,
+          "section": "R404.1",
+          "source": "https://www.energy.nv.gov/uploadedFiles/energynvgov/content/Programs/TaskForces/2017/2015 v 2018 IECC Summary - GOE Final w sources.pdf",
+          "checked": "2026-10-17",
+          "secondCheck": {
+            "verdict": "agree",
+            "source": "https://faasedac.web.illinois.edu/wp-content/uploads/2020/04/2018-IECC-Lighting-12.06.2018.pdf"
+          }
+        }
+      }
+    },
+    "2012": {
+      "source": "https://basc.pnnl.gov/information/2009-2021-iecc-and-irc-minimum-insulation-requirements-new-homes ; https://basc.pnnl.gov/information/table-maximum-fenestration-u-factor-requirements-new-homes-listed-2009-2021-iecc-and",
+      "secondSource": "https://basc.pnnl.gov/information/table-maximum-fenestration-u-factor-requirements-new-homes-listed-2009-2021-iecc-and ; https://basc.pnnl.gov/information/2009-2021-iecc-and-irc-minimum-insulation-requirements-new-homes ; air leakage: https://www.resnet.us/wp-content/uploads/archive/resblog/2016/01/R402-4-1-Building-Thermal-Envelope-Code-Change-Proposal-Final-1112016.pdf",
+      "zones": {
+        "1": {
+          "fenestrationU": "NR",
+          "skylightU": 0.75,
+          "glazedSHGC": 0.25,
+          "ceilingR": 30,
+          "woodWallR": "13",
+          "massWallR": "3/4",
+          "floorR": 13,
+          "basementWallR": "0",
+          "slabR": "0",
+          "crawlWallR": "0",
+          "airLeakageACH50": 5
+        },
+        "2": {
+          "fenestrationU": 0.4,
+          "skylightU": 0.65,
+          "glazedSHGC": 0.25,
+          "ceilingR": 38,
+          "woodWallR": "13",
+          "massWallR": "4/6",
+          "floorR": 13,
+          "basementWallR": "0",
+          "slabR": "0",
+          "crawlWallR": "0",
+          "airLeakageACH50": 5
+        },
+        "3": {
+          "fenestrationU": 0.35,
+          "skylightU": 0.55,
+          "glazedSHGC": 0.25,
+          "ceilingR": 38,
+          "woodWallR": "20 or 13+5",
+          "massWallR": "8/13",
+          "floorR": 19,
+          "basementWallR": "5/13",
+          "slabR": "0",
+          "crawlWallR": "5/13",
+          "airLeakageACH50": 3
+        },
+        "4": {
+          "fenestrationU": 0.35,
+          "skylightU": 0.55,
+          "glazedSHGC": 0.4,
+          "ceilingR": 49,
+          "woodWallR": "20 or 13+5",
+          "massWallR": "8/13",
+          "floorR": 19,
+          "basementWallR": "10/13",
+          "slabR": "R-10, 2 ft",
+          "crawlWallR": "10/13",
+          "airLeakageACH50": 3
+        },
+        "4C": {
+          "fenestrationU": 0.32,
+          "skylightU": 0.55,
+          "glazedSHGC": "NR",
+          "ceilingR": 49,
+          "woodWallR": "20 or 13+5",
+          "massWallR": "13/17",
+          "floorR": 30,
+          "basementWallR": "15/19",
+          "slabR": "R-10, 2 ft",
+          "crawlWallR": "15/19",
+          "airLeakageACH50": 3
+        },
+        "5": {
+          "fenestrationU": 0.32,
+          "skylightU": 0.55,
+          "glazedSHGC": "NR",
+          "ceilingR": 49,
+          "woodWallR": "20 or 13+5",
+          "massWallR": "13/17",
+          "floorR": 30,
+          "basementWallR": "15/19",
+          "slabR": "R-10, 2 ft",
+          "crawlWallR": "15/19",
+          "airLeakageACH50": 3
+        },
+        "6": {
+          "fenestrationU": 0.32,
+          "skylightU": 0.55,
+          "glazedSHGC": "NR",
+          "ceilingR": 49,
+          "woodWallR": "20+5 or 13+10",
+          "massWallR": "15/20",
+          "floorR": 30,
+          "basementWallR": "15/19",
+          "slabR": "R-10, 4 ft",
+          "crawlWallR": "15/19",
+          "airLeakageACH50": 3
+        },
+        "7": {
+          "fenestrationU": 0.32,
+          "skylightU": 0.55,
+          "glazedSHGC": "NR",
+          "ceilingR": 49,
+          "woodWallR": "20+5 or 13+10",
+          "massWallR": "19/21",
+          "floorR": 38,
+          "basementWallR": "15/19",
+          "slabR": "R-10, 4 ft",
+          "crawlWallR": "15/19",
+          "airLeakageACH50": 3
+        },
+        "8": {
+          "fenestrationU": 0.32,
+          "skylightU": 0.55,
+          "glazedSHGC": "NR",
+          "ceilingR": 49,
+          "woodWallR": "20+5 or 13+10",
+          "massWallR": "19/21",
+          "floorR": 38,
+          "basementWallR": "15/19",
+          "slabR": "R-10, 4 ft",
+          "crawlWallR": "15/19",
+          "airLeakageACH50": 3
+        }
+      }
+    }
+  },
+  "irc": {
+    "2018": {
+      "struct.slabVaporRetarder": {
+        "value": 6,
+        "section": "R506.2.3",
+        "source": "https://web.culpepercounty.gov/media/12551",
+        "secondCheck": {
+          "verdict": "agree",
+          "source": "https://web.culpepercounty.gov/media/12551 ; https://regulations.justia.com/states/oklahoma/title-748/chapter-20/subchapter-6/section-748-20-6-10"
+        }
+      }
+    },
+    "2015": {},
+    "2024": {
+      "struct.slabVaporRetarder": {
+        "value": 6,
+        "section": "R506.2.3",
+        "source": "https://web.culpepercounty.gov/media/12551",
+        "secondCheck": {
+          "verdict": "disagree",
+          "source": "https://web.culpepercounty.gov/media/12551"
+        },
+        "resolved": "10 -> 6: 2024 IRC R506.2.3 reverts to the 2018 6-mil requirement (Culpeper County VA building official letter)"
+      }
+    }
+  },
+  "nec": {
+    "2017": {
+      "elec.gfciLocations": {
+        "value": [
+          "bathrooms",
+          "garages and accessory buildings (floor at/below grade)",
+          "outdoors",
+          "crawl spaces (at/below grade)",
+          "unfinished basements (areas not intended as habitable rooms)",
+          "kitchens (countertop receptacles only)",
+          "sinks (within 6 ft of bowl edge)",
+          "boathouses",
+          "bathtubs or shower stalls (within 6 ft)",
+          "laundry areas"
+        ],
+        "section": "210.8(A)",
+        "source": "https://iaeimagazine.org/issue/january2020/nec-requirements-for-gfci-protection-section-210-8/ ; https://www.ecmag.com/magazine/articles/article-detail/residential-remodel-care-necessary-changes-nec-dwelling-units-2017-2020",
+        "note": "The UPC number, checked against the copy in the second check.",
+        "secondCheck": {
+          "verdict": "disagree",
+          "source": "https://iaeimagazine.org/issue/january2020/nec-requirements-for-gfci-protection-section-210-8/ ; https://www.ecmag.com/magazine/articles/article-detail/residential-remodel-care-necessary-changes-nec-dwelling-units-2017-2020"
+        },
+        "resolved": "'basements' -> unfinished basements only in 2017 (2020 made it all basements); other 9 items agree"
+      }
+    },
+    "2020": {
+      "elec.gfciLocations": {
+        "value": [
+          "bathrooms",
+          "garages and accessory buildings (floor at/below grade)",
+          "outdoors",
+          "crawl spaces (at/below grade)",
+          "basements",
+          "kitchens (countertop receptacles)",
+          "sinks (within 6 ft of bowl edge)",
+          "boathouses",
+          "bathtubs or shower stalls (within 6 ft)",
+          "laundry areas",
+          "indoor damp and wet locations"
+        ],
+        "section": "210.8(A)(1)-(11)",
+        "source": "https://dpnr.vi.gov/wp-content/uploads/2022/11/DPNR-2020-NEC-Code-Changes-.pdf (summary of 2020 NEC; 11 locations confirmed; 2023 adds areas with sinks and food/beverage prep, all kitchen receptacles, 250 V)",
+        "secondCheck": {
+          "verdict": "agree",
+          "source": "https://dpnr.vi.gov/wp-content/uploads/2022/11/DPNR-2020-NEC-Code-Changes-.pdf ; https://iaeimagazine.org/issue/january2020/nec-requirements-for-gfci-protection-section-210-8/"
+        }
+      }
+    }
+  },
+  "plumbing": {
+    "UPC 2015": {
+      "plumbing.wcFrontClearance": {
+        "value": 24,
+        "section": "UPC 402.5",
+        "source": "https://cupertinoca.prelive.opencities.com/files/assets/city/v/1/business-and-development/documents/bathroom-remodel-handout-0.pdf (later edition, same text)",
+        "note": "The UPC number, checked against the copy in the second check.",
+        "secondCheck": {
+          "verdict": "agree",
+          "source": "https://cupertinoca.prelive.opencities.com/files/assets/city/v/1/business-and-development/documents/bathroom-remodel-handout-0.pdf (later edition, same text)"
+        }
+      },
+      "plumbing.showerMinArea": {
+        "value": 1024,
+        "section": "UPC 408.6",
+        "source": "https://cupertinoca.prelive.opencities.com/files/assets/city/v/1/business-and-development/documents/bathroom-remodel-handout-0.pdf (2024-based; 1024 sq in / 30 in circle)",
+        "note": "The UPC number, checked against the copy in the second check.",
+        "secondCheck": {
+          "verdict": "agree",
+          "source": "https://cupertinoca.prelive.opencities.com/files/assets/city/v/1/business-and-development/documents/bathroom-remodel-handout-0.pdf (2024-based; 1024 sq in / 30 in circle)"
+        }
+      },
+      "plumbing.dfu.clothesWasher": {
+        "value": 3,
+        "section": "UPC Table 702.1",
+        "source": "https://www.revisor.mn.gov/rules/4714.0702/version/2016-01-25T09:45:49-06:00",
+        "note": "The UPC number, checked against the copy in the second check.",
+        "secondCheck": {
+          "verdict": "agree",
+          "source": "https://www.revisor.mn.gov/rules/4714.0702/version/2016-01-25T09:45:49-06:00"
+        }
+      },
+      "plumbing.wsfu.lavatory": {
+        "value": 1.0,
+        "section": "UPC Table 610.3",
+        "source": "https://www.revisor.mn.gov/rules/4714.0610/version/2016-01-25T09:45:43-06:00 ; https://www.pmmag.com/articles/102043-fixture-units-table-6103-uniform-plumbing-code",
+        "note": "The UPC number, checked against the copy in the second check.",
+        "secondCheck": {
+          "verdict": "agree",
+          "source": "https://www.revisor.mn.gov/rules/4714.0610/version/2016-01-25T09:45:43-06:00 ; https://www.pmmag.com/articles/102043-fixture-units-table-6103-uniform-plumbing-code"
+        }
+      },
+      "plumbing.wsfu.kitchenSink": {
+        "value": 1.5,
+        "section": "UPC Table 610.3",
+        "source": "https://www.revisor.mn.gov/rules/4714.0610/version/2016-01-25T09:45:43-06:00 ; https://www.pmmag.com/articles/102043-fixture-units-table-6103-uniform-plumbing-code",
+        "note": "The UPC number, checked against the copy in the second check.",
+        "secondCheck": {
+          "verdict": "agree",
+          "source": "https://www.revisor.mn.gov/rules/4714.0610/version/2016-01-25T09:45:43-06:00 ; https://www.pmmag.com/articles/102043-fixture-units-table-6103-uniform-plumbing-code"
+        }
+      },
+      "plumbing.wsfu.dishwasher": {
+        "value": 1.5,
+        "section": "UPC Table 610.3",
+        "source": "https://www.revisor.mn.gov/rules/4714.0610/version/2016-01-25T09:45:43-06:00 ; https://www.pmmag.com/articles/102043-fixture-units-table-6103-uniform-plumbing-code",
+        "note": "The UPC number, checked against the copy in the second check.",
+        "secondCheck": {
+          "verdict": "agree",
+          "source": "https://www.revisor.mn.gov/rules/4714.0610/version/2016-01-25T09:45:43-06:00 ; https://www.pmmag.com/articles/102043-fixture-units-table-6103-uniform-plumbing-code"
+        }
+      },
+      "plumbing.wsfu.clothesWasher": {
+        "value": 4.0,
+        "section": "UPC Table 610.3",
+        "source": "https://www.revisor.mn.gov/rules/4714.0610/version/2016-01-25T09:45:43-06:00 ; https://www.pmmag.com/articles/102043-fixture-units-table-6103-uniform-plumbing-code",
+        "note": "The UPC number, checked against the copy in the second check.",
+        "secondCheck": {
+          "verdict": "agree",
+          "source": "https://www.revisor.mn.gov/rules/4714.0610/version/2016-01-25T09:45:43-06:00 ; https://www.pmmag.com/articles/102043-fixture-units-table-6103-uniform-plumbing-code"
+        }
+      },
+      "plumbing.wsfu.shower": {
+        "value": 2.0,
+        "section": "UPC Table 610.3",
+        "source": "https://www.revisor.mn.gov/rules/4714.0610/version/2016-01-25T09:45:43-06:00 ; https://www.pmmag.com/articles/102043-fixture-units-table-6103-uniform-plumbing-code",
+        "note": "The UPC number, checked against the copy in the second check.",
+        "secondCheck": {
+          "verdict": "agree",
+          "source": "https://www.revisor.mn.gov/rules/4714.0610/version/2016-01-25T09:45:43-06:00 ; https://www.pmmag.com/articles/102043-fixture-units-table-6103-uniform-plumbing-code"
+        }
+      },
+      "plumbing.wsfu.bathtub": {
+        "value": 4.0,
+        "section": "UPC Table 610.3",
+        "source": "https://www.revisor.mn.gov/rules/4714.0610/version/2016-01-25T09:45:43-06:00 ; https://www.pmmag.com/articles/102043-fixture-units-table-6103-uniform-plumbing-code",
+        "note": "The UPC number, checked against the copy in the second check.",
+        "secondCheck": {
+          "verdict": "agree",
+          "source": "https://www.revisor.mn.gov/rules/4714.0610/version/2016-01-25T09:45:43-06:00 ; https://www.pmmag.com/articles/102043-fixture-units-table-6103-uniform-plumbing-code"
+        }
+      },
+      "plumbing.wsfu.waterCloset": {
+        "value": 2.5,
+        "section": "UPC Table 610.3",
+        "source": "https://www.revisor.mn.gov/rules/4714.0610/version/2016-01-25T09:45:43-06:00 ; https://www.pmmag.com/articles/102043-fixture-units-table-6103-uniform-plumbing-code",
+        "note": "The UPC number, checked against the copy in the second check.",
+        "secondCheck": {
+          "verdict": "agree",
+          "source": "https://www.revisor.mn.gov/rules/4714.0610/version/2016-01-25T09:45:43-06:00 ; https://www.pmmag.com/articles/102043-fixture-units-table-6103-uniform-plumbing-code"
+        }
+      },
+      "plumbing.wsfu.laundrySink": {
+        "value": 1.5,
+        "section": "UPC Table 610.3",
+        "source": "https://www.revisor.mn.gov/rules/4714.0610/version/2016-01-25T09:45:43-06:00 ; https://www.pmmag.com/articles/102043-fixture-units-table-6103-uniform-plumbing-code",
+        "note": "The UPC number, checked against the copy in the second check.",
+        "secondCheck": {
+          "verdict": "agree",
+          "source": "https://www.revisor.mn.gov/rules/4714.0610/version/2016-01-25T09:45:43-06:00 ; https://www.pmmag.com/articles/102043-fixture-units-table-6103-uniform-plumbing-code"
+        }
+      }
+    },
+    "UPC 2018": {
+      "plumbing.wcFrontClearance": {
+        "value": 24,
+        "section": "UPC 402.5",
+        "source": "https://lawfilesext.leg.wa.gov/Law/WSR/2021/01/21-01-125.htm",
+        "note": "The UPC number, checked against the copy in the second check.",
+        "secondCheck": {
+          "verdict": "agree",
+          "source": "https://lawfilesext.leg.wa.gov/Law/WSR/2021/01/21-01-125.htm"
+        }
+      },
+      "plumbing.showerMinArea": {
+        "value": 1024,
+        "section": "UPC 408.6",
+        "source": "https://cupertinoca.prelive.opencities.com/files/assets/city/v/1/business-and-development/documents/bathroom-remodel-handout-0.pdf (2024-based; 1024 sq in / 30 in circle)",
+        "note": "The UPC number, checked against the copy in the second check.",
+        "secondCheck": {
+          "verdict": "agree",
+          "source": "https://cupertinoca.prelive.opencities.com/files/assets/city/v/1/business-and-development/documents/bathroom-remodel-handout-0.pdf (2024-based; 1024 sq in / 30 in circle)"
+        }
+      },
+      "plumbing.dfu.clothesWasher": {
+        "value": 3,
+        "section": "UPC Table 702.1",
+        "source": "https://www.revisor.mn.gov/rules/4714.0702/version/2016-01-25T09:45:49-06:00",
+        "note": "The UPC number, checked against the copy in the second check.",
+        "secondCheck": {
+          "verdict": "agree",
+          "source": "https://www.revisor.mn.gov/rules/4714.0702/version/2016-01-25T09:45:49-06:00"
+        }
+      },
+      "plumbing.wsfu.lavatory": {
+        "value": 1.0,
+        "section": "UPC Table 610.3",
+        "source": "https://www.revisor.mn.gov/rules/4714.0610/version/2016-01-25T09:45:43-06:00 ; https://www.pmmag.com/articles/102043-fixture-units-table-6103-uniform-plumbing-code",
+        "note": "The UPC number, checked against the copy in the second check.",
+        "secondCheck": {
+          "verdict": "agree",
+          "source": "https://www.revisor.mn.gov/rules/4714.0610/version/2016-01-25T09:45:43-06:00 ; https://www.pmmag.com/articles/102043-fixture-units-table-6103-uniform-plumbing-code"
+        }
+      },
+      "plumbing.wsfu.kitchenSink": {
+        "value": 1.5,
+        "section": "UPC Table 610.3",
+        "source": "https://www.revisor.mn.gov/rules/4714.0610/version/2016-01-25T09:45:43-06:00 ; https://www.pmmag.com/articles/102043-fixture-units-table-6103-uniform-plumbing-code",
+        "note": "The UPC number, checked against the copy in the second check.",
+        "secondCheck": {
+          "verdict": "agree",
+          "source": "https://www.revisor.mn.gov/rules/4714.0610/version/2016-01-25T09:45:43-06:00 ; https://www.pmmag.com/articles/102043-fixture-units-table-6103-uniform-plumbing-code"
+        }
+      },
+      "plumbing.wsfu.dishwasher": {
+        "value": 1.5,
+        "section": "UPC Table 610.3",
+        "source": "https://www.revisor.mn.gov/rules/4714.0610/version/2016-01-25T09:45:43-06:00 ; https://www.pmmag.com/articles/102043-fixture-units-table-6103-uniform-plumbing-code",
+        "note": "The UPC number, checked against the copy in the second check.",
+        "secondCheck": {
+          "verdict": "agree",
+          "source": "https://www.revisor.mn.gov/rules/4714.0610/version/2016-01-25T09:45:43-06:00 ; https://www.pmmag.com/articles/102043-fixture-units-table-6103-uniform-plumbing-code"
+        }
+      },
+      "plumbing.wsfu.clothesWasher": {
+        "value": 4.0,
+        "section": "UPC Table 610.3",
+        "source": "https://www.revisor.mn.gov/rules/4714.0610/version/2016-01-25T09:45:43-06:00 ; https://www.pmmag.com/articles/102043-fixture-units-table-6103-uniform-plumbing-code",
+        "note": "The UPC number, checked against the copy in the second check.",
+        "secondCheck": {
+          "verdict": "agree",
+          "source": "https://www.revisor.mn.gov/rules/4714.0610/version/2016-01-25T09:45:43-06:00 ; https://www.pmmag.com/articles/102043-fixture-units-table-6103-uniform-plumbing-code"
+        }
+      },
+      "plumbing.wsfu.shower": {
+        "value": 2.0,
+        "section": "UPC Table 610.3",
+        "source": "https://www.revisor.mn.gov/rules/4714.0610/version/2016-01-25T09:45:43-06:00 ; https://www.pmmag.com/articles/102043-fixture-units-table-6103-uniform-plumbing-code",
+        "note": "The UPC number, checked against the copy in the second check.",
+        "secondCheck": {
+          "verdict": "agree",
+          "source": "https://www.revisor.mn.gov/rules/4714.0610/version/2016-01-25T09:45:43-06:00 ; https://www.pmmag.com/articles/102043-fixture-units-table-6103-uniform-plumbing-code"
+        }
+      },
+      "plumbing.wsfu.bathtub": {
+        "value": 4.0,
+        "section": "UPC Table 610.3",
+        "source": "https://www.revisor.mn.gov/rules/4714.0610/version/2016-01-25T09:45:43-06:00 ; https://www.pmmag.com/articles/102043-fixture-units-table-6103-uniform-plumbing-code",
+        "note": "The UPC number, checked against the copy in the second check.",
+        "secondCheck": {
+          "verdict": "agree",
+          "source": "https://www.revisor.mn.gov/rules/4714.0610/version/2016-01-25T09:45:43-06:00 ; https://www.pmmag.com/articles/102043-fixture-units-table-6103-uniform-plumbing-code"
+        }
+      },
+      "plumbing.wsfu.waterCloset": {
+        "value": 2.5,
+        "section": "UPC Table 610.3",
+        "source": "https://www.revisor.mn.gov/rules/4714.0610/version/2016-01-25T09:45:43-06:00 ; https://www.pmmag.com/articles/102043-fixture-units-table-6103-uniform-plumbing-code",
+        "note": "The UPC number, checked against the copy in the second check.",
+        "secondCheck": {
+          "verdict": "agree",
+          "source": "https://www.revisor.mn.gov/rules/4714.0610/version/2016-01-25T09:45:43-06:00 ; https://www.pmmag.com/articles/102043-fixture-units-table-6103-uniform-plumbing-code"
+        }
+      },
+      "plumbing.wsfu.laundrySink": {
+        "value": 1.5,
+        "section": "UPC Table 610.3",
+        "source": "https://www.revisor.mn.gov/rules/4714.0610/version/2016-01-25T09:45:43-06:00 ; https://www.pmmag.com/articles/102043-fixture-units-table-6103-uniform-plumbing-code",
+        "note": "The UPC number, checked against the copy in the second check.",
+        "secondCheck": {
+          "verdict": "agree",
+          "source": "https://www.revisor.mn.gov/rules/4714.0610/version/2016-01-25T09:45:43-06:00 ; https://www.pmmag.com/articles/102043-fixture-units-table-6103-uniform-plumbing-code"
+        }
+      }
+    },
+    "UPC 2021": {
+      "plumbing.wcFrontClearance": {
+        "value": 24,
+        "section": "UPC 402.5",
+        "source": "https://lawfilesext.leg.wa.gov/Law/WSR/2021/01/21-01-125.htm",
+        "note": "The UPC number, checked against the copy in the second check.",
+        "secondCheck": {
+          "verdict": "agree",
+          "source": "https://lawfilesext.leg.wa.gov/Law/WSR/2021/01/21-01-125.htm"
+        }
+      },
+      "plumbing.showerMinArea": {
+        "value": 1024,
+        "section": "UPC 408.6",
+        "source": "https://cupertinoca.prelive.opencities.com/files/assets/city/v/1/business-and-development/documents/bathroom-remodel-handout-0.pdf (2024-based; 1024 sq in / 30 in circle)",
+        "note": "The UPC number, checked against the copy in the second check.",
+        "secondCheck": {
+          "verdict": "agree",
+          "source": "https://cupertinoca.prelive.opencities.com/files/assets/city/v/1/business-and-development/documents/bathroom-remodel-handout-0.pdf (2024-based; 1024 sq in / 30 in circle)"
+        }
+      },
+      "plumbing.dfu.clothesWasher": {
+        "value": 3,
+        "section": "UPC Table 702.1",
+        "source": "https://www.revisor.mn.gov/rules/4714.0702/version/2016-01-25T09:45:49-06:00",
+        "note": "The UPC number, checked against the copy in the second check.",
+        "secondCheck": {
+          "verdict": "agree",
+          "source": "https://www.revisor.mn.gov/rules/4714.0702/version/2016-01-25T09:45:49-06:00"
+        }
+      },
+      "plumbing.wsfu.lavatory": {
+        "value": 1.0,
+        "section": "UPC Table 610.3",
+        "source": "https://mcw.specialdistrict.org/files/3c54d4925/Table-610.3.pdf (2022 California Plumbing Code Table 610.3, which is the 2021 UPC text; OCR garbled but row order matches)",
+        "secondCheck": {
+          "verdict": "agree",
+          "source": "https://mcw.specialdistrict.org/files/3c54d4925/Table-610.3.pdf ; https://bozeman.net/home/showpublisheddocument/10232/638345256860130000"
+        }
+      },
+      "plumbing.wsfu.kitchenSink": {
+        "value": 1.5,
+        "section": "UPC Table 610.3",
+        "source": "https://mcw.specialdistrict.org/files/3c54d4925/Table-610.3.pdf (2022 California Plumbing Code Table 610.3, which is the 2021 UPC text; OCR garbled but row order matches)",
+        "secondCheck": {
+          "verdict": "agree",
+          "source": "https://mcw.specialdistrict.org/files/3c54d4925/Table-610.3.pdf ; https://bozeman.net/home/showpublisheddocument/10232/638345256860130000"
+        }
+      },
+      "plumbing.wsfu.dishwasher": {
+        "value": 1.5,
+        "section": "UPC Table 610.3",
+        "source": "https://mcw.specialdistrict.org/files/3c54d4925/Table-610.3.pdf (2022 California Plumbing Code Table 610.3, which is the 2021 UPC text; OCR garbled but row order matches)",
+        "secondCheck": {
+          "verdict": "agree",
+          "source": "https://mcw.specialdistrict.org/files/3c54d4925/Table-610.3.pdf ; https://bozeman.net/home/showpublisheddocument/10232/638345256860130000"
+        }
+      },
+      "plumbing.wsfu.clothesWasher": {
+        "value": 4.0,
+        "section": "UPC Table 610.3",
+        "source": "https://mcw.specialdistrict.org/files/3c54d4925/Table-610.3.pdf (2022 California Plumbing Code Table 610.3, which is the 2021 UPC text; OCR garbled but row order matches)",
+        "secondCheck": {
+          "verdict": "agree",
+          "source": "https://mcw.specialdistrict.org/files/3c54d4925/Table-610.3.pdf ; https://bozeman.net/home/showpublisheddocument/10232/638345256860130000"
+        }
+      },
+      "plumbing.wsfu.shower": {
+        "value": 2.0,
+        "section": "UPC Table 610.3",
+        "source": "https://mcw.specialdistrict.org/files/3c54d4925/Table-610.3.pdf (2022 California Plumbing Code Table 610.3, which is the 2021 UPC text; OCR garbled but row order matches)",
+        "secondCheck": {
+          "verdict": "agree",
+          "source": "https://mcw.specialdistrict.org/files/3c54d4925/Table-610.3.pdf ; https://bozeman.net/home/showpublisheddocument/10232/638345256860130000"
+        }
+      },
+      "plumbing.wsfu.bathtub": {
+        "value": 4.0,
+        "section": "UPC Table 610.3",
+        "source": "https://mcw.specialdistrict.org/files/3c54d4925/Table-610.3.pdf (2022 California Plumbing Code Table 610.3, which is the 2021 UPC text; OCR garbled but row order matches)",
+        "secondCheck": {
+          "verdict": "agree",
+          "source": "https://mcw.specialdistrict.org/files/3c54d4925/Table-610.3.pdf ; https://bozeman.net/home/showpublisheddocument/10232/638345256860130000"
+        }
+      },
+      "plumbing.wsfu.waterCloset": {
+        "value": 2.5,
+        "section": "UPC Table 610.3",
+        "source": "https://mcw.specialdistrict.org/files/3c54d4925/Table-610.3.pdf (2022 California Plumbing Code Table 610.3, which is the 2021 UPC text; OCR garbled but row order matches)",
+        "secondCheck": {
+          "verdict": "agree",
+          "source": "https://mcw.specialdistrict.org/files/3c54d4925/Table-610.3.pdf ; https://bozeman.net/home/showpublisheddocument/10232/638345256860130000"
+        }
+      },
+      "plumbing.wsfu.laundrySink": {
+        "value": 1.5,
+        "section": "UPC Table 610.3",
+        "source": "https://mcw.specialdistrict.org/files/3c54d4925/Table-610.3.pdf (2022 California Plumbing Code Table 610.3, which is the 2021 UPC text; OCR garbled but row order matches)",
+        "secondCheck": {
+          "verdict": "agree",
+          "source": "https://mcw.specialdistrict.org/files/3c54d4925/Table-610.3.pdf ; https://bozeman.net/home/showpublisheddocument/10232/638345256860130000"
+        }
+      }
+    },
+    "UPC 2024": {
+      "plumbing.wcFrontClearance": {
+        "value": 24,
+        "section": "UPC 402.5",
+        "source": "https://gocodebook.com/library/us/ca/ca-plumbing-code/chapter-4-plumbing-fixtures-and-fixture-fittings/402.5-setting.-fixtures-shall-be-set-level-and-in-proper-alignment-with-reference-to-adjacent-wa (2025 California Plumbing Code 402.5 = UPC 2024 base: 24 in front, 15 in side)",
+        "secondCheck": {
+          "verdict": "agree",
+          "source": "https://cupertinoca.prelive.opencities.com/files/assets/city/v/1/business-and-development/documents/bathroom-remodel-handout-0.pdf"
+        }
+      },
+      "plumbing.showerMinArea": {
+        "value": 1024,
+        "section": "UPC 408.7 (2025 CPC numbering; was 408.6)",
+        "source": "https://cupertinoca.prelive.opencities.com/files/assets/city/v/1/business-and-development/documents/bathroom-remodel-handout-0.pdf",
+        "note": "The UPC number, checked against the copy in the second check.",
+        "secondCheck": {
+          "verdict": "agree",
+          "source": "https://cupertinoca.prelive.opencities.com/files/assets/city/v/1/business-and-development/documents/bathroom-remodel-handout-0.pdf"
+        },
+        "resolved": "section renumbered per 2025 CPC (UPC 2024 base); value unchanged"
+      },
+      "plumbing.dfu.clothesWasher": {
+        "value": 3,
+        "section": "UPC Table 702.1",
+        "source": "https://gocodebook.com/library/us/ca/ca-plumbing-code/e/2025/chapter-7-sanitary-drainage/702.1-trap-size",
+        "note": "The UPC number, checked against the copy in the second check.",
+        "secondCheck": {
+          "verdict": "agree",
+          "source": "https://gocodebook.com/library/us/ca/ca-plumbing-code/e/2025/chapter-7-sanitary-drainage/702.1-trap-size"
+        }
+      },
+      "plumbing.wsfu.lavatory": {
+        "value": 1.0,
+        "section": "UPC Table 610.3",
+        "source": "https://mcw.specialdistrict.org/files/3c54d4925/Table-610.3.pdf (2022 California Plumbing Code Table 610.3, which is the 2021 UPC text; OCR garbled but row order matches)",
+        "secondCheck": {
+          "verdict": "agree",
+          "source": "https://mcw.specialdistrict.org/files/3c54d4925/Table-610.3.pdf ; https://bozeman.net/home/showpublisheddocument/10232/638345256860130000"
+        }
+      },
+      "plumbing.wsfu.kitchenSink": {
+        "value": 1.5,
+        "section": "UPC Table 610.3",
+        "source": "https://mcw.specialdistrict.org/files/3c54d4925/Table-610.3.pdf (2022 California Plumbing Code Table 610.3, which is the 2021 UPC text; OCR garbled but row order matches)",
+        "secondCheck": {
+          "verdict": "agree",
+          "source": "https://mcw.specialdistrict.org/files/3c54d4925/Table-610.3.pdf ; https://bozeman.net/home/showpublisheddocument/10232/638345256860130000"
+        }
+      },
+      "plumbing.wsfu.dishwasher": {
+        "value": 1.5,
+        "section": "UPC Table 610.3",
+        "source": "https://mcw.specialdistrict.org/files/3c54d4925/Table-610.3.pdf (2022 California Plumbing Code Table 610.3, which is the 2021 UPC text; OCR garbled but row order matches)",
+        "secondCheck": {
+          "verdict": "agree",
+          "source": "https://mcw.specialdistrict.org/files/3c54d4925/Table-610.3.pdf ; https://bozeman.net/home/showpublisheddocument/10232/638345256860130000"
+        }
+      },
+      "plumbing.wsfu.clothesWasher": {
+        "value": 4.0,
+        "section": "UPC Table 610.3",
+        "source": "https://mcw.specialdistrict.org/files/3c54d4925/Table-610.3.pdf (2022 California Plumbing Code Table 610.3, which is the 2021 UPC text; OCR garbled but row order matches)",
+        "secondCheck": {
+          "verdict": "agree",
+          "source": "https://mcw.specialdistrict.org/files/3c54d4925/Table-610.3.pdf ; https://bozeman.net/home/showpublisheddocument/10232/638345256860130000"
+        }
+      },
+      "plumbing.wsfu.shower": {
+        "value": 2.0,
+        "section": "UPC Table 610.3",
+        "source": "https://mcw.specialdistrict.org/files/3c54d4925/Table-610.3.pdf (2022 California Plumbing Code Table 610.3, which is the 2021 UPC text; OCR garbled but row order matches)",
+        "secondCheck": {
+          "verdict": "agree",
+          "source": "https://mcw.specialdistrict.org/files/3c54d4925/Table-610.3.pdf ; https://bozeman.net/home/showpublisheddocument/10232/638345256860130000"
+        }
+      },
+      "plumbing.wsfu.bathtub": {
+        "value": 4.0,
+        "section": "UPC Table 610.3",
+        "source": "https://mcw.specialdistrict.org/files/3c54d4925/Table-610.3.pdf (2022 California Plumbing Code Table 610.3, which is the 2021 UPC text; OCR garbled but row order matches)",
+        "secondCheck": {
+          "verdict": "agree",
+          "source": "https://mcw.specialdistrict.org/files/3c54d4925/Table-610.3.pdf ; https://bozeman.net/home/showpublisheddocument/10232/638345256860130000"
+        }
+      },
+      "plumbing.wsfu.waterCloset": {
+        "value": 2.5,
+        "section": "UPC Table 610.3",
+        "source": "https://mcw.specialdistrict.org/files/3c54d4925/Table-610.3.pdf (2022 California Plumbing Code Table 610.3, which is the 2021 UPC text; OCR garbled but row order matches)",
+        "secondCheck": {
+          "verdict": "agree",
+          "source": "https://mcw.specialdistrict.org/files/3c54d4925/Table-610.3.pdf ; https://bozeman.net/home/showpublisheddocument/10232/638345256860130000"
+        }
+      },
+      "plumbing.wsfu.laundrySink": {
+        "value": 1.5,
+        "section": "UPC Table 610.3",
+        "source": "https://mcw.specialdistrict.org/files/3c54d4925/Table-610.3.pdf (2022 California Plumbing Code Table 610.3, which is the 2021 UPC text; OCR garbled but row order matches)",
+        "secondCheck": {
+          "verdict": "agree",
+          "source": "https://mcw.specialdistrict.org/files/3c54d4925/Table-610.3.pdf ; https://bozeman.net/home/showpublisheddocument/10232/638345256860130000"
+        }
+      }
+    },
+    "IPC 2021": {}
+  }
+}

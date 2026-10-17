@@ -1,0 +1,34 @@
+{
+  "jurisdiction": "FL",
+  "adoption": "statewide",
+  "codes": {
+    "irc": {
+      "edition": "2021",
+      "amendments": "Florida Building Code, Residential, 8th Edition (2023)",
+      "effective": "2023-12-31",
+      "source": "https://www.meltplan.com/buildingcodes/florida"
+    },
+    "iecc": {
+      "edition": "2021",
+      "name": "Florida Building Code, Energy Conservation, 8th Edition (2023)",
+      "effective": "2023-12-31",
+      "source": "https://www.energycodes.gov/status/states/Florida"
+    },
+    "nec": {
+      "edition": "2020",
+      "effective": "2023-12-31",
+      "source": "https://www.meltplan.com/buildingcodes/florida"
+    },
+    "plumbing": {
+      "edition": "2021",
+      "model": "IPC",
+      "name": "Florida Building Code, Plumbing, 8th Edition (2023); FBC-R uses IRC P chapters for houses",
+      "effective": "2023-12-31",
+      "source": "https://www.meltplan.com/buildingcodes/florida"
+    }
+  },
+  "elsewhere": "Statewide and mandatory; 9th Edition (2026) FBC is expected to take effect Dec 31, 2026, so the 8th Edition governs in Oct 2026.",
+  "checked": "2026-10-17",
+  "values": {},
+  "notes": "FBC-R has no frost provisions and uses its own wind map; Miami-Dade and Broward are High-Velocity Hurricane Zone (HVHZ) with additional product approval. Florida amendments to tracked numbers not itemized."
+}

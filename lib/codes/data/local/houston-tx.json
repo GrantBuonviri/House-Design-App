@@ -1,0 +1,24 @@
+{
+  "jurisdiction": "City of Houston, Harris County, Texas",
+  "permitOffice": "Houston Permitting Center (Houston Public Works)",
+  "zoningCode": "None - Houston has no zoning; see Code of Ordinances Ch. 42 (Subdivisions, Developments and Platting) and Ch. 10 (Buildings)",
+  "codes": {
+    "irc": {
+      "edition": "2021"
+    },
+    "iecc": {
+      "edition": "2021"
+    },
+    "nec": {
+      "edition": "2023"
+    },
+    "plumbing": {
+      "edition": "2021",
+      "model": "UPC",
+      "name": "2021 UPC with Houston amendments"
+    }
+  },
+  "checked": "2026-10-17",
+  "values": {},
+  "notes": "No zoning ordinance; deed restrictions govern."
+}
