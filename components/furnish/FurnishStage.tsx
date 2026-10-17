@@ -369,7 +369,7 @@ export default function FurnishStage({
                 Back to the floor plan
               </button>
               <button className="btn-primary" onClick={onContinue} data-testid="furnish-continue">
-                Next: interior →
+                Walk through and design →
               </button>
             </>
           )}

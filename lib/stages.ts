@@ -8,6 +8,9 @@ export const STAGE_INFO: { id: Stage; label: string }[] = [
   { id: "bubbles", label: "Flow sketch" },
   { id: "plan", label: "Floor plan" },
   { id: "furnish", label: "Furnish" },
-  { id: "interior", label: "Interior" },
-  { id: "exterior", label: "Exterior" },
 ];
+
+/** The stage whose page shows: Interior and Exterior are windows in the walkthrough now, so old saves on them open on Furnish. */
+export function shownStage(stage: Stage): Stage {
+  return stage === "interior" || stage === "exterior" ? "furnish" : stage;
+}
