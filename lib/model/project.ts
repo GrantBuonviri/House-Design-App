@@ -91,6 +91,7 @@ export function migrateProject(raw: unknown): Project {
   if (version < 30) migrated = migrateV29(migrated);
   // Version 30 to 31 added faucet changes on fixtures (`Fixture.faucet`, optional), so no change beyond the version.
   if (version < 32) migrated = migrateV31(migrated);
+  // Version 32 to 33 added pinned tape measurements (`FloorPlan.pins`, optional; `house3d.walkPins`, default none), so no change beyond the version.
   return Project.parse({ ...migrated, schemaVersion: SCHEMA_VERSION });
 }
 

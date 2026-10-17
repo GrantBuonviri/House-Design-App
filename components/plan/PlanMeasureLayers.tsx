@@ -1,6 +1,6 @@
 "use client";
 
-import { Group, Line, Rect, Text } from "react-konva";
+import { Circle, Group, Line, Rect, Text } from "react-konva";
 import type { FloorPlan, PlanLabels, Point } from "@/lib/model/schema";
 import { roomType } from "@/lib/brief/rooms";
 import { CATEGORY_COLOR } from "@/lib/bubbles/shapes";
@@ -202,6 +202,29 @@ export function TapeLine({ a, b, labels, s }: { a: Point; b: Point | null; label
         <Rect key={i} x={p.x - 3 / s} y={p.y - 3 / s} width={6 / s} height={6 / s} fill={ACCENT} />
       ))}
       <LText x={mid.x + off.x} y={mid.y + off.y} text={`${formatLength(r.inches, labels.units)} · ${r.angle}°`} fontSize={12 / s} fill={ACCENT} bold bg s={s} />
+    </Group>
+  );
+}
+
+/** A pinned measurement: a solid line with end ticks, its length and angle, and a pin dot by the label. Always shown. */
+export function PinnedTape({ pins, labels, s }: { pins: { id: string; a: Point; b: Point }[]; labels: PlanLabels; s: number }) {
+  return (
+    <Group listening={false}>
+      {pins.map(({ id, a, b }) => {
+        const r = tapeReading(a, b);
+        const mid = scaleV(add(a, b), 0.5);
+        const off = scaleV(leftNormal(unit(sub(b, a))), 14 / s);
+        return (
+          <Group key={id}>
+            <Line points={[a.x, a.y, b.x, b.y]} stroke={ACCENT} strokeWidth={2} strokeScaleEnabled={false} />
+            {[a, b].map((p, i) => (
+              <Rect key={i} x={p.x - 3 / s} y={p.y - 3 / s} width={6 / s} height={6 / s} fill={ACCENT} />
+            ))}
+            <Circle x={mid.x + off.x - 8 / s} y={mid.y + off.y + 6 / s} radius={3 / s} fill={ACCENT} />
+            <LText x={mid.x + off.x} y={mid.y + off.y} text={`${formatLength(r.inches, labels.units)} · ${r.angle}°`} fontSize={12 / s} fill={ACCENT} bold bg s={s} />
+          </Group>
+        );
+      })}
     </Group>
   );
 }
