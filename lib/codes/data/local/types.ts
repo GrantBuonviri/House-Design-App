@@ -53,6 +53,15 @@ export type CodeOverlay = {
   permitOffice?: string;
   /** "Boise City Code Title 11 (Zoning)". */
   zoningCode?: string;
+  /** Who issues electrical and plumbing permits where it isn't the building department: "the State of Idaho (DOPL)". */
+  electricalPermit?: string;
+  plumbingPermit?: string;
+  /** A local rule for steep lots, for the foundation sheet: "Boise asks for ...". */
+  hillsideRule?: string;
+  /** The building department's own list of required sheets: "Boise checklist #402". */
+  checklist?: string;
+  /** Whether new houses need fire sprinklers here, for the cover sheet (IRC R313.2, which many places delete). */
+  sprinklers?: string;
   /** Where the facts came from and when they were checked. */
   sources?: string[];
   checked?: string;

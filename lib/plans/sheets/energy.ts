@@ -4,14 +4,14 @@ import { roleOf, openingRooms } from "@/lib/plan/connect";
 import { ceilingFor, FLOOR_STRUCTURE_IN } from "@/lib/plan/basics";
 import { openingGeometries } from "@/lib/plan/walls";
 import { joinRooms, regionArea, subtractRegions, type Region } from "@/lib/house3d/footprint";
-import { codeNum, codeRef, codeText } from "@/lib/codes/data";
+import { changedBy, codeName, codeNum, codeRef, codeText } from "@/lib/codes/data";
 import { archFeet, type Item } from "../draw";
 import { houseFacts } from "../house";
 import { flowTables } from "./schedules";
 
 /**
- * Energy sheet (G-003): the 2018 IECC insulation and window values for
- * climate zone 5B as Idaho amended them, what this house uses, and the
+ * Energy sheet (G-003): the energy code's insulation and window values for
+ * the place's climate zone (with any state changes), what this house uses, and the
  * numbers REScheck asks for: wall, window and door areas by direction,
  * ceiling and floor areas, and a rough heat loss (not a Manual J).
  */
@@ -129,7 +129,7 @@ export function envelope(project: Project): Envelope {
 
 const r0 = (n: number) => Math.round(n).toLocaleString("en-US");
 
-/** A rough heat loss at Boise's winter design temperature: areas over R-values plus air leakage. Not a Manual J. */
+/** A rough heat loss at the place's winter design temperature: areas over R-values plus air leakage. Not a Manual J. */
 export function roughHeatLoss(project: Project, env = envelope(project)): { btuh: number; dt: number } {
   const wallR = (project.plan.basics?.exteriorWall ?? "2x6") === "2x6" ? 21 : 18;
   const u = codeNum("energy.fenestrationU");
@@ -162,8 +162,8 @@ export function energySheets(project: Project): Item[][] {
   req.push(
     ["Windows and glass doors", `U-${codeText("energy.fenestrationU")} max`, codeRef("energy.fenestrationU"), `Every window and glass door U-${codeText("energy.fenestrationU")} or lower, NFRC label left on until inspection`],
     ["Skylights", `U-${codeText("energy.skylightU")} max`, codeRef("energy.skylightU"), "None drawn"],
-    ["Glass solar heat gain (SHGC)", codeText("energy.glazedSHGC"), codeRef("energy.glazedSHGC"), "No requirement in zone 5"],
-    ["Air leakage", `${codeText("energy.airLeakageACH50")} ACH50 max`, codeRef("energy.airLeakageACH50"), "Air sealed per Table R402.4.1.1; blower door test or visual inspection, chosen at the permit (Idaho)"],
+    ["Glass solar heat gain (SHGC)", codeText("energy.glazedSHGC"), codeRef("energy.glazedSHGC"), codeText("energy.glazedSHGC") === "NR" ? `No requirement in zone ${codeText("design.climateZone")}` : `SHGC ${codeText("energy.glazedSHGC")} or lower on every window and glass door`],
+    ["Air leakage", `${codeText("energy.airLeakageACH50")} ACH50 max`, codeRef("energy.airLeakageACH50"), changedBy("energy.airLeakageACH50") ? `Air sealed per Table R402.4.1.1; blower door test or visual inspection, chosen at the permit (${changedBy("energy.airLeakageACH50")})` : "Air sealed per Table R402.4.1.1 and tested with a blower door (R402.4.1.2)"],
     ["Ducts", `R-${codeNum("energy.ductRAttic")} attic, R-${codeNum("energy.ductROther")} elsewhere; leakage test`, codeRef("energy.ductRAttic"), "Ducts inside the heated space where possible; sealed and tested"],
     ["Hot water pipes", `R-${codeNum("energy.hotWaterPipeR")}`, codeRef("energy.hotWaterPipeR"), `R-${codeNum("energy.hotWaterPipeR")} where the code asks`],
     ["Lighting", `${codeNum("energy.highEfficacyLampsPct")}% high-efficacy`, codeRef("energy.highEfficacyLampsPct"), "LED throughout"],
@@ -192,12 +192,12 @@ export function energySheets(project: Project): Item[][] {
   other.push(["Rough heat loss (not a Manual J)", `About ${r0(loss.btuh)} Btu/h at ${codeNum("design.manualJWinter")}°F outside, ${loss.dt}°F difference`]);
 
   const notes = [
-    `Climate zone ${codeText("design.climateZone")}, 2018 IECC with Idaho amendments. The house is designed to the prescriptive values in Table R402.1.2 (${codeRef("energy.ceilingR")}).`,
+    `Climate zone ${codeText("design.climateZone")}, ${codeName("Energy")}${changedBy("energy.ceilingR") ? ` with ${changedBy("energy.ceilingR")} amendments` : ""}. The house is designed to the prescriptive values in Table R402.1.2 (${codeRef("energy.ceilingR")}).`,
     "The energy compliance report (REScheck, free at energycodes.gov, or an energy rating) is made outside the app. Enter the areas on this sheet: walls, windows and doors by direction, the ceiling and the floor.",
     "Wall areas are floor to floor (ceiling height plus the floor framing) along the outside of the heated rooms, measured to the middle of the walls. Window and door areas are their rough opening sizes. Check them against the final drawings.",
     `Doors: one opaque door up to ${codeNum("energy.opaqueDoorExemptArea")} sq ft and ${codeNum("energy.glazedExemptArea")} sq ft of glass may skip the U-factor (${codeRef("energy.opaqueDoorExemptArea")}, ${codeRef("energy.glazedExemptArea")}).`,
     "Post the energy certificate (insulation R-values, window U-factors, equipment efficiencies) on or in the electrical panel before final inspection (IECC R401.3).",
-    "The rough heat loss uses the R-values above, U-0.32 glass and the air leakage limit spread over a year; it's for a first idea of furnace size only. The HVAC contractor's Manual J sets the real size.",
+    `The rough heat loss uses the R-values above, U-${codeText("energy.fenestrationU")} glass and the air leakage limit spread over a year; it's for a first idea of furnace size only. The HVAC contractor's Manual J sets the real size.`,
   ];
 
   return flowTables(

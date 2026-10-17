@@ -10,10 +10,11 @@ import { gasFixtures } from "./sheets/plumbing";
 import { levelDevices } from "./systems";
 import { structureOf } from "@/lib/structure";
 import { flatProject } from "@/lib/plan/flatten";
-import { codeSetKey } from "@/lib/codes/data";
+import { codeNum, codeSetKey } from "@/lib/codes/data";
+import { licensedEngineer, localFacts, placeShort } from "./local";
 
 /**
- * Every plan sheet a Boise house permit asks for (checklist #402), grouped
+ * Every plan sheet a typical house permit asks for (or the city's own list), grouped
  * the way a set is bound, each with a readiness rule worked out from the
  * project. Sheets that come in later updates show as "coming".
  */
@@ -49,13 +50,13 @@ export type SheetEntry = {
 export const canDraw = (s: SheetEntry) => s.status === "ready" || s.status === "notes";
 
 /** Documents a permit needs that the app can't make, who makes them, and what the app gives them. */
-export const OUTSIDE_DOCS: { id: string; title: string; who: string; gives: string }[] = [
-  { id: "manual-j", title: "Heating and cooling loads (Manual J, D and S)", who: "Your HVAC contractor, using ACCA Manual J, D and S software", gives: "Room list, floor areas, window sizes and Boise's design temperatures (11°F winter, 95°F summer)." },
+export const outsideDocs = (): { id: string; title: string; who: string; gives: string }[] => [
+  { id: "manual-j", title: "Heating and cooling loads (Manual J, D and S)", who: "Your HVAC contractor, using ACCA Manual J, D and S software", gives: `Room list, floor areas, window sizes and ${placeShort()}'s design temperatures (${codeNum("design.manualJWinter")}°F winter, ${codeNum("design.manualJSummer")}°F summer).` },
   { id: "rescheck", title: "Energy compliance report (REScheck or an energy rating)", who: "You, with the free REScheck tool at energycodes.gov, or an energy rater", gives: "Wall, window, door, ceiling and floor areas by direction, on the energy sheet (G-003)." },
   { id: "trusses", title: "Roof truss drawings", who: "The truss supplier's engineer", gives: "Roof shape, pitch, overhangs and spans." },
-  { id: "engineering", title: "Structural engineering", who: "An Idaho-licensed engineer, only where a sheet says \"Engineer required\"", gives: "The framing layout and loads." },
+  { id: "engineering", title: "Structural engineering", who: `${licensedEngineer().replace(/^an/, "An")}, only where a sheet says "Engineer required"`, gives: "The framing layout and loads." },
   { id: "survey", title: "Survey or recorded plat", who: "A licensed land surveyor, or the county's recorded plat", gives: "Nothing; the site plan is drawn from it." },
-  { id: "fire-flow", title: "Fire flow letter", who: "Your water company (Veolia or the city)", gives: "The address and house size." },
+  { id: "fire-flow", title: "Fire flow letter", who: "Your water company or fire district", gives: "The address and house size." },
 ];
 
 /** Floor plan sheet numbers: A-101 for the lowest floor with rooms, then up. */
@@ -228,7 +229,7 @@ export function readiness(project: Project): Readiness {
   }
 
   structuralSheets(project, needPlan, fails).forEach((e) => sheets.push(e));
-  for (const d of OUTSIDE_DOCS) sheets.push({ id: `outside:${d.id}`, number: "", title: d.title, group: "From outside the app", status: "outside", reasons: [{ text: `Made by: ${d.who}.` }, { text: `The app gives them: ${d.gives}` }] });
+  for (const d of outsideDocs()) sheets.push({ id: `outside:${d.id}`, number: "", title: d.title, group: "From outside the app", status: "outside", reasons: [{ text: `Made by: ${d.who}.` }, { text: `The app gives them: ${d.gives}` }] });
 
   const order = (g: SheetGroup) => SHEET_GROUPS.indexOf(g);
   sheets.sort((a, b) => order(a.group) - order(b.group) || a.number.localeCompare(b.number));
@@ -274,7 +275,7 @@ function structuralSheets(project: Project, needPlan: Reason[], fails: RuleRepor
   out.push({ id: "struct-notes", number: "S-001", title: "Structural notes and header schedule", group: "Structural", status: s.engineer.length ? "notes" : "ready", reasons: s.engineer.length ? [{ text: `${s.engineer.length} item${s.engineer.length === 1 ? " needs" : "s need"} an engineer; they're listed on this sheet.` }, basis] : [basis] });
   const fd = s.foundation;
   if (fd) {
-    const reasons: Reason[] = fd.hillside ? [{ text: "An engineer must design this foundation (Boise hillside rules)" }, ...eng(fd.engineer.slice(1))] : eng(fd.engineer);
+    const reasons: Reason[] = fd.hillside ? [{ text: `An engineer must design this foundation (${localFacts().hillsideRule ? `${placeShort()} hillside rules` : "steep lot"})` }, ...eng(fd.engineer.slice(1))] : eng(fd.engineer);
     out.push({ id: "foundation", number: "S-101", title: "Foundation plan", group: "Structural", status: reasons.length ? "notes" : "ready", reasons: [...reasons, basis] });
   }
   if (!s.floors.length) out.push({ id: "floor-framing", number: "S-201", title: "Floor framing plans", group: "Structural", status: "not-needed", reasons: [{ text: "Not needed: the only floor sits on a slab" }] });

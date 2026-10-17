@@ -2,13 +2,14 @@ import { windowWells, wellNote } from "@/lib/plan/wells";
 import type { Level, Point, Project } from "@/lib/model/schema";
 import { add, boundsOf, dist, leftNormal, lerp, polygonCenter, scale, sub, unit } from "@/lib/plan/geometry";
 import { wallPieces } from "@/lib/plan/walls";
-import { codeEntry, codeNum, codeRef, codeTable, codeText } from "@/lib/codes/data";
+import { changedBy, codeEntry, codeNum, codeRef, codeTable, codeText } from "@/lib/codes/data";
 import { structureOf, type Structure } from "@/lib/structure";
 import { lineIntervals, other, pt, regionBounds, stripPositions } from "@/lib/structure/geometry";
 import { LUMBER_NAME } from "@/lib/structure/tables";
 import type { FloorFraming } from "@/lib/structure/framing";
 import type { FoundationLine, Zone } from "@/lib/structure/foundation";
 import { DRAW_AREA } from "../frame";
+import { hillsideNote, placeShort, verifyNote } from "../local";
 import { archFeet, DASH, SCALES, textWidth, type Item, type Weight } from "../draw";
 import { houseFacts } from "../house";
 import { houseScene } from "../scene";
@@ -183,7 +184,8 @@ export function foundationSheet(project: Project): StructSheet {
     ],
     marks.map((m) => [m.mark, m.zone === "crawlspace" ? "Crawlspace stem wall" : m.zone === "basement" ? "Basement wall" : m.zone === "garage" ? "Garage edge" : "Slab edge", String(m.stories), m.footing ? `${m.footing.widthIn}" wide x ${m.footing.thicknessIn}" thick` : ENGINEER, m.zone === "basement" ? `${wallT}" concrete, ${m.wallNote === "PC" || !m.wallNote ? "plain" : m.wallNote}` : `${wallT}" concrete stem wall`]),
   );
-  col.notes([`Footing widths from Idaho's footing table (${codeRef("struct.footingsLightFrame")}, ${codeEntry("struct.footingsLightFrame").amendment ?? "IDAPA 24.39.30"}) for ${project.plans.structure.soilPsf.toLocaleString()} psf soil.`]);
+  const footingsBy = changedBy("struct.footingsLightFrame");
+  col.notes([`Footing widths from ${footingsBy ? `${footingsBy}'s footing table (${codeRef("struct.footingsLightFrame")}, ${codeEntry("struct.footingsLightFrame").amendment ?? "a local amendment"})` : `the IRC footing tables (${codeRef("struct.footingsLightFrame")})`} for ${project.plans.structure.soilPsf.toLocaleString()} psf soil.`]);
   if (fd.piers.length) {
     col.heading("Piers");
     const sizes = [...new Set(fd.piers.map((p) => `${p.sizeIn}|${p.thicknessIn}`))].map((k) => k.split("|").map(Number));
@@ -195,7 +197,7 @@ export function foundationSheet(project: Project): StructSheet {
   col.heading("Foundation notes");
   const cs = codeTable<number>("struct.concreteStrength");
   const notes = [
-    `Bottom of every footing at least ${codeNum("design.frostDepth")}" below finished grade (Boise frost depth, ${codeRef("footing.minDepthFrost")}), on undisturbed soil.`,
+    `Bottom of every footing at least ${codeNum("design.frostDepth")}" below finished grade (${placeShort()} frost depth, ${codeRef("footing.minDepthFrost")}), on undisturbed soil.`,
     `Soil assumed ${project.plans.structure.soilPsf.toLocaleString()} psf (${codeRef("struct.soilBearing")}). The building inspector or a soils report confirms it; change it in Plan details.`,
     `Concrete: ${cs.foundationsNotExposed.toLocaleString()} psi for footings and walls, ${cs.foundationsExposed.toLocaleString()} psi where exposed to weather, ${cs.garageSlab.toLocaleString()} psi for the garage slab (${codeRef("struct.concreteStrength")}, severe weathering).`,
     `Anchor bolts: ${codeNum("struct.anchorBoltDiameter")}" diameter, ${codeNum("struct.anchorBoltEmbed")}" into the concrete, ${codeNum("struct.anchorBoltSpacing")}'-0" apart and within ${codeNum("struct.anchorBoltFromEnd")}" of each end of every plate, at least ${codeNum("struct.anchorBoltMinPerPiece")} per plate piece (${codeRef("struct.anchorBoltSpacing")}). Sill plates preservative-treated.`,
@@ -207,7 +209,7 @@ export function foundationSheet(project: Project): StructSheet {
   }
   if (s.basement) notes.push(`Basement walls ${wallT}" concrete, braced by the floor framing before backfilling, with foundation drainage and dampproofing (R405, R406). Soil assumed the weakest class in the wall table.`);
   if (wells.length) notes.push(wellNote(wells));
-  if (fd.hillside) notes.push(`${ENGINEER}: this lot is steep. Boise asks for an Idaho-licensed engineer to design hillside foundations. The layout here is for the engineer to start from.`);
+  if (fd.hillside) notes.push(`${ENGINEER}: this lot is steep. ${hillsideNote()} The layout here is for the engineer to start from.`);
   for (const e of fd.engineer.filter((x) => !x.text.startsWith("The lot is steep"))) notes.push(`${ENGINEER}: ${e.text}`);
   col.notes(notes);
   d.items.push(...col.items);
@@ -362,7 +364,7 @@ export function roofFramingSheet(project: Project): StructSheet {
   const sheath = codeTable<string>("struct.roofSheathing");
   col.notes([
     `Trusses designed by the truss supplier's engineer to ANSI/TPI 1, with truss design drawings at the site for the inspector (${codeRef("struct.trussDesign")}). The layout here gives the supplier the roof shape, ${s.roof.pitch} in 12 pitch, ${ft(s.roof.overhangIn)} overhangs and the bearing walls.`,
-    `Design loads for the supplier: roof snow ${codeNum("design.roofSnowLoadMin")} psf (Boise), ground snow ${codeNum("design.groundSnowLoad")} psf, wind ${codeNum("struct.windSpeedBasis")} mph (ultimate, exposure ${project.plans.structure.windExposure}), ceiling ${codeTable<number>("struct.liveLoads").atticNoStorage} psf attic live load where there's no storage.`,
+    `Design loads for the supplier: roof snow ${codeNum("design.roofSnowLoadMin")} psf (${placeShort()}), ground snow ${codeNum("design.groundSnowLoad")} psf, wind ${codeNum("struct.windSpeedBasis")} mph (ultimate, exposure ${project.plans.structure.windExposure}), ceiling ${codeTable<number>("struct.liveLoads").atticNoStorage} psf attic live load where there's no storage.`,
     `Trusses bear on the outside walls under the eaves; inside walls on the top floor carry no roof load. Gable-end walls get a gable-end truss. Hips, valleys and girder trusses are laid out by the supplier.`,
     `Truss bracing per the truss drawings and BCSI (${codeRef("struct.trussBracing")}).`,
     `Uplift: ${codeText("struct.roofUplift").split(";")[0]}. Use connectors rated for the uplift on the truss drawings (${codeRef("struct.roofUplift")}).`,
@@ -448,11 +450,11 @@ export function structuralNotesSheets(project: Project): Item[][] {
     ["Floors (living)", `${live.floorLiving} psf live, ${codeNum("struct.floorDeadLoad")} psf dead`, codeRef("struct.liveLoads")],
     ["Floors (sleeping rooms)", `${live.floorSleeping} psf live (floors here are sized for ${live.floorLiving})`, codeRef("struct.liveLoads")],
     ["Attic without storage", `${live.atticNoStorage} psf`, codeRef("struct.liveLoads")],
-    ["Roof snow", `${codeNum("design.roofSnowLoadMin")} psf (ground snow ${codeNum("design.groundSnowLoad")} psf)`, "Boise design criteria"],
-    ["Wind", `${codeNum("struct.windSpeedBasis")} mph ultimate (Boise lists ${codeNum("design.windSpeed")} mph), exposure ${project.plans.structure.windExposure}`, codeRef("struct.windSpeedBasis")],
-    ["Seismic", `Category ${codeText("design.seismicCategory")}`, "Boise design criteria"],
+    ["Roof snow", `${codeNum("design.roofSnowLoadMin")} psf (ground snow ${codeNum("design.groundSnowLoad")} psf)`, `${placeShort()} design criteria`],
+    ["Wind", `${codeNum("struct.windSpeedBasis")} mph ultimate${codeNum("struct.windSpeedBasis") !== codeNum("design.windSpeed") ? ` (${placeShort()} lists ${codeNum("design.windSpeed")} mph)` : ""}, exposure ${project.plans.structure.windExposure}`, codeRef("struct.windSpeedBasis")],
+    ["Seismic", `Category ${codeText("design.seismicCategory")}`, `${placeShort()} design criteria`],
     ["Soil", `${project.plans.structure.soilPsf.toLocaleString()} psf (presumptive)`, codeRef("struct.soilBearing")],
-    ["Frost depth", `${codeNum("design.frostDepth")}"`, "Boise design criteria"],
+    ["Frost depth", `${codeNum("design.frostDepth")}"`, `${placeShort()} design criteria`],
   ];
   const lumber = LUMBER_NAME[project.plans.structure.lumber];
   const studs = codeTable<Record<string, number | null>>("struct.studSpacing");
@@ -466,7 +468,7 @@ export function structuralNotesSheets(project: Project): Item[][] {
     ...(anyCurvedWalls(project) ? [`${CURVED_FRAMING_NOTE} Each curved wall is built as short straight pieces on a curved plate; the radius is on the floor plans. Bracing does not count a curved wall as a braced wall line unless an engineer says so.`] : []),
     "Trusses: by the truss supplier, see S-301. Floor joists: see the floor framing plans. Foundation: see S-101. Wall bracing: see S-401.",
     "Decks and porch framing (ledgers, joists, posts, guards) are built per IRC R507 and checked by the inspector; they aren't drawn here.",
-    "Verify all dimensions and code requirements with the City of Boise before construction.",
+    verifyNote(),
   ];
   const sections = [
     { title: "Design loads", cols: [{ title: "Load", width: 2 }, { title: "Value", width: 4 }, { title: "Code", width: 2 }], rows: loads },

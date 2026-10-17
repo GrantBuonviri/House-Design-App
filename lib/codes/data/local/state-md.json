@@ -1,5 +1,6 @@
 {
   "jurisdiction": "MD",
+  "sprinklers": "Required in new one- and two-family houses unless the county opted out (Maryland state law)",
   "adoption": "statewide",
   "codes": {
     "irc": {

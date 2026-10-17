@@ -15,7 +15,7 @@ import { sharedEdges, widestUnit } from "./bend";
 const SOUTH: Point = { x: 0, y: 1 };
 
 /**
- * Afternoon sun comes from the west and Boise afternoons are hot, so west glass is kept small:
+ * Afternoon sun comes from the west and heats rooms most, so west glass is kept small:
  * at most 25% of a room's window area, and 4% of the house's floor area in all. Walls facing
  * within 60 degrees of due west count as west.
  */

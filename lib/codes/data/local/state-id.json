@@ -1,5 +1,8 @@
 {
   "jurisdiction": "Idaho",
+  "sprinklers": "None (not required for a house under the IRC as Idaho adopted it)",
+  "electricalPermit": "the State of Idaho (DOPL)",
+  "plumbingPermit": "the State of Idaho (DOPL)",
   "adoption": "statewide",
   "codes": {
     "irc": {

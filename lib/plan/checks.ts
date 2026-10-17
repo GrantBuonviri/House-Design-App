@@ -221,7 +221,7 @@ export function planWarnings(plans: Plans, ctx: Ctx): PlanWarning[] {
       add_(level.id, `setback:${r.id}`, worst.pastLine ? `${r.name} is ${formatFeetInches(worst.byIn)} past the ${side} lot line.` : `${r.name} is ${formatFeetInches(worst.byIn)} past the ${side} setback.`, [r], worst.point);
     }
 
-    // Light and air (R303): glass of 8% of the floor and 4% opening. A soft note, since the code allows electric light and Idaho's fresh-air fan instead.
+    // Light and air (R303): glass of 8% of the floor and 4% opening. A soft note, since the code allows electric light and a whole-house fresh-air fan instead.
     if (plan.openings.some((o) => o.kind === "window")) {
       for (const r of plan.rooms) {
         if (areaKind(r) !== "living" || !isHabitable(r)) continue;

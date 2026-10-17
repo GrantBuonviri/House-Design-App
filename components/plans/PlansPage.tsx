@@ -11,9 +11,10 @@ import { reportCounts, type RuleReport, type RuleStatus } from "@/lib/codes/rule
 import SheetSvg from "./SheetSvg";
 import RealLotForm from "./RealLotForm";
 import { codeEditions } from "@/lib/codes/data";
+import { localFacts } from "@/lib/plans/local";
 
 /**
- * The Plans page: every sheet a Boise permit asks for, with its status and
+ * The Plans page: every sheet a house permit asks for, with its status and
  * what it still needs, a preview, and PDF export of the chosen sheets or the
  * code check on its own.
  */
@@ -93,7 +94,7 @@ export default function PlansPage({ project, onClose, onGo, onEditInFurnish }: {
       <header className="flex items-center gap-3 whitespace-nowrap border-b border-line bg-white px-5 py-3">
         <div className="min-w-0">
           <h2 className="text-lg font-semibold">Building plans</h2>
-          <p className="truncate text-xs text-muted">{project.name} · {codeEditions().map((e) => e.label.replace(/^[^:]+: /, "")).join(", ")}</p>
+          <p className="truncate text-xs text-muted">{project.name} · {localFacts().place} · {codeEditions().map((e) => e.label.replace(/^[^:]+: /, "")).join(", ")}</p>
         </div>
         <span
           className={`ml-2 rounded-md border px-2 py-1 text-xs font-semibold ${r.label === LABEL_REVIEW ? "border-accent text-accent" : "border-amber-400 text-amber-800"}`}
@@ -322,12 +323,12 @@ function PlanDetails({ project, onSave, onClose }: { project: Project; onSave: (
           Site address
         </label>
         <input id="pd-address" className="input" value={form.address} onChange={(e) => setForm({ ...form, address: e.target.value })} placeholder="1234 W Example St" />
-        <p className="field-hint mb-3">The street address in Boise. The lot&apos;s shape and setbacks go in &quot;My real lot&quot;.</p>
+        <p className="field-hint mb-3">The street address. The lot&apos;s shape and setbacks go in &quot;My real lot&quot;.</p>
         <label className="field-label" htmlFor="pd-parcel">
           Parcel number
         </label>
         <input id="pd-parcel" className="input" value={form.parcel} onChange={(e) => setForm({ ...form, parcel: e.target.value })} placeholder="R1234567890" />
-        <p className="field-hint mb-3">From the Ada County Assessor&apos;s parcel search.</p>
+        <p className="field-hint mb-3">From your county assessor&apos;s parcel search.</p>
         <label className="field-label" htmlFor="pd-designer">
           Drawn by
         </label>

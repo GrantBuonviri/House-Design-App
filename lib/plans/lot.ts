@@ -131,7 +131,7 @@ function madeUpLayout(project: Project, house: Point[][]): SiteLayout | null {
 }
 
 /**
- * Typical Boise R-1C setbacks, in feet, for the made-up lot: 20 front, 5 sides, 20 back.
+ * Typical single-family zoning setbacks, in feet, for the made-up lot: 20 front, 5 sides, 20 back.
  * These are typical numbers, not checked against the city's code; a real lot uses its own.
  */
 export const DEFAULT_SETBACKS_FT = { front: 20, side: 5, rear: 20 } as const;

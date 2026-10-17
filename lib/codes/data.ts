@@ -5,6 +5,7 @@ import { CITY_OVERLAYS, STATE_OVERLAYS } from "./data/local";
 import type { AdoptedCode, AdoptedCodes, CodeOverlay, EditionTables, OverlayValue } from "./data/local/types";
 import type { Location } from "@/lib/model/schema";
 import { DEFAULT_PLACE } from "@/lib/location/current";
+import { CITIES } from "@/lib/location/cities";
 
 /**
  * The building-code numbers the plan checks use, for a new house at the
@@ -71,7 +72,7 @@ export type CodeSet = {
 
 /** The building department's names, from the city file. */
 export type LocalFacts = {
-  /** "City of Boise, Ada County, Idaho", or "Elsewhere in Idaho, ID" for a place off the list. */
+  /** "City and County of Denver, Colorado", or "Elsewhere in Colorado" for a place off the list. */
   jurisdiction: string;
   permitOffice?: string;
   zoningCode?: string;
@@ -79,6 +80,23 @@ export type LocalFacts = {
   adoption?: CodeOverlay["adoption"];
   /** For "Elsewhere in <state>": what applies there. */
   elsewhere?: string;
+  /** "Colorado". */
+  stateName: string;
+  /** For the title block and cover: "Denver, Colorado", or just "Colorado" for a place off the list. */
+  place: string;
+  /** Who reviews the plans, for "Verify ... with ...": "the City and County of Denver", or "the building department". */
+  reviewer: string;
+  /** The city's short name ("Denver"), for a local rule; unset for a place off the list. */
+  cityName?: string;
+  /** Who issues electrical and plumbing permits, where it isn't the building department (a state licensing office). */
+  electricalPermit?: string;
+  plumbingPermit?: string;
+  /** A local rule for building on a steep lot. */
+  hillsideRule?: string;
+  /** The building department's own list of required sheets. */
+  checklist?: string;
+  /** Fire sprinklers in a new house here, for the cover sheet. */
+  sprinklers?: string;
 };
 
 type BaseData = { meta: CodeSet["meta"]; editionLines: EditionLine[]; values: Record<string, CodeEntry> };
@@ -288,13 +306,24 @@ export function buildCodeSet(location: Location, overlays?: { state?: CodeOverla
   if (roof.layer !== "location" && typeof roof.value === "number" && roof.value < roofSnowFor(location.groundSnowPsf)) values["design.roofSnowLoadMin"] = locationLayer(location)["design.roofSnowLoadMin"];
   const elsewhere = location.cityId.startsWith("elsewhere-") ? state?.elsewhere : undefined;
   const editions = city?.editionLines ?? state?.editionLines ?? editionLinesFor(adopted, elsewhere);
-  const jurisdiction = city?.jurisdiction ?? `${location.name}, ${location.state}`;
+  const stateName = CITIES.find((c) => c.state === location.state)?.stateName ?? location.state;
+  const offList = location.cityId.startsWith("elsewhere-");
+  const jurisdiction = city?.jurisdiction ?? (offList ? location.name : `${location.name}, ${stateName}`);
   const local: LocalFacts = {
     jurisdiction,
     permitOffice: city?.permitOffice,
     zoningCode: city?.zoningCode,
     adoption: city?.adoption ?? state?.adoption,
     elsewhere,
+    stateName,
+    place: offList ? stateName : `${location.name}, ${stateName}`,
+    reviewer: city?.jurisdiction ? `the ${city.jurisdiction.split(",")[0]}` : "the building department",
+    cityName: offList ? undefined : location.name,
+    electricalPermit: city?.electricalPermit ?? state?.electricalPermit,
+    plumbingPermit: city?.plumbingPermit ?? state?.plumbingPermit,
+    hillsideRule: city?.hillsideRule,
+    checklist: city?.checklist,
+    sprinklers: city?.sprinklers ?? state?.sprinklers,
   };
   const metaEditions: CodeEdition[] = editions.map((l) => ({ code: l.label.replace(/:.*/, ""), edition: l.label.replace(/^[^:]+: /, ""), amendments: l.detail }));
   return { meta: { ...BASE.meta, jurisdiction, editions: metaEditions }, editions, values, location, local };
@@ -308,7 +337,7 @@ let active: CodeSet = buildCodeSet(DEFAULT_PLACE);
 let activeKey = placeKey(DEFAULT_PLACE);
 built.set(activeKey, active);
 
-/** Use the code numbers for this place from now on (null = Boise's numbers, as before a place is picked). */
+/** Use the code numbers for this place from now on (null = the default place's numbers, as before a place is picked). */
 export function setCodeLocation(location: Location | null | undefined): void {
   const loc = location ?? DEFAULT_PLACE;
   const key = placeKey(loc);
@@ -376,5 +405,25 @@ export function codeTable<T>(key: string): Record<string, T> {
 export function codeRef(key: string): string {
   const e = codeEntry(key);
   const book = e.code.replace(/ \d{4}$/, "");
-  return book === "Design criteria" ? `IRC ${e.section}` : `${book} ${e.section}`;
+  if (book === "Design criteria") return `IRC ${e.section}`;
+  return e.section.startsWith(`${book} `) ? e.section : `${book} ${e.section}`;
+}
+
+/** Whose change a number is: the city ("Denver") for a city's, the state ("Colorado") for a state's, null for the model code or the place card. */
+export function changedBy(key: string): string | null {
+  const layer = codeEntry(key).layer;
+  if (layer === "city") return active.local.cityName ?? active.local.stateName;
+  if (layer === "state") return active.local.stateName;
+  return null;
+}
+
+/** A steep lot's foundation note: the city's own rule where it has one. */
+export function hillsideNote(): string {
+  return active.local.hillsideRule ?? "Steep lots usually need an engineer-designed foundation.";
+}
+
+/** The code in use for one part of the work, from the cover sheet's list: "Energy" gives "2018 International Energy Conservation Code (IECC)". */
+export function codeName(part: "Residential" | "Energy" | "Electrical" | "Plumbing"): string {
+  const line = active.editions.find((l) => l.label.startsWith(`${part}:`));
+  return line ? line.label.slice(part.length + 2) : part;
 }

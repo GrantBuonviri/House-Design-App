@@ -1,6 +1,6 @@
 import type { Project, RealLot } from "@/lib/model/schema";
 import { houseSpot } from "@/lib/house3d/site";
-import { codeEditions, codeEntry, codeNum, codeSet, codeText } from "@/lib/codes/data";
+import { changedBy, codeEditions, codeEntry, codeNum, codeRef, codeSet, codeText } from "@/lib/codes/data";
 import { reportCounts, type RuleReport } from "@/lib/codes/rules";
 import { inchText } from "@/lib/codes/rules";
 import { planTotals } from "@/lib/plan/measure";
@@ -9,7 +9,8 @@ import { houseFacts } from "../house";
 import { realLotOk } from "../lot";
 import { fittedView } from "./views";
 import { DRAW_AREA, designerOf, ownerOf, preparedNote } from "../frame";
-import { OUTSIDE_DOCS, type SheetEntry } from "../catalog";
+import { outsideDocs, type SheetEntry } from "../catalog";
+import { amendedRef, licensedEngineer, localFacts, placeShort, reviewNote, verifyNote } from "../local";
 import { capHeight, heading, HEADING_H, lineHeight, rect, table, textBlock, type Item } from "../draw";
 
 /**
@@ -30,7 +31,7 @@ export function designCriteriaRows(): string[][] {
   const row = (label: string, key: string, unit = "") => {
     const e = codeEntry(key);
     const v = typeof e.value === "boolean" ? (e.value ? "Yes" : "No") : `${codeText(key)}${unit}`;
-    return [label, v, e.amendment ? "Boise / Idaho" : e.section];
+    return [label, v, e.amendment ? (changedBy(key) ?? e.section) : e.section];
   };
   return [
     row("Ground snow load", "design.groundSnowLoad", " psf"),
@@ -52,15 +53,15 @@ export function designCriteriaRows(): string[][] {
 function generalNotes(): string[] {
   return [
     "These drawings show a new single-family house: occupancy R-3, construction type V-B, built under the International Residential Code.",
-    "All work follows the codes listed on this sheet as the City of Boise has adopted them. Where the drawings and the code differ, the code governs.",
-    "Verify all dimensions and code requirements with the City of Boise before construction.",
-    `Design loads (IRC Table R301.2(1), Boise): ground snow ${codeNum("design.groundSnowLoad")} psf, roof snow at least ${codeNum("design.roofSnowLoadMin")} psf, wind ${codeNum("design.windSpeed")} mph, seismic design category ${codeText("design.seismicCategory")}.`,
+    `All work follows the codes listed on this sheet as ${localFacts().reviewer} has adopted them. Where the drawings and the code differ, the code governs.`,
+    verifyNote(),
+    `Design loads (IRC Table R301.2(1), ${placeShort()}): ground snow ${codeNum("design.groundSnowLoad")} psf, roof snow at least ${codeNum("design.roofSnowLoadMin")} psf, wind ${codeNum("design.windSpeed")} mph, seismic design category ${codeText("design.seismicCategory")}.`,
     `Footings bear on undisturbed soil at least ${codeNum("design.frostDepth")}" below finished grade (frost depth) and ${codeNum("footing.minDepthBelowGrade")}" at the least (IRC R403.1.4). Soil is assumed ordinary; the inspector confirms it at the footing inspection.`,
-    "Anything marked \"Engineer required\" must be designed and sealed by an Idaho-licensed engineer before it is built.",
+    `Anything marked "Engineer required" must be designed and sealed by ${licensedEngineer()} before it is built.`,
     "Roof trusses are designed by the truss supplier's engineer; their drawings go to the city before framing (IRC R802.10).",
     "Glass marked TEMP is safety glass, tempered or laminated (IRC R308.4).",
     `Smoke alarms in each bedroom, outside each sleeping area and on every floor, wired together with battery backup; carbon monoxide alarms outside sleeping areas when the house has gas appliances or an attached garage (IRC R314, R315).`,
-    `Gypsum board between an attached garage and the house: ${inchText(codeNum("garage.gypsumGarageSide"))} Type X on the garage side (IRC Table R302.6 as amended by Idaho).`,
+    `Gypsum board between an attached garage and the house: ${inchText(codeNum("garage.gypsumGarageSide"))} Type X on the garage side (${amendedRef("IRC Table R302.6", "garage.gypsumGarageSide")}).`,
     "Install every product to its maker's instructions and listing.",
   ];
 }
@@ -74,7 +75,7 @@ export function coverSheet(project: Project, ctx: { sheets: SheetEntry[]; report
   let y = DRAW_AREA.y0 + 0.1;
   items.push({ t: "text", at: { x: DRAW_AREA.x0, y: y + capHeight(30) }, text: project.name.toUpperCase(), size: 30, bold: true });
   y += capHeight(30) + 0.3;
-  const place = project.plans.address.trim() ? `${project.plans.address.trim()}, Boise, Idaho` : "Boise, Idaho (site address TBD)";
+  const place = project.plans.address.trim() ? `${project.plans.address.trim()}, ${localFacts().place}` : `${localFacts().place} (site address TBD)`;
   items.push({ t: "text", at: { x: DRAW_AREA.x0, y: y + capHeight(12) }, text: `NEW SINGLE-FAMILY HOUSE  ·  ${place.toUpperCase()}`, size: 12 });
   y += capHeight(12) + 0.25;
   items.push({ t: "text", at: { x: DRAW_AREA.x0, y: y + capHeight(10) }, text: ctx.label, size: 10, bold: true });
@@ -97,7 +98,7 @@ export function coverSheet(project: Project, ctx: { sheets: SheetEntry[]; report
     ["Occupancy", "R-3, single-family house (IRC)"],
     ["Construction type", "V-B, wood frame"],
     ["Stories", `${above} above ground${h.levels.some((l) => l.kind === "basement") ? ", plus a basement" : ""}`],
-    ["Fire sprinklers", "None (not required for a house under the IRC as Idaho adopted it)"],
+    ["Fire sprinklers", localFacts().sprinklers ?? "Check with the building department: the model IRC asks for them (R313.2), but many states remove that"],
     ["Foundation", foundationText(project)],
     ["Lot", realLotOk(project.plans.lot) ? lotText(project.plans.lot) : plot ? "Sample lot from the app, not a real property" : "TBD"],
   ];
@@ -124,7 +125,7 @@ export function coverSheet(project: Project, ctx: { sheets: SheetEntry[]; report
   items.push(...textBlock("Areas are measured to the middle of the walls.", c1.x, y1, c1.w, 6.5).items);
   y1 += 0.4;
 
-  items.push(...heading("Design criteria (IRC Table R301.2(1), Boise)", c1.x, y1, c1.w));
+  items.push(...heading(`Design criteria (IRC Table R301.2(1), ${placeShort()})`, c1.x, y1, c1.w));
   y1 += HEADING_H + 0.05;
   tb = table(c1.x, y1, [{ title: "Item", width: 2.6 }, { title: "Value", width: 2.4 }, { title: "Source", width: c1.w - 5 }], designCriteriaRows(), { size: 7 });
   items.push(...tb.items);
@@ -190,7 +191,7 @@ export function coverSheet(project: Project, ctx: { sheets: SheetEntry[]; report
 
   items.push(...heading("From outside the app", c4.x, y4, c4.w));
   y4 += HEADING_H + 0.08;
-  for (const d of OUTSIDE_DOCS) {
+  for (const d of outsideDocs()) {
     b = textBlock(d.title, c4.x, y4, c4.w, 7.5, { bold: true });
     items.push(...b.items);
     y4 += b.height;
@@ -203,7 +204,7 @@ export function coverSheet(project: Project, ctx: { sheets: SheetEntry[]; report
   const disclaimer = [
     preparedNote(project),
     "The app checked the code rules listed on G-002 against these drawings and shows each result. It does not check anything else, and it can be wrong. Items marked \"Check by hand\" and every document listed above must come from the person or company named.",
-    "Plan review by the City of Boise is the real check. Verify all dimensions and code requirements with the City of Boise before construction.",
+    reviewNote(),
   ].join("\n");
   b = textBlock(disclaimer, c4.x + 0.12, y4 + 0.12, c4.w - 0.24, 7.5);
   items.push(rect(c4.x, y4, c4.w, b.height + 0.24, "medium"));
@@ -285,8 +286,13 @@ export function codeSheets(project: Project, report: RuleReport[]): Item[][] {
       items.push(...heading("Local changes used here", DRAW_AREA.x0, y, s1));
       y += HEADING_H + 0.08;
       const amended = Object.entries(codeSet().values).filter(([, e]) => e.amendment && (e.layer === "state" || e.layer === "city"));
-      for (const [, e] of amended) {
-        const b = textBlock(`${e.code.replace(/ \d{4}$/, "")} ${e.section}: ${e.amendment}`, DRAW_AREA.x0, y, s1, 6.5);
+      if (!amended.length) {
+        const b = textBlock("None: the numbers checked here are the model codes' own, for this place's design criteria.", DRAW_AREA.x0, y, s1, 6.5);
+        items.push(...b.items);
+        y += b.height + 0.05;
+      }
+      for (const [key, e] of amended) {
+        const b = textBlock(`${codeRef(key)}: ${e.amendment}`, DRAW_AREA.x0, y, s1, 6.5);
         if (y + b.height > DRAW_AREA.y1 - 4.2) break;
         items.push(...b.items);
         y += b.height + 0.05;

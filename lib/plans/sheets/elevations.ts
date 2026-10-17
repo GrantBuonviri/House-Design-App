@@ -5,6 +5,7 @@ import type { ExteriorCategoryId } from "@/lib/catalog/exterior";
 import { codeNum, codeRef } from "@/lib/codes/data";
 import { inchText } from "@/lib/codes/rules";
 import { DRAW_AREA } from "../frame";
+import { placeShort } from "../local";
 import { archFeet, capHeight, DASH, heading, HEADING_H, line, SCALES, textBlock, textWidth, type Item } from "../draw";
 import { houseFacts } from "../house";
 import { frontSide, realLotOk, type Compass } from "../lot";
@@ -307,8 +308,8 @@ function notes(project: Project, sc: HouseScene, continued: boolean): Item[] {
     `Wood siding and sheathing at least ${inchText(codeNum("siding.woodClearanceToGrade"))} above the ground (${codeRef("siding.woodClearanceToGrade")}).`,
     "Siding over a water-resistive barrier, with flashing at every door, window and roof-to-wall joint (IRC R703.2, R703.4).",
     `House number on the street side, at least ${inchText(codeNum("address.minHeight"))} high, in a color that stands out (${codeRef("address.minHeight")}).`,
-    `Roof designed for ${codeNum("design.roofSnowLoadMin")} psf snow and ${codeNum("design.windSpeed")} mph wind (IRC Table R301.2(1), Boise).`,
-    `Highest point of the roof: ${archFeet(top)} above the main floor.${limit ? ` Zoning height limit entered: ${limit} ft; check how Boise measures it for your zone.` : " Check the zoning height limit for your lot with Boise Planning."}`,
+    `Roof designed for ${codeNum("design.roofSnowLoadMin")} psf snow and ${codeNum("design.windSpeed")} mph wind (IRC Table R301.2(1), ${placeShort()}).`,
+    `Highest point of the roof: ${archFeet(top)} above the main floor.${limit ? ` Zoning height limit entered: ${limit} ft; check how ${placeShort()} measures it for your zone.` : " Check the zoning height limit for your lot with the city or county planning office."}`,
     "Door and window tags (D1, W1) match the floor plans. Dashed lines below the grade are footings.",
   ];
   list.forEach((n, i) => {
