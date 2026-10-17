@@ -22,7 +22,7 @@ import { fixtureType, openingType } from "@/lib/plan/catalog";
 import { catalogEntry, type CatalogEntry } from "@/lib/furnish/catalog";
 import { placeCheck, removeItem, roomAt, type LayerItem } from "@/lib/furnish/layer";
 import { deleteItem, furnishLayouts, patchItem, placeGhost, stageItems, type Ghost } from "@/lib/furnish/stage";
-import { addWall, liftable, openingOnWall, openingShape, slideOpening, walkGhost, walkMove, wallHeightIn, wallPoint, withOpening, type WalkSpot } from "@/lib/furnish/walk";
+import { addWall, liftable, openingInTheWay, openingOnWall, openingShape, slideOpening, walkGhost, walkMove, wallHeightIn, wallPoint, withOpening, type WalkSpot } from "@/lib/furnish/walk";
 import { canAutoFurnish, furnishRoom, furnishSummary } from "@/lib/furnish/autoFurnish";
 import { isClosetRod } from "@/lib/furnish/closets";
 import { effectiveAnswers } from "@/lib/interior/style";
@@ -88,11 +88,20 @@ type Panel =
  */
 type Carry =
   | { kind: "new"; entryId: string; levelId: string; turn: number; lift: number; ghost: Ghost | null }
-  | { kind: "move"; item: LayerItem; levelId: string; turn: number; lift: number; ghost: Ghost | null }
+  // `away`: you've gone to another floor with it; something already placed stays on its own floor.
+  | { kind: "move"; item: LayerItem; levelId: string; turn: number; lift: number; ghost: Ghost | null; away?: boolean }
   | { kind: "door"; style: string; levelId: string; opening: Opening | null }
-  | { kind: "slide"; id: string; levelId: string; opening: Opening | null }
+  | { kind: "slide"; id: string; levelId: string; opening: Opening | null; away?: boolean }
   | { kind: "wall"; height: WallHeight; levelId: string; first: Point | null; hover: Point | null }
   | { kind: "railing"; levelId: string; target: RailingTarget | null };
+
+const AWAY = "put it down on its own floor first";
+
+/** "there's a window there", when another door or window is where this one would go. */
+function inTheWay(plan: FloorPlan, o: Opening): string | undefined {
+  const x = openingInTheWay(plan, o);
+  return x ? `there's a ${openingType(x.style).label.toLowerCase()} there` : undefined;
+}
 
 /** The name of what's being placed, and whether it can go where it is now. */
 function carryInfo(c: Carry, plan: FloorPlan): { label: string; ok: boolean; problem?: string; note?: string; keys: string } {
@@ -106,16 +115,19 @@ function carryInfo(c: Carry, plan: FloorPlan): { label: string; ok: boolean; pro
       return {
         label,
         ok: Boolean(g?.check.ok),
-        problem: g ? g.check.problem : mount === "wall" ? "aim at a wall" : "aim at the floor",
+        problem: c.kind === "move" && c.away ? AWAY : g ? g.check.problem : mount === "wall" ? "aim at a wall" : "aim at the floor",
         note: g?.check.ok && g.check.blocksDoors.length ? "in front of a door" : undefined,
         keys: `R to turn${lifts ? " · scroll to raise or lower" : ""} · Esc to cancel`,
       };
     }
-    case "door":
-      return { label: openingType(c.style).label, ok: Boolean(c.opening), problem: c.opening ? undefined : "aim at a wall", keys: "Esc to cancel" };
+    case "door": {
+      const problem = c.opening ? inTheWay(plan, c.opening) : "aim at a wall";
+      return { label: openingType(c.style).label, ok: !problem, problem, keys: "Esc to cancel" };
+    }
     case "slide": {
       const o = plan.openings.find((x) => x.id === c.id);
-      return { label: o ? openingType(o.style).label : "Door", ok: Boolean(c.opening), problem: c.opening ? undefined : "aim along its wall", keys: "Click to leave it there · Esc to cancel" };
+      const problem = c.away ? AWAY : c.opening ? inTheWay(plan, c.opening) : "aim along its wall";
+      return { label: o ? openingType(o.style).label : "Door", ok: !problem, problem, keys: "Click to leave it there · Esc to cancel" };
     }
     case "railing":
       return { label: "Railing", ok: Boolean(c.target), problem: c.target ? undefined : "aim at a side of the stairs or stairwell with no railing", note: c.target ? "click to add one here" : undefined, keys: "Esc to cancel" };
@@ -123,6 +135,8 @@ function carryInfo(c: Carry, plan: FloorPlan): { label: string; ok: boolean; pro
       return { label: c.height === "full" ? "Wall" : c.height === "half" ? "Half wall" : "Half wall with a cap", ok: Boolean(c.hover), problem: c.hover ? undefined : "aim at the floor", note: c.first ? "click where it ends" : "click where it starts", keys: "Esc to cancel" };
   }
 }
+
+const AWAY_SAID = "Put it down on its own floor first. Things can't be carried between floors.";
 
 const isDesignPanel = (p: Panel | null) => Boolean(p && p.kind !== "labels" && p.kind !== "pin");
 
@@ -230,8 +244,8 @@ export default function Walkthrough({ project, cost, onClose, startWindow }: { p
   const ceilingOf = useCallback((levelId: string) => ceilingFor(basics, levels.find((l) => l.id === levelId) ?? { id: levelId, kind: "main" }), [basics, levels]);
   // Everything placed on each floor, the app's own cabinets and outlets too: what Design can aim at.
   const itemsOn = useMemo<Record<string, LayerItem[]>>(
-    () => (design ? Object.fromEntries(levels.map((l) => [l.id, stageItems(planOf(project.floorPlans, l.id), furnishLayouts(project, l))])) : {}),
-    [design, project, levels],
+    () => (design ? Object.fromEntries(levels.map((l) => [l.id, stageItems(planOf(project.floorPlans, l.id), furnishLayouts(project, l), ceilingOf(l.id))])) : {}),
+    [design, project, levels, ceilingOf],
   );
   const site = useMemo(() => siteFor(project.plot, offset, plans), [project.plot, offset, plans]);
   const ctx: HouseContext = useMemo(
@@ -313,6 +327,9 @@ export default function Walkthrough({ project, cost, onClose, startWindow }: { p
     return [...used].reverse().find((l) => heights[l.id].floorIn <= walker.current.feet + 12)?.id ?? used[0]?.id;
   }, [levels, heights, project.floorPlans]);
 
+  const levelHereRef = useRef(levelHere);
+  levelHereRef.current = levelHere;
+
   const setPlan = useCallback(
     (levelId: string, change: (pl: FloorPlan) => FloorPlan) =>
       update((p) => ({ ...p, floorPlans: { ...p.floorPlans, [levelId]: change(planOf(p.floorPlans, levelId)) } })),
@@ -357,6 +374,7 @@ export default function Walkthrough({ project, cost, onClose, startWindow }: { p
     const c = latest.current.carry;
     if (!c) return;
     const pl = planOf(latest.current.plans, c.levelId);
+    if ((c.kind === "move" || c.kind === "slide") && c.away) return say(AWAY_SAID);
     if (c.kind === "railing") {
       if (!c.target) return say("Aim at a side of the stairs or stairwell that has no railing (it's drawn blue).");
       const out = addRailingIn(latest.current.plans, c.target);
@@ -376,6 +394,8 @@ export default function Walkthrough({ project, cost, onClose, startWindow }: { p
     }
     if (c.kind === "door" || c.kind === "slide") {
       if (!c.opening) return say(c.kind === "door" ? "Aim at a wall to put it there." : "Aim along its own wall to slide it.");
+      const blocked = inTheWay(pl, c.opening);
+      if (blocked) return say(`${blocked[0].toUpperCase()}${blocked.slice(1)}. Aim at a clear stretch of wall.`);
       setLevelPlan(c.levelId, withOpening(pl, c.opening));
       setCarry(null);
       return say(c.kind === "door" ? `Added the ${openingType(c.opening.style).label.toLowerCase()}. Click it in Place to change its size or style.` : null);
@@ -511,6 +531,20 @@ export default function Walkthrough({ project, cost, onClose, startWindow }: { p
       const toPlan = (v: THREE.Vector3): Point => ({ x: v.x * IN_PER_UNIT + frame.ox, y: v.z * IN_PER_UNIT + frame.oy });
       const c = latest.current.carry;
       if (c) {
+        // Gone up or down the stairs: something new comes along to this floor; something already placed stays on its own.
+        const here = levelHereRef.current();
+        if (here && here !== c.levelId) {
+          if (c.kind === "move" || c.kind === "slide") {
+            if (!c.away) {
+              setCarry((cur) => (cur !== c ? cur : c.kind === "move" ? { ...c, away: true, ghost: null } : { ...c, away: true, opening: null }));
+              say(AWAY_SAID);
+            }
+            return;
+          }
+          const moved: Carry = c.kind === "new" ? { ...c, levelId: here, ghost: null } : c.kind === "door" ? { ...c, levelId: here, opening: null } : c.kind === "wall" ? { ...c, levelId: here, first: null, hover: null } : { ...c, levelId: here };
+          setCarry((cur) => (cur === c ? moved : cur));
+          return;
+        }
         // Placing: the spot on the floor you're looking at, and the wall the dot is on.
         const floorIn = heights[c.levelId]?.floorIn ?? 0;
         const y = floorIn / IN_PER_UNIT;
@@ -544,9 +578,9 @@ export default function Walkthrough({ project, cost, onClose, startWindow }: { p
           }
           next = { ...c, target: best?.t ?? null };
         } else if (c.kind === "new") next = { ...c, ghost: walkGhost(pl, c.entryId, spot, c.turn, items, ceilingIn, c.lift) };
-        else if (c.kind === "move") next = { ...c, ghost: walkMove(pl, c.item, spot, c.turn, items, ceilingIn, c.lift) };
+        else if (c.kind === "move") next = { ...c, away: false, ghost: walkMove(pl, c.item, spot, c.turn, items, ceilingIn, c.lift) };
         else if (c.kind === "door") next = { ...c, opening: keepId(openingOnWall(pl, spot.wall?.p ?? floor, c.style, basics?.doorHeightIn), c.opening) };
-        else if (c.kind === "slide") next = { ...c, opening: slideOpening(pl, c.id, spot.wall?.p ?? floor) };
+        else if (c.kind === "slide") next = { ...c, away: false, opening: slideOpening(pl, c.id, spot.wall?.p ?? floor) };
         else next = { ...c, hover: wallPoint(pl, floor) };
         setCarry((cur) => (!cur || cur.kind !== next.kind || cur.levelId !== next.levelId ? cur : JSON.stringify(cur) === JSON.stringify(next) ? cur : next));
         return;
@@ -584,7 +618,7 @@ export default function Walkthrough({ project, cost, onClose, startWindow }: { p
       }
       setAim((cur) => (JSON.stringify(cur) === JSON.stringify(next) ? cur : next));
     },
-    [frame, heights, levels, basics, ceilingOf],
+    [frame, heights, levels, basics, ceilingOf, say],
   );
 
   // The mouse is captured while walking; Esc gives it back (the browser does that), and Esc again closes
@@ -607,11 +641,19 @@ export default function Walkthrough({ project, cost, onClose, startWindow }: { p
       }
     };
     const onKey = (e: KeyboardEvent) => {
-      // The top-down view has its own keys (M or Esc come back).
+      // The top-down view has its own keys (M or Esc come back): that's the Furnish page's, so they go on to it.
       if (latest.current.topDown) return;
+      // The stage page under the walkthrough listens on the window (F for Furnish, Delete, tool letters):
+      // keys stop here, on the document, so it never sees them. Undo and redo still go through.
+      if (!((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "z")) e.stopPropagation();
       const t = e.target as HTMLElement | null;
       if (t?.closest("input, textarea, select")) return;
       if (e.key === "Shift") shiftDown.current = true;
+      // Holding a key down repeats it: only R, turning something being carried, keeps going (walking is Player's).
+      if (e.repeat && !(e.code === "KeyR" && latest.current.carry)) {
+        if (e.code === "Tab" && latest.current.design) e.preventDefault();
+        return;
+      }
       // While a design window is open walking is paused: only I, X and Esc do anything.
       if (latest.current.win) {
         if (e.key === "Escape") {
@@ -754,13 +796,14 @@ export default function Walkthrough({ project, cost, onClose, startWindow }: { p
     };
     document.addEventListener("pointerlockchange", onChange);
     window.addEventListener("keyup", onKeyUp);
-    window.addEventListener("keydown", onKey);
+    // On the document, not the window: see onKey.
+    document.addEventListener("keydown", onKey);
     window.addEventListener("mousedown", onDown);
     window.addEventListener("wheel", onWheel);
     return () => {
       window.removeEventListener("wheel", onWheel);
       document.removeEventListener("pointerlockchange", onChange);
-      window.removeEventListener("keydown", onKey);
+      document.removeEventListener("keydown", onKey);
       window.removeEventListener("keyup", onKeyUp);
       window.removeEventListener("mousedown", onDown);
     };
@@ -840,7 +883,7 @@ export default function Walkthrough({ project, cost, onClose, startWindow }: { p
         {carry && (carry.kind === "new" || carry.kind === "move") && carry.ghost && (
           <ItemGhost ghost={carry.ghost} color={carry.kind === "move" ? carry.item.color : undefined} floorIn={heights[carry.levelId]?.floorIn ?? 0} frame={frame} />
         )}
-        {carry && carryOpening && <OpeningGhost g={carryOpening} floorIn={heights[carry.levelId]?.floorIn ?? 0} frame={frame} ok />}
+        {carry && carryOpening && <OpeningGhost g={carryOpening} floorIn={heights[carry.levelId]?.floorIn ?? 0} frame={frame} ok={carryLabel?.ok ?? true} />}
         {carry?.kind === "wall" && carry.hover && <WallGhost a={carry.first ?? carry.hover} b={carry.hover} heightIn={wallHeightIn(carry.height, ceilingOf(carry.levelId))} floorIn={heights[carry.levelId]?.floorIn ?? 0} frame={frame} />}
         {aimedItem && aim?.kind === "furnish" && <ItemHighlight item={aimedItem} floorIn={heights[aim.levelId]?.floorIn ?? 0} ceilingIn={ceilingOf(aim.levelId)} frame={frame} />}
         {railHint && <RailingHighlight a={railHint.a} b={railHint.b} za={railHint.za} zb={railHint.zb} heightIn={railHint.heightIn} floorIn={heights[railHint.levelId]?.floorIn ?? 0} frame={frame} />}

@@ -79,12 +79,13 @@ export function Player({
       w.yaw += e.movementX * LOOK_PER_PX;
       w.pitch = Math.max(-1.45, Math.min(1.45, w.pitch - e.movementY * LOOK_PER_PX));
     };
-    window.addEventListener("keydown", down);
-    window.addEventListener("keyup", up);
+    // On the document: the walkthrough stops keys there so the page under it doesn't see them.
+    document.addEventListener("keydown", down);
+    document.addEventListener("keyup", up);
     window.addEventListener("mousemove", move);
     return () => {
-      window.removeEventListener("keydown", down);
-      window.removeEventListener("keyup", up);
+      document.removeEventListener("keydown", down);
+      document.removeEventListener("keyup", up);
       window.removeEventListener("mousemove", move);
     };
   }, [locked, walker]);
