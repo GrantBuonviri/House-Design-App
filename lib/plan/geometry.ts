@@ -209,8 +209,38 @@ export function polygonsOverlap(p: Point[], q: Point[], inset = 1): boolean {
 const SLIVER_AREA = 20;
 
 function sharedArea(p: Point[], q: Point[]): number {
-  const ring = (poly: Point[]): [number, number][][] => [[...poly.map((v): [number, number] => [v.x, v.y]), [poly[0].x, poly[0].y]]];
+  try {
+    return clippedArea(p, q, (n) => n);
+  } catch {
+    // polygon-clipping can trip over near-coincident edges (stairs stacked at an angle); snapping to 1/64 in usually clears it.
+  }
+  try {
+    return clippedArea(p, q, (n) => Math.round(n * 64) / 64);
+  } catch {
+    return sampledArea(p, q);
+  }
+}
+
+function clippedArea(p: Point[], q: Point[], snap: (n: number) => number): number {
+  const ring = (poly: Point[]): [number, number][][] => [[...poly.map((v): [number, number] => [snap(v.x), snap(v.y)]), [snap(poly[0].x), snap(poly[0].y)]]];
   return polygonClipping.intersection(ring(p), ring(q)).reduce((t, poly) => t + Math.abs(polygonArea(poly[0].slice(0, -1).map(([x, y]) => ({ x, y })))) - poly.slice(1).reduce((h, r) => h + Math.abs(polygonArea(r.slice(0, -1).map(([x, y]) => ({ x, y })))), 0), 0);
+}
+
+/** Last resort when clipping fails: count grid points inside both shapes. */
+function sampledArea(p: Point[], q: Point[]): number {
+  const xs = [...p, ...q].map((v) => v.x);
+  const ys = [...p, ...q].map((v) => v.y);
+  const x0 = Math.min(...xs), x1 = Math.max(...xs), y0 = Math.min(...ys), y1 = Math.max(...ys);
+  const n = 80;
+  const dx = (x1 - x0) / n, dy = (y1 - y0) / n;
+  if (!(dx > 0 && dy > 0)) return 0;
+  let hits = 0;
+  for (let i = 0; i < n; i++)
+    for (let j = 0; j < n; j++) {
+      const pt = { x: x0 + (i + 0.5) * dx, y: y0 + (j + 0.5) * dy };
+      if (pointInPolygon(pt, p) && pointInPolygon(pt, q)) hits++;
+    }
+  return hits * dx * dy;
 }
 
 function segmentsCross(a: Point, b: Point, c: Point, d: Point): boolean {
