@@ -138,7 +138,7 @@ Every suggestion (the Design Brief, the starting flow sketch, Suggest a plan and
 
 ## Where your projects are saved
 
-Projects live in your browser's storage (IndexedDB) on this computer. They stay there between visits, but clearing your browser's site data deletes them, and a different browser won't see them. Use **Export** on a project to save a `.house.json` backup file, and **Import project** on the home screen to bring one back.
+Projects live in your browser's storage (IndexedDB) on this computer. They stay there between visits, but clearing your browser's site data deletes them, and a different browser won't see them. Use **Export** on a project to save a `.house.json` file, or **Export all houses** to save every house in one file, and **Import** on the home screen to bring either back. The app also keeps backups by itself: each time you close a house after changing it, and every 15 minutes while you work, it keeps a copy (the last 10 per house) under **Backups** on the house's card, with **Restore this backup**. **Delete** moves a house to **Recently deleted** at the bottom of the home screen, where it can be restored for 30 days. These backups live in the same browser storage, so an exported file is still the only copy that survives clearing your browser's data.
 
 ## For developers
 

@@ -2,7 +2,7 @@
 
 import { create } from "zustand";
 import type { Project, Stage } from "@/lib/model/schema";
-import { loadHistory, loadProject, saveHistory, saveProject, type HistoryRow } from "@/lib/storage/db";
+import { listBackups, loadHistory, loadProject, saveBackup, saveHistory, saveProject, type HistoryRow } from "@/lib/storage/db";
 import { describeChange } from "./describe";
 import { setCodeLocation } from "@/lib/codes/data";
 
@@ -11,6 +11,8 @@ const HISTORY_LIMIT = 100;
 /** Undo steps kept in the browser for next time the house is opened. */
 export const SAVED_HISTORY = 30;
 const AUTOSAVE_MS = 400;
+/** A backup copy is kept after this much time editing, and when the house is closed. */
+export const BACKUP_MS = 15 * 60_000;
 
 export type SaveState = "saved" | "saving" | "unsaved" | "error";
 
@@ -36,8 +38,12 @@ type State = {
   open: (id: string) => Promise<void>;
   /** Close the house, saving anything not saved yet. Resolves when that save is done. */
   close: () => Promise<void>;
-  /** Save now anything still waiting on the autosave timer (when the tab is hidden or closed). */
-  flush: () => void;
+  /**
+   * Save now anything still waiting on the autosave timer (when the tab is
+   * hidden or closed). `closing` (the tab is going away) also keeps a backup
+   * of any edits since the last one.
+   */
+  flush: (opts?: { closing?: boolean }) => void;
   /**
    * Change the project. Every change is undoable and autosaved. Changes that
    * share a `coalesce` key within a second (like typing in one field) become
@@ -57,6 +63,9 @@ let saveTimer: ReturnType<typeof setTimeout> | null = null;
 let lastCoalesce: { key: string; at: number } | null = null;
 /** History versions changed since the last save. */
 let dirty = new Set<number>();
+/** When the last backup was kept (or the house opened), and whether it's been changed since. */
+let lastBackupAt = 0;
+let editedSinceBackup = false;
 
 export const useProjectStore = create<State>((set, get) => {
   /** Set the versions and which one is open, keeping the flags in step. */
@@ -64,9 +73,15 @@ export const useProjectStore = create<State>((set, get) => {
     set({ versions, at, project, canUndo: at > 0, canRedo: at < versions.length - 1 });
   }
 
-  async function saveNow() {
+  /** Save the open house; keep a backup too when `closing`, or BACKUP_MS after the last one, if it's been changed. */
+  async function saveNow(closing = false) {
     const { project: p, versions, at } = get();
     if (!p) return;
+    const backup = editedSinceBackup && (closing || Date.now() - lastBackupAt >= BACKUP_MS);
+    if (backup) {
+      editedSinceBackup = false;
+      lastBackupAt = Date.now();
+    }
     const changed = [...dirty];
     dirty = new Set();
     set({ saveState: "saving" });
@@ -76,6 +91,7 @@ export const useProjectStore = create<State>((set, get) => {
       const kept = versions.slice(from);
       const put: HistoryRow[] = kept.filter((v) => changed.includes(v.n)).map((v) => ({ projectId: p.id, n: v.n, project: v.project }));
       await saveHistory({ projectId: p.id, current: versions[at].n, first: kept[0].n, last: kept[kept.length - 1].n }, put);
+      if (backup) await saveBackup(p);
       if (get().project === p) set({ saveState: "saved" });
     } catch (e) {
       console.error("Save failed", e);
@@ -85,6 +101,7 @@ export const useProjectStore = create<State>((set, get) => {
 
   function scheduleSave(...changed: number[]) {
     for (const n of changed) dirty.add(n);
+    editedSinceBackup = true;
     set({ saveState: "unsaved" });
     if (saveTimer) clearTimeout(saveTimer);
     saveTimer = setTimeout(() => {
@@ -122,6 +139,8 @@ export const useProjectStore = create<State>((set, get) => {
     async open(id) {
       set({ loading: true, notFound: false, loadError: null, project: null, versions: [], at: 0, canUndo: false, canRedo: false });
       dirty = new Set();
+      lastBackupAt = Date.now();
+      editedSinceBackup = false;
       let p: Project | null;
       try {
         p = await loadProject(id);
@@ -134,6 +153,13 @@ export const useProjectStore = create<State>((set, get) => {
         set({ loading: false, notFound: true });
         return;
       }
+      // A closing tab can be gone before its backup is written: keep one now if the house changed after its newest backup.
+      const opened = p;
+      void listBackups(id)
+        .then(([newest]) => {
+          if (newest ? newest.at < opened.updatedAt : opened.updatedAt > opened.createdAt) return saveBackup(opened);
+        })
+        .catch((e) => console.error("Couldn't keep a backup", e));
       let versions: Version[] = [{ n: 0, project: p }];
       let at = 0;
       try {
@@ -157,22 +183,21 @@ export const useProjectStore = create<State>((set, get) => {
 
     close() {
       lastCoalesce = null;
-      // Save right away anything still waiting on the autosave timer.
+      // Save right away anything still waiting on the autosave timer, and keep a backup of this visit's edits.
       let saving = Promise.resolve();
-      if (saveTimer) {
-        clearTimeout(saveTimer);
-        saveTimer = null;
-        if (get().project && get().saveState !== "saved") saving = saveNow();
-      }
+      if (saveTimer) clearTimeout(saveTimer);
+      if (get().project && (saveTimer || editedSinceBackup)) saving = saveNow(true);
+      saveTimer = null;
       set({ project: null, versions: [], at: 0, canUndo: false, canRedo: false, notice: null, saveState: "saved" });
       return saving;
     },
 
-    flush() {
-      if (!saveTimer) return;
-      clearTimeout(saveTimer);
+    flush(opts) {
+      const closing = !!opts?.closing && editedSinceBackup;
+      if (!saveTimer && !closing) return;
+      if (saveTimer) clearTimeout(saveTimer);
       saveTimer = null;
-      void saveNow();
+      void saveNow(closing);
     },
 
     update(change, opts) {

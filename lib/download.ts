@@ -1,13 +1,22 @@
 import type { Project } from "@/lib/model/schema";
-import { exportFileName, exportProjectJson } from "@/lib/storage/exchange";
+import { exportAllFileName, exportAllJson, exportFileName, exportProjectJson } from "@/lib/storage/exchange";
 
 /** Save a project as a .house.json file through the browser's download. */
 export function downloadProject(project: Project) {
-  const blob = new Blob([exportProjectJson(project)], { type: "application/json" });
+  downloadJson(exportProjectJson(project), exportFileName(project));
+}
+
+/** Save every house in one file ("Export all houses"). */
+export function downloadAllProjects(projects: Project[]) {
+  downloadJson(exportAllJson(projects), exportAllFileName());
+}
+
+function downloadJson(text: string, fileName: string) {
+  const blob = new Blob([text], { type: "application/json" });
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
   a.href = url;
-  a.download = exportFileName(project);
+  a.download = fileName;
   // Some browsers only download from a link on the page, and drop it if the link is freed right away.
   document.body.appendChild(a);
   a.click();

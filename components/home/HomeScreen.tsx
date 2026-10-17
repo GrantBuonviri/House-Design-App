@@ -3,26 +3,23 @@
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createProject, duplicateProject } from "@/lib/model/project";
+import type { Project } from "@/lib/model/schema";
 import {
+  DELETED_DAYS,
   deleteProject,
+  listDeleted,
   listProjects,
   loadProject,
   saveProject,
+  type DeletedSummary,
   type ProjectSummary,
 } from "@/lib/storage/db";
-import { importProjectJson } from "@/lib/storage/exchange";
-import { downloadProject } from "@/lib/download";
+import { importAnyJson } from "@/lib/storage/exchange";
+import { downloadAllProjects, downloadProject } from "@/lib/download";
 import { STAGE_INFO, shownStage } from "@/lib/stages";
-
-function formatDate(iso: string) {
-  return new Date(iso).toLocaleDateString("en-US", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-    hour: "numeric",
-    minute: "2-digit",
-  });
-}
+import BackupsList from "./BackupsList";
+import RecentlyDeleted from "./RecentlyDeleted";
+import { formatDate } from "./formatDate";
 
 export default function HomeScreen() {
   const router = useRouter();
@@ -32,10 +29,14 @@ export default function HomeScreen() {
   const [renamingId, setRenamingId] = useState<string | null>(null);
   const [renameText, setRenameText] = useState("");
   const [message, setMessage] = useState<{ kind: "error" | "info"; text: string } | null>(null);
+  const [deleted, setDeleted] = useState<DeletedSummary[]>([]);
+  /** The house card showing its backups, or null. */
+  const [backupsOf, setBackupsOf] = useState<string | null>(null);
   const fileInput = useRef<HTMLInputElement>(null);
 
   async function refresh() {
     setProjects(await listProjects());
+    setDeleted(await listDeleted());
   }
 
   useEffect(() => {
@@ -82,9 +83,25 @@ export default function HomeScreen() {
   }
 
   async function handleDelete(summary: ProjectSummary) {
-    if (!confirm(`Delete "${summary.name}"? This can't be undone. Export it first if you want a backup.`)) return;
+    if (!confirm(`Delete "${summary.name}"? It goes to Recently deleted at the bottom of this page, where you can restore it for ${DELETED_DAYS} days.`)) return;
     await deleteProject(summary.id);
     await refresh();
+  }
+
+  /** Download every house in one file. Houses that won't open are left out and named. */
+  async function handleExportAll() {
+    const all: Project[] = [];
+    const damaged: string[] = [];
+    for (const s of projects ?? []) {
+      try {
+        const p = await loadProject(s.id);
+        if (p) all.push(p);
+      } catch {
+        damaged.push(s.name);
+      }
+    }
+    if (all.length) downloadAllProjects(all);
+    if (damaged.length) setMessage({ kind: "error", text: `Left out because its saved data is damaged: ${damaged.join(", ")}.` });
   }
 
   async function handleImport(e: React.ChangeEvent<HTMLInputElement>) {
@@ -93,10 +110,12 @@ export default function HomeScreen() {
     if (!file) return;
     try {
       const taken = new Set((projects ?? []).map((p) => p.id));
-      const p = importProjectJson(await file.text(), taken);
-      await saveProject(p);
+      const { projects: imported, skipped } = importAnyJson(await file.text(), taken);
+      for (const p of imported) await saveProject(p);
       await refresh();
-      setMessage({ kind: "info", text: `Imported "${p.name}".` });
+      const what = imported.length === 1 ? `"${imported[0].name}"` : `${imported.length} houses`;
+      const left = skipped ? ` ${skipped} ${skipped === 1 ? "house was" : "houses were"} damaged and left out.` : "";
+      setMessage({ kind: skipped ? "error" : "info", text: `Imported ${what}.${left}` });
     } catch (err) {
       setMessage({ kind: "error", text: err instanceof Error ? err.message : "Import failed." });
     }
@@ -108,12 +127,17 @@ export default function HomeScreen() {
         <div>
           <h1 className="text-2xl font-semibold tracking-tight">Your houses</h1>
           <p className="mt-1 text-sm text-muted">
-            Projects are saved in this browser. Export one to keep a backup file.
+            Houses are saved in this browser, with backups kept automatically. Export all houses to keep a copy outside it.
           </p>
         </div>
         <div className="flex gap-2">
+          {!!projects?.length && (
+            <button className="btn" onClick={() => void handleExportAll()}>
+              Export all houses
+            </button>
+          )}
           <button className="btn" onClick={() => fileInput.current?.click()}>
-            Import project
+            Import
           </button>
           <input
             ref={fileInput}
@@ -230,14 +254,37 @@ export default function HomeScreen() {
                 <button className="hover:text-ink" onClick={() => void handleExport(p.id)}>
                   Export
                 </button>
+                <button
+                  className={backupsOf === p.id ? "text-ink" : "hover:text-ink"}
+                  onClick={() => setBackupsOf(backupsOf === p.id ? null : p.id)}
+                >
+                  Backups
+                </button>
                 <button className="hover:text-red-700" onClick={() => void handleDelete(p)}>
                   Delete
                 </button>
               </div>
+              {backupsOf === p.id && (
+                <BackupsList
+                  projectId={p.id}
+                  onRestored={(name) => {
+                    void refresh();
+                    setMessage({ kind: "info", text: `Restored the backup of "${name}".` });
+                  }}
+                />
+              )}
             </li>
           ))}
         </ul>
       )}
+
+      <RecentlyDeleted
+        houses={deleted}
+        onChange={(text) => {
+          void refresh();
+          if (text) setMessage({ kind: text.includes("damaged") ? "error" : "info", text });
+        }}
+      />
     </main>
   );
 }

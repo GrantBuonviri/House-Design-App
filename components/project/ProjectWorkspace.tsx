@@ -70,10 +70,10 @@ export default function ProjectWorkspace({ id }: { id: string }) {
     setTouring(null);
   }, [touring]);
 
-  // Save right away when the tab is hidden or closed, so the last change and undo step aren't lost.
+  // Save right away when the tab is hidden or closed, so the last change and undo step aren't lost (closing also keeps a backup).
   useEffect(() => {
-    const flush = () => useProjectStore.getState().flush();
-    const onHide = () => document.visibilityState === "hidden" && flush();
+    const flush = () => useProjectStore.getState().flush({ closing: true });
+    const onHide = () => document.visibilityState === "hidden" && useProjectStore.getState().flush();
     window.addEventListener("pagehide", flush);
     document.addEventListener("visibilitychange", onHide);
     return () => {
