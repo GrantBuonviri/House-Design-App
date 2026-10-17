@@ -1,7 +1,7 @@
 import type { LotSide, Plot, Point, Project, RealLot } from "@/lib/model/schema";
 import { add, clockwise, dist, dot, polygonArea, scale, sub, unit } from "@/lib/plan/geometry";
 import { lotOffsetFor } from "@/lib/house3d/site";
-import { offsetRing, roofFootprint } from "@/lib/house3d/footprint";
+import { joinRooms, offsetRing, regionArea, roofFootprint } from "@/lib/house3d/footprint";
 import { plotRoadEdges } from "@/lib/land/custom";
 import { bearingVector } from "@/lib/land/generate";
 import { houseFacts } from "./house";
@@ -22,6 +22,7 @@ const TOWARD: Record<Compass, Point> = { N: { x: 0, y: -1 }, S: { x: 0, y: 1 }, 
 
 export type LotLine = { side: LotSide; a: Point; b: Point; lengthFt: number; street: boolean; setbackFt: number | null; setbackName: string };
 
+/** `providedFt` is negative when the house reaches past the lot line; that always fails. */
 export type SetbackCheck = { side: LotSide; name: string; requiredFt: number | null; providedFt: number; ok: boolean | null };
 
 export type SiteLayout = {
@@ -74,10 +75,23 @@ export function houseOutlines(project: Project): Point[][] {
   return h.drawn.flatMap((l) => roofFootprint(h.plan(l.id)).map((r) => offsetRing(r.outline, h.exteriorIn / 2)));
 }
 
-/** Perpendicular distance from p to the line through a and b. */
-function lineDist(p: Point, a: Point, b: Point): number {
+/**
+ * The footprint for lot coverage, square feet: the outlines of the floors above ground
+ * (with the garage and covered porches) joined into one, so an upper floor over the main one
+ * counts once and only its overhang adds. Basements are left out.
+ */
+export function houseFootprintSqft(project: Project): number {
+  project = flatProject(project);
+  const h = houseFacts(project);
+  const rings = h.drawn.filter((l) => l.kind !== "basement").flatMap((l) => roofFootprint(h.plan(l.id)).map((r) => offsetRing(r.outline, h.exteriorIn / 2)));
+  return joinRooms(rings).reduce((s, r) => s + regionArea(r), 0) / 144;
+}
+
+/** Distance from p to the line through a and b, square to it: positive on the side `inside` is on, negative past the line. */
+function insideDist(p: Point, a: Point, b: Point, inside: Point): number {
   const u = unit(sub(b, a));
-  return Math.abs((p.x - a.x) * u.y - (p.y - a.y) * u.x);
+  const side = (q: Point) => (q.x - a.x) * u.y - (q.y - a.y) * u.x;
+  return side(inside) < 0 ? -side(p) : side(p);
 }
 
 const cache = new WeakMap<Project, SiteLayout | null>();
@@ -223,12 +237,13 @@ function realLayout(lot: RealLot, house: Point[][]): SiteLayout {
     const [setbackFt, setbackName] = setbackFor(side);
     return { side, a: p, b: q, lengthFt: dist(p, q) / FT, street: streetSide(side), setbackFt, setbackName };
   });
+  const center = scale(outlinePlan.reduce((sum, p) => add(sum, p), { x: 0, y: 0 }), 0.25);
   const checks: SetbackCheck[] = lines.map((l) => {
-    const provided = pts.length ? Math.min(...pts.map((p) => lineDist(p, l.a, l.b))) / FT : 0;
-    return { side: l.side, name: l.setbackName, requiredFt: l.setbackFt, providedFt: provided, ok: l.setbackFt === null ? null : provided + 0.01 >= l.setbackFt };
+    const provided = pts.length ? Math.min(...pts.map((p) => insideDist(p, l.a, l.b, center))) / FT : 0;
+    const ok = provided < -0.01 ? false : l.setbackFt === null ? null : provided + 0.01 >= l.setbackFt;
+    return { side: l.side, name: l.setbackName, requiredFt: l.setbackFt, providedFt: provided, ok };
   });
   // Easements: a strip inside each named side.
-  const center = scale(outlinePlan.reduce((sum, p) => add(sum, p), { x: 0, y: 0 }), 0.25);
   const easements = lot.easements
     .filter((e) => e.widthFt > 0)
     .map((e) => {

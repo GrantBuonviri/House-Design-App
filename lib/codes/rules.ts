@@ -539,6 +539,7 @@ export const RULES: CodeRule[] = [
       if (!site?.real) return [{ status: "manual", text: "The site plan uses a sample lot. Fill in \"My real lot\" on the Plans page with your lot's sides and zoning setbacks to check them." }];
       const out: RuleResult[] = site.checks.map((c) => {
         const side = `${c.name} setback`;
+        if (c.providedFt < 0) return { status: "fail", text: `${side}: the house reaches ${feetText(-c.providedFt)} past the ${c.side} lot line.`, fix: "Move the house on the lot in \"My real lot\", or make the house smaller on that side." };
         if (c.ok === null) return { status: "manual", text: `${side}: no setback entered. The house is ${feetText(c.providedFt)} from the ${c.side} lot line.` };
         return c.ok
           ? { status: "pass", text: `${side}: the house is ${feetText(c.providedFt)} from the lot line, ${feetText(c.requiredFt!)} needed.` }
