@@ -18,9 +18,12 @@ function formatSqFt(sqft: number): string {
 export default function BriefEditor({
   brief,
   onChange,
+  sizing,
 }: {
   brief: DesignBrief;
   onChange: (brief: DesignBrief, key: string) => void;
+  /** One line on how default sizes fit the household and budget. */
+  sizing?: string | null;
 }) {
   const levels = levelIdsFor(brief.floors, brief.floorsBelow);
   const totals = briefTotals(brief);
@@ -112,6 +115,7 @@ export default function BriefEditor({
         <p className="mb-4 text-sm text-muted">
           Sizes are targets. Fill in length × width in feet to set a size exactly. The flow sketch uses them for bubble sizes.
         </p>
+        {sizing && <p className="-mt-2 mb-4 text-sm text-muted">{sizing}</p>}
         <div className="space-y-6">
           {levelsFor(brief.floors, brief.floorsBelow)
             .slice()

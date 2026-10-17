@@ -1,10 +1,12 @@
 import type { FloorPlan, PlanRoom } from "@/lib/model/schema";
-import { OUTSIDE, openingRooms, sharedWall } from "./connect";
+import { OUTSIDE, openingRooms, roomLinks, sharedWall } from "./connect";
+import { polygonCenter } from "./geometry";
 import { applyChanges, edgeFacing, mirrorAxis, type PlanChange } from "./changes";
 import { planOf, type Plans } from "./edit";
 import type { PlanContext } from "./fromSketch";
 import { roomSqft } from "./measure";
 import { overruns, type SetbackLimit } from "./setbacks";
+import { compareScores, priorityWeights, scoreDetails, scorePlan, type ScoreContext } from "./score";
 
 /** One of the floor plan's "Show me alternatives" designs. */
 export type PlanAlternative = {
@@ -15,6 +17,12 @@ export type PlanAlternative = {
   changed: string[];
   /** Changes the whole house at once (a flip), so it can't be taken one floor at a time. */
   wholeHouse: boolean;
+  /** Up to 3 of the biggest differences from the current plan, in numbers: "+38 sq ft south glass · saves $4,100". */
+  numbers?: string;
+  /** Every number behind the ranking, for the "Why this?" line. */
+  details?: string;
+  /** The score (`scorePlan`) less the current plan's: higher is better. */
+  gain?: number;
 };
 
 /** An idea for an alternative: a title, a why, and the changes to try. */
@@ -244,6 +252,89 @@ export function ruleAlternatives(plans: Plans, ctx: PlanContext): PlanAlternativ
     );
   }
 
+  // Swaps, doors and closed openings: the first two of each that work.
+  for (const ideas of [swapIdeas(plans), doorIdeas(plans, ctx), closeIdeas(plans, ctx)]) {
+    ideas.map((idea) => tryIdea(plans, idea, ctx)).filter((a): a is PlanAlternative => a !== null).slice(0, 2).forEach(push);
+  }
+
+  return out;
+}
+
+/** Rooms a bedroom can trade places with: about the same size, and nothing plumbed in. */
+const SWAPPABLE = new Set(["office", "craft", "playroom", "gym", "media", "bonus"]);
+const lower = (name: string) => name.toLowerCase();
+const the = (room: PlanRoom) => (/^(bed|bedroom)\s*\d/i.test(room.name) ? room.name : `the ${lower(room.name)}`);
+
+/** "Swap Bed 2 and the office for more morning sun": a bedroom trades places with a similar room farther east. */
+function swapIdeas(plans: Plans): Idea[] {
+  const out: Idea[] = [];
+  for (const plan of Object.values(plans)) {
+    for (const other of plan.rooms.filter((r) => SWAPPABLE.has(r.type ?? ""))) {
+      const co = polygonCenter(other.polygon);
+      // Morning sun comes from the east (plan x grows to the east): the bedroom farthest west of it moves there.
+      const bed = plan.rooms
+        .filter((r) => r.type === "bedroom" || r.type === "guest-suite")
+        .filter((r) => {
+          const ratio = roomSqft(other) / Math.max(1, roomSqft(r));
+          return ratio >= 0.7 && ratio <= 1.4 && co.x - polygonCenter(r.polygon).x >= 72;
+        })
+        .sort((a, b) => polygonCenter(a.polygon).x - polygonCenter(b.polygon).x)[0];
+      if (!bed) continue;
+      out.push({
+        title: `Swap ${the(bed)} and ${the(other)}`,
+        why: `${capital(the(bed))} moves to the east side for more morning sun, and ${the(other)} takes its place.`,
+        changes: [change("swap", bed.id, { other: other.id })],
+      });
+    }
+  }
+  return out;
+}
+
+const capital = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
+
+/** "Add a door from the kitchen to the mudroom": two rooms the brief wants together share a wall but have no way between them. */
+function doorIdeas(plans: Plans, ctx: PlanContext): Idea[] {
+  const out: Idea[] = [];
+  for (const plan of Object.values(plans)) {
+    const links = roomLinks(plan);
+    for (const e of ctx.brief?.adjacencies ?? []) {
+      const a = plan.rooms.find((r) => r.briefRoomId === e.a);
+      const b = plan.rooms.find((r) => r.briefRoomId === e.b);
+      if (!a || !b || links.get(a.id)?.has(b.id)) continue;
+      const wall = sharedWall(a, b);
+      if (!wall || wall.t1 - wall.t0 < 36) continue;
+      out.push({
+        title: `Add a door from the ${lower(a.name)} to the ${lower(b.name)}`,
+        why: `Your brief wants the ${lower(a.name)} ${e.strength === "must" ? "right next to" : "near"} the ${lower(b.name)}. They share a wall, so a door joins them without a walk around.`,
+        changes: [change("door", a.id, { other: b.id })],
+      });
+    }
+  }
+  return out;
+}
+
+/** "Close the opening between dining and living": a wide opening the brief doesn't ask for becomes a wall, when both rooms can still be reached. */
+function closeIdeas(plans: Plans, ctx: PlanContext): Idea[] {
+  const out: Idea[] = [];
+  const wanted = (a: PlanRoom, b: PlanRoom) =>
+    (ctx.brief?.adjacencies ?? []).some((e) => e.strength === "must" && ((e.a === a.briefRoomId && e.b === b.briefRoomId) || (e.a === b.briefRoomId && e.b === a.briefRoomId)));
+  for (const plan of Object.values(plans)) {
+    const byId = new Map(plan.rooms.map((r) => [r.id, r]));
+    const done = new Set<string>();
+    for (const o of plan.openings) {
+      if (o.kind !== "opening") continue;
+      const [x, y] = openingRooms(plan, o);
+      const a = x ? byId.get(x) : undefined;
+      const b = y ? byId.get(y) : undefined;
+      if (!a || !b || !LIVING.has(a.type ?? "") || !LIVING.has(b.type ?? "") || wanted(a, b) || done.has([a.id, b.id].sort().join())) continue;
+      done.add([a.id, b.id].sort().join());
+      out.push({
+        title: `Close the opening between ${lower(a.name)} and ${lower(b.name)}`,
+        why: `A wall goes back between the ${lower(a.name)} and the ${lower(b.name)}, so each is its own quieter room with more wall for furniture.`,
+        changes: [change("no_door", a.id, { other: b.id })],
+      });
+    }
+  }
   return out;
 }
 
@@ -281,15 +372,32 @@ export function pickDistinct(current: Plans, list: PlanAlternative[], count = 3)
 }
 
 /**
- * The floor plan's "Show me alternatives": three of the built-in ideas that
- * change the plan in different ways. Titles in `skip` were shown already, so
- * other ideas come first. A smarter version can take this function's place
- * later without changing the page.
+ * Each alternative scored against the current plan (`scorePlan`), best first,
+ * with up to 3 numbers for its reason and all of them for "Why this?".
  */
-export function suggestPlanAlternatives(plans: Plans, ctx: PlanContext, skip: string[] = []): { alternatives: PlanAlternative[]; note?: string } {
+export function rankAlternatives(plans: Plans, list: PlanAlternative[], ctx: ScoreContext): PlanAlternative[] {
+  const now = scorePlan(plans, ctx);
+  return list
+    .map((alt) => {
+      const s = scorePlan(alt.plans, ctx);
+      const numbers = compareScores(now, s, ctx.weights).slice(0, 3).join(" · ");
+      return { ...alt, numbers: numbers || undefined, details: scoreDetails(s), gain: Math.round((s.total - now.total) * 10) / 10 };
+    })
+    .sort((a, b) => (b.gain ?? 0) - (a.gain ?? 0));
+}
+
+/**
+ * The floor plan's "Show me alternatives": three of the built-in ideas that
+ * change the plan in different ways, best scoring first. Titles in `skip`
+ * were shown already, so other ideas come first. `rankedFor` names the
+ * brief's priorities that changed the order.
+ */
+export function suggestPlanAlternatives(plans: Plans, ctx: ScoreContext, skip: string[] = []): { alternatives: PlanAlternative[]; note?: string; rankedFor?: string[] } {
   if (!Object.values(plans).some((p) => p.rooms.length > 0)) return { alternatives: [], note: "Draw some rooms first." };
+  const { weights, rankedFor } = priorityWeights(ctx.brief?.priorities);
+  const scored = { ...ctx, weights: ctx.weights ?? weights };
   const seen = new Set(skip.map((t) => t.toLowerCase()));
-  const all = ruleAlternatives(plans, ctx);
+  const all = rankAlternatives(plans, ruleAlternatives(plans, ctx), scored);
   const unseen = all.filter((a) => !seen.has(a.title.toLowerCase()));
-  return { alternatives: pickDistinct(plans, [...unseen, ...all.filter((a) => !unseen.includes(a))]) };
+  return { alternatives: pickDistinct(plans, [...unseen, ...all.filter((a) => !unseen.includes(a))]), rankedFor: rankedFor.length ? rankedFor : undefined };
 }

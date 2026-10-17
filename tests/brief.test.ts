@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { DiscoveryAnswers, SCHEMA_VERSION, type ChosenRoom, type DesignBrief, type Profile } from "@/lib/model/schema";
 import { createProject, migrateProject } from "@/lib/model/project";
 import { FLAT_PLOT_SEED, generatePlot } from "@/lib/land/generate";
-import { buildRuleBrief, briefTotals, missingEssentials, type BriefContext } from "@/lib/brief/rules";
+import { buildRuleBrief, briefTotals, householdFactor, householdSizing, missingEssentials, sizingNote, type BriefContext } from "@/lib/brief/rules";
 import { levelIdsFor, levelsFor, nearestLevel, syncLevels } from "@/lib/brief/levels";
 import { GARAGE_SQFT, roomType, setTypeCount, sqftFromDims } from "@/lib/brief/rooms";
 
@@ -303,5 +303,53 @@ describe("opening projects saved before the rooms page", () => {
     expect(p.brief).toBeFalsy();
     expect(p.discovery.answers.rooms).toEqual([]);
     expect(p.discovery.answers.floorsAbove).toBe(1);
+  });
+});
+
+describe("sizes that fit the household", () => {
+  const size = (b: DesignBrief, type: string) => b.rooms.find((r) => r.type === type)!.targetSqFt;
+
+  it("scales shared rooms with the number of people, inside each room type's limits", () => {
+    expect(householdFactor(2)).toBe(0.85);
+    expect(householdFactor(4)).toBe(1);
+    expect(householdFactor(6)).toBeCloseTo(1.12);
+    const rooms = typical();
+    const four = buildRuleBrief(ctx({ rooms }, { profile: { ...profile, adults: 2, kids: 2 } }));
+    const six = buildRuleBrief(ctx({ rooms }, { profile: { ...profile, adults: 2, kids: 4 } }));
+    const two = buildRuleBrief(ctx({ rooms }, { profile: { ...profile, adults: 2 } }));
+    expect(size(four, "living")).toBe(roomType("living").sqft);
+    expect(size(six, "living")).toBe(Math.round((roomType("living").sqft * 1.12) / 5) * 5);
+    expect(size(two, "kitchen")).toBe(Math.round((roomType("kitchen").sqft * 0.85) / 5) * 5);
+    // Bedrooms and baths don't change with the head count.
+    expect(size(six, "bedroom")).toBe(roomType("bedroom").sqft);
+    const crowd = buildRuleBrief(ctx({ rooms }, { profile: { ...profile, adults: 20, kids: 20 } }));
+    expect(size(crowd, "dining")).toBe(roomType("dining").max);
+  });
+
+  it("counts people from the bedrooms when the profile doesn't say", () => {
+    const s = householdSizing({ rooms: typical() }, profile);
+    expect(s.guessed).toBe(true);
+    expect(s.people).toBe(typical().filter((r) => r.type === "bedroom").length + 2);
+    expect(sizingNote({ rooms: typical() }, profile)).toMatch(/counted from the bedrooms/);
+  });
+
+  it("fits the rooms to the size the budget pays for, never below 110 sq ft for a bedroom", () => {
+    const rooms = typical();
+    const plain = buildRuleBrief(ctx({ rooms }));
+    const tight = buildRuleBrief(ctx({ rooms }, { profile: { ...profile, budget: { high: 300_000 } } }));
+    const roomy = buildRuleBrief(ctx({ rooms }, { profile: { ...profile, budget: { high: 1_500_000 } } }));
+    const target = householdSizing({ rooms }, { ...profile, budget: { high: 300_000 } }).targetSqft!;
+    expect(target).toBeGreaterThan(800);
+    expect(briefTotals(tight).heated).toBeLessThan(briefTotals(plain).heated);
+    expect(briefTotals(roomy).heated).toBeGreaterThan(briefTotals(plain).heated);
+    for (const r of tight.rooms.filter((x) => x.type === "bedroom")) expect(r.targetSqFt).toBeGreaterThanOrEqual(110);
+    expect(sizingNote({ rooms }, { ...profile, adults: 2, kids: 3, budget: { high: 300_000 } })).toBe(`Sizes fit 5 people and about ${target.toLocaleString("en-US")} sq ft. Rooms you gave a size keep it.`);
+  });
+
+  it("never changes a size the user typed", () => {
+    const rooms = [room("living", { lengthIn: 240, widthIn: 180 }), room("kitchen"), room("bedroom")];
+    const b = buildRuleBrief(ctx({ rooms }, { profile: { ...profile, adults: 6, kids: 4, budget: { high: 200_000 } } }));
+    expect(size(b, "living")).toBe(300);
+    expect(sizingNote({ rooms: [room("living", { lengthIn: 240, widthIn: 180 })] }, profile)).toBeNull();
   });
 });

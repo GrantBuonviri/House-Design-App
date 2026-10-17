@@ -18,7 +18,12 @@ export function describeChange(before: Project, after: Project): string {
   const same = (k: keyof Project) => before[k] === after[k] || json(before[k]) === json(after[k]);
 
   if (!same("name")) return "rename the house";
-  if (!same("profile")) return "change your name";
+  if (!same("profile")) {
+    const [b, a] = [before.profile, after.profile];
+    if (b.adults !== a.adults || b.kids !== a.kids) return "change who the house is for";
+    if (json(b.budget) !== json(a.budget)) return "change the budget";
+    return "change your name";
+  }
   if (!same("plot") && before.plot?.custom && after.plot?.custom && before.plot.custom.id === after.plot.custom.id) return "change the land";
   if (!same("plot")) return after.plot ? (before.plot ? "pick other land" : "pick land") : "clear the land";
   if (!same("discovery")) return describeRooms(before, after);

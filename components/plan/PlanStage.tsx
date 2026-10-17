@@ -11,7 +11,8 @@ import { WINTER_RING, defaultLotOffset, houseCenter, landDrawing, lotCenter } fr
 import { siteOf } from "@/lib/bubbles/site";
 import { MAIN_LEVEL_ID } from "@/lib/brief/levels";
 import { nearestSide } from "@/lib/land/generate";
-import { blankPlans, moveMany, planHasContent, planOf, removeMany } from "@/lib/plan/edit";
+import { blankPlans, moveMany, planHasContent, planOf, removeMany, type Plans } from "@/lib/plan/edit";
+import { estimate } from "@/lib/cost/estimate";
 import { removeWall } from "@/lib/plan/openWalls";
 import { plansFromSketch } from "@/lib/plan/fromSketch";
 import { suggestPlanAlternatives, type PlanAlternative } from "@/lib/plan/alternatives";
@@ -70,7 +71,7 @@ const CANVAS_HEIGHT = 640;
 
 const FT = 12;
 
-type Compare = { alternatives: PlanAlternative[]; note?: string; basis: Record<string, FloorPlan> };
+type Compare = { alternatives: PlanAlternative[]; note?: string; rankedFor?: string[]; basis: Record<string, FloorPlan> };
 
 /** Stage 5: the floor plan. Rooms with real walls, doors, windows, stairs and fixtures, one tab per floor. */
 /** What a door's reason depends on: once any of it changes, the reason no longer applies. */
@@ -472,7 +473,9 @@ export default function PlanStage({ onContinue, onGoToSketch, onGoToFurnish }: {
       return;
     }
     setError(undefined);
-    const res = suggestPlanAlternatives(plans, { brief, plot, levels, basics, limits }, again ? compare?.alternatives.map((a) => a.title) : undefined);
+    // Each alternative is priced the way the cost panel prices the house.
+    const costOf = (ps: Plans) => estimate({ ...project, floorPlans: ps })?.total.likely ?? null;
+    const res = suggestPlanAlternatives(plans, { brief, plot, levels, basics, limits, land: { plot, offset }, costOf }, again ? compare?.alternatives.map((a) => a.title) : undefined);
     if (res.alternatives.length === 0) {
       setError(res.note ?? "There were no alternatives to show. Try adding a few more rooms first.");
       return;
@@ -622,6 +625,7 @@ export default function PlanStage({ onContinue, onGoToSketch, onGoToFurnish }: {
           mine={plans}
           alternatives={compare.alternatives}
           note={compare.note}
+          rankedFor={compare.rankedFor}
           levels={levels}
           level={level}
           basics={basics}

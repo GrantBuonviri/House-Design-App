@@ -17,6 +17,7 @@ export default function PlanAlternativesView({
   mine,
   alternatives,
   note,
+  rankedFor,
   levels,
   level,
   basics,
@@ -29,6 +30,8 @@ export default function PlanAlternativesView({
   mine: Plans;
   alternatives: PlanAlternative[];
   note?: string;
+  /** The brief's priorities that changed the order. */
+  rankedFor?: string[];
   levels: Level[];
   level: Level;
   basics: PlanBasics | null;
@@ -63,7 +66,8 @@ export default function PlanAlternativesView({
       <div className="flex items-start justify-between gap-6">
         <div>
           <h2 className="text-xl font-semibold tracking-tight">{alternatives.length === 3 ? "Three alternatives" : "Alternatives"}</h2>
-          <p className="mt-1 text-sm text-muted">Each one keeps your plan and tries one change. Rooms that changed have a purple outline.</p>
+          <p className="mt-1 text-sm text-muted">Each one keeps your plan and tries one change, best first. Rooms that changed have a purple outline.</p>
+          {rankedFor?.length ? <p className="mt-1 text-sm text-muted">Ranked for: {rankedFor.map((p) => p.charAt(0).toLowerCase() + p.slice(1)).join(", ")}.</p> : null}
         </div>
         <div className="flex shrink-0 gap-2">
           <button className="btn" onClick={onAgain}>
@@ -94,10 +98,20 @@ export default function PlanAlternativesView({
             </div>
             <figcaption className="flex flex-1 flex-col p-3">
               <p className="text-sm font-semibold">{alt.title}</p>
-              <p className="mt-1 flex-1 text-xs text-muted">
+              <div className="mt-1 flex-1 text-xs text-muted">
                 {alt.why}
+                {alt.numbers && <span className="mt-1 block font-medium text-ink">{alt.numbers}</span>}
+                {alt.details && (
+                  <details className="mt-1">
+                    <summary className="cursor-pointer">Why this?</summary>
+                    <span className="block">
+                      {alt.details}
+                      {alt.gain !== undefined && ` · ${alt.gain >= 0 ? "+" : "−"}${Math.abs(alt.gain)} points compared with yours`}
+                    </span>
+                  </details>
+                )}
                 {elsewhere(alt) && <span className="mt-1 block text-violet-800">{elsewhere(alt)}</span>}
-              </p>
+              </div>
               <div className="mt-3 flex flex-wrap gap-2">
                 <button className="btn px-2.5 py-1.5" onClick={() => onUse(i, false)}>
                   Use this design
