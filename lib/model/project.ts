@@ -97,7 +97,19 @@ export function migrateRaw(raw: unknown): Record<string, unknown> {
   // Version 30 to 31 added faucet changes on fixtures (`Fixture.faucet`, optional), so no change beyond the version.
   if (version < 32) migrated = migrateV31(migrated);
   // Version 32 to 33 added pinned tape measurements (`FloorPlan.pins`, optional; `house3d.walkPins`, default none), so no change beyond the version.
+  // Version 33 to 34 removed the inside door style (`plan.basics.doorStyle`), which nothing read.
+  if (version < 34) migrated = migrateV33(migrated);
   return repairProject({ ...migrated, schemaVersion: SCHEMA_VERSION });
+}
+
+/** Version 33 to 34: drop `plan.basics.doorStyle`. */
+function migrateV33(data: Raw): Raw {
+  const plan = data.plan as Raw | undefined;
+  const basics = plan?.basics as Raw | null | undefined;
+  if (!plan || !basics || typeof basics !== "object") return data;
+  const { doorStyle: _d, ...rest } = basics;
+  void _d;
+  return { ...data, plan: { ...plan, basics: rest } };
 }
 
 /** The longest house name the saved file allows. */
