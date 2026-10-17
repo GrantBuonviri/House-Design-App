@@ -57,6 +57,8 @@ export type RoomLook = {
   counterPattern: PatternId;
   vanity: RGB;
   sink: RGB;
+  /** The kitchen sink pick is an apron-front (farmhouse) sink. */
+  sinkApron?: boolean;
   fridge: RGB;
   range: RGB;
   dishwasher: RGB;
@@ -124,6 +126,7 @@ export function roomLook(selections: Selection[] | undefined, room: Pick<PlanRoo
     counterPattern: counterPatternOf(picks.get("counters")),
     vanity: colorOf(picks.get("vanities"), COLORS.cabinet),
     sink: colorOf(picks.get("kitchen-sinks"), COLORS.steel),
+    sinkApron: /farmhouse|apron/i.test(picks.get("kitchen-sinks")?.name ?? ""),
     fridge: colorOf(picks.get("fridges"), COLORS.steel),
     range: colorOf(picks.get("ranges"), COLORS.steel),
     dishwasher: colorOf(picks.get("dishwashers"), COLORS.steel),
