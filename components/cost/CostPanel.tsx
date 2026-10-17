@@ -136,7 +136,7 @@ const PERMIT_BASIS = {
   typed: "Your fee.",
 } as const;
 
-/** "Boise, ID", or "a house elsewhere in Idaho" for a state's catch-all place. */
+/** "City, ST", or "a house elsewhere in <state>" for a state's catch-all place. */
 function placePhrase(place: Estimate["place"]): string {
   const label = placeLabel(place);
   return place.cityId.startsWith("elsewhere-") ? `a house ${label.charAt(0).toLowerCase()}${label.slice(1)}` : label;
