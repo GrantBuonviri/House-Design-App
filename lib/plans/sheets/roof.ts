@@ -4,6 +4,7 @@ import { measureRoof } from "@/lib/cost/quantities";
 import { exteriorPick } from "@/lib/exterior/picks";
 import { codeEntry, codeNum, codeRef } from "@/lib/codes/data";
 import { DRAW_AREA } from "../frame";
+import { placeShort } from "../local";
 import { capHeight, DASH, heading, HEADING_H, SCALES, table, textBlock, readable, type Item, type Weight } from "../draw";
 import { houseFacts } from "../house";
 import { houseScene, type V3 } from "../scene";
@@ -163,11 +164,11 @@ export function roofSheet(project: Project): { items: Item[]; scaleLabel: string
   const under = codeNum("roof.shingleDoubleUnderlaymentBelow");
   const minSlope = codeNum("roof.shingleMinSlope");
   const notes = [
-    `Roof framing: engineered trusses from the truss supplier, with their drawings and layout before framing. Design loads: ${codeNum("design.roofSnowLoadMin")} psf snow, ${codeNum("design.windSpeed")} mph wind (IRC Table R301.2(1), Boise).`,
+    `Roof framing: engineered trusses from the truss supplier, with their drawings and layout before framing. Design loads: ${codeNum("design.roofSnowLoadMin")} psf snow, ${codeNum("design.windSpeed")} mph wind (IRC Table R301.2(1), ${placeShort()}).`,
     shingle
       ? `Asphalt shingles need at least ${minSlope}:12 slope (${codeRef("roof.shingleMinSlope")})${roof.style !== "flat" && roof.pitch < under ? `; below ${under}:12, two layers of underlayment (${codeRef("roof.shingleDoubleUnderlaymentBelow")}).` : "."}${roof.style !== "flat" && roof.pitch < minSlope ? " THIS ROOF IS TOO FLAT FOR SHINGLES: pick metal or membrane roofing." : ""}`
       : `Lapped metal roofing without seam sealant needs at least ${codeNum("roof.metalLappedMinSlope")}:12 slope (${codeRef("roof.metalLappedMinSlope")}). Follow the maker's minimum for other panels.`,
-    `Ice barrier underlayment: ${codeEntry("design.iceBarrierRequired").value === false ? "not required in Boise" : "required"} (IRC Table R301.2(1), Boise).`,
+    `Ice barrier underlayment: ${codeEntry("design.iceBarrierRequired").value === false ? `not required in ${placeShort()}` : "required"} (IRC Table R301.2(1), ${placeShort()}).`,
     "Gutters and downspouts: about one downspout for every 40 ft of gutter, each draining away from the foundation. Low-slope roofs drain to scuppers or drains by the roofer.",
     "Dashed lines are the outside walls below. Flashing at every wall, chimney and valley to the roofing maker's instructions.",
   ];

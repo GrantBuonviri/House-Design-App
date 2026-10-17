@@ -8,7 +8,7 @@ import { stairsCut, stairsDrawing } from "@/lib/plan/stairs";
 import { HALF_WALL_THICK_IN, railingShortName } from "@/lib/plan/railings";
 import { HALF_WALL_IN, openingGeometries, solidWalls, wallPieces, type OpeningGeometry, type WallPiece } from "@/lib/plan/walls";
 import { floorFootprint, offsetRing } from "@/lib/house3d/footprint";
-import { codeNum, codeRef } from "@/lib/codes/data";
+import { changedBy, codeNum, codeRef } from "@/lib/codes/data";
 import { escapeCheck, operationOf, OPERATION_LABEL } from "@/lib/codes/openings";
 import { atticAccessSpot, inchText, isSleeping } from "@/lib/codes/rules";
 import { houseFacts } from "../house";
@@ -399,7 +399,7 @@ function drawPlan(project: Project, level: Level, viewNumber: number, base: bool
   }
   const garageDoors = plan.openings.filter((o) => o.kind === "door" && o.style !== "door-garage" && openingRooms(plan, o).some((id) => garages.some((g) => g.id === id)) && openingRooms(plan, o).some((id) => id && !garages.some((g) => g.id === id) && roleOf(plan.rooms.find((r) => r.id === id) ?? {}) !== "outdoor"));
   if (garages.length) {
-    notes.push(`Garage to house: ${gyp} Type X gypsum board on the garage side of walls and ceilings between the garage and the house (${codeRef("garage.gypsumGarageSide")}, Idaho amendment).`);
+    notes.push(`Garage to house: ${gyp} Type X gypsum board on the garage side of walls and ceilings between the garage and the house (${codeRef("garage.gypsumGarageSide")}${changedBy("garage.gypsumGarageSide") ? `, ${changedBy("garage.gypsumGarageSide")} amendment` : ""}).`);
     if (garageDoors.length) notes.push(`${garageDoors.map((o) => h.tags.get(o.id)).join(", ")}: solid wood or solid-core door at least ${inchText(codeNum("garage.doorSolidWoodThickness"))} thick, solid or honeycomb steel, or ${codeNum("garage.doorFireRatingMinutes")}-minute rated (${codeRef("garage.doorFireRatingMinutes")}).`);
   }
 

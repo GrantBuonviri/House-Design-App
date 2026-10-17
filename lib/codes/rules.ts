@@ -9,7 +9,7 @@ import { stairsDrawing, TREAD_IN } from "@/lib/plan/stairs";
 import { formatFeetInches } from "@/lib/model/units";
 import { houseFacts, type HouseFacts } from "@/lib/plans/house";
 import { siteLayout } from "@/lib/plans/lot";
-import { codeNum, codeRef } from "./data";
+import { changedBy, codeEntry, codeNum, codeRef, codeSet } from "./data";
 import { escapeCheck, glassSqft, openableSqft } from "./openings";
 import { alarmChecks, bathFanCheck, electricalChecks, mechanicalChecks } from "./systemsChecks";
 import { bracingChecks, floorFramingChecks, footingChecks, headerChecks, headroomChecks } from "./structureChecks";
@@ -17,7 +17,7 @@ import { flatProject } from "@/lib/plan/flatten";
 import { windowWells } from "@/lib/plan/wells";
 
 /**
- * The code check: a list of rules from the codes Boise uses, each with its
+ * The code check: a list of rules from the codes the place uses, each with its
  * section, worked out from the project every time. A rule gives one result
  * per thing it looks at (a room, a window, the stairs). "Check by hand" is
  * for what the app can't see or doesn't draw yet.
@@ -125,7 +125,9 @@ export const RULES: CodeRule[] = [
   {
     id: "room-area",
     group: "Rooms",
-    title: `Habitable rooms are at least ${codeNum("rooms.minHabitableArea")} sq ft`,
+    get title() {
+      return `Habitable rooms are at least ${codeNum("rooms.minHabitableArea")} sq ft`;
+    },
     ref: "rooms.minHabitableArea",
     check: (h) =>
       rooms(h, (r) => isHabitable(r) && r.type !== "kitchen").map(({ level, room: r }) => {
@@ -139,7 +141,9 @@ export const RULES: CodeRule[] = [
   {
     id: "room-width",
     group: "Rooms",
-    title: `Habitable rooms are at least ${formatFeetInches(codeNum("rooms.minHabitableDimension"))} wide`,
+    get title() {
+      return `Habitable rooms are at least ${formatFeetInches(codeNum("rooms.minHabitableDimension"))} wide`;
+    },
     ref: "rooms.minHabitableDimension",
     check: (h) =>
       rooms(h, (r) => isHabitable(r) && r.type !== "kitchen").map(({ level, room: r }) => {
@@ -153,7 +157,9 @@ export const RULES: CodeRule[] = [
   {
     id: "ceiling",
     group: "Rooms",
-    title: `Ceilings in habitable rooms are at least ${formatFeetInches(codeNum("rooms.minCeilingHabitable"))}`,
+    get title() {
+      return `Ceilings in habitable rooms are at least ${formatFeetInches(codeNum("rooms.minCeilingHabitable"))}`;
+    },
     ref: "rooms.minCeilingHabitable",
     check: (h) =>
       h.drawn
@@ -169,7 +175,9 @@ export const RULES: CodeRule[] = [
   {
     id: "light",
     group: "Rooms",
-    title: `Habitable rooms have window glass of at least ${codeNum("light.glazingPctOfFloor")}% of the floor`,
+    get title() {
+      return `Habitable rooms have window glass of at least ${codeNum("light.glazingPctOfFloor")}% of the floor`;
+    },
     ref: "light.glazingPctOfFloor",
     check: (h) =>
       rooms(h, isHabitable).map(({ level, plan, room: r }) => {
@@ -187,7 +195,9 @@ export const RULES: CodeRule[] = [
   {
     id: "ventilation",
     group: "Rooms",
-    title: `Habitable rooms have openable windows of ${codeNum("light.ventOpenablePctOfFloor")}% of the floor, or mechanical ventilation`,
+    get title() {
+      return `Habitable rooms have openable windows of ${codeNum("light.ventOpenablePctOfFloor")}% of the floor, or mechanical ventilation`;
+    },
     ref: "light.ventOpenablePctOfFloor",
     check: (h) =>
       rooms(h, isHabitable).map(({ level, plan, room: r }) => {
@@ -197,14 +207,16 @@ export const RULES: CodeRule[] = [
           ? room(level, r, { status: "pass", text: `${where(level, r)}: about ${f1(open)} sq ft opens (needs ${f1(need)})` })
           : room(level, r, {
               status: "pass",
-              text: `${where(level, r)}: about ${f1(open)} sq ft opens (under ${f1(need)}), covered by the whole-house fresh-air fan Idaho requires in every new house (R303.1 exception, R303.4)`,
+              text: `${where(level, r)}: about ${f1(open)} sq ft opens (under ${f1(need)}), covered by the whole-house fresh-air fan (R303.1 exception, R303.4)`,
             });
       }),
   },
   {
     id: "bath-vent",
     group: "Bathrooms",
-    title: `Bathrooms have a ${codeNum("light.bathroomGlazingArea")} sq ft window or an exhaust fan`,
+    get title() {
+      return `Bathrooms have a ${codeNum("light.bathroomGlazingArea")} sq ft window or an exhaust fan`;
+    },
     ref: "light.bathroomGlazingArea",
     check: (h) =>
       rooms(h, (r) => BATHS.has(r.type ?? "")).map(({ level, plan, room: r }) => {
@@ -259,7 +271,9 @@ export const RULES: CodeRule[] = [
   {
     id: "exit-door",
     group: "Escape and exits",
-    title: `One outside door is at least ${codeNum("exit.doorClearWidth")}" wide and ${codeNum("exit.doorClearHeight")}" tall, clear`,
+    get title() {
+      return `One outside door is at least ${codeNum("exit.doorClearWidth")}" wide and ${codeNum("exit.doorClearHeight")}" tall, clear`;
+    },
     ref: "exit.doorClearWidth",
     check: (h) => {
       const level = h.drawn.find((l) => l.id === MAIN_LEVEL_ID) ?? h.drawn.find((l) => l.kind === "main");
@@ -292,7 +306,9 @@ export const RULES: CodeRule[] = [
   {
     id: "hall-width",
     group: "Escape and exits",
-    title: `Hallways are at least ${formatFeetInches(codeNum("exit.hallwayMinWidth"))} wide`,
+    get title() {
+      return `Hallways are at least ${formatFeetInches(codeNum("exit.hallwayMinWidth"))} wide`;
+    },
     ref: "exit.hallwayMinWidth",
     check: (h) =>
       rooms(h, (r) => r.type === "hall").map(({ level, room: r }) => {
@@ -305,7 +321,9 @@ export const RULES: CodeRule[] = [
   {
     id: "stairs-width",
     group: "Stairs",
-    title: `Stairs are at least ${codeNum("stairs.minWidth")}" wide`,
+    get title() {
+      return `Stairs are at least ${codeNum("stairs.minWidth")}" wide`;
+    },
     ref: "stairs.minWidth",
     check: (h) =>
       stairsList(h).map(({ level, s }) =>
@@ -317,7 +335,9 @@ export const RULES: CodeRule[] = [
   {
     id: "stairs-steps",
     group: "Stairs",
-    title: `Steps are at most ${inchText(codeNum("stairs.maxRiser"))} tall with treads of at least ${inchText(codeNum("stairs.minTread"))}`,
+    get title() {
+      return `Steps are at most ${inchText(codeNum("stairs.maxRiser"))} tall with treads of at least ${inchText(codeNum("stairs.minTread"))}`;
+    },
     ref: "stairs.maxRiser",
     check: (h) =>
       stairsList(h).map(({ level, s }) => {
@@ -331,7 +351,9 @@ export const RULES: CodeRule[] = [
   {
     id: "stairs-landing",
     group: "Stairs",
-    title: `A flight climbs at most ${formatFeetInches(codeNum("stairs.maxRiseBetweenLandings"))} between landings`,
+    get title() {
+      return `A flight climbs at most ${formatFeetInches(codeNum("stairs.maxRiseBetweenLandings"))} between landings`;
+    },
     ref: "stairs.maxRiseBetweenLandings",
     check: (h) =>
       stairsList(h).map(({ level, s }) => {
@@ -345,14 +367,18 @@ export const RULES: CodeRule[] = [
   {
     id: "stairs-handrail",
     group: "Stairs",
-    title: `Stairs with ${codeNum("stairs.handrailRequiredRisers")} or more risers have a handrail ${codeNum("stairs.handrailMinHeight")}" to ${codeNum("stairs.handrailMaxHeight")}" high`,
+    get title() {
+      return `Stairs with ${codeNum("stairs.handrailRequiredRisers")} or more risers have a handrail ${codeNum("stairs.handrailMinHeight")}" to ${codeNum("stairs.handrailMaxHeight")}" high`;
+    },
     ref: "stairs.handrailMinHeight",
     check: (h) => stairsList(h).map(({ level }) => ({ status: "pass", text: `${level.name} stairs: handrail noted on the floor plan`, levelId: level.id })),
   },
   {
     id: "stairs-headroom",
     group: "Stairs",
-    title: `Stairs have ${formatFeetInches(codeNum("stairs.minHeadroom"))} of headroom`,
+    get title() {
+      return `Stairs have ${formatFeetInches(codeNum("stairs.minHeadroom"))} of headroom`;
+    },
     ref: "stairs.minHeadroom",
     check: (h) => headroomChecks(h, codeNum("stairs.minHeadroom")),
   },
@@ -389,7 +415,9 @@ export const RULES: CodeRule[] = [
   {
     id: "garage-gypsum",
     group: "Garage",
-    title: `The garage side of the walls and ceiling between garage and house gets ${inchText(codeNum("garage.gypsumGarageSide"))} gypsum board`,
+    get title() {
+      return `The garage side of the walls and ceiling between garage and house gets ${inchText(codeNum("garage.gypsumGarageSide"))} gypsum board`;
+    },
     ref: "garage.gypsumGarageSide",
     check: (h) => {
       const has = h.drawn.some((l) => h.plan(l.id).rooms.some((r) => roleOf(r) === "garage"));
@@ -406,7 +434,9 @@ export const RULES: CodeRule[] = [
   {
     id: "attic-access",
     group: "Attic and foundation",
-    title: `There's a ${codeNum("attic.accessMinWidth")}" x ${codeNum("attic.accessMinLength")}" attic access`,
+    get title() {
+      return `There's a ${codeNum("attic.accessMinWidth")}" x ${codeNum("attic.accessMinLength")}" attic access`;
+    },
     ref: "attic.accessMinWidth",
     check: (h) => {
       if (h.project.house3d.roof.style === "flat" || !h.drawn.length) return [];
@@ -419,14 +449,18 @@ export const RULES: CodeRule[] = [
   {
     id: "frost",
     group: "Attic and foundation",
-    title: `Footings go ${codeNum("design.frostDepth")}" below the ground (frost depth)`,
+    get title() {
+      return `Footings go ${codeNum("design.frostDepth")}" below the ground (frost depth)`;
+    },
     ref: "design.frostDepth",
     check: (h) => (h.drawn.length ? [{ status: "pass", text: "In the general notes, the building sections (A-301) and the foundation plan (S-101)." }] : []),
   },
   {
     id: "toilet-room",
     group: "Bathrooms",
-    title: `Toilets have ${codeNum("plumbing.wcSideClearance")}" to each side and ${codeNum("plumbing.wcFrontClearance")}" in front`,
+    get title() {
+      return `Toilets have ${codeNum("plumbing.wcSideClearance")}" to each side and ${codeNum("plumbing.wcFrontClearance")}" in front`;
+    },
     ref: "plumbing.wcSideClearance",
     check: (h) =>
       h.drawn.flatMap((l) => {
@@ -448,7 +482,9 @@ export const RULES: CodeRule[] = [
   {
     id: "shower-size",
     group: "Bathrooms",
-    title: `Showers are at least ${codeNum("plumbing.showerMinArea").toLocaleString("en-US")} sq in with room for a ${codeNum("plumbing.showerMinCircle")}" circle`,
+    get title() {
+      return `Showers are at least ${codeNum("plumbing.showerMinArea").toLocaleString("en-US")} sq in with room for a ${codeNum("plumbing.showerMinCircle")}" circle`;
+    },
     ref: "plumbing.showerMinArea",
     check: (h) =>
       h.drawn.flatMap((l) =>
@@ -500,7 +536,7 @@ export const RULES: CodeRule[] = [
     ref: "design.frostDepth",
     check: (h) => {
       const site = siteLayout(h.project);
-      if (!site?.real) return [{ status: "manual", text: "The site plan uses a sample lot. Fill in \"My real lot\" on the Plans page with your lot's sides and Boise zoning setbacks to check them." }];
+      if (!site?.real) return [{ status: "manual", text: "The site plan uses a sample lot. Fill in \"My real lot\" on the Plans page with your lot's sides and zoning setbacks to check them." }];
       const out: RuleResult[] = site.checks.map((c) => {
         const side = `${c.name} setback`;
         if (c.ok === null) return { status: "manual", text: `${side}: no setback entered. The house is ${feetText(c.providedFt)} from the ${c.side} lot line.` };
@@ -518,7 +554,9 @@ export const RULES: CodeRule[] = [
   {
     id: "lot-fire",
     group: "Site",
-    title: `Walls at least ${codeNum("fire.ratedWallDistance")} ft and eaves at least ${codeNum("fire.projectionMinDistance")} ft from side and rear lot lines`,
+    get title() {
+      return `Walls at least ${codeNum("fire.ratedWallDistance")} ft and eaves at least ${codeNum("fire.projectionMinDistance")} ft from side and rear lot lines`;
+    },
     ref: "fire.ratedWallDistance",
     check: (h) => {
       const site = siteLayout(h.project);
@@ -582,26 +620,35 @@ const SECTION: Record<string, string> = {
   alarms: "IRC R314, R315",
   "attic-access": "IRC R807.1",
   frost: "IRC R403.1.4.1",
-  "toilet-room": "ISPC 402.5",
-  "shower-size": "ISPC 408.6",
   electrical: "NEC 210.8, 210.11, 210.12, 210.52",
   mechanical: "IRC M1505",
   energy: "IECC R402",
-  setbacks: "Boise City Code Title 11 (zoning)",
-  "lot-fire": "IRC Table R302.1(1) as amended by Idaho",
   soil: "IRC R401.4",
   "stairs-handrail": "IRC R311.7.8",
   "floor-framing": "IRC R502.3.1, R602.7",
   headers: "IRC R602.7",
-  footings: "IRC R403.1 as amended by Idaho",
   "wall-bracing": "IRC R602.10",
   "egress-bedroom": "IRC R310.1, R310.2",
   "egress-basement": "IRC R310.1",
   "exit-door": "IRC R311.2",
 };
 
+/** Sections that name whoever changed them: "IRC R403.1 as amended by Oregon". */
+function localSection(id: string): string | undefined {
+  const amended = (ref: string, key: string) => {
+    const who = changedBy(key);
+    return who ? `${ref} as amended by ${who}` : ref;
+  };
+  if (id === "setbacks") return codeSet().local.zoningCode ?? "Local zoning code";
+  if (id === "lot-fire") return amended("IRC Table R302.1(1)", "fire.ratedWallDistance");
+  if (id === "footings") return amended("IRC R403.1", "struct.footingsLightFrame");
+  // A state plumbing code (the UPC) puts toilet and shower rooms in its own sections.
+  const plumbing = id === "toilet-room" ? "plumbing.wcFrontClearance" : id === "shower-size" ? "plumbing.showerMinArea" : null;
+  if (plumbing && codeEntry(plumbing).layer !== "base") return codeRef(plumbing);
+}
+
 export function ruleSection(rule: CodeRule): string {
-  return SECTION[rule.id] ?? codeRef(rule.ref);
+  return SECTION[rule.id] ?? localSection(rule.id) ?? codeRef(rule.ref);
 }
 
 const RANK: Record<RuleStatus, number> = { pass: 0, manual: 1, fail: 2 };

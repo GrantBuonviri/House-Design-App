@@ -2,8 +2,9 @@ import type { Fixture, Level, Project } from "@/lib/model/schema";
 import { add, pointInPolygon, rotate } from "@/lib/plan/geometry";
 import { placedHookups } from "@/lib/plan/devices";
 import { roleOf } from "@/lib/plan/connect";
-import { codeNum, codeRef, codeText, codeEntry } from "@/lib/codes/data";
+import { codeName, codeNum, codeRef, codeText, codeEntry } from "@/lib/codes/data";
 import { DRAW_AREA } from "../frame";
+import { localFacts } from "../local";
 import { viewTitle } from "../view";
 import { houseFacts } from "../house";
 import { levelDevices } from "../systems";
@@ -122,7 +123,7 @@ export function plumbingSheet(project: Project, level: Level): SystemsSheet {
   const whInGarage = wh.some(({ f, l }) => h.plan(l.id).rooms.some((r) => roleOf(r) === "garage" && pointInPolygon({ x: f.x, y: f.y }, r.polygon)));
   const gas = sys.waterHeater === "gas" || sys.waterHeater === "tankless-gas";
   const notes = [
-    "All work to the 2017 Idaho State Plumbing Code (2015 Uniform Plumbing Code with Idaho amendments), by a licensed plumber or the owner under a plumbing permit from the State of Idaho (DOPL).",
+    `All work to the ${codeName("Plumbing")}, by a licensed plumber or the owner under a plumbing permit from ${localFacts().plumbingPermit ?? localFacts().reviewer}.`,
     `Water use: toilets ${codeNum("plumbing.wcMaxFlush")} gal per flush (${codeRef("plumbing.wcMaxFlush")}), shower heads ${codeNum("plumbing.showerheadMaxFlow")} gpm (${codeRef("plumbing.showerheadMaxFlow")}), bathroom faucets ${codeNum("plumbing.lavatoryFaucetMaxFlow")} gpm, kitchen faucets ${codeNum("plumbing.kitchenFaucetMaxFlow")} gpm at most.`,
     `Shower and tub-shower valves: pressure-balance or thermostatic, limited to ${codeNum("plumbing.showerValveMaxTemp")}°F (${codeRef("plumbing.showerValveMaxTemp")}).`,
     `Water heater: ${sys.waterHeater === "tankless-gas" ? "tankless, gas" : sys.waterHeater === "heat-pump" ? "heat pump" : sys.waterHeater}. Relief valve drain to a safe, visible spot with no valve in the line (${codeRef("plumbing.waterHeaterTPRDischarge")}).${gas && whInGarage ? ` In the garage, the burner sits at least ${codeNum("mech.garageIgnitionHeight")}" above the floor (${codeRef("mech.garageIgnitionHeight")}).` : ""}${codeEntry("plumbing.whStrapRequired").value === true ? ` Strap the water heater against earthquakes (${codeRef("plumbing.whStrapRequired")}).` : ` No earthquake strap is required here (${codeRef("plumbing.whStrapRequired")}); strap it if the maker asks.`}`,

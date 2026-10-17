@@ -10,7 +10,8 @@ import { categoriesFor, effectivePick, productTitle, roomFinishes } from "@/lib/
 import { exteriorPick } from "@/lib/exterior/picks";
 import { BATHS, FULL_BATHS, TILE_ROOMS } from "@/lib/catalog/categories";
 import { clearOpening, escapeCheck, glassSqft, operationOf, OPERATION_LABEL } from "@/lib/codes/openings";
-import { codeNum, codeRef } from "@/lib/codes/data";
+import { codeName, codeNum, codeRef } from "@/lib/codes/data";
+import { locationOf } from "@/lib/location/current";
 import { inchText, isSleeping } from "@/lib/codes/rules";
 import { DRAW_AREA } from "../frame";
 import { archFeet, capHeight, heading, HEADING_H, table, textBlock, type Item } from "../draw";
@@ -103,8 +104,13 @@ function sideOf(plan: FloorPlan, o: Opening): Where {
   return "inside";
 }
 
-/** Overhang depth is about this share of the drop from the overhang to the sill (Boise summer noon sun, 70 degrees). */
-const SUN_SHADE_RATIO = 0.36;
+/**
+ * Overhang depth is about this share of the drop from the overhang to the sill:
+ * the summer noon sun stands 90 - latitude + 23.4 degrees high (about 70 at 43.6 degrees north).
+ */
+export function sunShadeRatio(latitudeDeg: number): number {
+  return Math.tan(((latitudeDeg - 23.44) * Math.PI) / 180);
+}
 
 const productText = (p: Product | undefined) => (p ? `${productTitle(p)}${p.sku ? ` (${p.sku})` : ""}` : "Owner's pick");
 
@@ -119,6 +125,7 @@ export function doorWindowRows(project: Project): { doors: string[][]; windows: 
   const fallSill = codeNum("windowFall.minSillHeight");
   let exteriorDoorCount = 0;
   const overhang = project.house3d.roof.overhangIn;
+  const shade = sunShadeRatio(locationOf(project).latitudeDeg);
   const aboveGround = h.levels.filter((l) => l.kind !== "basement");
   const topLevel = aboveGround[aboveGround.length - 1] ?? h.levels[h.levels.length - 1];
   for (const level of h.levels) {
@@ -176,8 +183,9 @@ export function doorWindowRows(project: Project): { doors: string[][]; windows: 
         const notes: string[] = [];
         if (curved) notes.push(`Set in a curved wall (${radiusLabel(curved)})`);
         if (safety) notes.push(`Tempered: ${safety.join("; ")}`);
-        // Summer noon sun in Boise is about 70 degrees high: an overhang shades a south window when it is no more than about 1/0.36 times its depth above the sill.
-        if (g.n.y >= 0.6 && where === "outside" && level.id === topLevel.id && overhang > 0) notes.push(`Faces south: the ${inchText(overhang)} roof overhang shades it at summer noon when the eave is within about ${inchText(Math.round(overhang / SUN_SHADE_RATIO))} above the sill`);
+        // An overhang shades a south window at summer noon when the eave is no more than its depth / sunShadeRatio above the sill.
+        // Near the tropics the noon sun is almost overhead, so the note is left off.
+        if (g.n.y >= 0.6 && where === "outside" && level.id === topLevel.id && overhang > 0 && shade >= 0.1) notes.push(`Faces south: the ${inchText(overhang)} roof overhang shades it at summer noon when the eave is within about ${inchText(Math.round(overhang / shade))} above the sill`);
         if (!basement && level.kind !== "main" && level.elevationIn + sill > fall && sill < fallSill) notes.push(`Opening limit device or sill at ${inchText(fallSill)} (${codeRef("windowFall.minSillHeight")})`);
         windows.push({
           tag,
@@ -452,7 +460,7 @@ export function fixtureSheets(project: Project): Item[][] {
   ];
   const notes = [
     "Products are the owner's picks on the Interior page of House Design App; equal products may be used. Install every fixture and appliance to its maker's instructions and listing.",
-    `Water use limits come from the Idaho State Plumbing Code (${codeRef("plumbing.wcMaxFlush")}). Look for the WaterSense label.`,
+    `Water use limits come from the ${codeName("Plumbing")} (${codeRef("plumbing.wcMaxFlush")}). Look for the WaterSense label.`,
     "Fixture units and hose bibs are on the plumbing plan; gas, ducts and fans on the mechanical plan.",
   ];
   return flowTables(

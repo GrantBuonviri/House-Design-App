@@ -4,6 +4,7 @@ import { reportCounts } from "@/lib/codes/rules";
 import { readiness } from "./catalog";
 import { issueDate } from "./build";
 import { preparedNote } from "./frame";
+import { reviewNote } from "./local";
 import { capHeight, line, table, textBlock, type Item, type Sheet } from "./draw";
 import { codeRows } from "./sheets/general";
 import { flatProject } from "@/lib/plan/flatten";
@@ -38,7 +39,7 @@ export function codeReportPages(project: Project, date = new Date()): Sheet[] {
       b = textBlock(codeEditions().map((e) => e.label.replace(/^[^:]+: /, "")).join(" · "), M, y, width, 7);
       items.push(...b.items);
       y += b.height + 0.08;
-      b = textBlock("Plan review by the City of Boise is the real check. Verify all dimensions and code requirements with the City of Boise before construction.", M, y, width, 7);
+      b = textBlock(reviewNote(), M, y, width, 7);
       items.push(...b.items);
       y += b.height + 0.12;
     }

@@ -4,9 +4,10 @@ import { landDrawing } from "@/lib/bubbles/land";
 import { yardLayout, yardAmounts, type Strip } from "@/lib/exterior/yard";
 import { exteriorPick } from "@/lib/exterior/picks";
 import { plotAcres } from "@/lib/land/generate";
-import { codeNum, codeRef } from "@/lib/codes/data";
+import { changedBy, codeNum, codeRef } from "@/lib/codes/data";
 import { inchText } from "@/lib/codes/rules";
 import { DRAW_AREA } from "../frame";
+import { zoningCode } from "../local";
 import { archFeet, capHeight, DASH, GREY, heading, HEADING_H, LIGHT, table, textBlock, readable, type Item, type Weight } from "../draw";
 import { houseFacts } from "../house";
 import { lotAsPlot, siteLayout, type SiteLayout } from "../lot";
@@ -239,10 +240,10 @@ function notesColumn(project: Project, site: SiteLayout, footprint: number, amou
         : "This lot is the app's sample land. Fill in My real lot with the lot from the recorded plat before this sheet is used for a permit.",
     "Distances to the lot lines are measured square to each line, from the outside face of the walls. The roof edge (dashed) reaches past the walls.",
     `Slope finished grade away from the house at least ${inchText(codeNum("site.gradeFall"))} in the first ${codeNum("site.gradeFallDistance")} ft (${codeRef("site.gradeFall")}). Carry roof water from the downspouts away from the foundation.`,
-    `Walls closer than ${codeNum("fire.ratedWallDistance")} ft to a side or rear lot line need a 1-hour fire rating and no openings; eaves stay at least ${codeNum("fire.projectionMinDistance")} ft from the line (${codeRef("fire.ratedWallDistance")}, as amended by Idaho).`,
+    `Walls closer than ${codeNum("fire.ratedWallDistance")} ft to a side or rear lot line need a 1-hour fire rating and no openings; eaves stay at least ${codeNum("fire.projectionMinDistance")} ft from the line (${codeRef("fire.ratedWallDistance")}${changedBy("fire.ratedWallDistance") ? `, as amended by ${changedBy("fire.ratedWallDistance")}` : ""}).`,
     "Show water, sewer, gas and power service routes as the utility companies lay them out. Call 811 before digging.",
     ...(!site.real && project.plot && !project.plot.isFlat ? [`Thin grey lines are ground contours of the sample land (every ${landDrawing(project.plot).contourFt} ft).`] : []),
-    "Zoning (setbacks, height, lot coverage) is set by Boise City Code Title 11 for the lot's zone. Confirm with Boise Planning.",
+    `Zoning (setbacks, height, lot coverage) is set by ${zoningCode()} for the lot's zone. Confirm with the city or county planning office.`,
   ];
   notes.forEach((n, i) => {
     items.push({ t: "text", at: { x: nx, y: ny + capHeight(7) }, text: `${i + 1}.`, size: 7 });

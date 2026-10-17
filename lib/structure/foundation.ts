@@ -2,7 +2,7 @@ import type { FloorPlan, HouseSystems, Level, Point } from "@/lib/model/schema";
 import { joinRooms, subtractRegions, type Region } from "@/lib/house3d/footprint";
 import { areaKind } from "@/lib/plan/measure";
 import { add, dist, leftNormal, lerp, polygonArea, scale, sub, unit } from "@/lib/plan/geometry";
-import { codeEntry, codeTable } from "@/lib/codes/data";
+import { codeEntry, codeTable, hillsideNote } from "@/lib/codes/data";
 import { insideRegions } from "./geometry";
 import { footingSize, type FootingSize, type FoundationKind } from "./tables";
 import type { Engineer, FloorFraming, Pier } from "./framing";
@@ -10,7 +10,7 @@ import type { Engineer, FloorFraming, Pier } from "./framing";
 /**
  * The foundation: what's under each part of the lowest floor (basement,
  * crawlspace, slab, garage slab), the walls and footings around and between
- * them sized from Idaho's footing table, and the piers under the girders.
+ * them sized from the footing table in force (the IRC's, or a state's own), and the piers under the girders.
  */
 
 export type Zone = "basement" | "crawlspace" | "slab" | "garage";
@@ -164,7 +164,7 @@ export function foundationOf(input: FoundationInput): Foundation {
   }
   const crawlSqft = zones.crawlspace.reduce((s, r) => s + polygonArea(r.outline) - r.holes.reduce((h, x) => h + polygonArea(x), 0), 0) / 144;
 
-  if (input.hillside) engineer.unshift({ levelId: input.main.id, text: "The lot is steep (a walkout or stepped foundation). Boise asks for an engineer to design hillside foundations." });
+  if (input.hillside) engineer.unshift({ levelId: input.main.id, text: `The lot is steep (a walkout or stepped foundation). ${hillsideNote()}` });
   if (lines.some((l) => !l.footing)) engineer.push({ levelId: input.main.id, text: "A footing is past the footing table (more floors, more snow or weaker soil than it covers). An engineer must size it." });
   return { zones, lines, interior, piers, vents, access: crawlSqft > 0 ? access : null, crawlSqft, hillside: input.hillside, engineer };
 }

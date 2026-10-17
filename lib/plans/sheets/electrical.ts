@@ -2,9 +2,10 @@ import type { DeviceKind, Level, Point, Project } from "@/lib/model/schema";
 import { add, dist, pointInPolygon, rotate } from "@/lib/plan/geometry";
 import { DEVICE_INFO, isLight, isSwitch, type PlacedDevice } from "@/lib/plan/devices";
 import { roleOf } from "@/lib/plan/connect";
-import { codeEntry, codeNum, codeRef, codeText } from "@/lib/codes/data";
+import { changedBy, codeEntry, codeName, codeNum, codeRef, codeText } from "@/lib/codes/data";
 import { archFeet } from "../draw";
 import { DRAW_AREA } from "../frame";
+import { localFacts } from "../local";
 import { viewTitle } from "../view";
 import { houseFacts } from "../house";
 import { coNeeded, levelDevices, needsGfci, outside, roomAt } from "../systems";
@@ -86,7 +87,7 @@ export function electricalSheet(project: Project, level: Level): SystemsSheet {
     ["smoke", "Smoke alarm, wired, with battery backup, all wired together."],
     ["smoke-co", "Combination smoke and carbon monoxide alarm."],
     ["co", "Carbon monoxide alarm."],
-    ["heat", "Heat alarm in the garage, wired to the smoke alarms (Boise amendment)."],
+    ["heat", `Heat alarm in the garage, wired to the smoke alarms (${changedBy("smoke.garageHeatAlarm") ?? "local"} amendment).`],
     ["panel", `Electrical panel, ${project.plans.systems.panelAmps} amp.`],
   ];
   for (const [k, text, note] of LEGEND) if (present.has(k)) col.legend(k, text, { note });
@@ -111,7 +112,7 @@ export function electricalSheet(project: Project, level: Level): SystemsSheet {
   col.heading("Electrical notes");
   const sys = project.plans.systems;
   const notes = [
-    "All work to the 2023 National Electrical Code with Idaho amendments, by a licensed electrician or the owner under an electrical permit from the State of Idaho (DOPL).",
+    `All work to the ${codeName("Electrical")}, by a licensed electrician or the owner under an electrical permit from ${localFacts().electricalPermit ?? localFacts().reviewer}.`,
     `GFCI protection: ${codeText("elec.gfciLocations")} (${codeRef("elec.gfciLocations")}).`,
     `AFCI protection: ${codeText("elec.afciLocations")} (${codeRef("elec.afciLocations")}).`,
     `Wall outlets: no point along a wall more than ${codeNum("elec.wallReceptacleMaxDistance")} ft from an outlet, every wall ${codeNum("elec.wallSpaceMinWidth")} ft or wider (${codeRef("elec.wallReceptacleMaxDistance")}); outlets over ${codeNum("elec.receptacleMaxHeight")} ft up don't count. Counters: no point more than ${codeNum("elec.counterReceptacleMaxDistance")}" from an outlet, every counter ${codeNum("elec.counterSpaceMinWidth")}" or wider, no more than ${codeNum("elec.counterReceptacleMaxAbove")}" above it (${codeRef("elec.counterReceptacleMaxDistance")}).`,

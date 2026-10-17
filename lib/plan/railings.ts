@@ -29,7 +29,7 @@ export type RailingKind = NonNullable<RailingEdit["kind"]>;
 export type RailingStyle = NonNullable<RailingEdit["style"]>;
 export type EdgeRole = "flight" | "landing" | "middle" | "opening" | "well";
 
-/** Guard heights from the Boise code numbers: along a flight (above the nosings), and at landings and floors. */
+/** Guard heights from the code numbers in force: along a flight (above the nosings), and at landings and floors. */
 export const GUARD_FLIGHT_IN = 34;
 export const GUARD_LANDING_IN = 36;
 /** Handrails go 34" to 38" above the nosings; the app uses the middle. */

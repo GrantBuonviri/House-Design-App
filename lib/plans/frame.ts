@@ -1,5 +1,6 @@
 import type { Project } from "@/lib/model/schema";
 import { capHeight, line, lineHeight, rect, textBlock, type Item } from "./draw";
+import { localFacts } from "./local";
 
 /**
  * The sheet border and the title block down the right edge, the same on
@@ -80,7 +81,7 @@ export function frame(info: SetInfo, sheet: { number: string; title: string; ind
   value("New single-family house");
   label("Site address");
   value(p.plans.address.trim() || "TBD");
-  value("Boise, Idaho", 7);
+  value(localFacts().place, 7);
   label("Parcel number");
   value(p.plans.parcel.trim() || "TBD");
   rule();

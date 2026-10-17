@@ -7,7 +7,7 @@ import type { HouseFacts } from "@/lib/plans/house";
 import { coNeeded, gradeLevel, hasAttachedGarage, levelDevices, outside, wholeHouseCfm } from "@/lib/plans/systems";
 import { levelCabinets } from "@/lib/plans/sheets/cabinets";
 import { dryerRuns, freshAirFan } from "@/lib/plans/sheets/mechanical";
-import { codeEntry, codeNum } from "./data";
+import { changedBy, codeEntry, codeNum } from "./data";
 import type { RuleResult } from "./rules";
 
 /**
@@ -128,7 +128,7 @@ export function alarmChecks(h: HouseFacts): RuleResult[] {
     }
     if (codeEntry("smoke.garageHeatAlarm").value === true && hasAttachedGarage(h.project))
       for (const g of plan.rooms.filter((r) => roleOf(r) === "garage"))
-        if (!inRoom(g, (d) => d.kind === "heat")) out.push(at(level, g, { status: "fail", text: `${where(level, g)}: no heat alarm (Boise asks for one in an attached garage, wired to the smoke alarms).`, fix: "Add a heat alarm in the garage." }));
+        if (!inRoom(g, (d) => d.kind === "heat")) out.push(at(level, g, { status: "fail", text: `${where(level, g)}: no heat alarm (${changedBy("smoke.garageHeatAlarm") ?? "the local code"} asks for one in an attached garage, wired to the smoke alarms).`, fix: "Add a heat alarm in the garage." }));
     if (smoke.length) out.push({ status: "pass", text: `${level.name}: ${smoke.length} smoke alarm${smoke.length === 1 ? "" : "s"}${co ? `, ${devices.filter((d) => isCo(d.kind)).length} with CO` : ""}, wired together.`, levelId: level.id });
   }
   return out;

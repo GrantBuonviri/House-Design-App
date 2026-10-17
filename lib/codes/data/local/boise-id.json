@@ -2,6 +2,8 @@
   "jurisdiction": "City of Boise, Ada County, Idaho",
   "permitOffice": "Boise Planning and Development Services (Building Division)",
   "zoningCode": "Boise City Code Title 11 (Development Code)",
+  "hillsideRule": "Boise asks for an Idaho-licensed engineer to design hillside foundations.",
+  "checklist": "Boise checklist #402",
   "checked": "2026-10-17",
   "values": {
     "struct.windSpeedBasis": {

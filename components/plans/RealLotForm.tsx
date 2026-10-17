@@ -119,7 +119,7 @@ export default function RealLotForm({ project, onSave, onClose }: { project: Pro
         }}
       >
         <h3 className="text-lg font-semibold">My real lot</h3>
-        <p className="mb-3 text-sm text-muted">From your lot&apos;s recorded plat or survey (Ada County has them). The site plan and setback checks use it instead of the sample land. All lengths in feet.</p>
+        <p className="mb-3 text-sm text-muted">From your lot&apos;s recorded plat or survey (your county recorder or assessor has them). The site plan and setback checks use it instead of the sample land. All lengths in feet.</p>
         {custom && (
           <div className="mb-3 flex items-center gap-3 text-sm">
             <button type="button" className="btn py-1" onClick={copyFromCustom} data-testid="lot-copy-custom">
@@ -188,7 +188,7 @@ export default function RealLotForm({ project, onSave, onClose }: { project: Pro
                 {field("setRear", "Rear")}
                 {d.sideStreet !== "none" && field("setStreet", "Street side")}
               </div>
-              <p className="field-hint">Boise Planning or the city&apos;s zoning map gives these for your lot&apos;s zone.</p>
+              <p className="field-hint">Your city or county planning office gives these for your lot&apos;s zone.</p>
             </fieldset>
             <fieldset>
               <legend className="field-label">Easements on the plat</legend>
