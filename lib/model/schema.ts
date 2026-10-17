@@ -9,7 +9,7 @@ import { z } from "zod";
  * Angles are degrees clockwise from north (0 = N, 90 = E).
  */
 
-export const SCHEMA_VERSION = 35;
+export const SCHEMA_VERSION = 36;
 
 export const Point = z.object({ x: z.number(), y: z.number() });
 export type Point = z.infer<typeof Point>;
@@ -813,6 +813,8 @@ export const RealLot = z.object({
   houseLeftFt: z.number().min(0).max(5000).nullable().default(null),
   /** The zoning height limit, feet, if known. */
   heightLimitFt: z.number().min(0).max(200).nullable().default(null),
+  /** The most of the lot the house may cover, percent, if known. */
+  coverageLimitPct: z.number().min(0).max(100).nullable().default(null),
 });
 export type RealLot = z.infer<typeof RealLot>;
 

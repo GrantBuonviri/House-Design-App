@@ -11,6 +11,7 @@ import { zoningCode } from "../local";
 import { archFeet, capHeight, DASH, GREY, heading, HEADING_H, LIGHT, table, textBlock, readable, type Item, type Weight } from "../draw";
 import { houseFacts } from "../house";
 import { houseFootprintSqft, lotAsPlot, siteLayout, type SiteLayout } from "../lot";
+import { limitText, lotLimits } from "../lotLimits";
 import { houseScene } from "../scene";
 import { viewTitle } from "../view";
 
@@ -207,16 +208,17 @@ function notesColumn(project: Project, site: SiteLayout, footprint: number, amou
   items.push(...heading("Lot data", nx, ny, NOTES_W));
   ny += HEADING_H + 0.05;
   const acres = site.areaSqft / 43560;
+  const limitFor = (id: "coverage" | "height") => lotLimits(project).find((c) => c.id === id);
   const rows: string[][] = [
     ["Site address", project.plans.address.trim() || "TBD"],
     ["Parcel number", project.plans.parcel.trim() || "TBD"],
     ["Lot", site.real ? "From the owner's entry of the recorded plat (My real lot)" : designed(project) ? `Land designed in the app${project.plot?.name ? ` ("${project.plot.name}")` : ""}, not a surveyed property` : `Sample lot from the app, not a real property${project.plot ? ` (${plotAcres(project.plot).toFixed(2)} acres)` : ""}`],
     ["Lot area", `${Math.round(site.areaSqft).toLocaleString("en-US")} sq ft (${acres.toFixed(2)} acres)`],
     ["House footprint", `${Math.round(footprint).toLocaleString("en-US")} sq ft, with garage and covered porches`],
-    ["Lot coverage", `${((footprint / Math.max(1, site.areaSqft)) * 100).toFixed(1)}%`],
+    ["Lot coverage", `${((footprint / Math.max(1, site.areaSqft)) * 100).toFixed(1)}%${site.real && lot?.coverageLimitPct ? ` of ${lot.coverageLimitPct}% allowed (${limitFor("coverage")?.ok ? "OK" : "OVER"})` : ""}`],
     ...(amounts ? [["Driveway and walk", `${Math.round(amounts.driveSqft + amounts.walkSqft).toLocaleString("en-US")} sq ft of paving`]] : []),
     ["Street", `On the ${({ N: "north", E: "east", S: "south", W: "west" } as const)[site.streetSide]} side${site.real && lot?.sideStreet !== "none" ? `, side street on the ${lot?.sideStreet}` : ""}${!site.real ? sideStreets(site) : ""}`],
-    ...(site.real && lot?.heightLimitFt ? [["Height limit", `${lot.heightLimitFt} ft (zoning, as entered)`]] : []),
+    ...(site.real && lot?.heightLimitFt ? [["Height limit", `${lot.heightLimitFt} ft (zoning, as entered); the house is ${limitFor("height") ? limitText(limitFor("height")!.actual, "ft") : "?"} (${limitFor("height")?.ok ? "OK" : "OVER"})`]] : []),
   ];
   let tb = table(nx, ny, [{ title: "", width: 1.7 }, { title: "", width: NOTES_W - 1.7 }], rows, { size: 7, boldFirst: true });
   items.push(...tb.items);
