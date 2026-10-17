@@ -1,0 +1,150 @@
+[
+  {
+    "id": "kraus-oletto-kpf-2822ch-chrome",
+    "name": "Oletto Single-Handle Kitchen Bar Faucet in Chrome",
+    "brand": "Kraus",
+    "line": "Oletto",
+    "sku": "KPF-2822CH",
+    "url": "https://homedepot.com/p/KRAUS-Oletto-Single-Handle-Kitchen-Bar-Faucet-in-Chrome-KPF-2822CH/321039234",
+    "price": 129.95,
+    "unit": "each",
+    "priceSource": "listed",
+    "priceNote": "$129.95 at Home Depot",
+    "lastChecked": "2026-10-17",
+    "kind": "faucet",
+    "styles": [
+      "modern",
+      "transitional"
+    ],
+    "tags": [
+      "chrome",
+      "cool"
+    ],
+    "color": "#c8ccd0",
+    "pattern": "metal"
+  },
+  {
+    "id": "delta-classic-1903-dst-chrome",
+    "name": "Classic Single-Handle Bar Faucet in Chrome",
+    "brand": "Delta",
+    "line": "Classic",
+    "sku": "1903-DST",
+    "url": "https://www.homedepot.com/p/Delta-Classic-Single-Handle-Bar-Faucet-in-Chrome-1903-DST/202042380",
+    "price": 143.99,
+    "unit": "each",
+    "priceSource": "listed",
+    "priceNote": "$143.99 at Home Depot",
+    "lastChecked": "2026-10-17",
+    "kind": "faucet",
+    "styles": [
+      "transitional",
+      "craftsman"
+    ],
+    "tags": [
+      "chrome",
+      "cool"
+    ],
+    "color": "#c8ccd0",
+    "pattern": "metal"
+  },
+  {
+    "id": "delta-gold-14882lf-cz-champagne-bronze",
+    "name": "Gold Single Handle Bar Faucet in Champagne Bronze",
+    "brand": "Delta",
+    "line": "Gold",
+    "sku": "14882LF-CZ",
+    "url": "https://www.homedepot.com/p/Delta-Gold-Single-Handle-Bar-Faucet-in-Champagne-Bronze-14882LF-CZ/328761203",
+    "price": 181.99,
+    "unit": "each",
+    "priceSource": "listed",
+    "priceNote": "$181.99 at Home Depot",
+    "lastChecked": "2026-10-17",
+    "kind": "faucet",
+    "styles": [
+      "transitional",
+      "modern-farmhouse",
+      "mountain-modern"
+    ],
+    "tags": [
+      "brass",
+      "warm"
+    ],
+    "color": "#b99a6b",
+    "pattern": "metal"
+  },
+  {
+    "id": "moen-camerist-4905srs-spot-resist-stainless",
+    "name": "Camerist 1-Handle Bar Faucet in Spot Resist Stainless",
+    "brand": "Moen",
+    "line": "Camerist",
+    "sku": "4905SRS",
+    "url": "https://www.homedepot.com/p/MOEN-Camerist-1-Handle-Bar-Faucet-in-Spot-Resist-Stainless-4905SRS/337217108",
+    "price": 182.99,
+    "unit": "each",
+    "priceSource": "listed",
+    "priceNote": "$182.99 at Home Depot",
+    "lastChecked": "2026-10-17",
+    "kind": "faucet",
+    "styles": [
+      "modern",
+      "transitional",
+      "scandinavian"
+    ],
+    "tags": [
+      "stainless",
+      "cool"
+    ],
+    "color": "#b9b9b4",
+    "pattern": "metal"
+  },
+  {
+    "id": "kraus-oletto-kpf-2822mbsfsb-matte-black",
+    "name": "Oletto Single-Handle Kitchen Bar Faucet in Matte Black/Spot Free Black Stainless Steel",
+    "brand": "Kraus",
+    "line": "Oletto",
+    "sku": "KPF-2822MBSFSB",
+    "url": "https://homedepot.com/p/KRAUS-Oletto-Single-Handle-Kitchen-Bar-Faucet-in-Matte-Black-Spot-Free-Black-Stainless-Steel-KPF-2822MBSFSB/321039237",
+    "price": 189.95,
+    "unit": "each",
+    "priceSource": "listed",
+    "priceNote": "$189.95 at Home Depot",
+    "lastChecked": "2026-10-17",
+    "kind": "faucet",
+    "styles": [
+      "industrial",
+      "modern",
+      "modern-farmhouse"
+    ],
+    "tags": [
+      "matte-black",
+      "bold",
+      "cool"
+    ],
+    "color": "#1c1c1c",
+    "pattern": "metal"
+  },
+  {
+    "id": "moen-sleek-7664bg-brushed-gold",
+    "name": "Sleek 1 Handle Bar Faucet in Brushed Gold",
+    "brand": "Moen",
+    "line": "Sleek",
+    "sku": "7664BG",
+    "url": "https://www.homedepot.com/p/MOEN-Sleek-1-Handle-Bar-Faucet-in-Brushed-Gold-7664BG/337217116",
+    "price": 394.75,
+    "unit": "each",
+    "priceSource": "listed",
+    "priceNote": "$394.75 at Home Depot",
+    "lastChecked": "2026-10-17",
+    "kind": "faucet",
+    "styles": [
+      "modern",
+      "transitional"
+    ],
+    "tags": [
+      "brass",
+      "warm"
+    ],
+    "color": "#c4a46a",
+    "pattern": "metal"
+  }
+]

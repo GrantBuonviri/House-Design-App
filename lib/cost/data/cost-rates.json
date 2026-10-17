@@ -837,17 +837,31 @@
       "normalized": "Boise price divided by Boise's cost level (0.92) to give a US-average price."
     },
     "shower-tub": {
-      "label": "Tub/shower or shower (valve + trim)",
+      "label": "Tub or shower pan, valve body and glass",
       "unit": "each",
       "material": [
-        1195.6522,
-        2173.913,
-        3804.3478
+        836.9565,
+        1521.7391,
+        2663.0435
       ],
       "source": "Judgment based on retail tub/pan + valve pricing",
       "url": null,
       "checked": "2026-10-14",
-      "note": "Alloy/acrylic tub or shower pan, pressure-balance valve and trim, glass door/curtain rod allowance. Tile walls in 'tile'.",
+      "note": "Alloy/acrylic tub or shower pan, pressure-balance valve body, glass door/curtain rod allowance: 70% of the old 'tub/shower or shower' line (trim is its own line). Tile walls in 'tile'.",
+      "normalized": "Boise price divided by Boise's cost level (0.92) to give a US-average price."
+    },
+    "tub-shower-trim": {
+      "label": "Tub and shower trim (spout, handles, shower head)",
+      "unit": "each",
+      "material": [
+        358.6957,
+        652.1739,
+        1141.3043
+      ],
+      "source": "Judgment based on retail tub/pan + valve pricing",
+      "url": null,
+      "checked": "2026-10-14",
+      "note": "Spout, handle(s) and shower head for one tub or shower: 30% of the old 'tub/shower or shower' line. Product picks in Interior design replace it.",
       "normalized": "Boise price divided by Boise's cost level (0.92) to give a US-average price."
     },
     "kitchen-sink-faucet": {
@@ -1397,6 +1411,34 @@
       "checked": "2026-10-16",
       "note": "Per foot along the stair. A full wall beside stairs is priced as two half walls per foot. Ballpark: confirm with local bids.",
       "normalized": "Boise price divided by Boise's cost level (0.92) to give a US-average price."
+    },
+    "pot-filler": {
+      "label": "Pot filler (wall-mount faucet + cold water stub)",
+      "unit": "each",
+      "material": [
+        190,
+        380,
+        820
+      ],
+      "source": "Estimate from the retail fixture prices in the product lists (fixture only, no labor)",
+      "url": null,
+      "checked": "2026-10-17",
+      "note": "Wall-mount folding-arm pot filler with its shutoff valve and a short run of supply pipe. Product picks in Interior design replace the faucet part.",
+      "normalized": "Entered as a US-average price; Boise's cost level does not apply."
+    },
+    "prep-sink-faucet": {
+      "label": "Bar or prep sink + faucet",
+      "unit": "each",
+      "material": [
+        170,
+        340,
+        720
+      ],
+      "source": "Estimate from the retail fixture prices in the product lists (fixture only, no labor)",
+      "url": null,
+      "checked": "2026-10-17",
+      "note": "15 inch stainless or composite bar sink, small faucet, supplies and drain. Product picks in Interior design replace the faucet part.",
+      "normalized": "Entered as a US-average price; Boise's cost level does not apply."
     }
   },
   "percents": {

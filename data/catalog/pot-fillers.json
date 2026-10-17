@@ -1,0 +1,153 @@
+[
+  {
+    "id": "glacier-bay-lyndhurst-67589-0004-brushed-nickel",
+    "name": "Lyndhurst Wall Mounted Pot Filler in Brushed Nickel",
+    "brand": "Glacier Bay",
+    "line": "Lyndhurst",
+    "sku": "67589-0004",
+    "url": "https://www.homedepot.com/p/Glacier-Bay-Lyndhurst-Wall-Mounted-Pot-Filler-in-Brushed-Nickel-67589-0004/204683820",
+    "price": 109.35,
+    "unit": "each",
+    "priceSource": "listed",
+    "priceNote": "$109.35 at Home Depot",
+    "lastChecked": "2026-10-17",
+    "kind": "faucet",
+    "styles": [
+      "transitional",
+      "craftsman"
+    ],
+    "tags": [
+      "brushed-nickel",
+      "neutral"
+    ],
+    "color": "#bdbdb8",
+    "pattern": "metal"
+  },
+  {
+    "id": "kraus-oletto-kpf-5001sfbb-brushed-brass",
+    "name": "Oletto Wall Mount Pot Filler Kitchen Faucet with Retractable Arm in Spot-Free Brushed Brass",
+    "brand": "Kraus",
+    "line": "Oletto",
+    "sku": "KPF-5001SFBB",
+    "url": "https://www.homedepot.com/p/KRAUS-Oletto-Wall-Mount-Pot-Filler-Kitchen-Faucet-with-Retractable-Arm-in-Spot-Free-Brushed-Brass-KPF-5001SFBB/339180136",
+    "price": 314.95,
+    "unit": "each",
+    "priceSource": "listed",
+    "priceNote": "$314.95 at Home Depot",
+    "lastChecked": "2026-10-17",
+    "kind": "faucet",
+    "styles": [
+      "modern",
+      "modern-farmhouse",
+      "transitional"
+    ],
+    "tags": [
+      "brass",
+      "warm"
+    ],
+    "color": "#c4a46a",
+    "pattern": "metal"
+  },
+  {
+    "id": "kingston-brass-concord-hks4103dl-antique-brass",
+    "name": "Concord Wall Mount Pot Filler in Antique Brass",
+    "brand": "Kingston Brass",
+    "line": "Concord",
+    "sku": "HKS4103DL",
+    "url": "https://www.homedepot.com/p/Kingston-Brass-Concord-Wall-Mount-Pot-Filler-in-Antique-Brass-HKS4103DL/316406210",
+    "price": 357.47,
+    "unit": "each",
+    "priceSource": "listed",
+    "priceNote": "$357.47 at Home Depot",
+    "lastChecked": "2026-10-17",
+    "kind": "faucet",
+    "styles": [
+      "craftsman",
+      "transitional",
+      "mountain-modern"
+    ],
+    "tags": [
+      "brass",
+      "warm"
+    ],
+    "color": "#b99a6b",
+    "pattern": "metal"
+  },
+  {
+    "id": "moen-traditional-s664bl-matte-black",
+    "name": "Traditional Wall Mount Pot Filler with Swing Arm in Matte Black",
+    "brand": "Moen",
+    "line": "Traditional",
+    "sku": "S664BL",
+    "url": "https://www.homedepot.com/p/MOEN-Traditional-Wall-Mount-Pot-Filler-with-Swing-Arm-in-Matte-Black-S664BL/308240700",
+    "price": 538.98,
+    "unit": "each",
+    "priceSource": "listed",
+    "priceNote": "$538.98 at Home Depot",
+    "lastChecked": "2026-10-17",
+    "kind": "faucet",
+    "styles": [
+      "industrial",
+      "modern-farmhouse",
+      "mountain-modern"
+    ],
+    "tags": [
+      "matte-black",
+      "bold",
+      "cool"
+    ],
+    "color": "#1c1c1c",
+    "pattern": "metal"
+  },
+  {
+    "id": "kohler-wall-mount-35744-bl-matte-black",
+    "name": "Wall Mount 5.2 GPM Pot Filler in Matte Black",
+    "brand": "Kohler",
+    "line": "Wall Mount",
+    "sku": "35744-BL",
+    "url": "https://www.homedepot.com/p/KOHLER-Wall-Mount-5-2-GPM-Pot-Filler-in-Matte-Black-35744-BL/328286036",
+    "price": 658.12,
+    "unit": "each",
+    "priceSource": "listed",
+    "priceNote": "$658.12 at Home Depot",
+    "lastChecked": "2026-10-17",
+    "kind": "faucet",
+    "styles": [
+      "modern",
+      "industrial",
+      "scandinavian"
+    ],
+    "tags": [
+      "matte-black",
+      "bold",
+      "cool"
+    ],
+    "color": "#1c1c1c",
+    "pattern": "metal"
+  },
+  {
+    "id": "delta-traditional-1177lf-ar-arctic-stainless",
+    "name": "Traditional Wall-Mounted Potfiller in Arctic Stainless",
+    "brand": "Delta",
+    "line": "Traditional",
+    "sku": "1177LF-AR",
+    "url": "https://homedepot.com/p/Delta-Traditional-Wall-Mounted-Potfiller-in-Arctic-Stainless-1177LF-AR/204379761",
+    "price": 719.0,
+    "unit": "each",
+    "priceSource": "listed",
+    "priceNote": "$719.00 at Home Depot",
+    "lastChecked": "2026-10-17",
+    "kind": "faucet",
+    "styles": [
+      "transitional",
+      "craftsman",
+      "modern-farmhouse"
+    ],
+    "tags": [
+      "stainless",
+      "cool"
+    ],
+    "color": "#b9b9b4",
+    "pattern": "metal"
+  }
+]

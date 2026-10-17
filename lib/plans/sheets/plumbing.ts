@@ -51,7 +51,8 @@ export function fixtureUnits(project: Project): { rows: { label: string; count: 
   const fixtures = h.levels.flatMap((l) => h.plan(l.id).fixtures);
   const rows = UNITS.map((u) => {
     // A vanity 60" or wider has two basins.
-    const count = fixtures.filter((f) => f.kind === u.kind).reduce((s, f) => s + (u.kind === "vanity" && f.widthIn >= 60 ? 2 : 1), 0);
+    // Bar and prep sinks count as kitchen sinks.
+    const count = fixtures.filter((f) => f.kind === u.kind || (u.kind === "sink" && f.kind === "prep-sink")).reduce((s, f) => s + (u.kind === "vanity" && f.widthIn >= 60 ? 2 : 1), 0);
     return { label: u.label, count, dfu: codeNum(`plumbing.dfu.${u.key}`), wsfu: codeNum(`plumbing.wsfu.${u.key}`) };
   }).filter((r) => r.count > 0);
   const bibs = h.levels.reduce((s, l) => s + levelDevices(project, l).filter((d) => d.kind === "hose-bib").length, 0);
@@ -81,6 +82,18 @@ export function plumbingSheet(project: Project, level: Level): SystemsSheet {
   // Water, drain and gas hookups: the ones fixtures bring (less any taken away) and ones placed in Furnish.
   const hookups = placedHookups(plan, project.plans.systems).filter((d) => ["water", "drain", "gas"].includes(d.kind));
   for (const d of hookups) items.push(...deviceSymbol(d.kind, T({ x: d.x, y: d.y }), rotate({ x: 0, y: 1 }, d.rotation)));
+  // Pot fillers: a cold water stub and the fixture's tag.
+  const potFillers = (plan.addOns ?? []).filter((a) => a.kind === "pot-filler");
+  for (const a of potFillers) {
+    items.push(...deviceSymbol("water", T({ x: a.x, y: a.y }), rotate({ x: 0, y: 1 }, a.rotation ?? 0)));
+    const tag = tags.get(a.id);
+    if (tag) {
+      const c = add(T({ x: a.x, y: a.y }), { x: 0, y: 0.2 });
+      const w = textWidth(tag, 5.5, true) + 0.08;
+      items.push({ t: "poly", pts: [add(c, { x: -w / 2, y: -0.07 }), add(c, { x: w / 2, y: -0.07 }), add(c, { x: w / 2, y: 0.07 }), add(c, { x: -w / 2, y: 0.07 })], stroke: "fine", fill: "#ffffff" });
+      items.push({ t: "text", at: c, text: tag, size: 5.5, bold: true, align: "center", valign: "middle" });
+    }
+  }
   // Hose bibs.
   for (const d of levelDevices(project, level).filter((x) => x.kind === "hose-bib")) items.push(...deviceSymbol("hose-bib", T({ x: d.x, y: d.y }), rotate({ x: 0, y: 1 }, d.rotation)));
 
@@ -95,6 +108,7 @@ export function plumbingSheet(project: Project, level: Level): SystemsSheet {
     col.y += 0.34;
   }
   col.legend("hose-bib", `Frost-free hose bib with backflow protection (${codeRef("plumbing.hoseBibBackflow")}).`);
+  if (potFillers.length) col.legend("water", "Pot filler: cold water stub on the wall above the range, with a shutoff valve.");
   if (hookups.some((d) => d.kind === "water")) col.legend("water", "Hot and cold water supply stub-out, with a shutoff valve.");
   if (hookups.some((d) => d.kind === "drain")) col.legend("drain", "Drain and vent stub-out.");
   if (hookups.some((d) => d.kind === "gas")) col.legend("gas", "Gas outlet with a shutoff valve at the appliance.");

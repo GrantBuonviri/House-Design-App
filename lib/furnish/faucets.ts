@@ -78,7 +78,7 @@ export const FAUCET_KIND: Record<string, FaucetKind> = {
 /** The Interior design category whose pick is the faucet's product. */
 export const FAUCET_CATEGORY: Record<FaucetKind, string> = {
   kitchen: "kitchen-faucets",
-  prep: "kitchen-faucets",
+  prep: "bar-faucets",
   laundry: "kitchen-faucets",
   bath: "bath-faucets",
   tub: "showers",
@@ -216,7 +216,8 @@ export function faucetOf(
   if (!kind) return null;
   const room = (fx.roomId && plan.rooms.find((r) => r.id === fx.roomId)) || roomAt(plan, { x: fx.x, y: fx.y });
   const picks = selections.length && room ? roomFinishes(selections, room.id) : new Map<string, Product>();
-  const product = picks.get(FAUCET_CATEGORY[kind]);
+  // A prep sink with no bar faucet pick uses the room's kitchen faucet pick.
+  const product = picks.get(FAUCET_CATEGORY[kind]) ?? (kind === "prep" ? picks.get("kitchen-faucets") : undefined);
   const edit = fx.faucet;
   const max = maxAlong(fx);
   const alongIn = clamp(edit?.alongIn ?? 0, max);
