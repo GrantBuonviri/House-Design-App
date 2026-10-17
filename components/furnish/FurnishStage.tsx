@@ -20,7 +20,7 @@ import { formatFeetInches } from "@/lib/model/units";
 import { Note } from "@/components/brief/bits";
 import LevelTabs from "@/components/bubbles/LevelTabs";
 import PlanSidePanel from "@/components/plan/PlanSidePanel";
-import PlanChecks from "@/components/plan/PlanChecks";
+import PlanChecks, { type FixAction } from "@/components/plan/PlanChecks";
 import type { PlanSelection } from "@/components/plan/types";
 import FurnishCatalog from "./FurnishCatalog";
 import FurnishItemPanel from "./FurnishItemPanel";
@@ -246,7 +246,7 @@ export default function FurnishStage({
     setSelection(w.furnish ? [{ kind: "furnish", id: w.furnish.id }] : []);
     if (w.at) setFocus({ at: w.at, key: Date.now() });
   }
-  function fixWarning(w: PlanWarning, action?: "inside" | "delete" | "plan") {
+  function fixWarning(w: PlanWarning, action?: FixAction) {
     if (action === "plan") return onGoToPlan();
     const p = planOf(plans, w.levelId);
     const it = w.furnish && layerItems(p).find((x) => x.id === w.furnish!.id);

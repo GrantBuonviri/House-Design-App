@@ -3,7 +3,7 @@
 import { DEFAULT_ROUND_ROOM_IN } from "@/lib/plan/shapes";
 import dynamic from "next/dynamic";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import type { FloorPlan, Level, PlanBasics, Point, Roof, TopLabels } from "@/lib/model/schema";
+import type { FloorPlan, Level, Opening, PlanBasics, Point, Roof, TopLabels } from "@/lib/model/schema";
 import { useProjectStore } from "@/lib/store/projectStore";
 import { diagramOf } from "@/lib/bubbles/edit";
 import { WINTER_RING, defaultLotOffset, houseCenter, landDrawing, lotCenter } from "@/lib/bubbles/land";
@@ -14,7 +14,8 @@ import { blankPlans, moveMany, planHasContent, planOf, removeMany } from "@/lib/
 import { removeWall } from "@/lib/plan/openWalls";
 import { plansFromSketch } from "@/lib/plan/fromSketch";
 import { suggestPlanAlternatives, type PlanAlternative } from "@/lib/plan/alternatives";
-import { dismissWarning, makeStairsU, planWarnings, restoreWarning, splitDismissed, type PlanWarning } from "@/lib/plan/checks";
+import { dismissWarning, makeStairsU, planWarnings, restoreWarning, splitDismissed, swingExtras, type PlanWarning } from "@/lib/plan/checks";
+import { flipSwing, toPocketDoor } from "@/lib/plan/swing";
 import { makeEscapeWindow, suggestPlans } from "@/lib/plan/suggest";
 import { fixMessage, recheck } from "@/lib/plan/recheck";
 import { coveredAbove } from "@/lib/plan/wells";
@@ -34,7 +35,7 @@ import { keepFurnish, layerItems, moveInside, removeItem } from "@/lib/furnish/l
 import { leftoverClosets, removeLeftoverCloset } from "@/lib/furnish/closets";
 import { furnishLevel, furnishSummary } from "@/lib/furnish/autoFurnish";
 import { ceilingFor } from "@/lib/plan/basics";
-import PlanChecks from "./PlanChecks";
+import PlanChecks, { type FixAction } from "./PlanChecks";
 import PlanContextMenu, { contextItems, type ContextAt } from "./PlanContextMenu";
 import KeyboardHelp from "./KeyboardHelp";
 import { duplicateAndSelect } from "./ArrangeButtons";
@@ -71,6 +72,9 @@ const FT = 12;
 type Compare = { alternatives: PlanAlternative[]; note?: string; basis: Record<string, FloorPlan> };
 
 /** Stage 5: the floor plan. Rooms with real walls, doors, windows, stairs and fixtures, one tab per floor. */
+/** What a door's reason depends on: once any of it changes, the reason no longer applies. */
+const doorKey = (o: Opening) => JSON.stringify([o.host, o.offsetIn, o.widthIn, o.style, o.hinge ?? "start", o.side ?? 1]);
+
 export default function PlanStage({ onContinue, onGoToSketch, onGoToFurnish }: { onContinue: () => void; onGoToSketch: () => void; onGoToFurnish: () => void }) {
   const project = useProjectStore((s) => s.project)!;
   const update = useProjectStore((s) => s.update);
@@ -99,6 +103,8 @@ export default function PlanStage({ onContinue, onGoToSketch, onGoToFurnish }: {
   const [notes, setNotes] = useState<string[]>([]);
   /** Things to check that the last fix, Suggest a plan or alternative brought up: tagged "new" until the next edit (`skip` lets the fix's own change through). */
   const [fresh, setFresh] = useState<{ ids: string[]; skip: boolean } | null>(null);
+  // Why Suggest a plan put each door where it did, with the door as it was then: not saved, and dropped once the door changes.
+  const [doorNotes, setDoorNotes] = useState<Map<string, { reason: string; was: string }>>(new Map());
   /** After Suggest a plan: offer Furnish for me for the new plan. */
   const [offerFurnish, setOfferFurnish] = useState(false);
   const [flash, setFlash] = useState<string>();
@@ -146,6 +152,10 @@ export default function PlanStage({ onContinue, onGoToSketch, onGoToFurnish }: {
   const aboveLevel = levelAbove(levels, level);
   const above = useMemo(() => (aboveLevel && aboveLevel.kind !== "main" && aboveLevel.kind !== "basement" && plans[aboveLevel.id]?.rooms.length ? { name: aboveLevel.name, plan: plans[aboveLevel.id] } : null), [aboveLevel, plans]);
   const canFill = sup ? fillShapes(plan, sup.regions).length > 0 : false;
+  const doorReasons = useMemo(
+    () => new Map(plan.openings.flatMap((o) => (doorNotes.get(o.id)?.was === doorKey(o) ? [[o.id, doorNotes.get(o.id)!.reason] as const] : []))),
+    [doorNotes, plan.openings],
+  );
   const overhangs = useMemo(() => (sup ? overhangsOf(plan.rooms, sup.regions) : []), [sup, plan.rooms]);
   const sketch = diagramOf(sketches, level.id);
   const sketchHasRooms = Object.values(sketches).some((d) => d.bubbles.some((b) => !b.stairs));
@@ -386,6 +396,8 @@ export default function PlanStage({ onContinue, onGoToSketch, onGoToFurnish }: {
   /** The sketch as a plan, plus hallways, closets, windows and doors from the built-in rules. */
   function suggest() {
     const res = suggestPlans(sketches, { brief, plot, levels, basics });
+    const placed = new Map(Object.values(res.plans).flatMap((pl) => pl.openings.map((o) => [o.id, o] as const)));
+    setDoorNotes(new Map([...res.doorReasons].flatMap(([id, reason]) => (placed.get(id) ? [[id, { reason, was: doorKey(placed.get(id)!) }] as const] : []))));
     const next = keepFurnish(plans, { ...blankPlans(levels), ...res.plans });
     const r = recheck(plans, next, checkCtx);
     update((p) => ({ ...p, floorPlans: keepFurnish(p.floorPlans, { ...blankPlans(levels), ...res.plans }), plan: { ...p.plan, showSketch: false } }));
@@ -513,7 +525,7 @@ export default function PlanStage({ onContinue, onGoToSketch, onGoToFurnish }: {
   }
 
   /** The fix buttons in Things to check. The change is always kept; the message says what it brought up. */
-  function fixWarning(w: PlanWarning, action?: "inside" | "delete" | "plan") {
+  function fixWarning(w: PlanWarning, action?: FixAction) {
     const p = planOf(plans, w.levelId);
     if (w.closetWalls) {
       const lc = leftoverClosets(p).find((x) => x.stem === w.closetWalls!.stem);
@@ -538,6 +550,14 @@ export default function PlanStage({ onContinue, onGoToSketch, onGoToFurnish }: {
     }
     if (w.stairsU) {
       applyFix(refitHalls(makeStairsU(plans, w.stairsU), stackCtx), "Made both stairs U-shaped.");
+      return;
+    }
+    if (w.swing) {
+      const lv = levels.find((l) => l.id === w.levelId);
+      if (!lv) return;
+      const id = w.swing.openingId;
+      const next = action === "pocket" ? toPocketDoor(p, id) : flipSwing(p, id, swingExtras(plans, { levels, basics }, lv));
+      applyFix({ ...plans, [w.levelId]: next }, action === "pocket" ? "Switched to a pocket door." : "Flipped the door's swing.");
       return;
     }
     if (w.escape) {
@@ -744,6 +764,7 @@ export default function PlanStage({ onContinue, onGoToSketch, onGoToFurnish }: {
                 onSelect={setSelection}
                 onPreviewWindow={(id) => setPreviewing({ levelId: level.id, openingId: id })}
                 onAnchor={setAnchored}
+                doorReasons={doorReasons}
               />
             )}
             <PlanChecks {...dismissProps} levels={levels} levelId={level.id} onPick={pickWarning} onFix={fixWarning} />
@@ -867,6 +888,7 @@ export default function PlanStage({ onContinue, onGoToSketch, onGoToFurnish }: {
               onSelect={setSelection}
               onPreviewWindow={(id) => setPreviewing({ levelId: level.id, openingId: id })}
               onAnchor={setAnchored}
+              doorReasons={doorReasons}
             />
             {help && <KeyboardHelp onClose={() => setHelp(false)} />}
             <PlanChecks {...dismissProps} levels={levels} levelId={level.id} onPick={pickWarning} onFix={fixWarning} />

@@ -3,7 +3,7 @@ import { landUnder } from "@/lib/land/onLot";
 import { placeName } from "@/lib/land/implications";
 import { formatFeetInches } from "@/lib/model/units";
 import { MAIN_LEVEL_ID } from "@/lib/brief/levels";
-import { INTERIOR_WALL_IN, levelAbove, riseBetween } from "./basics";
+import { INTERIOR_WALL_IN, ceilingFor, levelAbove, riseBetween } from "./basics";
 import { OUTSIDE, openingRooms, reachable, roleOf, roomLinks } from "./connect";
 import { planOf, type Plans } from "./edit";
 import { dist, edgesOf, isRectangle, polygonCenter, polygonsOverlap, scale, add } from "./geometry";
@@ -14,12 +14,14 @@ import { escapeCheck, operationOf } from "@/lib/codes/openings";
 import { clearSqft, clearWidthIn, isHabitable } from "@/lib/codes/rules";
 import { windowWells } from "./wells";
 import { findGaps, type Gap } from "./overlaps";
-import { isWayIn, stairsBoxes, wayInRooms } from "./suggest";
+import { isWayIn, stairsBoxes, stairsFootprints, wayInRooms } from "./suggest";
 import { CANTILEVER_MAX_IN, overhangsOf, pulledBack, supportOf } from "./support";
 import { flatPlans } from "./flatten";
 import { tooWideForCurve } from "./bend";
 import { pointOnEdge } from "./arcs";
-import { hostSegment } from "./walls";
+import { hostSegment, openingGeometry } from "./walls";
+import { listHits, swingClear, swingRoom, type SwingExtras } from "./swing";
+import { cabinetCorners, cabinetLayout } from "./cabinets";
 import { openingType } from "./catalog";
 import { furnishProblems, type LayerKind } from "@/lib/furnish/layer";
 import { leftoverClosets } from "@/lib/furnish/closets";
@@ -51,7 +53,18 @@ export type PlanWarning = {
   escape?: { roomId: string };
   /** A closet piece whose rod and shelf were deleted in Furnish: "Remove the closet walls" (on the floor plan). */
   closetWalls?: { stem: string };
+  /** A door whose swing hits something: "Flip the swing" and "Switch to a pocket door". */
+  swing?: { openingId: string };
 };
+
+/** What a door's swing shouldn't hit on a level beyond the plan's own fixtures, rooms and doors: the stairs and the kitchen cabinets. */
+export function swingExtras(plans: Plans, ctx: Pick<Ctx, "levels" | "basics">, level: Level): SwingExtras {
+  const plan = planOf(plans, level.id);
+  return {
+    stairs: stairsFootprints(plans, ctx, level),
+    cabinets: cabinetLayout(plan, ceilingFor(ctx.basics, level)).cabinets.map((c) => ({ outline: cabinetCorners(c), label: "the cabinets" })),
+  };
+}
 
 const SHAPE_NAME = { straight: "straight", l: "L-shaped", u: "U-shaped" } as const;
 
@@ -194,6 +207,23 @@ export function planWarnings(plans: Plans, ctx: Ctx): PlanWarning[] {
       const big = [...plan.rooms].filter((r) => isHabitable(r) && areaKind(r) === "living").sort((a, b) => roomSqft(b) - roomSqft(a))[0];
       add_(level.id, "egress-basement", `The ${level.name.toLowerCase()} has no emergency escape window or door outside.`, [big]);
       out[out.length - 1].escape = { roomId: big.id };
+    }
+
+    // Doors that hit something when they open: another door, a fixture or cabinet, the stairs, a closet or the far wall.
+    const extras = swingExtras(plans, ctx, level);
+    const warned = new Set<string>();
+    for (const o of plan.openings) {
+      if (o.kind !== "door" || !openingType(o.style).swings) continue;
+      const c = swingClear(plan, o, extras);
+      // Two doors that hit each other get one warning, on the first.
+      const hits = c.hits.filter((h) => h !== "another door's swing" || c.doors.some((id) => !warned.has(id)));
+      if (!hits.length) continue;
+      warned.add(o.id);
+      const g = openingGeometry(plan, o);
+      const into = g ? swingRoom(plan, g) : null;
+      const who = into ? `The door into ${into.name}` : "An outside door";
+      add_(level.id, `swing:${o.id}`, `${who} hits ${listHits(hits)} when it opens.`, into ? [into] : [], g?.center ?? null);
+      out[out.length - 1].swing = { openingId: o.id };
     }
 
     // The code's smallest rooms: 70 sq ft and 7' across inside the walls (kitchens excepted), the same as the code check.

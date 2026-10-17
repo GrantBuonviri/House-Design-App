@@ -31,6 +31,8 @@ import { parseEdgeId, runTargets, type PlanSelection, type PlanTool } from "./ty
 const PLAN_ONLY = ROOM_TYPES.filter((t) => t.planOnly).map((t) => t.id);
 
 type Props = {
+  /** Why Suggest a plan put a door where it is, by opening id (not saved). */
+  doorReasons?: Map<string, string>;
   plan: FloorPlan;
   /** Rooms on this floor that reach past the floor below. */
   overhangs?: Overhang[];
@@ -343,8 +345,14 @@ export default function PlanSidePanel(props: Props) {
     const set = (patch: Parameters<typeof updateOpening>[2]) => onChange(updateOpening(plan, o.id, patch));
     const widths = [...new Set([...t.widths, o.widthIn])].sort((a, b) => a - b);
     const previewable = props.onPreviewWindow && canPreview(plan, o, basics);
+    const reason = props.doorReasons?.get(o.id);
     return (
       <Panel title={t.label}>
+        {reason && (
+          <p className="mb-3 rounded bg-sky-50 px-2 py-1.5 text-xs leading-snug text-sky-900" data-testid="door-reason">
+            {reason}
+          </p>
+        )}
         {previewable && (
           <button className="btn-primary mb-4 w-full text-sm" onClick={() => props.onPreviewWindow?.(o.id)} title="See the view out of this window, and the window from outside">
             Preview window

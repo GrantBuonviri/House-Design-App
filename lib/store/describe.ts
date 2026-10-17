@@ -1,3 +1,5 @@
+import { swingRoom } from "@/lib/plan/swing";
+import { openingGeometry } from "@/lib/plan/walls";
 import { describeRailingEdit } from "@/lib/plan/railings";
 import type { BubbleDiagram, DesignChoices, FloorPlan, Project } from "@/lib/model/schema";
 import { openingType, fixtureType } from "@/lib/plan/catalog";
@@ -136,7 +138,7 @@ function moved(a: object, b: object): boolean {
 function describePlan(a: FloorPlan | undefined, b: FloorPlan | undefined): string | null {
   if (!a || !b) return b ? "start the floor plan" : "clear the floor plan";
   const roomName = (r: FloorPlan["rooms"][number]) => r.name || "a room";
-  const special = describeWallEdits(a, b, roomName) ?? describeRunBend(a, b, roomName) ?? describeBend(a, b, roomName) ?? describeOpenWalls(a, b, roomName) ?? describeSplit(a, b, roomName) ?? describeTrim(a, b, roomName) ?? describeCloset(a, b, roomName) ?? describeEscape(a, b, roomName) ?? describeFurnish(a, b, roomName);
+  const special = describeWallEdits(a, b, roomName) ?? describeRunBend(a, b, roomName) ?? describeBend(a, b, roomName) ?? describeOpenWalls(a, b, roomName) ?? describeSplit(a, b, roomName) ?? describeTrim(a, b, roomName) ?? describeCloset(a, b, roomName) ?? describeEscape(a, b, roomName) ?? describeDoorFix(a, b, roomName) ?? describeFurnish(a, b, roomName);
   if (special) return special;
   const rooms = describeList(a.rooms, b.rooms, roomName, (was, now) =>
     was.name !== now.name ? `rename ${roomName(was)}` : moved(was, now) ? `move ${roomName(now)}` : `change ${roomName(now)}`,
@@ -178,6 +180,23 @@ function describeEscape(a: FloorPlan, b: FloorPlan, roomName: (r: FloorPlan["roo
   const room = "roomId" in o.host ? b.rooms.find((r) => r.id === (o.host as { roomId: string }).roomId) : undefined;
   const name = room ? roomName(room) : "the room";
   return was.has(o.id) ? `make ${name}'s window an escape window` : `add an escape window to ${name}`;
+}
+
+/** "Flip the swing" and "Switch to a pocket door": one door, same spot, hung or slid differently. */
+function describeDoorFix(a: FloorPlan, b: FloorPlan, roomName: (r: FloorPlan["rooms"][number]) => string): string | null {
+  if (json(a.rooms) !== json(b.rooms) || a.openings.length !== b.openings.length) return null;
+  const was = new Map(a.openings.map((o) => [o.id, o]));
+  const changed = b.openings.filter((o) => json(was.get(o.id)) !== json(o));
+  if (changed.length !== 1) return null;
+  const now = changed[0];
+  const old = was.get(now.id);
+  if (!old || old.kind !== "door" || old.offsetIn !== now.offsetIn || json(old.host) !== json(now.host) || old.widthIn !== now.widthIn) return null;
+  const g = openingGeometry(b, old);
+  const into = g ? swingRoom(b, g) : null;
+  const door = into ? `the door into ${roomName(into)}` : "a door";
+  if (now.style === "door-pocket" && old.style !== "door-pocket") return `switch ${door} to a pocket door`;
+  if (now.style === old.style && (now.hinge !== old.hinge || now.side !== old.side)) return `flip the swing of ${door}`;
+  return null;
 }
 
 function describeSketch(a: BubbleDiagram | undefined, b: BubbleDiagram | undefined): string | null {

@@ -8,7 +8,10 @@ import type { PlanWarning } from "@/lib/plan/checks";
  * "Things to check": the plan's friendly warnings, all floors at once.
  * Clicking one goes to its floor, selects the room and centers it.
  */
-export default function PlanChecks({ warnings, fresh = [], dismissed = [], levels, levelId, onPick, onFix, onDismiss, onRestore, onRestoreAll, inFurnish = false }: { warnings: PlanWarning[]; /** Ids of warnings the last fix brought up, tagged "new". */ fresh?: string[]; dismissed?: PlanWarning[]; levels: Level[]; levelId: string; onPick: (w: PlanWarning) => void; onFix?: (w: PlanWarning, action?: "inside" | "delete" | "plan") => void; inFurnish?: boolean; onDismiss?: (w: PlanWarning) => void; onRestore?: (w: PlanWarning) => void; onRestoreAll?: () => void }) {
+/** Which button of a warning was pressed, for warnings with more than one. */
+export type FixAction = "inside" | "delete" | "plan" | "flip" | "pocket";
+
+export default function PlanChecks({ warnings, fresh = [], dismissed = [], levels, levelId, onPick, onFix, onDismiss, onRestore, onRestoreAll, inFurnish = false }: { warnings: PlanWarning[]; /** Ids of warnings the last fix brought up, tagged "new". */ fresh?: string[]; dismissed?: PlanWarning[]; levels: Level[]; levelId: string; onPick: (w: PlanWarning) => void; onFix?: (w: PlanWarning, action?: FixAction) => void; inFurnish?: boolean; onDismiss?: (w: PlanWarning) => void; onRestore?: (w: PlanWarning) => void; onRestoreAll?: () => void }) {
   const [open, setOpen] = useState(true);
   const [showDismissed, setShowDismissed] = useState(false);
   const multi = new Set(warnings.map((w) => w.levelId)).size > 1 || warnings.some((w) => w.levelId !== levelId);
@@ -82,6 +85,16 @@ export default function PlanChecks({ warnings, fresh = [], dismissed = [], level
                     <button className="btn mx-2 mb-1 px-2 py-0.5 text-xs" onClick={() => onFix(w)} data-testid="escape-fix">
                       Make this an escape window
                     </button>
+                  )}
+                  {w.swing && onFix && !inFurnish && (
+                    <span className="mx-2 mb-1 flex gap-1">
+                      <button className="btn px-2 py-0.5 text-xs" onClick={() => onFix(w, "flip")} data-testid="swing-flip">
+                        Flip the swing
+                      </button>
+                      <button className="btn px-2 py-0.5 text-xs" onClick={() => onFix(w, "pocket")} data-testid="swing-pocket">
+                        Switch to a pocket door
+                      </button>
+                    </span>
                   )}
                   {w.gap && onFix && (
                     <button className="btn mx-2 mb-1 px-2 py-0.5 text-xs" onClick={() => onFix(w)}>
