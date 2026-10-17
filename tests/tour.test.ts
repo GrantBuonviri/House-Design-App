@@ -14,3 +14,18 @@ describe("guided tour", () => {
     expect(TOUR.find((s) => s.target === "stages")!.title).toContain(words[STAGE_INFO.length]);
   });
 });
+
+describe("help cards and mini tours", () => {
+  it("starts the tour at the step for the page you're on", async () => {
+    const { tourStartFor } = await import("@/lib/tour/help");
+    expect(TOUR[tourStartFor("plan")].title).toMatch(/^5\./);
+    expect(TOUR[tourStartFor("interior")].title).toMatch(/^6\./);
+  });
+
+  it("has a card for every page but the floor plan, and mini tours pointing at real things", async () => {
+    const { PAGE_HELP, MINI_TOURS } = await import("@/lib/tour/help");
+    expect(Object.keys(PAGE_HELP).sort()).toEqual(["brief", "bubbles", "furnish", "land", "setup"]);
+    const targets = new Set(TOUR.map((s) => s.target));
+    for (const t of MINI_TOURS) for (const s of t.steps) expect(targets.has(s.target)).toBe(true);
+  });
+});

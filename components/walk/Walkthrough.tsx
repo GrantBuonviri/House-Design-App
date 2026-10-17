@@ -30,6 +30,7 @@ import { aimAt, type Aim } from "@/lib/interior/surfaces";
 import { Ground } from "@/components/house3d/House3DView";
 import { HouseMeshes, Sky, type AimTarget } from "@/components/house3d/Scene";
 import { FinishPanel, OutsidePanel } from "./DesignPanel";
+import { DESIGN_KEYS } from "@/lib/tour/help";
 import { Player, type Look } from "./Player";
 import { DesignTabs, FinishesHelp, PlaceTab, type DesignTab } from "./PlaceTab";
 import { DevicePlates, ItemGhost, ItemHighlight, OpeningGhost, RailingHighlight, WallGhost } from "./WalkGhosts";
@@ -997,6 +998,19 @@ export default function Walkthrough({ project, cost, onClose, startWindow }: { p
                   }}
                 />
               </div>
+            )}
+            {isDesignPanel(panel) && (
+              <details className="mb-3 text-xs" data-testid="design-keys">
+                <summary className="cursor-pointer text-muted">Keys</summary>
+                <dl className="mt-1 space-y-0.5">
+                  {DESIGN_KEYS.map(([k, v]) => (
+                    <div key={k} className="flex gap-2">
+                      <dt className="w-14 shrink-0 font-mono font-semibold">{k}</dt>
+                      <dd>{v}</dd>
+                    </div>
+                  ))}
+                </dl>
+              </details>
             )}
             {panel.kind === "finish" && <FinishPanel key={panel.aim.label} aim={panel.aim} selections={project.interior.selections} answers={answers} onChange={setSelections} />}
             {panel.kind === "outside" && <OutsidePanel key={panel.aim.label} aim={panel.aim} selections={project.exterior.selections} answers={outsideAnswers} onChange={setOutside} />}
