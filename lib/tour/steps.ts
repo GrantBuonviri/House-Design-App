@@ -46,7 +46,7 @@ export const TOUR: TourStep[] = [
     target: "stage-brief",
     stage: "brief",
     title: "3. Rooms",
-    body: "Check the rooms you want, how many floors, and which rooms should be near each other. The app turns this into a design brief.",
+    body: "Check the rooms you want and how many floors, then open any room to set its size, floor and what it should be next to. Your design brief keeps up on the right as you go.",
   },
   {
     target: "stage-bubbles",
