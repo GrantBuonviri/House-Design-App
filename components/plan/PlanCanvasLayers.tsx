@@ -3,7 +3,7 @@
 import { Circle, Group, Layer, Line, Rect, Text } from "react-konva";
 import type { BubbleDiagram, FloorPlan, Level, PlanLabels, PlanRoom, Point } from "@/lib/model/schema";
 import { formatFeetInches } from "@/lib/model/units";
-import { add, dist, edgesOf, leftNormal, scale as scaleV, sub, unit } from "@/lib/plan/geometry";
+import { add, dist, edgesOf, leftNormal, rotate as rotateBy, scale as scaleV, sub, unit } from "@/lib/plan/geometry";
 import { bendInfo, type BendSnap, type BendTarget } from "@/lib/plan/bend";
 import { runInfo, type Run } from "@/lib/plan/curveRun";
 import { arcBetween, leftBulge, pointOnEdge, roomEdgeLength } from "@/lib/plan/arcs";
@@ -16,6 +16,7 @@ import type { Overhang } from "@/lib/plan/support";
 import type { Region } from "@/lib/house3d/footprint";
 import type { Guides } from "@/lib/plan/snap";
 import type { Railing, RailingSlot } from "@/lib/plan/railings";
+import type { Faucet } from "@/lib/furnish/faucets";
 import BubbleShape from "@/components/bubbles/BubbleShape";
 import { ACCENT, INK } from "./PlanShapes";
 import { edgeId, isPicked, type PlanSelection, type PlanTool } from "./types";
@@ -428,6 +429,37 @@ export function RailingLines({ railings, bare = [], selectedKey, pickable = fals
           );
         if (r.kind === "handrail") return <Line key={r.key} {...hit} points={pts(r.a, r.b, 0)} stroke={stroke} strokeWidth={(on ? 2 : 1) / s} dash={[6 / s, 3 / s]} hitStrokeWidth={hitW} />;
         return <Line key={r.key} {...hit} points={pts(r.a, r.b, 0)} stroke={on ? ACCENT : INK} strokeWidth={Math.max(2 / s, 4.5)} opacity={on ? 0.9 : 0.6} hitStrokeWidth={hitW} />;
+      })}
+    </Group>
+  );
+}
+
+/**
+ * Faucets, tub spouts and shower heads as small symbols: a dot with a short
+ * spout line over the basin, a ring for a shower head. On the floor plan they
+ * are faded and can't be clicked; on the Furnish page (`pickable`) they answer
+ * to the mouse (the Konva name "faucet", id = the fixture's id). A faucet
+ * that was taken off shows as a dotted ring so it can be picked and put back.
+ */
+export function FaucetSymbols({ faucets, selectedId, pickable = false, s }: { faucets: Faucet[]; selectedId?: string; pickable?: boolean; s: number }) {
+  return (
+    <Group listening={pickable} opacity={pickable ? 1 : 0.55} name="faucets">
+      {faucets.map((f) => {
+        if (f.removed && !pickable) return null;
+        const on = f.fixtureId === selectedId;
+        const stroke = on ? ACCENT : f.removed ? "#9a9486" : INK;
+        const w = (on ? 1.6 : 1) / s;
+        const dir = rotateBy({ x: 0, y: 1 }, f.rotation);
+        const head = f.kind === "shower" ? 3.5 : 1.6;
+        const tip = f.kind === "shower" ? 8 : f.shape === "pot-filler" ? 8 : 5;
+        return (
+          <Group key={f.key} id={f.fixtureId} name="faucet" x={f.at.x} y={f.at.y}>
+            <Circle radius={7} fill="rgba(0,0,0,0.001)" />
+            {!f.removed && f.kind !== "shower" && <Line points={[0, 0, dir.x * tip, dir.y * tip]} stroke={stroke} strokeWidth={w * 1.4} lineCap="round" />}
+            <Circle radius={head} stroke={stroke} strokeWidth={w} fill={f.removed ? undefined : on ? "#fff" : f.color} dash={f.removed ? [1.5, 1.5] : undefined} />
+            {f.kind === "shower" && !f.removed && <Circle radius={1} fill={stroke} />}
+          </Group>
+        );
       })}
     </Group>
   );

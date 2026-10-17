@@ -1,5 +1,6 @@
 "use client";
 
+import { restoreFaucet } from "@/lib/furnish/faucets";
 import { setbackLimits } from "@/lib/plans/lot";
 import { DEFAULT_ROUND_ROOM_IN } from "@/lib/plan/shapes";
 import dynamic from "next/dynamic";
@@ -538,6 +539,11 @@ export default function PlanStage({ onContinue, onGoToSketch, onGoToFurnish }: {
       if (!lc) return;
       setPlans((ps) => ({ ...ps, [w.levelId]: removeLeftoverCloset(p, lc) }));
       setFlash("Removed the closet's walls and door. Undo puts them back.");
+      return;
+    }
+    if (w.noFaucet) {
+      setPlans((ps) => ({ ...ps, [w.levelId]: restoreFaucet(p, w.noFaucet!.fixtureId) }));
+      setFlash("Put the faucet back. Undo takes it off again.");
       return;
     }
     if (w.furnish) {

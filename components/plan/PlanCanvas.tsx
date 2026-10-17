@@ -20,6 +20,7 @@ import { curveRun, isRun, runInfo, runOf, sharesOf, startBow, type Run } from "@
 import { isStairHall, lockedNote, unlocked } from "@/lib/plan/locks";
 import { addRoom, emptyPlan, insertGluedCorner, makeRoom, moveEdge, moveMany, moveOpeningTo, newPlanId, removeCorner, setCornerGlued, type Plans } from "@/lib/plan/edit";
 import { railingsOn, type Railing, type RailingSlot } from "@/lib/plan/railings";
+import { faucetsOn, type Faucet } from "@/lib/furnish/faucets";
 import { add, boundsOf, dist, polygonArea, polygonsOverlap, project, rectangle, round1, roundPoint, scale as scaleV, sub, unit } from "@/lib/plan/geometry";
 import { curvedOpeningGuides, distanceGuides, formatLength, labelOn, openingGuides, wallSegments, type Guide } from "@/lib/plan/labels";
 import { snapFrom, snapMove, snapNode, snapPush, snapTargets, type Guides } from "@/lib/plan/snap";
@@ -35,7 +36,7 @@ import type { LandView, Side } from "@/components/bubbles/types";
 import { Grid, ScaleBar, SideLabels, useSpacePan, type View } from "@/components/canvas/CanvasBits";
 import { ACCENT, OpeningSymbol, StairsSymbol } from "./PlanShapes";
 import { dedupe, flat, ghostOpeningAt, roomFill, type Box } from "./canvasHelpers";
-import { BendHandles, BendTip, RUN_HANDLE_ID, RunHandle, DraftPreview, GuidesAndBox, MidNodes, NodeReadout, OverhangLayer, PlanWalls, RailingLines, ReferenceLayer, ZoomButtons } from "./PlanCanvasLayers";
+import { BendHandles, BendTip, RUN_HANDLE_ID, RunHandle, DraftPreview, GuidesAndBox, MidNodes, NodeReadout, OverhangLayer, PlanWalls, RailingLines, FaucetSymbols, ReferenceLayer, ZoomButtons } from "./PlanCanvasLayers";
 import { DistanceGuides, OutsideDims, RoomLabels, TapeLine, ThingLabels } from "./PlanMeasureLayers";
 import { edgeId, isPicked, parseEdgeId, runTargets, type PlanItem, type PlanSelection, type PlanTool } from "./types";
 
@@ -108,7 +109,7 @@ type Props = {
   /** The floor plan shows furnish items faded (the Show furnishings switch). */
   showFurnishings?: boolean;
   /** The Furnish page: the app's own cabinets and devices, the catalog entry being placed, how far it is turned, the wall the Wall tool draws, and the ceiling. */
-  furnish?: { railings?: Railing[]; bareRailings?: RailingSlot[]; layouts?: Layouts; pick: string | null; turn: number; wallHeight: WallHeight; ceilingIn: number; closetSize?: ClosetSize; here?: { p: Point; dir: Point } };
+  furnish?: { faucets?: Faucet[]; railings?: Railing[]; bareRailings?: RailingSlot[]; layouts?: Layouts; pick: string | null; turn: number; wallHeight: WallHeight; ceilingIn: number; closetSize?: ClosetSize; here?: { p: Point; dir: Point } };
   selection: PlanSelection;
   snap: boolean;
   labels: PlanLabels;
@@ -319,6 +320,9 @@ export default function PlanCanvas(props: Props) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [fp, shown.stairs.length, below, level.id, levels, basics]);
 
+  // Faucets on the floor plan are faded symbols; the Furnish page passes its own (with the room picks).
+  const faucetsHere = useMemo(() => (showFurnishings && !furnish?.faucets ? faucetsOn(fp, level.id, [], { exteriorIn }) : []), [fp, level.id, showFurnishings, furnish?.faucets, exteriorIn]);
+
   const single = selection.length === 1 ? selection[0] : null;
   const selRoom = single?.kind === "room" && tool === "select" ? shown.rooms.find((r) => r.id === single.id) : undefined;
   const selRoomId = selRoom?.id;
@@ -380,6 +384,8 @@ export default function PlanCanvas(props: Props) {
     if (furn) return { kind: "furnish", id: furn.id() };
     const rail = furnishing ? node.findAncestor(".railing", true) : null;
     if (rail) return { kind: "railing", id: rail.id() };
+    const faucet = furnishing ? node.findAncestor(".faucet", true) : null;
+    if (faucet) return { kind: "faucet", id: faucet.id() };
     // On the Furnish page the rooms and walls are locked: only furnishings, doors and windows answer to the mouse.
     if (furnishing) {
       const op = node.findAncestor(".opening", true);
@@ -702,7 +708,7 @@ export default function PlanCanvas(props: Props) {
       setDragCorner({ roomId: el.id, i: el.corner });
       return;
     }
-    if (el.kind === "railing") {
+    if (el.kind === "railing" || el.kind === "faucet") {
       onSelect([el]);
       return;
     }
@@ -1130,6 +1136,9 @@ export default function PlanCanvas(props: Props) {
             />
 
             {(furnishing || showFurnishings) && <FurnishItems items={shownItems} selectedId={single?.kind === "furnish" ? single.id : undefined} badId={badId ?? undefined} s={s} faded={!furnishing} names={labelOn(labels, "fixtureNames")} />}
+            {(furnishing || showFurnishings) && (
+              <FaucetSymbols faucets={furnishing && furnish?.faucets ? furnish.faucets : faucetsHere} selectedId={single?.kind === "faucet" ? single.id : undefined} pickable={furnishing && tool === "select"} s={s} />
+            )}
 
             <PlanWalls exteriorIn={exteriorIn} solids={solids} selection={selection} s={s} toSaved={(h) => savedHost(fp, h)} />
 

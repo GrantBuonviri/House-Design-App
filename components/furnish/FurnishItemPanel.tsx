@@ -25,6 +25,9 @@ export default function FurnishItemPanel({
   onApply,
   onDelete,
   onMessage,
+  faucet,
+  onFaucet,
+  onPotFiller,
 }: {
   plan: FloorPlan;
   item: LayerItem;
@@ -34,6 +37,11 @@ export default function FurnishItemPanel({
   onApply: (out: Done, coalesce?: string) => void;
   onDelete: (plan: FloorPlan) => void;
   onMessage: (text: string) => void;
+  /** The faucet of a sink, vanity, tub or shower: Edit faucet / Put the faucet back. */
+  faucet?: { removed: boolean };
+  onFaucet?: (action: "edit" | "restore") => void;
+  /** A range: "Add a pot filler above". */
+  onPotFiller?: () => void;
 }) {
   const [swapKey, setSwapKey] = useState(0);
   const patch = (p: Parameters<typeof patchItem>[2], coalesce?: string) => onApply(patchItem(plan, item, p), coalesce);
@@ -100,6 +108,19 @@ export default function FurnishItemPanel({
             ))}
           </select>
         </div>
+      )}
+      {faucet && onFaucet && (
+        <div className="mt-4 flex items-center justify-between gap-2 rounded-md border border-line px-2 py-1.5 text-sm" data-testid="furnish-faucet-line">
+          <span>Faucet: {faucet.removed ? "taken off" : "on"}</span>
+          <button className="btn px-2 py-0.5 text-xs" onClick={() => onFaucet(faucet.removed ? "restore" : "edit")} data-testid={faucet.removed ? "furnish-faucet-restore" : "furnish-faucet-edit"}>
+            {faucet.removed ? "Put the faucet back" : "Edit faucet"}
+          </button>
+        </div>
+      )}
+      {onPotFiller && (
+        <button className="btn mt-4 w-full justify-center text-sm" onClick={onPotFiller} data-testid="furnish-add-pot-filler">
+          Add a pot filler above
+        </button>
       )}
       <div className="mt-4 grid grid-cols-2 gap-2">
         <button
