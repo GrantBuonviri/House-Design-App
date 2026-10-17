@@ -46,7 +46,7 @@ import { levelAbove } from "@/lib/plan/basics";
 import { closeGap } from "@/lib/plan/overlaps";
 import { fillBelow, fillShapes, overhangsOf, pullBack, supportOf } from "@/lib/plan/support";
 import { copyableIds } from "@/lib/plan/arrange";
-import { anchor, flightsOf, reconcileStacks, refitHalls, stackOfItem, unanchor } from "@/lib/plan/anchor";
+import { anchor, reconcileStacks, stackOfItem, unanchor } from "@/lib/plan/anchor";
 import { lockedNote } from "@/lib/plan/locks";
 import PlanSidePanel from "./PlanSidePanel";
 import { pruneTopLabels } from "@/lib/house3d/topLabels";
@@ -255,18 +255,17 @@ export default function PlanStage({ onContinue, onGoToSketch, onGoToFurnish }: {
     [setPlans, stackCtx],
   );
   const setLevelPlan = useCallback((pl: FloorPlan, coalesce?: string) => setPlanOn(level.id, pl, coalesce), [setPlanOn, level.id]);
-  /** The Anchor / Unanchor buttons, for stairs or a stair hall on this floor. */
+  /** The Anchor / Unanchor buttons, for stairs on this floor. */
   const setAnchored = (id: string, on: boolean) => {
     const stackId = stackOfItem(plan, id);
     if (!on) {
       if (!stackId) return;
       setPlans((ps) => unanchor(ps, stackId));
-      setFlash("Unanchored the stairs. They and their stair halls still move together on every floor.");
+      setFlash("Unanchored the stairs. They still move together on every floor.");
       return;
     }
-    const flight = plan.stairs.some((s) => s.id === id) ? { levelId: level.id, id } : stackId ? (([f]) => f && { levelId: f.levelId, id: f.stairs.id })(flightsOf(plans, stackCtx, stackId)) : null;
-    const out = flight && anchor(plans, stackCtx, flight.levelId, flight.id);
-    if (!out) return setFlash("There are no stairs left in this stair hall to anchor.");
+    const out = anchor(plans, stackCtx, level.id, id);
+    if (!out) return;
     setPlans(() => out.plans);
     setFlash(out.note);
   };
@@ -561,7 +560,7 @@ export default function PlanStage({ onContinue, onGoToSketch, onGoToFurnish }: {
       return;
     }
     if (w.stairsU) {
-      applyFix(refitHalls(makeStairsU(plans, w.stairsU), stackCtx), "Made both stairs U-shaped.");
+      applyFix(makeStairsU(plans, w.stairsU), "Made both stairs U-shaped.");
       return;
     }
     if (w.swing) {

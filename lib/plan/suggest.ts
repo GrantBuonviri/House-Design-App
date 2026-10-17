@@ -78,7 +78,7 @@ export function suggestPlans(diagrams: Record<string, BubbleDiagram>, ctx: PlanC
     if (plan.rooms.length) {
       const obstacles = stairsBoxes(base.plans, ctx, level);
       const support = supportOf(plans, ctx.levels, level);
-      // Stairs outside every room get taken into an ordinary room, never a stair hall of their own.
+      // Stairs outside every room get taken into an ordinary room.
       plan = coverStairs(plan, obstacles, ctx.limits, support?.regions).plan;
       const h = addHallways(plan, obstacles, 3, ctx.limits);
       halls += h.added;

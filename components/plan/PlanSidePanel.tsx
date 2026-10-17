@@ -2,7 +2,6 @@
 
 import { keepRailingEdits, resetRailings } from "@/lib/plan/railings";
 import AnchorBox from "./AnchorBox";
-import { isStairHall } from "@/lib/plan/locks";
 import ArrangeButtons from "./ArrangeButtons";
 import CurveFields, { RunCurveFields } from "./CurveFields";
 import { BayFields, RoundCornerFields } from "./ShapeFields";
@@ -58,7 +57,7 @@ type Props = {
   onSelect: (s: PlanSelection) => void;
   /** Open the Preview window popup for a window or sliding glass door on an outside wall. */
   onPreviewWindow?: (openingId: string) => void;
-  /** Anchor (true) or unanchor stairs, or the stairs of a stair hall, by the stairs' or hall's id. Changes every floor of the stack. */
+  /** Anchor (true) or unanchor stairs, by the stairs' id. Changes every floor of the stack. */
   onAnchor?: (id: string, on: boolean) => void;
 };
 
@@ -170,10 +169,8 @@ export default function PlanSidePanel(props: Props) {
     const brRoom = brief?.rooms.find((r) => r.id === room.briefRoomId);
     const rect = isRectangle(room.polygon) && !roomHasCurves(room);
     const set = (patch: Parameters<typeof updateRoom>[2], key: string) => onChange(updateRoom(plan, room.id, patch), `${key}.${room.id}`);
-    const locked = !!(room.stairStack && room.anchored);
     return (
-      <Panel title={room.stairStack ? "Stair hall" : "Room"}>
-        {room.stairStack && props.onAnchor && <AnchorBox hall anchored={locked} onAnchor={(on) => props.onAnchor!(room.id, on)} />}
+      <Panel title="Room">
         {combined === room.id && <p className="mb-3 rounded bg-accent/10 p-2 text-xs">Rooms combined. Give the new room a name.</p>}
         <label className="field-label" htmlFor="room-name">
           Name
@@ -232,20 +229,16 @@ export default function PlanSidePanel(props: Props) {
           corner, or the diamond to bend the wall into a curve; double-click a wall to show the corner dots, and again to add one. To take a corner away, pick it and press Delete, or right-click it and pick Combine walls. Right-click a wall to split it here or into equal pieces.
         </p>
 
-        {!room.stairStack && <RoundCornerFields plan={plan} roomId={room.id} onChange={onChange} />}
+        <RoundCornerFields plan={plan} roomId={room.id} onChange={onChange} />
 
         <OverhangField room={room} overhang={props.overhangs?.find((o) => o.roomId === room.id)} onSet={(v) => set({ overhang: v === "none" ? undefined : v }, "overhang")} />
 
-        {!locked && (
-          <>
-            <TurnButtons onTurn={(deg) => onChange(rotateMany(plan, [room.id], deg, polygonCenter(room.polygon)))} />
-            <ArrangeButtons plan={plan} ids={[room.id]} onChange={onChange} onSelect={onSelect} />
+        <TurnButtons onTurn={(deg) => onChange(rotateMany(plan, [room.id], deg, polygonCenter(room.polygon)))} />
+        <ArrangeButtons plan={plan} ids={[room.id]} onChange={onChange} onSelect={onSelect} />
 
-            <button className="mt-4 text-sm text-red-700 hover:underline" onClick={() => remove([room.id])}>
-              Delete this room
-            </button>
-          </>
-        )}
+        <button className="mt-4 text-sm text-red-700 hover:underline" onClick={() => remove([room.id])}>
+          Delete this room
+        </button>
       </Panel>
     );
   }
@@ -266,7 +259,7 @@ export default function PlanSidePanel(props: Props) {
       <Panel title={`Wall of ${r.name}`}>
         <LengthField label="Length" value={seg.length} onCommit={(v) => onChange(setEdgeLength(plan, roomId, edge, v))} />
         <p className="field-hint">The far end moves; drag the wall on the drawing to push it in or out.</p>
-        {!isStairHall(plan, roomId) && <CurveFields plan={plan} target={{ roomId, edge }} onChange={onChange} />}
+        <CurveFields plan={plan} target={{ roomId, edge }} onChange={onChange} />
         <BayFields plan={plan} roomId={roomId} edge={edge} onChange={onChange} />
         <div className="mt-4 grid grid-cols-2 gap-2">
           <button className="btn text-sm" onClick={() => addHere("door-hinged")}>

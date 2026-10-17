@@ -215,7 +215,7 @@ describe("saved data", () => {
     const v30 = JSON.parse(JSON.stringify({ ...p, schemaVersion: 30 }));
     const migrated = migrateProject(v30);
     expect(migrated.schemaVersion).toBe(SCHEMA_VERSION);
-    expect(SCHEMA_VERSION).toBe(31);
+    expect(SCHEMA_VERSION).toBeGreaterThanOrEqual(31);
     const withPlan = { ...migrated, floorPlans: { [L]: changeFaucet(bathAndKitchen(), "sink", { shape: "bridge", alongIn: 2 }) } };
     const again = migrateProject(JSON.parse(JSON.stringify(withPlan)));
     expect(JSON.stringify(again)).toContain('"faucet":{"shape":"bridge","alongIn":2}');

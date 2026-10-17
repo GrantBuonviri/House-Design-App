@@ -9,7 +9,7 @@ import { z } from "zod";
  * Angles are degrees clockwise from north (0 = N, 90 = E).
  */
 
-export const SCHEMA_VERSION = 31;
+export const SCHEMA_VERSION = 32;
 
 export const Point = z.object({ x: z.number(), y: z.number() });
 export type Point = z.infer<typeof Point>;
@@ -354,14 +354,6 @@ export const PlanRoom = z.object({
    * beam, or an engineered beam or truss. Left out means "none".
    */
   overhang: z.enum(["none", "cantilever", "posts", "engineered"]).optional(),
-  /**
-   * This room is the stair hall for the stair stack with this id (see
-   * lib/plan/anchor.ts): same outline on every floor of the stack, never
-   * bigger than the stairs plus 3' at each end. Left out means an ordinary room.
-   */
-  stairStack: z.string().optional(),
-  /** A stair hall of anchored stairs: locked in place like the stairs (its walls can still be moved). Left out means free. */
-  anchored: z.boolean().optional(),
 });
 export type PlanRoom = z.infer<typeof PlanRoom>;
 export type OverhangKind = NonNullable<PlanRoom["overhang"]>;
@@ -448,7 +440,7 @@ export const PlanStairs = z.object({
   railings: z.array(RailingEdit).optional(),
   /** Stairs with the same id climb through the house as one stack (see lib/plan/anchor.ts) and move together. */
   stackId: z.string().optional(),
-  /** Anchored stairs and their stair halls can't be moved, turned, resized or deleted. Left out means free. */
+  /** Anchored stairs can't be moved, turned, resized or deleted. Left out means free. */
   anchored: z.boolean().optional(),
 });
 export type PlanStairs = z.infer<typeof PlanStairs>;

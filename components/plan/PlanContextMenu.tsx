@@ -31,11 +31,9 @@ export function contextItems(
 ): Item[] {
   const { el } = c;
   if (!el) return [];
-  // Anchored stairs and stair halls can't move: offer Unanchor instead (copies of stairs start free).
-  if ((el.kind === "stairs" || el.kind === "room") && isLocked(plan, el.id)) {
-    const items: Item[] = [{ label: "Unanchor", run: () => act.anchor?.(el.id, false) }];
-    if (el.kind === "stairs") items.push("line", { label: "Duplicate  ⌘D", run: () => duplicateAndSelect(plan, [el.id], act.change, act.select) });
-    return items;
+  // Anchored stairs can't move: offer Unanchor instead (copies of stairs start free).
+  if (el.kind === "stairs" && isLocked(plan, el.id)) {
+    return [{ label: "Unanchor", run: () => act.anchor?.(el.id, false) }, "line", { label: "Duplicate  ⌘D", run: () => duplicateAndSelect(plan, [el.id], act.change, act.select) }];
   }
   const anchoring: Item[] = act.anchor && el.kind === "stairs" ? [{ label: "Anchor", run: () => act.anchor!(el.id, true) }, "line"] : [];
   const picked = selection.some((s) => s.id === el.id) ? selection : [el];

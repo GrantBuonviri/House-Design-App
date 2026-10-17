@@ -203,8 +203,8 @@ export function fillBelow(plan: FloorPlan, regions: Region[], arcs: Arc[] = [], 
     used.add(name);
     const room = refitRoom(makeRoom(poly, name), clockwise(poly.map(roundPoint)), curves);
     out = { ...out, rooms: [...out.rooms, room] };
-    // A door to a room next to it, so it isn't shut in: a hallway or stair hall first, then any room but a closet.
-    const rank = (r: PlanRoom) => (r.type === "hall" || r.stairStack ? 0 : r.type === "closet" || r.type === "primary-closet" ? 9 : 1);
+    // A door to a room next to it, so it isn't shut in: a hallway first, then any room but a closet.
+    const rank = (r: PlanRoom) => (r.type === "hall" ? 0 : r.type === "closet" || r.type === "primary-closet" ? 9 : 1);
     const next = out.rooms.filter((r) => r.id !== room.id && areaKind(r) !== "outdoor" && rank(r) < 9 && sharedWall(room, r)).sort((a, b) => rank(a) - rank(b));
     for (const r of next) {
       const door = doorBetween(out, room, r);

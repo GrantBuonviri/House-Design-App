@@ -127,8 +127,7 @@ function cutPath(cut: Cut): { path: Point[]; arcs: Arc[] } {
 /** The room a line of walls (or a curve) cuts across, if any (the first one it splits cleanly). */
 export function roomSplitBy(plan: FloorPlan, cut: Cut): PlanRoom | null {
   const { path } = cutPath(cut);
-  // A stair hall keeps one outline on every floor, so it isn't split.
-  return plan.rooms.find((r) => !r.stairStack && splitOutlines(cutOutline(r), path)) ?? null;
+  return plan.rooms.find((r) => splitOutlines(cutOutline(r), path)) ?? null;
 }
 
 /**
