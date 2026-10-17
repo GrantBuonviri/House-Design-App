@@ -63,21 +63,28 @@ export function ghostOpeningAt(plan: FloorPlan, p: Point, style: string, s: numb
   return g ? { g, thickness: 6 } : null;
 }
 
-let stripeTile: HTMLCanvasElement | null | undefined;
+const stripeTiles = new Map<string, HTMLCanvasElement | null>();
 
-/** A tile of red diagonal stripes for shading, made once. Null where there's no document (tests). */
-export function stripes(): HTMLCanvasElement | null {
-  if (stripeTile !== undefined) return stripeTile;
-  if (typeof document === "undefined") return (stripeTile = null);
-  const c = document.createElement("canvas");
-  c.width = c.height = 10;
-  const g = c.getContext("2d");
-  if (!g) return (stripeTile = null);
-  g.strokeStyle = "rgba(200,50,40,0.75)";
-  g.lineWidth = 2;
-  g.beginPath();
-  g.moveTo(-2, 12);
-  g.lineTo(12, -2);
-  g.stroke();
-  return (stripeTile = c);
+/** A tile of diagonal stripes for shading, made once per color and strength. Null where there's no document (tests). */
+export function stripes(rgb = "200,50,40", alpha = 0.75): HTMLCanvasElement | null {
+  const key = `${rgb}/${alpha}`;
+  const cached = stripeTiles.get(key);
+  if (cached !== undefined) return cached;
+  let tile: HTMLCanvasElement | null = null;
+  if (typeof document !== "undefined") {
+    const c = document.createElement("canvas");
+    c.width = c.height = 10;
+    const g = c.getContext("2d");
+    if (g) {
+      g.strokeStyle = `rgba(${rgb},${alpha})`;
+      g.lineWidth = 2;
+      g.beginPath();
+      g.moveTo(-2, 12);
+      g.lineTo(12, -2);
+      g.stroke();
+      tile = c;
+    }
+  }
+  stripeTiles.set(key, tile);
+  return tile;
 }

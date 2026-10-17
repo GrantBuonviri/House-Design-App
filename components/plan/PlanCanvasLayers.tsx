@@ -1,7 +1,7 @@
 "use client";
 
 import { Circle, Group, Layer, Line, Rect, Text } from "react-konva";
-import type { BubbleDiagram, FloorPlan, Level, PlanRoom, Point } from "@/lib/model/schema";
+import type { BubbleDiagram, FloorPlan, Level, PlanLabels, PlanRoom, Point } from "@/lib/model/schema";
 import { formatFeetInches } from "@/lib/model/units";
 import { add, dist, edgesOf, leftNormal, scale as scaleV, sub, unit } from "@/lib/plan/geometry";
 import { bendInfo, type BendSnap, type BendTarget } from "@/lib/plan/bend";
@@ -47,47 +47,64 @@ export function ReferenceLayer({ sketch, below, support, above, s }: { sketch: B
 /** How a room held up on purpose reads on the plan. */
 const HELD_BY: Record<Overhang["kind"], string> = { none: "", cantilever: "short cantilever", posts: "on posts", engineered: "engineered" };
 
-/** The parts of rooms that hang past the floor below: red stripes and how far they reach, or blue when it's held up on purpose. */
-export function OverhangLayer({ overhangs, s, past = "the wall below" }: { overhangs: Overhang[]; s: number; past?: string }) {
-  const pattern = stripes();
+/** Warning looks for the overhang stripes: stroke, text, stripe color and fill. */
+const WARN_LOOK: Record<PlanLabels["overhangColor"], { stroke: string; text: string; rgb: string }> = {
+  red: { stroke: "#c8322a", text: "#a3231c", rgb: "200,50,40" },
+  orange: { stroke: "#d9731a", text: "#a5530f", rgb: "217,115,26" },
+  purple: { stroke: "#8a3fb8", text: "#682b8f", rgb: "138,63,184" },
+};
+const STRENGTH: Record<PlanLabels["overhangStrength"], { fill: number; stripe: number; blue: number }> = {
+  light: { fill: 0.08, stripe: 0.4, blue: 0.06 },
+  normal: { fill: 0.18, stripe: 0.75, blue: 0.12 },
+  strong: { fill: 0.32, stripe: 1, blue: 0.22 },
+};
+
+/** The parts of rooms that hang past the floor below: striped pieces and how far they reach, or blue when it's held up on purpose. */
+export function OverhangLayer({ overhangs, s, past = "the wall below", shading = true, text = true, color = "red", strength = "normal", textSize = 1 }: { overhangs: Overhang[]; s: number; past?: string; shading?: boolean; text?: boolean; color?: PlanLabels["overhangColor"]; strength?: PlanLabels["overhangStrength"]; textSize?: number }) {
+  if (!shading && !text) return null;
+  const look = WARN_LOOK[color];
+  const str = STRENGTH[strength];
+  const pattern = stripes(look.rgb, str.stripe);
   const w = 260 / s;
   return (
     <Layer listening={false}>
-      {overhangs.flatMap((o) =>
-        o.pieces.map((piece, i) =>
-          o.ok ? (
-            <Line key={`${o.roomId}-${i}`} points={flat(piece)} closed fill="rgba(40,110,190,0.12)" stroke="#2c6eb8" strokeWidth={1.5} strokeScaleEnabled={false} dash={[6, 4]} />
-          ) : (
-            <Line
-              key={`${o.roomId}-${i}`}
-              points={flat(piece)}
-              closed
-              fill="rgba(200,50,40,0.18)"
-              fillPatternImage={pattern as unknown as HTMLImageElement}
-              fillPatternScale={{ x: 1 / s, y: 1 / s }}
-              fillPriority={pattern ? "pattern" : "color"}
-              stroke="#c8322a"
-              strokeWidth={1.5}
-              strokeScaleEnabled={false}
-            />
+      {shading &&
+        overhangs.flatMap((o) =>
+          o.pieces.map((piece, i) =>
+            o.ok ? (
+              <Line key={`${o.roomId}-${i}`} points={flat(piece)} closed fill={`rgba(40,110,190,${str.blue})`} stroke="#2c6eb8" strokeWidth={1.5} strokeScaleEnabled={false} dash={[6, 4]} />
+            ) : (
+              <Line
+                key={`${o.roomId}-${i}`}
+                points={flat(piece)}
+                closed
+                fill={`rgba(${look.rgb},${str.fill})`}
+                fillPatternImage={pattern as unknown as HTMLImageElement}
+                fillPatternScale={{ x: 1 / s, y: 1 / s }}
+                fillPriority={pattern ? "pattern" : "color"}
+                stroke={look.stroke}
+                strokeWidth={1.5}
+                strokeScaleEnabled={false}
+              />
+            ),
           ),
-        ),
-      )}
-      {overhangs.map((o) => (
-        <Text
-          key={`t-${o.roomId}`}
-          x={o.at.x}
-          y={o.at.y}
-          width={w}
-          offsetX={w / 2}
-          offsetY={6 / s}
-          align="center"
-          text={o.ok ? `${HELD_BY[o.kind]}, ${formatFeetInches(o.depthIn)} out` : `hangs ${formatFeetInches(o.depthIn)} past ${past}`}
-          fontSize={11.5 / s}
-          fontStyle="600"
-          fill={o.ok ? "#1f548f" : "#a3231c"}
-        />
-      ))}
+        )}
+      {text &&
+        overhangs.map((o) => (
+          <Text
+            key={`t-${o.roomId}`}
+            x={o.at.x}
+            y={o.at.y}
+            width={w}
+            offsetX={w / 2}
+            offsetY={6 / s}
+            align="center"
+            text={o.ok ? `${HELD_BY[o.kind]}, ${formatFeetInches(o.depthIn)} out` : `hangs ${formatFeetInches(o.depthIn)} past ${past}`}
+            fontSize={(11.5 * textSize) / s}
+            fontStyle="600"
+            fill={o.ok ? "#1f548f" : look.text}
+          />
+        ))}
     </Layer>
   );
 }

@@ -70,6 +70,15 @@ describe("migrateProject", () => {
     expect(migrated.floorPlans["floor-1"].rooms[0].overhang).toBe("none");
   });
 
+  it("fills the overhang label switches on a version 26 project", () => {
+    const p = createProject("Old labels");
+    const v26 = JSON.parse(JSON.stringify({ ...p, schemaVersion: 26 }));
+    for (const k of ["aboveOutlines", "aboveShading", "aboveText", "overhangShading", "overhangText", "overhangColor", "overhangStrength"]) delete v26.plan?.labels?.[k];
+    const migrated = migrateProject(v26);
+    expect(migrated.schemaVersion).toBe(SCHEMA_VERSION);
+    expect(JSON.stringify(migrated)).toContain("overhangStrength");
+  });
+
   it("round-trips a custom plot", () => {
     const plot = buildCustomPlot({
       ...newCustomLand("Creek lot"),

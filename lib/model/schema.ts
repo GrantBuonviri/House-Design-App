@@ -9,7 +9,7 @@ import { z } from "zod";
  * Angles are degrees clockwise from north (0 = N, 90 = E).
  */
 
-export const SCHEMA_VERSION = 26;
+export const SCHEMA_VERSION = 27;
 
 export const Point = z.object({ x: z.number(), y: z.number() });
 export type Point = z.infer<typeof Point>;
@@ -624,6 +624,18 @@ export const PlanLabels = z.object({
   openingTags: z.boolean().default(true),
   /** Fixture and furniture names. */
   fixtureNames: z.boolean().default(true),
+  /** The floor above's dotted room outlines on this floor's plan. */
+  aboveOutlines: z.boolean().default(true),
+  /** Red stripes where the floor above hangs past this floor's walls. */
+  aboveShading: z.boolean().default(true),
+  /** The "hangs X past this floor's wall (upstairs)" notes. Hidden by L. */
+  aboveText: z.boolean().default(true),
+  /** This floor's stripes (and blue "held up" outlines) where it hangs past the floor below. */
+  overhangShading: z.boolean().default(true),
+  /** The "hangs X past the wall below" notes. Hidden by L. */
+  overhangText: z.boolean().default(true),
+  overhangColor: z.enum(["red", "orange", "purple"]).default("red"),
+  overhangStrength: z.enum(["light", "normal", "strong"]).default("normal"),
   /** Text size multiplier: 0.85 small, 1 medium, 1.25 large, or anything between 0.7 and 1.6. */
   textSize: z.number().min(0.7).max(1.6).default(1),
   textColor: z.enum(["dark", "gray", "room"]).default("dark"),

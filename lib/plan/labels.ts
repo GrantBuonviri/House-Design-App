@@ -21,6 +21,13 @@ export const DEFAULT_LABELS: PlanLabels = {
   outsideDims: true,
   openingTags: true,
   fixtureNames: true,
+  aboveOutlines: true,
+  aboveShading: true,
+  aboveText: true,
+  overhangShading: true,
+  overhangText: true,
+  overhangColor: "red",
+  overhangStrength: "normal",
   textSize: 1,
   textColor: "dark",
   boldNames: true,
@@ -29,7 +36,7 @@ export const DEFAULT_LABELS: PlanLabels = {
 };
 
 /** Is this kind of label showing? Everything is off while "hide all" is on. */
-export function labelOn(labels: PlanLabels, kind: "roomNames" | "sqft" | "roomSizes" | "wallLengths" | "outsideDims" | "openingTags" | "fixtureNames"): boolean {
+export function labelOn(labels: PlanLabels, kind: "roomNames" | "sqft" | "roomSizes" | "wallLengths" | "outsideDims" | "openingTags" | "fixtureNames" | "overhangText" | "aboveText"): boolean {
   return !labels.hideAll && labels[kind];
 }
 

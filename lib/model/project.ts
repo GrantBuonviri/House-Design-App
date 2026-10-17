@@ -81,6 +81,8 @@ export function migrateProject(raw: unknown): Project {
   // defaults, so no change beyond the version.
   // Version 25 to 26 added railing changes on stairs (`railings`, left out
   // means automatic), so no change beyond the version.
+  // Version 26 to 27 added the floor above and overhang label switches, color and
+  // strength (`plan.labels`, all with defaults), so no change beyond the version.
   return Project.parse({ ...migrated, schemaVersion: SCHEMA_VERSION });
 }
 

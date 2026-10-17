@@ -1083,7 +1083,7 @@ export default function PlanCanvas(props: Props) {
 
           {land && <LandLayer land={land} scale={s} shift={lotDelta} />}
 
-          {(sketch || below || above) && <ReferenceLayer sketch={sketch} below={below} support={support?.regions} above={above?.plan} s={s} />}
+          {(sketch || below || above) && <ReferenceLayer sketch={sketch} below={below} support={support?.regions} above={labels.aboveOutlines ? above?.plan : null} s={s} />}
 
           <Layer ref={layerRef}>
             {shown.rooms.map((r) => (
@@ -1189,15 +1189,15 @@ export default function PlanCanvas(props: Props) {
               keepRatio={false}
             />
           </Layer>
-          {overhangs.length > 0 && <OverhangLayer overhangs={overhangs} s={s} />}
-          {aboveOver.length > 0 && <OverhangLayer overhangs={aboveOver} s={s} past="this floor's wall (upstairs)" />}
+          {overhangs.length > 0 && <OverhangLayer overhangs={overhangs} s={s} shading={labels.overhangShading} text={labelOn(labels, "overhangText")} color={labels.overhangColor} strength={labels.overhangStrength} textSize={labels.textSize} />}
+          {aboveOver.length > 0 && <OverhangLayer overhangs={aboveOver} s={s} past="this floor's wall (upstairs)" shading={labels.aboveShading} text={labelOn(labels, "aboveText")} color={labels.overhangColor} strength={labels.overhangStrength} textSize={labels.textSize} />}
         </Stage>
       )}
 
       <SideLabels sides={sides} />
-      {(below || sketch || above) && (
+      {(below || sketch || (above && labels.aboveOutlines)) && (
         <p className="pointer-events-none absolute top-2 left-3 rounded bg-white/80 px-2 py-0.5 text-xs text-muted">
-          {[sketch ? "Faint bubbles: your flow sketch" : null, below ? `Dashed: ${below.name}` : null, support ? `Solid: its outside walls` : null, above ? `Dotted: ${above.name}` : null].filter(Boolean).join(" · ")}
+          {[sketch ? "Faint bubbles: your flow sketch" : null, below ? `Dashed: ${below.name}` : null, support ? `Solid: its outside walls` : null, above && labels.aboveOutlines ? `Dotted: ${above.name}` : null].filter(Boolean).join(" · ")}
         </p>
       )}
       <ScaleBar scale={s} />
