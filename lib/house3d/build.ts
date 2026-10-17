@@ -1,4 +1,4 @@
-import { HouseSystems, type DesignChoices, type FloorPlan, type House3D, type Level, type PlanBasics, type PlanRoom, type Point, type Selection } from "@/lib/model/schema";
+import { HouseSystems, type DesignChoices, type FloorPlan, type Fixture, type House3D, type Level, type PlanBasics, type PlanRoom, type Point, type Selection } from "@/lib/model/schema";
 import { exteriorWallIn, INTERIOR_WALL_IN } from "@/lib/plan/basics";
 import { planOf, type Plans } from "@/lib/plan/edit";
 import { add, rotate as rotateBy, collinearOverlap, dist, lerp, pointInPolygon, polygonArea, polygonCenter, project, rectangle, scale, sub, subtractIntervals, unit } from "@/lib/plan/geometry";
@@ -8,13 +8,15 @@ import { HALF_WALL_IN, openingGeometries, roomEdgeAt, WALL_CAP_IN, WALL_CAP_OVER
 import { wallKey } from "@/lib/interior/picks";
 import { COLORS, floorColor } from "./colors";
 import { drawAddOn, drawFixture, drawFurniture, drawHookup } from "./fixtures";
+import { APRON_IN, drawFixtureDetail, isFarmhouse } from "./kitchenBath";
+import { CROWN_FROM_IN, drawCabinet } from "./cabinets3d";
 import { DEVICE_INFO, placedHookups } from "@/lib/plan/devices";
 import { PATTERN, roomLook, type RoomLook } from "./finishes";
 import { exteriorLook, type ExteriorLook } from "./exterior";
 import { COVERED, cutHoles, floorFootprint, intersectRegions, offsetRing, roofFootprint, subtractRegions, type Region } from "./footprint";
 import { isBelowGround, levelHeights, type LevelHeights } from "./levels";
 import { against, faceOf, stretchOf, wallFootprints } from "./joints";
-import { MeshBuilder, toScene, type Frame, type MeshData, type Vec3 } from "./mesh";
+import { hex, MeshBuilder, toScene, type Frame, type MeshData, type Vec3 } from "./mesh";
 import { drawOpening, openingSpan, type DoorMotion } from "./openings";
 import { CROWN_ROOMS, drawWallTrim } from "./trim";
 import { drawRoof, roofShape, roofTop, ROOF_THICK_IN } from "./roof";
@@ -52,6 +54,9 @@ export type Pick = {
   /** A faucet's key (its fixture is `id`), the same way. */
   faucet?: string;
 };
+
+/** Open shelves in cabinets are stained wood. */
+const CABINET_SHELF = hex("#8a5a3b");
 
 export type Layer = "walls" | "footprints" | "floors" | "ceilings" | "openings" | "stairs" | "fixtures" | "furniture" | "roof" | "foundation" | "yard";
 
@@ -422,15 +427,23 @@ export function buildLevel(
     parts.push({ key: `${L}:entry`, levelId: L, layer: "stairs", mesh: mb.build() });
   }
 
-  // ---- Fixtures ----
+  // ---- Fixtures (kitchen, bath and laundry ones in detail with Pretty, kitchenBath.ts) ----
+  const cabinets = cabinetLayout(plan, ceilingIn, codeNum("kitchen.rangeClearanceAbove"));
+  const footprintOf = (x: { x: number; y: number; widthIn: number; depthIn: number; rotation?: number }) => rectangle(x.x, x.y, x.widthIn, x.depthIn, x.rotation ?? 0);
+  const upperOver = (fx: Fixture) => cabinets.cabinets.some((c) => !BASE_KINDS.has(c.kind) && c.bottomIn > 36 && pointInPolygon({ x: c.x, y: c.y }, footprintOf(fx)));
   for (const fx of plan.fixtures) {
     const solid = new MeshBuilder();
     const glass = new MeshBuilder();
     const fxRoom = fx.roomId ? looks.get(fx.roomId) : lookAt({ x: fx.x, y: fx.y });
     drawFixture(solid, glass, f, fx, floorIn, fxRoom);
     const pick: Pick = { kind: "fixture", id: fx.id, levelId: L };
-    if (!solid.empty) parts.push({ key: `${L}:f:${fx.id}`, levelId: L, layer: "fixtures", pick, mesh: solid.build() });
-    if (!glass.empty) parts.push({ key: `${L}:fg:${fx.id}`, levelId: L, layer: "fixtures", pick, mesh: glass.build(), glass: true });
+    const detail = { solid: new MeshBuilder(), glass: new MeshBuilder() };
+    const detailed = drawFixtureDetail(detail.solid, detail.glass, f, fx, floorIn, fxRoom, { others: plan.fixtures, ceilingIn, cabinetOverRange: fx.kind === "range" && upperOver(fx) });
+    const fast = detailed ? { quality: "fast" as const } : {};
+    if (!solid.empty) parts.push({ key: `${L}:f:${fx.id}`, levelId: L, layer: "fixtures", pick, mesh: solid.build(), ...fast });
+    if (!glass.empty) parts.push({ key: `${L}:fg:${fx.id}`, levelId: L, layer: "fixtures", pick, mesh: glass.build(), glass: true, ...fast });
+    if (!detail.solid.empty) parts.push({ key: `${L}:fp:${fx.id}`, levelId: L, layer: "fixtures", pick, mesh: detail.solid.build(), quality: "pretty" });
+    if (!detail.glass.empty) parts.push({ key: `${L}:fpg:${fx.id}`, levelId: L, layer: "fixtures", pick, mesh: detail.glass.build(), glass: true, quality: "pretty" });
   }
 
   // ---- Faucets, tub spouts and shower heads, worked out from the fixtures ----
@@ -450,7 +463,6 @@ export function buildLevel(
   // Base boxes the app lays out are drawn as the counters; hand-placed ones of any kind are drawn as boxes.
   const counters = plan.fixtures.filter((x) => x.kind === "counter" || x.kind === "island" || x.kind === "vanity");
   const underCounter = (c: { x: number; y: number }) => counters.some((x) => pointInPolygon(c, rectangle(x.x, x.y, x.widthIn, x.depthIn, x.rotation)));
-  const cabinets = cabinetLayout(plan, ceilingIn, codeNum("kitchen.rangeClearanceAbove"));
   const hung = cabinets.cabinets.filter(
     (c) => !BASE_KINDS.has(c.kind) || c.bottomIn > 24 || (!c.auto && !underCounter(c)),
   );
@@ -461,7 +473,19 @@ export function buildLevel(
       const look = lookAt({ x: c.x, y: c.y });
       mb.block(f, { x: c.x, y: c.y }, c.rotation, c.widthIn - 0.25, c.depthIn, floorIn + c.bottomIn, floorIn + c.bottomIn + c.heightIn, look?.cabinet ?? COLORS.cabinet);
     }
-    parts.push({ key: `${L}:cab`, levelId: L, layer: "fixtures", mesh: mb.build() });
+    parts.push({ key: `${L}:cab`, levelId: L, layer: "fixtures", mesh: mb.build(), quality: "fast" });
+  }
+  // Pretty: every cabinet in detail (base ones too: their boxes and fronts sit under the counter's top).
+  if (cabinets.cabinets.length) {
+    const mb = new MeshBuilder();
+    const farmhouse = plan.fixtures.filter((x) => isFarmhouse(x, x.roomId ? looks.get(x.roomId) : lookAt(x)));
+    for (const c of cabinets.cabinets) {
+      const look = lookAt({ x: c.x, y: c.y });
+      const color = c.kind === "vanity" ? (look?.vanity ?? COLORS.cabinet) : (look?.cabinet ?? COLORS.cabinet);
+      const apron = c.kind === "sink" && farmhouse.some((x) => pointInPolygon({ x: c.x, y: c.y }, footprintOf({ ...x, depthIn: x.depthIn + 6 })));
+      drawCabinet(mb, f, c, floorIn, color, { crown: c.bottomIn + c.heightIn >= CROWN_FROM_IN, shelf: CABINET_SHELF, ...(apron ? { apronIn: APRON_IN } : {}) });
+    }
+    if (!mb.empty) parts.push({ key: `${L}:cabd`, levelId: L, layer: "fixtures", mesh: mb.build(), quality: "pretty" });
   }
 
   // ---- Built-ins and extras, and the hookups behind fixtures ----

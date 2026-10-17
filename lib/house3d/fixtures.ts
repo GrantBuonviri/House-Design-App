@@ -69,7 +69,7 @@ export function fixtureSpan(kind: string): { z0: number; z1: number } {
 }
 
 /** A fixture piece's color with the room's picked finishes: cabinets, counters, the sink and appliances. */
-function finished(kind: string, color: RGB, look?: RoomLook): RGB {
+export function finished(kind: string, color: RGB, look?: RoomLook): RGB {
   if (!look) return color;
   if (color === COLORS.cabinet) return kind === "vanity" ? look.vanity : look.cabinet;
   if (color === COLORS.counter) return look.counter;
@@ -83,7 +83,7 @@ function finished(kind: string, color: RGB, look?: RoomLook): RGB {
 }
 
 /** A fixture piece's surface for Pretty graphics, by its plain color: painted cabinets, the counter's stone, steel, porcelain... */
-function finishPattern(color: RGB, look?: RoomLook): number {
+export function finishPattern(color: RGB, look?: RoomLook): number {
   switch (color) {
     case COLORS.cabinet:
       return PATTERN.cabinet;
