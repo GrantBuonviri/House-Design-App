@@ -8,6 +8,7 @@ import { useGraphics } from "@/lib/graphics";
 import { sunDirection } from "@/lib/house3d/sun";
 import { glassMaterial, solidMaterial } from "./House3DView";
 import { mergeParts } from "./geometry";
+import { usePlace } from "@/lib/location/usePlace";
 
 /**
  * Pieces shared by the walkthrough and the window preview: the house with
@@ -66,7 +67,8 @@ type SkyProps = {
 /** Sunlight for the day and hour, and a sky that warms up near sunrise and sunset. */
 export function Sky({ day, hour, span, center, version, shadowSize = 4096, showSun = false }: SkyProps) {
   const { scene, gl } = useThree();
-  const sun = useMemo(() => sunDirection(day, hour), [day, hour]);
+  const lat = usePlace().latitudeDeg;
+  const sun = useMemo(() => sunDirection(day, hour, lat), [day, hour, lat]);
   const low = Math.max(0, Math.min(1, 1 - sun[1] / 0.35)); // 1 near the horizon, 0 once the sun is up
   const sky = useMemo(() => new THREE.Color("#a9cbe8").lerp(new THREE.Color("#f2c49b"), low * 0.8), [low]);
   const sunColor = useMemo(() => new THREE.Color("#fffaf0").lerp(new THREE.Color("#ffb46b"), low), [low]);

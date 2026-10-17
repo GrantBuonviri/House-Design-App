@@ -10,6 +10,7 @@ import { siteFor } from "@/lib/house3d/site";
 import { SEASONS, clockTime } from "@/lib/house3d/sun";
 import { blockersOf, sunNote, sunThroughWindow, timeSpan } from "@/lib/house3d/sunHours";
 import { canPreview, rayToSegments, windowViews, type WindowViews } from "@/lib/house3d/windowView";
+import { DEFAULT_PLACE } from "@/lib/location/current";
 
 const FT = 12;
 const UPPER = "floor-2";
@@ -127,7 +128,7 @@ describe("sun through the window", () => {
     const { ctx } = setup(plans);
     const v = windowViews(plans, ctx, MAIN_LEVEL_ID, id)!;
     const model = buildHouse(plans, ctx);
-    return sunThroughWindow(v, blockersOf(model.parts), ctx.site, ctx.frame);
+    return sunThroughWindow(v, blockersOf(model.parts), ctx.site, ctx.frame, DEFAULT_PLACE);
   }
   const hours = (spans: [number, number][]) => spans.reduce((s, [a, b]) => s + (b - a), 0);
 
@@ -158,12 +159,12 @@ describe("sun through the window", () => {
     expect(note).toMatch(/^Direct sun through this window: /);
     expect(note).toContain("none in winter");
     expect(note).toContain("in summer");
-    expect(sunNote(SEASONS.map((season) => ({ season, spans: [], brief: false })))).toMatch(/No direct sun/);
+    expect(sunNote(SEASONS.map((season) => ({ season, spans: [], brief: false, place: DEFAULT_PLACE })))).toMatch(/No direct sun/);
   });
 
   it("writes times like a clock", () => {
-    expect(clockTime(12, false)).toBe("12:45 pm");
-    expect(timeSpan(6.25, 10.25, true)).toBe("8 am to 12 pm");
-    expect(timeSpan(8.25, 13.75, false)).toBe("9 am to 2:30 pm");
+    expect(clockTime(12, false, DEFAULT_PLACE)).toBe("12:45 pm");
+    expect(timeSpan(6.25, 10.25, true, DEFAULT_PLACE)).toBe("8 am to 12 pm");
+    expect(timeSpan(8.25, 13.75, false, DEFAULT_PLACE)).toBe("9 am to 2:30 pm");
   });
 });

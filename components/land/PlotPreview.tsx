@@ -8,6 +8,7 @@ import { roadStrips } from "@/lib/land/mesh";
 import { createTerrain } from "@/lib/land/terrain";
 import { dayArc, SUMMER_SOLSTICE, WINTER_SOLSTICE } from "@/lib/land/sun";
 import { landTint as tint, landView as viewFor, type LandView as View } from "@/lib/land/view";
+import { usePlace } from "@/lib/location/usePlace";
 
 const VERTICAL_EXAGGERATION = 3;
 
@@ -75,7 +76,7 @@ function drawRelief(ctx: CanvasRenderingContext2D, plot: Plot, px: number) {
   return { view, scale: px / view.side };
 }
 
-function drawOverlays(ctx: CanvasRenderingContext2D, plot: Plot, view: View, scale: number, px: number, detailed: boolean) {
+function drawOverlays(ctx: CanvasRenderingContext2D, plot: Plot, view: View, scale: number, px: number, detailed: boolean, latitudeDeg: number) {
   const toPx = (p: Point) => [(p.x - view.x0) * scale, (p.y - view.y0) * scale] as const;
   const u = px / 220; // drawing unit, so line widths scale with the canvas
 
@@ -186,7 +187,7 @@ function drawOverlays(ctx: CanvasRenderingContext2D, plot: Plot, view: View, sca
     [SUMMER_SOLSTICE, "#e8892b", r],
     [WINTER_SOLSTICE, "#d8b43a", r * 0.62],
   ] as const) {
-    const arc = dayArc(day);
+    const arc = dayArc(day, latitudeDeg);
     ctx.beginPath();
     const steps = 24;
     for (let i = 0; i <= steps; i++) {
@@ -231,7 +232,7 @@ function arrow(ctx: CanvasRenderingContext2D, x1: number, y1: number, x2: number
 
 /**
  * A shaded-relief map of a plot: contours, water, road, boundary, a downhill
- * arrow, north marker and a dial with Boise's summer and winter sun paths.
+ * arrow, north marker and a dial with the place's summer and winter sun paths.
  * Draws only once it scrolls into view, so long feeds stay fast.
  */
 export default function PlotPreview({
@@ -247,6 +248,7 @@ export default function PlotPreview({
 }) {
   const ref = useRef<HTMLCanvasElement>(null);
   const [visible, setVisible] = useState(false);
+  const lat = usePlace().latitudeDeg;
 
   useEffect(() => {
     const el = ref.current;
@@ -274,8 +276,8 @@ export default function PlotPreview({
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
     const { view, scale } = drawRelief(ctx, plot, px);
-    drawOverlays(ctx, plot, view, scale, px, detailed);
-  }, [plot, size, detailed, visible]);
+    drawOverlays(ctx, plot, view, scale, px, detailed, lat);
+  }, [plot, size, detailed, visible, lat]);
 
   return (
     <canvas

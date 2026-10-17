@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useProjectStore } from "@/lib/store/projectStore";
+import PlaceBox from "./PlaceBox";
 
 export default function SetupForm({ onContinue }: { onContinue: () => void }) {
   const project = useProjectStore((s) => s.project)!;
@@ -51,6 +52,7 @@ export default function SetupForm({ onContinue }: { onContinue: () => void }) {
             onBlur={() => setNameDraft(null)}
           />
         </div>
+        <PlaceBox />
       </section>
 
       <div className="flex justify-end pb-10">

@@ -4,6 +4,8 @@ import { useState } from "react";
 import type { Level, PlanBasics } from "@/lib/model/schema";
 import { formatFeetInches } from "@/lib/model/units";
 import { DOOR_STYLE_LABEL, GARAGE_LABEL, STAIRS_LABEL, ceilingFor, defaultBasics } from "@/lib/plan/basics";
+import { usePlace } from "@/lib/location/usePlace";
+import { placeLabel } from "@/lib/location/cities";
 
 const CEILINGS = [96, 108, 120, 144];
 
@@ -26,8 +28,9 @@ export default function PlanBasicsForm({
   onSave: (b: PlanBasics) => void;
   onCancel?: () => void;
 }) {
+  const place = usePlace();
   const [b, setB] = useState<PlanBasics>(() => {
-    const start = basics ?? defaultBasics();
+    const start = basics ?? defaultBasics(place.climateZone);
     return { ...start, ceilings: Object.fromEntries(levels.map((l) => [l.id, ceilingFor(start, l)])) };
   });
   const set = (patch: Partial<PlanBasics>) => setB((x) => ({ ...x, ...patch }));
@@ -36,7 +39,7 @@ export default function PlanBasicsForm({
   return (
     <div className="card mx-auto max-w-2xl px-8 py-8">
       <h2 className="text-xl font-semibold tracking-tight">Plan basics</h2>
-      <p className="mt-1 text-sm text-muted">A few things the floor plan needs. Each one starts with a common choice for a new house in Boise, so you can just press Continue. You can change them later.</p>
+      <p className="mt-1 text-sm text-muted">A few things the floor plan needs. Each one starts with a common choice for a new house in {placeLabel(place)}, so you can just press Continue. You can change them later.</p>
 
       <Section title="Ceiling height">
         <div className="space-y-2">
@@ -60,7 +63,7 @@ export default function PlanBasicsForm({
           name="exterior"
           value={b.exteriorWall}
           options={[
-            { value: "2x6", label: "2x6 framing", note: "Thicker walls with more insulation. The usual choice in Idaho today." },
+            { value: "2x6", label: "2x6 framing", note: "Thicker walls with more insulation. The usual choice in cold climates." },
             { value: "2x4", label: "2x4 framing", note: "Thinner walls and a little cheaper, with less room for insulation." },
           ]}
           onChange={(v) => set({ exteriorWall: v })}

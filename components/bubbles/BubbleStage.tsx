@@ -20,6 +20,7 @@ import SidePanel from "./SidePanel";
 import { houseSpot } from "@/lib/house3d/site";
 import ViewOptions, { type Overlay } from "./ViewOptions";
 import { TOOLS, type LandView, type Selection, type Side, type Tool } from "./types";
+import { locationOf } from "@/lib/location/current";
 
 const SketchCanvas = dynamic(() => import("./SketchCanvas"), {
   ssr: false,
@@ -96,7 +97,7 @@ export default function BubbleStage({ onContinue, onGoToRooms }: { onContinue: (
           offset: lotOffset ?? defaultLotOffset(plot, mainBubbles),
           show: overlays,
           // The winter path (the inner one) clears the house; summer goes around it.
-          sun: { center, radius: Math.max((houseReach(allBubbles, center) + 8 * FT) / WINTER_RING, 25 * FT) },
+          sun: { center, radius: Math.max((houseReach(allBubbles, center) + 8 * FT) / WINTER_RING, 25 * FT), latitudeDeg: locationOf(project).latitudeDeg },
         }
       : null;
   const canMoveLot = Boolean(land && (overlays.property || overlays.land));

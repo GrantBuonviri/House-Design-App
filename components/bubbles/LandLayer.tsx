@@ -120,7 +120,7 @@ export default function LandLayer({ land, scale, shift }: { land: LandView; scal
         )}
       </Group>
 
-      {show.sun && <SunDial center={land.sun.center} radius={land.sun.radius} scale={scale} />}
+      {show.sun && <SunDial center={land.sun.center} radius={land.sun.radius} latitudeDeg={land.sun.latitudeDeg} scale={scale} />}
     </Layer>
   );
 }
@@ -145,9 +145,9 @@ function towards(p: Point, from: Point, d: number): Point {
   return { x: p.x - ((p.x - from.x) / len) * d, y: p.y - ((p.y - from.y) / len) * d };
 }
 
-function SunDial({ center, radius, scale }: { center: Point; radius: number; scale: number }) {
+function SunDial({ center, radius, latitudeDeg, scale }: { center: Point; radius: number; latitudeDeg: number; scale: number }) {
   const px = (n: number) => n / scale;
-  const { paths, noon } = sunPaths(center, radius);
+  const { paths, noon } = sunPaths(center, radius, latitudeDeg);
   const out = (p: Point, d: number) => towards(p, center, -px(d));
   const tag = (text: string, p: Point, color: string) => {
     const w = px(120);

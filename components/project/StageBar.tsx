@@ -3,7 +3,8 @@
 import type { Stage } from "@/lib/model/schema";
 import { STAGE_INFO } from "@/lib/stages";
 
-export default function StageBar({ current, onSelect }: { current: Stage; onSelect: (s: Stage) => void }) {
+/** `nudges` puts a short reminder on a stage, such as "Pick where you'll build" on step one. */
+export default function StageBar({ current, onSelect, nudges = {} }: { current: Stage; onSelect: (s: Stage) => void; nudges?: Partial<Record<Stage, string>> }) {
   return (
     <ol className="flex gap-1 overflow-x-auto" data-tour="stages">
       {STAGE_INFO.map((s, i) => {
@@ -25,6 +26,11 @@ export default function StageBar({ current, onSelect }: { current: Stage; onSele
                 {i + 1}
               </span>
               {s.label}
+              {nudges[s.id] && (
+                <span className={`rounded px-1.5 text-[11px] ${active ? "bg-white/20" : "bg-amber-100 text-amber-800"}`} data-testid={`nudge-${s.id}`}>
+                  {nudges[s.id]}
+                </span>
+              )}
             </button>
           </li>
         );

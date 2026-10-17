@@ -1,10 +1,8 @@
 /**
- * Sun position for Boise, Idaho. Simple solar geometry (no refraction or
- * equation of time), accurate to about a degree, which is plenty for
- * orienting rooms and lighting the 3D scene.
+ * Sun position at a latitude (the project's place, `locationOf(project)`).
+ * Simple solar geometry (no refraction or equation of time), accurate to
+ * about a degree, which is plenty for orienting rooms and lighting the 3D scene.
  */
-
-export const BOISE = { latitudeDeg: 43.615, longitudeDeg: -116.202 } as const;
 
 const rad = (d: number) => (d * Math.PI) / 180;
 const deg = (r: number) => (r * 180) / Math.PI;
@@ -27,7 +25,7 @@ export type SunPosition = {
 export function sunPosition(
   dayOfYear: number,
   solarHour: number,
-  latitudeDeg: number = BOISE.latitudeDeg,
+  latitudeDeg: number,
 ): SunPosition {
   const decl = rad(declinationDeg(dayOfYear));
   const lat = rad(latitudeDeg);
@@ -41,7 +39,7 @@ export function sunPosition(
 }
 
 /** Sunrise and sunset directions plus the noon height, for one day. */
-export function dayArc(dayOfYear: number, latitudeDeg: number = BOISE.latitudeDeg) {
+export function dayArc(dayOfYear: number, latitudeDeg: number) {
   const decl = rad(declinationDeg(dayOfYear));
   const lat = rad(latitudeDeg);
   const cosH = -Math.tan(lat) * Math.tan(decl);

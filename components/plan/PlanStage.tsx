@@ -54,6 +54,7 @@ import type { WallsShown } from "@/components/house3d/House3DView";
 import type { DoorMode } from "@/lib/house3d/doors";
 import { PLAN_TOOLS, parseEdgeId, type PlanSelection, type PlanTool } from "./types";
 import { DisplayTabs, LotModeBanner, PlanStartChoices, PlanToolbar, type Display } from "./PlanStageParts";
+import { locationOf } from "@/lib/location/current";
 
 const PlanCanvas = dynamic(() => import("./PlanCanvas"), {
   ssr: false,
@@ -220,7 +221,7 @@ export default function PlanStage({ onContinue, onGoToSketch, onGoToFurnish }: {
           drawing,
           offset: realLot ? realLot.offset : (lotOffset ?? fallbackOffset()!),
           show: overlays,
-          sun: { center, radius: Math.max((reach + 8 * FT) / WINTER_RING, 25 * FT) },
+          sun: { center, radius: Math.max((reach + 8 * FT) / WINTER_RING, 25 * FT), latitudeDeg: locationOf(project).latitudeDeg },
         }
       : null;
   const canMoveLot = Boolean(land && !realLot && (overlays.property || overlays.land));

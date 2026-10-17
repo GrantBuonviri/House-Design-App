@@ -1,5 +1,6 @@
 import { add, scale } from "@/lib/plan/geometry";
 import { sunPosition } from "@/lib/land/sun";
+import type { SunPlace } from "@/lib/location/solar";
 import type { Part } from "./build";
 import { IN_PER_UNIT, toScene, type Frame, type Vec3 } from "./mesh";
 import type { Site } from "./site";
@@ -14,7 +15,7 @@ import type { WindowViews } from "./windowView";
  */
 
 /** Spans of direct sun, in local solar hours (12 = solar noon). */
-export type SunSpans = { season: Season; spans: [number, number][]; brief: boolean };
+export type SunSpans = { season: Season; spans: [number, number][]; brief: boolean; place: SunPlace };
 
 const STEP_H = 0.25;
 
@@ -90,8 +91,8 @@ function hillInTheWay(o: Vec3, d: Vec3, site: Site, f: Frame): boolean {
 }
 
 /** Unit direction toward the sun in the scene (x east, y up, z south), or null while it's down. */
-function sunToward(day: number, hour: number): Vec3 | null {
-  const s = sunPosition(day, hour);
+function sunToward(day: number, hour: number, latitudeDeg: number): Vec3 | null {
+  const s = sunPosition(day, hour, latitudeDeg);
   if (s.altitudeDeg < 1) return null;
   const az = (s.azimuthDeg * Math.PI) / 180;
   const alt = (s.altitudeDeg * Math.PI) / 180;
@@ -110,16 +111,16 @@ function samplePoints(v: WindowViews, f: Frame): Vec3[] {
   return out;
 }
 
-export function sunThroughWindow(v: WindowViews, blockers: Blockers, site: Site, f: Frame, seasons: readonly Season[] = SEASONS): SunSpans[] {
+export function sunThroughWindow(v: WindowViews, blockers: Blockers, site: Site, f: Frame, place: SunPlace, seasons: readonly Season[] = SEASONS): SunSpans[] {
   const origins = samplePoints(v, f);
   const lit = (day: number, hour: number) => {
-    const d = sunToward(day, hour);
+    const d = sunToward(day, hour, place.latitudeDeg);
     // Facing the glass at all (a sun grazing along the wall doesn't come in).
     if (!d || d[0] * v.out.x + d[2] * v.out.y < 0.05) return false;
     return origins.some((o) => !hillInTheWay(o, d, site, f) && !blockers.boxes.some((b) => hitsBox(o, d, b.min, b.max) && hitsTriangles(o, d, b.tris)));
   };
   return seasons.map((season) => {
-    const { sunrise, sunset } = daylight(season.day);
+    const { sunrise, sunset } = daylight(season.day, place.latitudeDeg);
     const spans: [number, number][] = [];
     let start: number | null = null;
     let last = sunrise;
@@ -135,14 +136,14 @@ export function sunThroughWindow(v: WindowViews, blockers: Blockers, site: Site,
       }
     }
     if (start !== null && last > start) spans.push([start, last]);
-    return { season, spans, brief: any && spans.length === 0 };
+    return { season, spans, brief: any && spans.length === 0, place };
   });
 }
 
 /** "7 to 11 am", "10 am to 2:30 pm". */
-export function timeSpan(a: number, b: number, daylightSaving: boolean): string {
+export function timeSpan(a: number, b: number, daylightSaving: boolean, place: SunPlace): string {
   const short = (s: string) => s.replace(":00", "");
-  const [sa, sb] = [short(clockTime(a, daylightSaving)), short(clockTime(b, daylightSaving))];
+  const [sa, sb] = [short(clockTime(a, daylightSaving, place)), short(clockTime(b, daylightSaving, place))];
   const [ta, pa] = sa.split(" ");
   const pb = sb.split(" ")[1];
   return pa === pb ? `${ta} to ${sb}` : `${sa} to ${sb}`;
@@ -153,8 +154,8 @@ function seasonText(s: SunSpans): string {
   const name = s.season.name;
   if (s.brief) return `only briefly in ${name}`;
   if (!s.spans.length) return `none in ${name}`;
-  if (s.spans.length > 2) return `on and off from ${timeSpan(s.spans[0][0], s.spans[s.spans.length - 1][1], dst)} in ${name}`;
-  return `about ${s.spans.map(([a, b]) => timeSpan(a, b, dst)).join(" and ")} in ${name}`;
+  if (s.spans.length > 2) return `on and off from ${timeSpan(s.spans[0][0], s.spans[s.spans.length - 1][1], dst, s.place)} in ${name}`;
+  return `about ${s.spans.map(([a, b]) => timeSpan(a, b, dst, s.place)).join(" and ")} in ${name}`;
 }
 
 /** One line for the preview: when the sun comes straight in, season by season. */
