@@ -48,10 +48,11 @@ describe("structural tables", () => {
     expect(h?.size).toBeTruthy();
     expect(pickHeader("exterior", "roof-ceiling-2-center-bearing-floors", 36 * 12, 20 * 12)).toBeNull();
   });
-  it("reads Idaho's footing widths", () => {
+  it("reads the 2021 IRC footing widths for Boise's 20 psf snow", () => {
     expect(footingSize(1500, 1, "crawl")).toEqual({ widthIn: 12, thicknessIn: 6 });
     expect(footingSize(1500, 2, "crawl")?.widthIn).toBe(15);
-    expect(footingSize(1500, 3, "slab")?.widthIn).toBe(23);
+    expect(footingSize(1500, 3, "slab")?.widthIn).toBe(16);
+    expect(footingSize(1500, 3, "basement")).toEqual({ widthIn: 22, thicknessIn: 7 });
     expect(footingSize(3000, 3, "slab")?.widthIn).toBe(12);
   });
   it("needs more bracing on the first of two floors and in exposure C", () => {

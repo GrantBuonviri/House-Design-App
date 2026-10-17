@@ -165,6 +165,6 @@ export function foundationOf(input: FoundationInput): Foundation {
   const crawlSqft = zones.crawlspace.reduce((s, r) => s + polygonArea(r.outline) - r.holes.reduce((h, x) => h + polygonArea(x), 0), 0) / 144;
 
   if (input.hillside) engineer.unshift({ levelId: input.main.id, text: "The lot is steep (a walkout or stepped foundation). Boise asks for an engineer to design hillside foundations." });
-  if (lines.some((l) => !l.footing)) engineer.push({ levelId: input.main.id, text: "A footing carries more floors than Idaho's footing table covers. An engineer must size it." });
+  if (lines.some((l) => !l.footing)) engineer.push({ levelId: input.main.id, text: "A footing is past the footing table (more floors, more snow or weaker soil than it covers). An engineer must size it." });
   return { zones, lines, interior, piers, vents, access: crawlSqft > 0 ? access : null, crawlSqft, hillside: input.hillside, engineer };
 }

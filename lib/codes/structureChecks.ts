@@ -5,6 +5,7 @@ import { formatFeetInches } from "@/lib/model/units";
 import type { HouseFacts } from "@/lib/plans/house";
 import { structureOf } from "@/lib/structure";
 import { LUMBER_NAME } from "@/lib/structure/tables";
+import { codeRef } from "./data";
 import type { RuleResult } from "./rules";
 
 /**
@@ -45,17 +46,20 @@ export function footingChecks(h: HouseFacts): RuleResult[] {
   if (!fd) return [];
   const out: RuleResult[] = fd.engineer.map((e) => ({ status: "manual", text: `${ENGINEER}${e.text}`, levelId: e.levelId, at: e.at }));
   const widths = [...new Set(fd.lines.flatMap((l) => (l.footing ? [l.footing.widthIn] : [])))].sort((a, b) => a - b);
-  if (widths.length) out.push({ status: "pass", text: `Footings ${widths.map((w) => `${w}"`).join(", ")} wide from Idaho's footing table, for ${h.project.plans.structure.soilPsf.toLocaleString()} psf soil (S-101).` });
+  if (widths.length) out.push({ status: "pass", text: `Footings ${widths.map((w) => `${w}"`).join(", ")} wide from the footing table (${codeRef("struct.footingsLightFrame")}), for ${h.project.plans.structure.soilPsf.toLocaleString()} psf soil (S-101).` });
   return out;
 }
 
 export function bracingChecks(h: HouseFacts): RuleResult[] {
   const s = structureOf(h.project);
-  const out: RuleResult[] = [];
+  // Wind or earthquakes past the IRC's rules: one "Engineer required" for the house, not one per wall line.
+  const past = s.limits.filter((l) => l.kind === "wind" || l.kind === "seismic");
+  const out: RuleResult[] = s.limits.map((l) => ({ status: "manual", text: `${ENGINEER}${l.text}`, levelId: s.main?.id }));
   const byLevel = new Map<string, number>();
   for (const b of s.bracing) {
     const name = levelName(h, b.levelId);
     if (b.requiredFt === null) {
+      if (past.length) continue;
       out.push({ status: "manual", text: `${ENGINEER}${name}, braced wall line ${b.label}: past the IRC bracing table (wall height, roof height or line spacing).`, levelId: b.levelId, at: b.a, stage: "plan" });
       continue;
     }

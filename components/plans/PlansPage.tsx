@@ -10,6 +10,7 @@ import { codeReportPages } from "@/lib/plans/report";
 import { reportCounts, type RuleReport, type RuleStatus } from "@/lib/codes/rules";
 import SheetSvg from "./SheetSvg";
 import RealLotForm from "./RealLotForm";
+import { codeEditions } from "@/lib/codes/data";
 
 /**
  * The Plans page: every sheet a Boise permit asks for, with its status and
@@ -92,7 +93,7 @@ export default function PlansPage({ project, onClose, onGo, onEditInFurnish }: {
       <header className="flex items-center gap-3 whitespace-nowrap border-b border-line bg-white px-5 py-3">
         <div className="min-w-0">
           <h2 className="text-lg font-semibold">Building plans</h2>
-          <p className="truncate text-xs text-muted">{project.name} · 2018 IRC and IECC with Idaho amendments, 2023 NEC, 2017 Idaho State Plumbing Code</p>
+          <p className="truncate text-xs text-muted">{project.name} · {codeEditions().map((e) => e.label.replace(/^[^:]+: /, "")).join(", ")}</p>
         </div>
         <span
           className={`ml-2 rounded-md border px-2 py-1 text-xs font-semibold ${r.label === LABEL_REVIEW ? "border-accent text-accent" : "border-amber-400 text-amber-800"}`}

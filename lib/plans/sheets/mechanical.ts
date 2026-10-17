@@ -2,7 +2,7 @@ import type { Fixture, FloorPlan, Level, Point, Project } from "@/lib/model/sche
 import { add, dist, dot, pointInPolygon, polygonArea, rotate, scale, sub, unit } from "@/lib/plan/geometry";
 import { roleOf } from "@/lib/plan/connect";
 import { roomEdges, isBath } from "@/lib/plan/devices";
-import { codeNum, codeRef } from "@/lib/codes/data";
+import { codeEditions, codeNum, codeRef } from "@/lib/codes/data";
 import { DASH, type Item } from "../draw";
 import { DRAW_AREA } from "../frame";
 import { viewTitle } from "../view";
@@ -146,7 +146,7 @@ export function mechanicalSheet(project: Project, level: Level): SystemsSheet {
   col.heading("Mechanical notes");
   const heat = sys.heating === "gas-furnace" ? "Gas furnace" : sys.heating === "heat-pump" ? "Heat pump with an air handler" : "Electric furnace";
   const notes = [
-    "All work to the 2018 IRC mechanical and fuel gas chapters with Idaho amendments, by a licensed HVAC contractor or the owner under a mechanical permit.",
+    `All work to the ${codeEditions().find((e) => e.label.startsWith("Mechanical"))?.label.replace(/^[^:]+: /, "") ?? "IRC mechanical and fuel gas chapters"}, by a licensed HVAC contractor or the owner under a mechanical permit.`,
     `${heat}${sys.cooling && sys.heating !== "heat-pump" ? " with central air conditioning" : ""}. Equipment and duct sizes come from the HVAC contractor's Manual J, D and S, using Boise's design temperatures: ${codeNum("design.manualJWinter")}°F winter, ${codeNum("design.manualJSummer")}°F summer (Boise design criteria).`,
     `Whole-house fresh air: ${cfm} cfm continuous (${codeRef("vent.wholeHouseCfmPerSqFt")}). Bath fans ${codeNum("vent.bathIntermittent")} cfm switched or ${codeNum("vent.bathContinuous")} cfm continuous; kitchen hood ${codeNum("vent.kitchenIntermittent")} cfm (${codeRef("vent.bathIntermittent")}). Hoods over ${codeNum("vent.makeupAirHoodCfm")} cfm need makeup air (${codeRef("vent.makeupAirHoodCfm")}).`,
     `Exhaust ducts end outside at least ${codeNum("mech.exhaustTerminationFromOpenings")} ft from doors, opening windows and air intakes, and ${codeNum("mech.exhaustTerminationFromLotLine")} ft from lot lines (${codeRef("mech.exhaustTerminationFromLotLine")}); never into the attic or crawlspace.`,

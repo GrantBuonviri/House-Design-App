@@ -112,7 +112,7 @@ export function plumbingSheet(project: Project, level: Level): SystemsSheet {
     [...fu.rows.map((r) => [r.label, `${r.count}`, r.dfu ? n1(r.dfu) : "-", r.dfu ? n1(r.dfu * r.count) : "-", n1(r.wsfu), n1(r.wsfu * r.count)]), ["Total", "", "", n1(fu.dfu), "", n1(fu.wsfu)]],
   );
   {
-    const tb = `DFU: drainage fixture units (${codeRef("plumbing.dfu.lavatory")}), for sizing the drains and building sewer. WSFU: water supply fixture units, private use (${codeRef("plumbing.wsfu.lavatory")}), for sizing the water service and meter. Idaho's amended values used for the washer and tub.`;
+    const tb = `DFU: drainage fixture units (${codeRef("plumbing.dfu.lavatory")}), for sizing the drains and building sewer. WSFU: water supply fixture units, private use (${codeRef("plumbing.wsfu.lavatory")}), for sizing the water service and meter.`;
     col.notes([tb]);
   }
 
@@ -125,7 +125,7 @@ export function plumbingSheet(project: Project, level: Level): SystemsSheet {
     "All work to the 2017 Idaho State Plumbing Code (2015 Uniform Plumbing Code with Idaho amendments), by a licensed plumber or the owner under a plumbing permit from the State of Idaho (DOPL).",
     `Water use: toilets ${codeNum("plumbing.wcMaxFlush")} gal per flush (${codeRef("plumbing.wcMaxFlush")}), shower heads ${codeNum("plumbing.showerheadMaxFlow")} gpm (${codeRef("plumbing.showerheadMaxFlow")}), bathroom faucets ${codeNum("plumbing.lavatoryFaucetMaxFlow")} gpm, kitchen faucets ${codeNum("plumbing.kitchenFaucetMaxFlow")} gpm at most.`,
     `Shower and tub-shower valves: pressure-balance or thermostatic, limited to ${codeNum("plumbing.showerValveMaxTemp")}°F (${codeRef("plumbing.showerValveMaxTemp")}).`,
-    `Water heater: ${sys.waterHeater === "tankless-gas" ? "tankless, gas" : sys.waterHeater === "heat-pump" ? "heat pump" : sys.waterHeater}. Relief valve drain to a safe, visible spot with no valve in the line (${codeRef("plumbing.waterHeaterTPRDischarge")}).${gas && whInGarage ? ` In the garage, the burner sits at least ${codeNum("mech.garageIgnitionHeight")}" above the floor (${codeRef("mech.garageIgnitionHeight")}).` : ""}${codeEntry("plumbing.whStrapRequired").value === false ? ` Idaho's plumbing code drops the earthquake strap rule (${codeRef("plumbing.whStrapRequired")}); strap it if the maker asks.` : ""}`,
+    `Water heater: ${sys.waterHeater === "tankless-gas" ? "tankless, gas" : sys.waterHeater === "heat-pump" ? "heat pump" : sys.waterHeater}. Relief valve drain to a safe, visible spot with no valve in the line (${codeRef("plumbing.waterHeaterTPRDischarge")}).${gas && whInGarage ? ` In the garage, the burner sits at least ${codeNum("mech.garageIgnitionHeight")}" above the floor (${codeRef("mech.garageIgnitionHeight")}).` : ""}${codeEntry("plumbing.whStrapRequired").value === true ? ` Strap the water heater against earthquakes (${codeRef("plumbing.whStrapRequired")}).` : ` No earthquake strap is required here (${codeRef("plumbing.whStrapRequired")}); strap it if the maker asks.`}`,
     `Hose bibs: ${codeText("plumbing.hoseBibBackflow")} (${codeRef("plumbing.hoseBibBackflow")}).`,
     "Size the water service, meter and pipes from the WSFU total and the street pressure (UPC chapter 6); add a pressure-reducing valve if the street pressure is high. Size drains and the building sewer from the DFU total (UPC chapter 7).",
     gasFixtures(project, h.levels.flatMap((l) => h.plan(l.id).fixtures)).length

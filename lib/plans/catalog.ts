@@ -10,6 +10,7 @@ import { gasFixtures } from "./sheets/plumbing";
 import { levelDevices } from "./systems";
 import { structureOf } from "@/lib/structure";
 import { flatProject } from "@/lib/plan/flatten";
+import { codeSetKey } from "@/lib/codes/data";
 
 /**
  * Every plan sheet a Boise house permit asks for (checklist #402), grouped
@@ -75,12 +76,14 @@ export type Readiness = {
   labelReasons: string[];
 };
 
-const cache = new WeakMap<Project, Readiness>();
+/** Keyed by project, then by the code set (the place). */
+const cache = new WeakMap<Project, { key: string; v: Readiness }>();
 
 export function readiness(project: Project): Readiness {
   project = flatProject(project);
+  const key = codeSetKey();
   const hit = cache.get(project);
-  if (hit) return hit;
+  if (hit && hit.key === key) return hit.v;
   const h = houseFacts(project);
   const report = codeReport(project);
   const fails = report.filter((r) => r.status === "fail");
@@ -235,7 +238,7 @@ export function readiness(project: Project): Readiness {
   if (missing.length) labelReasons.push(`${missing.length} sheet${missing.length === 1 ? " isn't" : "s aren't"} ready yet`);
   if (fails.length) labelReasons.push(`${fails.length} code check${fails.length === 1 ? "" : "s"} fail`);
   const out: Readiness = { sheets, report, label: labelReasons.length ? LABEL_PRELIMINARY : LABEL_REVIEW, labelReasons };
-  cache.set(project, out);
+  cache.set(project, { key, v: out });
   return out;
 }
 

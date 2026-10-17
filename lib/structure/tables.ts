@@ -3,7 +3,7 @@ import { codeEntry, codeNum } from "@/lib/codes/data";
 
 /**
  * Lookups in the IRC's ready-made (prescriptive) structural tables, kept in
- * boise-2018.json as the tables print them. A size the tables don't cover
+ * the code set (lib/codes/data.ts) as the tables print them. A size the tables don't cover
  * comes back as null, and the caller marks it "Engineer required".
  */
 
@@ -104,10 +104,19 @@ export function kingStuds(openingIn: number): number {
 export type FoundationKind = "slab" | "crawl" | "basement";
 export type FootingSize = { widthIn: number; thicknessIn: number };
 
-export function footingSize(soilPsf: number, stories: number, kind: FoundationKind): FootingSize | null {
-  const t = table<Table<Table<{ width: number; thickness: number }>>>("struct.footingsLightFrame");
-  const c = t[String(soilPsf)]?.[String(Math.max(1, stories))]?.[kind];
-  if (!c) return null;
+/** The table's snow column for a ground snow load: the next one up, or null past the table. */
+export function snowColumn(keys: string[], groundSnowPsf: number): string | null {
+  const sorted = keys.map(Number).sort((a, b) => a - b);
+  const hit = sorted.find((k) => groundSnowPsf <= k + 1e-6);
+  return hit === undefined ? null : String(hit);
+}
+
+/** Footing width and thickness (IRC Table R403.1(1), or the state's own table), by ground snow, soil, stories and foundation, or null past the table. */
+export function footingSize(soilPsf: number, stories: number, kind: FoundationKind, groundSnowPsf = codeNum("design.groundSnowLoad")): FootingSize | null {
+  const t = table<Table<Table<Table<{ width: number | null; thickness: number | null }>>>>("struct.footingsLightFrame");
+  const snow = snowColumn(Object.keys(t), groundSnowPsf);
+  const c = snow ? t[snow][String(soilPsf)]?.[String(Math.max(1, stories))]?.[kind] : undefined;
+  if (!c || c.width === null || c.thickness === null) return null;
   return { widthIn: Math.max(c.width, codeNum("struct.footingMinWidth")), thicknessIn: Math.max(c.thickness, codeNum("struct.footingMinThickness")) };
 }
 
@@ -122,12 +131,36 @@ const bucketUp = (keys: string[], v: number): string | null => {
   return hit === undefined ? null : String(hit);
 };
 
-/** Feet of bracing a braced wall line needs, before adjustments (Table R602.10.3(1)), or null past the table. */
-export function bracingBase(location: StoryLocation, spacingFt: number, method: BracingMethod): number | null {
-  const t = table<Table<Record<string, number | null>>>("struct.bracingWind")[location];
+/** The wind band of Table R602.10.3(1) for an ultimate wind speed, or null past the table (an engineer designs it). */
+export function windBand(windMph: number): string | null {
+  return bucketUp(Object.keys(table<unknown>("struct.bracingWind")), windMph);
+}
+
+/** Feet of bracing a braced wall line needs for wind, before adjustments (Table R602.10.3(1)), or null past the table. */
+export function bracingBase(location: StoryLocation, spacingFt: number, method: BracingMethod, windMph = codeNum("struct.windSpeedBasis")): number | null {
+  const band = windBand(windMph);
+  const t = band ? table<Table<Table<Record<string, number | null>>>>("struct.bracingWind")[band][location] : undefined;
   if (!t) return null;
   const k = bucketUp(Object.keys(t), Math.max(spacingFt, 10));
   return k ? (t[k][method] ?? null) : null;
+}
+
+/** Feet of bracing a braced wall line needs for earthquakes in seismic category D0, D1 or D2 (Table R602.10.3(3)), by the line's length, or null past the table. */
+export function seismicBase(sdc: string, location: StoryLocation, lineLengthFt: number, method: BracingMethod): number | null {
+  const t = table<Table<Table<Record<string, number | null>>>>("struct.bracingSeismic")[sdc.toUpperCase()]?.[location];
+  if (!t) return null;
+  const k = bucketUp(Object.keys(t), Math.max(lineLengthFt, 10));
+  return k ? (t[k][method] ?? null) : null;
+}
+
+/** Table R602.10.3(4) factors for the seismic amount: story height, and braced wall line spacing over 25 ft. Null past the table. */
+export function seismicFactor(o: { wallHeightFt: number; spacingFt: number }): number | null {
+  const t = codeEntry("struct.bracingSeismicAdjust").value as unknown as { storyHeight: Table<number>; spacing: Table<number> };
+  const hKey = bucketUp(Object.keys(t.storyHeight), Math.max(10, o.wallHeightFt));
+  const sKey = bucketUp(Object.keys(t.spacing), Math.max(25, o.spacingFt));
+  const h = hKey ? t.storyHeight[hKey] : null;
+  const s = sKey ? t.spacing[sKey] : null;
+  return h && s ? h * s : null;
 }
 
 export type BracingFactors = { exposure: number; eaveToRidge: number; wallHeight: number; lines: number; total: number };
@@ -188,7 +221,6 @@ const CANTILEVER_OPTIONS: [JoistSize, JoistSpacing][] = [
   ["2x10", 12],
   ["2x12", 12],
 ];
-const SNOW_COLUMNS = [20, 30, 50, 70];
 const ROOF_WIDTHS = [24, 32, 40];
 
 /**
@@ -197,10 +229,10 @@ const ROOF_WIDTHS = [24, 32, 40];
  * and ground snow load round up to the next column. Null past the table.
  */
 export function pickCantilever(depthIn: number, roofWidthIn: number, groundSnowPsf: number): CantileverPick | null {
-  const snow = SNOW_COLUMNS.find((s) => groundSnowPsf <= s);
-  const width = ROOF_WIDTHS.find((w) => roofWidthIn / 12 <= w + 1e-6);
-  if (snow === undefined || width === undefined) return null;
   const t = table<Table<Table<number | null>>>("struct.cantilevers");
+  const snow = snowColumn(Object.keys(Object.values(t)[0] ?? {}), groundSnowPsf);
+  const width = ROOF_WIDTHS.find((w) => roofWidthIn / 12 <= w + 1e-6);
+  if (snow === null || width === undefined) return null;
   for (const [size, spacing] of CANTILEVER_OPTIONS) {
     const allowIn = t[`${size}@${spacing}`]?.[String(snow)]?.[String(width)];
     if (typeof allowIn === "number" && allowIn >= depthIn) return { size, spacing, allowIn, roofWidthFt: width };

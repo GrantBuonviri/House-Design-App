@@ -8,6 +8,7 @@ import { flatProject } from "@/lib/plan/flatten";
 import { railingsOn, type Railing } from "@/lib/plan/railings";
 import { riseFromHeights } from "@/lib/house3d/railings";
 import { levelHeights } from "@/lib/house3d/levels";
+import { codeSetKey } from "@/lib/codes/data";
 
 /**
  * Everything the plan sheets and code checks share about the house, worked
@@ -36,12 +37,14 @@ export type HouseFacts = {
   safety: Map<string, string[]>;
 };
 
-const cache = new WeakMap<Project, HouseFacts>();
+/** Keyed by project, then by the code set (the place). */
+const cache = new WeakMap<Project, { key: string; v: HouseFacts }>();
 
 export function houseFacts(project: Project): HouseFacts {
   project = flatProject(project);
+  const key = codeSetKey();
   const hit = cache.get(project);
-  if (hit) return hit;
+  if (hit && hit.key === key) return hit.v;
   const levels = [...project.levels].sort((a, b) => a.elevationIn - b.elevationIn);
   const plan = (id: string) => planOf(project.floorPlans, id);
   const basics = project.plan.basics;
@@ -94,6 +97,6 @@ export function houseFacts(project: Project): HouseFacts {
     tags,
     safety,
   };
-  cache.set(project, facts);
+  cache.set(project, { key, v: facts });
   return facts;
 }

@@ -2,13 +2,14 @@ import type { FloorPlan, Level, Point } from "@/lib/model/schema";
 import { openingSpan } from "@/lib/house3d/openings";
 import { openingGeometries, solidWalls, wallPieces, type SolidWall, type WallPiece } from "@/lib/plan/walls";
 import { dist, lerp } from "@/lib/plan/geometry";
-import { codeNum } from "@/lib/codes/data";
+import { codeEntry, codeNum, codeText } from "@/lib/codes/data";
 import { along, other, pt, runsAcross, type Axis } from "./geometry";
-import { bracingBase, bracingFactors, csPanelMin, portalMin, wspPanelMin, type StoryLocation } from "./tables";
+import { bracingBase, bracingFactors, csPanelMin, portalMin, seismicBase, seismicFactor, wspPanelMin, type StoryLocation } from "./tables";
 
 /**
  * Wall bracing (IRC R602.10): the outside walls of each floor grouped into
- * braced wall lines, how much bracing each line needs for Boise's wind, and
+ * braced wall lines, how much bracing each line needs for the place's wind
+ * (and, in seismic categories D0 to D2, its earthquakes: the larger wins), and
  * how much it has, counting continuously sheathed wall (CS-WSP) between the
  * doors and windows, and portal frames beside garage doors.
  */
@@ -28,6 +29,8 @@ export type BracedLine = {
   interior: boolean;
   spacingFt: number;
   location: StoryLocation;
+  /** What set the required length: wind, or earthquakes (seismic categories D0 to D2). */
+  governs: "wind" | "seismic";
   requiredFt: number | null;
   providedFt: number;
   panels: BracePanel[];
@@ -54,7 +57,9 @@ export function bracingFor(input: BracingInput): BracedLine[] {
   const solids = solidWalls(pieces, geos);
   const wallFt = input.ceilingIn / 12;
   const offset = codeNum("struct.bwlOffset") * 12;
-  const maxSpacing = codeNum("struct.bwlMaxSpacing") * 12;
+  // Detached houses in seismic categories A to C brace for wind only; D0 to D2 also brace for earthquakes.
+  const seismic = codeEntry("struct.seismicBracingExempt").value === true ? null : codeText("design.seismicCategory").toUpperCase();
+  const maxSpacing = codeNum(seismic ? "struct.bwlMaxSpacingSeismic" : "struct.bwlMaxSpacing") * 12;
   const out: BracedLine[] = [];
 
   for (const axis of ["x", "y"] as Axis[]) {
@@ -134,7 +139,13 @@ export function bracingFor(input: BracingInput): BracedLine[] {
       const method = ln.interior ? "WSP" : "CS-WSP";
       const base = bracingBase(location, spacingFt, method);
       const f = bracingFactors({ exposure: input.exposure, stories: 1 + above, above, eaveToRidgeFt: input.eaveToRidgeIn / 12, wallHeightFt: wallFt, lines: lines.length });
-      const requiredFt = base !== null && f ? Math.round(base * f.total * 10) / 10 : null;
+      const windFt = base !== null && f ? base * f.total : null;
+      const lineFt = feet(ln.s1 - ln.s0);
+      const sBase = seismic ? seismicBase(seismic, location, lineFt, method) : null;
+      const sf = seismic ? seismicFactor({ wallHeightFt: wallFt, spacingFt }) : null;
+      const quakeFt = seismic ? (sBase !== null && sf !== null ? sBase * sf : null) : 0;
+      const requiredFt = windFt !== null && quakeFt !== null ? Math.round(Math.max(windFt, quakeFt) * 10) / 10 : null;
+      const governs = quakeFt !== null && windFt !== null && quakeFt > windFt ? "seismic" : "wind";
 
       // Full-height wall between the openings, long enough to count.
       const panels: BracePanel[] = [];
@@ -171,6 +182,7 @@ export function bracingFor(input: BracingInput): BracedLine[] {
         interior: ln.interior,
         spacingFt,
         location,
+        governs,
         requiredFt,
         providedFt,
         panels,

@@ -1,6 +1,6 @@
 import type { Level, PlanRoom, Point, Project } from "@/lib/model/schema";
 import { roleOf } from "@/lib/plan/connect";
-import { codeEntry, codeNum } from "@/lib/codes/data";
+import { codeEntry, codeNum, codeSetKey } from "@/lib/codes/data";
 import { deviceLayout, isBath, type PlacedDevice } from "@/lib/plan/devices";
 import { stairsDrawing } from "@/lib/plan/stairs";
 import { dist, pointInPolygon } from "@/lib/plan/geometry";
@@ -15,7 +15,8 @@ import { roomArea } from "@/lib/plan/arcs";
  * changes), and facts about the house's systems.
  */
 
-const cache = new WeakMap<Project, Map<string, PlacedDevice[]>>();
+/** Keyed by project, then by the code set (the place), then by floor. */
+const cache = new WeakMap<Project, { key: string; byLevel: Map<string, PlacedDevice[]> }>();
 
 /** Does the house burn anything: gas heat, water heater, range or dryer, or a fireplace? */
 export function hasFuel(project: Project): boolean {
@@ -45,8 +46,10 @@ export function panelLevel(project: Project): Level | undefined {
 
 export function levelDevices(project: Project, level: Pick<Level, "id" | "kind" | "elevationIn">): PlacedDevice[] {
   project = flatProject(project);
-  let byLevel = cache.get(project);
-  if (!byLevel) cache.set(project, (byLevel = new Map()));
+  const key = codeSetKey();
+  let entry = cache.get(project);
+  if (!entry || entry.key !== key) cache.set(project, (entry = { key, byLevel: new Map() }));
+  const byLevel = entry.byLevel;
   const hit = byLevel.get(level.id);
   if (hit) return hit;
   const h = houseFacts(project);

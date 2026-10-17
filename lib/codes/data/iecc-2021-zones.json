@@ -1,0 +1,159 @@
+{
+  "meta": {
+    "section": "Table R402.1.3",
+    "source": "https://basc.pnnl.gov/information/2009-2021-iecc-and-irc-minimum-insulation-requirements-new-homes",
+    "checked": "2026-10-17",
+    "note": "2021 IECC residential prescriptive values by climate zone (R402.1.3 R-values, R402.1.2 U-factors where R402.1.3 prints NR, R402.4.1.2 air leakage). Marine 4 (4C) uses the '5 and Marine 4' column. The ICC copy of the 2021 tables (https://iccsafe.org/wp-content/uploads/IECC-RES-CAR-update-72622.pdf) agrees.",
+    "secondSource": "https://basc.pnnl.gov/information/table-maximum-fenestration-u-factor-requirements-new-homes-listed-2009-2021-iecc-and"
+  },
+  "units": {
+    "fenestrationU": "",
+    "skylightU": "",
+    "glazedSHGC": "",
+    "ceilingR": "",
+    "woodWallR": "",
+    "massWallR": "",
+    "floorR": "",
+    "basementWallR": "",
+    "slabR": "",
+    "crawlWallR": "",
+    "airLeakageACH50": "ACH50"
+  },
+  "sections": {
+    "fenestrationU": "Table R402.1.2",
+    "skylightU": "Table R402.1.2",
+    "airLeakageACH50": "R402.4.1.2"
+  },
+  "zones": {
+    "0": {
+      "fenestrationU": 0.5,
+      "skylightU": 0.75,
+      "glazedSHGC": 0.25,
+      "ceilingR": 30,
+      "woodWallR": "13 or 0+10ci",
+      "massWallR": "3/4",
+      "floorR": 13,
+      "basementWallR": "0",
+      "slabR": "0",
+      "crawlWallR": "0",
+      "airLeakageACH50": 5
+    },
+    "1": {
+      "fenestrationU": 0.5,
+      "skylightU": 0.75,
+      "glazedSHGC": 0.25,
+      "ceilingR": 30,
+      "woodWallR": "13 or 0+10ci",
+      "massWallR": "3/4",
+      "floorR": 13,
+      "basementWallR": "0",
+      "slabR": "0",
+      "crawlWallR": "0",
+      "airLeakageACH50": 5
+    },
+    "2": {
+      "fenestrationU": 0.4,
+      "skylightU": 0.65,
+      "glazedSHGC": 0.25,
+      "ceilingR": 49,
+      "woodWallR": "13 or 0+10ci",
+      "massWallR": "4/6",
+      "floorR": 13,
+      "basementWallR": "0",
+      "slabR": "0",
+      "crawlWallR": "0",
+      "airLeakageACH50": 5
+    },
+    "3": {
+      "fenestrationU": 0.3,
+      "skylightU": 0.55,
+      "glazedSHGC": 0.25,
+      "ceilingR": 49,
+      "woodWallR": "20 or 13+5ci or 0+15ci",
+      "massWallR": "8/13",
+      "floorR": 19,
+      "basementWallR": "5/13",
+      "slabR": "R-10, 2 ft",
+      "crawlWallR": "5/13",
+      "airLeakageACH50": 3
+    },
+    "4": {
+      "fenestrationU": 0.3,
+      "skylightU": 0.55,
+      "glazedSHGC": 0.4,
+      "ceilingR": 60,
+      "woodWallR": "30 or 20+5ci or 13+10ci or 0+20ci",
+      "massWallR": "8/13",
+      "floorR": 19,
+      "basementWallR": "10/13",
+      "slabR": "R-10, 4 ft",
+      "crawlWallR": "10/13",
+      "airLeakageACH50": 3
+    },
+    "4C": {
+      "fenestrationU": 0.3,
+      "skylightU": 0.55,
+      "glazedSHGC": 0.4,
+      "ceilingR": 60,
+      "woodWallR": "30 or 20+5ci or 13+10ci or 0+20ci",
+      "massWallR": "13/17",
+      "floorR": 30,
+      "basementWallR": "15/19 or 13+5ci",
+      "slabR": "R-10, 4 ft",
+      "crawlWallR": "15/19 or 13+5ci",
+      "airLeakageACH50": 3
+    },
+    "5": {
+      "fenestrationU": 0.3,
+      "skylightU": 0.55,
+      "glazedSHGC": 0.4,
+      "ceilingR": 60,
+      "woodWallR": "30 or 20+5ci or 13+10ci or 0+20ci",
+      "massWallR": "13/17",
+      "floorR": 30,
+      "basementWallR": "15/19 or 13+5ci",
+      "slabR": "R-10, 4 ft",
+      "crawlWallR": "15/19 or 13+5ci",
+      "airLeakageACH50": 3
+    },
+    "6": {
+      "fenestrationU": 0.3,
+      "skylightU": 0.55,
+      "glazedSHGC": "NR",
+      "ceilingR": 60,
+      "woodWallR": "30 or 20+5ci or 13+10ci or 0+20ci",
+      "massWallR": "15/20",
+      "floorR": 30,
+      "basementWallR": "15/19 or 13+5ci",
+      "slabR": "R-10, 4 ft",
+      "crawlWallR": "15/19 or 13+5ci",
+      "airLeakageACH50": 3
+    },
+    "7": {
+      "fenestrationU": 0.3,
+      "skylightU": 0.55,
+      "glazedSHGC": "NR",
+      "ceilingR": 60,
+      "woodWallR": "30 or 20+5ci or 13+10ci or 0+20ci",
+      "massWallR": "19/21",
+      "floorR": 38,
+      "basementWallR": "15/19 or 13+5ci",
+      "slabR": "R-10, 4 ft",
+      "crawlWallR": "15/19 or 13+5ci",
+      "airLeakageACH50": 3
+    },
+    "8": {
+      "fenestrationU": 0.3,
+      "skylightU": 0.55,
+      "glazedSHGC": "NR",
+      "ceilingR": 60,
+      "woodWallR": "30 or 20+5ci or 13+10ci or 0+20ci",
+      "massWallR": "19/21",
+      "floorR": 38,
+      "basementWallR": "15/19 or 13+5ci",
+      "slabR": "R-10, 4 ft",
+      "crawlWallR": "15/19 or 13+5ci",
+      "airLeakageACH50": 3
+    }
+  }
+}

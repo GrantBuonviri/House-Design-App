@@ -4,6 +4,7 @@ import { create } from "zustand";
 import type { Project, Stage } from "@/lib/model/schema";
 import { loadHistory, loadProject, saveHistory, saveProject, type HistoryRow } from "@/lib/storage/db";
 import { describeChange } from "./describe";
+import { setCodeLocation } from "@/lib/codes/data";
 
 /** Undo steps kept while a house is open. */
 const HISTORY_LIMIT = 100;
@@ -217,3 +218,6 @@ export const useProjectStore = create<State>((set, get) => {
     },
   };
 });
+
+// The code numbers follow the open project's place (open, edit, undo and redo all go through set()).
+useProjectStore.subscribe((s) => setCodeLocation(s.project?.location));
