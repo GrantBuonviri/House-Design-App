@@ -42,6 +42,7 @@ export function describeChange(before: Project, after: Project): string {
       return b.some((id) => !a.includes(id)) ? "dismiss a thing to check" : "bring back a thing to check";
     }
   }
+  if (!same("plan") && before.plan.basics && after.plan.basics && before.plan.basics.exteriorWall !== after.plan.basics.exteriorWall) return `switch to ${after.plan.basics.exteriorWall} outside walls`;
   if (!same("plan")) return before.plan.basics === null && after.plan.basics ? "answer the plan basics" : "change the plan settings";
   if (!same("house3d")) {
     if (json(before.house3d.topLabels) !== json(after.house3d.topLabels)) return describeTopLabels(before, after);
@@ -50,9 +51,11 @@ export function describeChange(before: Project, after: Project): string {
       return b.length > a.length ? "save a camera spot" : b.length < a.length ? "delete a camera spot" : "rename a camera spot";
     }
     if (json(before.house3d.walkPins) !== json(after.house3d.walkPins)) return after.house3d.walkPins.length > before.house3d.walkPins.length ? "pin a measurement" : "delete a pinned measurement";
-    return json(before.house3d.walkLabels) !== json(after.house3d.walkLabels) ? "change the floor labels" : "change the roof";
+    if (json(before.house3d.walkLabels) !== json(after.house3d.walkLabels)) return "change the floor labels";
+    return before.house3d.roof.style !== after.house3d.roof.style ? `switch to a ${after.house3d.roof.style} roof` : "change the roof";
   }
   if (!same("cost")) return "change the water and sewer setting";
+  if (!same("plans") && before.plans.systems.foundation !== after.plans.systems.foundation) return `switch to a ${after.plans.systems.foundation}`;
   if (!same("plans")) return "change the plan details";
   if (!same("interior")) return describeDesign(before.interior, after.interior, "inside");
   if (!same("exterior")) return describeDesign(before.exterior, after.exterior, "outside");

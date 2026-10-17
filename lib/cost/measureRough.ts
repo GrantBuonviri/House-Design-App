@@ -1,3 +1,4 @@
+import { realLotOk } from "@/lib/plans/lot";
 import { isHeated, roomType } from "@/lib/brief/rooms";
 import { FLOOR_STRUCTURE_IN } from "@/lib/plan/basics";
 import { type Quantities, OPEN_ROOMS, type Ctx, empty, siteFacts, roomFixtures } from "./quantityBasics";
@@ -87,8 +88,12 @@ export function measureRough(p: Ctx): Quantities | null {
     rooms.map((r, i) => ({ id: `rough-${i}`, name: r.name, type: r.type, sqft: r.sqft, fixtures: [] })),
   );
   q.drywallSqft = q.extWallSqft + q.intWallSqft * 2 + heated + garage;
-  q.driveSqft = 40 * (garage ? 20 : 12);
-  q.trenchLf = 60;
+  // On a real lot the house sits where My real lot puts it: its typed distance from the front line, or just behind the front setback.
+  const lot = p.plans?.lot ?? null;
+  const toStreet = realLotOk(lot) ? Math.max(20, lot.houseFrontFt ?? (lot.setbacks.front ?? 20) + 5) : null;
+  q.realLot = toStreet !== null;
+  q.driveSqft = (toStreet ?? 40) * (garage ? 20 : 12);
+  q.trenchLf = toStreet !== null ? toStreet + Math.sqrt(mainArea) / 2 : 60;
   q.patioSqft = outdoor.filter((r) => r.type === "patio").reduce((s, r) => s + r.sqft, 0);
   q.baseWallLf = perimeter(mainArea);
   // A typical yard: a front walk, beds along the front and sides, lawn around the house, a few trees.
