@@ -58,6 +58,16 @@ export function ItemGhost({ ghost, color, floorIn, frame }: { ghost: Ghost; colo
   return <SeeThrough data={data} ok={ghost.check.ok} />;
 }
 
+/** Furnish for me's preview: what it would put in, see-through blue, before anything is saved. */
+export function PreviewGhosts({ items, floorIn, frame }: { items: LayerItem[]; floorIn: number; frame: Frame }) {
+  const data = useMemo(() => {
+    const mb = new MeshBuilder();
+    for (const it of items) drawShape(mb, frame, it, floorIn);
+    return mb.build();
+  }, [items, floorIn, frame]);
+  return <SeeThrough data={data} ok opacity={0.55} highlight />;
+}
+
 /** A door or window being put on a wall or slid along it (or, with `highlight`, the one under the dot). */
 export function OpeningGhost({ g, floorIn, frame, ok, highlight = false }: { g: OpeningGeometry; floorIn: number; frame: Frame; ok: boolean; highlight?: boolean }) {
   const data = useMemo(() => {

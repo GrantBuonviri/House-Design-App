@@ -99,6 +99,7 @@ export function migrateRaw(raw: unknown): Record<string, unknown> {
   // Version 32 to 33 added pinned tape measurements (`FloorPlan.pins`, optional; `house3d.walkPins`, default none), so no change beyond the version.
   // Version 33 to 34 removed the inside door style (`plan.basics.doorStyle`), which nothing read.
   if (version < 34) migrated = migrateV33(migrated);
+  // Version 34 to 35 added saved camera spots in the walkthrough (`house3d.walkViews`, default none), so no change beyond the version.
   return repairProject({ ...migrated, schemaVersion: SCHEMA_VERSION });
 }
 

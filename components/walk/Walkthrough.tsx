@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Canvas } from "@react-three/fiber";
 import { PerspectiveCamera } from "@react-three/drei";
 import * as THREE from "three";
-import type { FloorPlan, Opening, Point, Product, Project, Selection, WallHeight } from "@/lib/model/schema";
+import type { FloorPlan, Opening, Point, Product, Project, Selection, WalkView, WallHeight } from "@/lib/model/schema";
 import { useProjectStore } from "@/lib/store/projectStore";
 import type { Estimate } from "@/lib/cost/estimate";
 import { buildHouse, type HouseContext } from "@/lib/house3d/build";
@@ -20,10 +20,10 @@ import { defaultFurnitureColor } from "@/lib/plan/furniture";
 import { ceilingFor, exteriorWallIn } from "@/lib/plan/basics";
 import { fixtureType, openingType } from "@/lib/plan/catalog";
 import { catalogEntry, type CatalogEntry } from "@/lib/furnish/catalog";
-import { placeCheck, removeItem, roomAt, type LayerItem } from "@/lib/furnish/layer";
+import { layerItems, placeCheck, removeItem, roomAt, type LayerItem } from "@/lib/furnish/layer";
 import { deleteItem, furnishLayouts, patchItem, placeGhost, stageItems, type Ghost } from "@/lib/furnish/stage";
 import { addWall, carryToFloor, liftable, openingInTheWay, openingOnWall, openingShape, slideOpening, walkGhost, walkMove, wallHeightIn, wallPoint, withOpening, type WalkSpot } from "@/lib/furnish/walk";
-import { canAutoFurnish, furnishRoom, furnishSummary } from "@/lib/furnish/autoFurnish";
+import { canAutoFurnish, furnishRoom, furnishSummary, previewLines, type FurnishPreset, type FurnishResult } from "@/lib/furnish/autoFurnish";
 import { isClosetRod } from "@/lib/furnish/closets";
 import { effectiveAnswers } from "@/lib/interior/style";
 import { aimAt, type Aim } from "@/lib/interior/surfaces";
@@ -34,7 +34,9 @@ import { DESIGN_KEYS } from "@/lib/tour/help";
 import { Player, type Look } from "./Player";
 import { DesignTabs, FinishesHelp, PlaceTab, type DesignTab } from "./PlaceTab";
 import type { ExteriorCategoryId } from "@/lib/catalog/exterior";
-import { DevicePlates, ItemGhost, ItemHighlight, OpeningGhost, RailingHighlight, WallGhost } from "./WalkGhosts";
+import { addView, removeView, renameView, screenshotName, viewHere, viewName, walkerAt } from "@/lib/house3d/views";
+import { SavedViewsPanel } from "./SavedViews";
+import { DevicePlates, ItemGhost, ItemHighlight, OpeningGhost, PreviewGhosts, RailingHighlight, WallGhost } from "./WalkGhosts";
 import RailingPanel from "@/components/furnish/RailingPanel";
 import FaucetPanel, { type FaucetChangeIn } from "@/components/furnish/FaucetPanel";
 import { applyFaucetChange, faucetById, pickFaucetProduct, pickPotFiller, potFillerPick, usedFor } from "@/lib/furnish/faucetPick";
@@ -81,7 +83,8 @@ type Panel =
   | { kind: "faucet"; levelId: string; id: string }
   | { kind: "pin"; id: string }
   | { kind: "design" }
-  | { kind: "labels" };
+  | { kind: "labels" }
+  | { kind: "views" };
 
 /**
  * What's being placed: a new catalog item or one picked up (both follow where
@@ -141,7 +144,7 @@ function carryInfo(c: Carry, plan: FloorPlan): { label: string; ok: boolean; pro
 
 const AWAY_SAID = "A door or window slides along its own wall. Go back to its floor, or press Esc and add a new one here.";
 
-const isDesignPanel = (p: Panel | null) => Boolean(p && p.kind !== "labels" && p.kind !== "pin");
+const isDesignPanel = (p: Panel | null) => Boolean(p && p.kind !== "labels" && p.kind !== "pin" && p.kind !== "views");
 
 /**
  * Walk through the house in first person, like a video game. Click to start,
@@ -167,6 +170,8 @@ export default function Walkthrough({ project, cost, onClose, startWindow }: { p
   const [tab, setTab] = useState<DesignTab>("finishes");
   const [topDown, setTopDown] = useState<{ levelId: string; p: Point; dir: Point } | null>(null);
   const [autoNotes, setAutoNotes] = useState<string[]>([]);
+  const [autoPreset, setAutoPreset] = useState<FurnishPreset>("minimal");
+  const [furnishPreview, setFurnishPreview] = useState<{ levelId: string; base: FloorPlan; res: FurnishResult } | null>(null);
   // Floor labels (L) and the tape measure (T). Measurements aren't saved.
   const [labelsOn, setLabelsOn] = useState(false);
   const [tapeOn, setTapeOn] = useState(false);
@@ -208,6 +213,35 @@ export default function Walkthrough({ project, cost, onClose, startWindow }: { p
     setTape((t) => ({ ...t, done: r.done }));
     update((p) => ({ ...p, house3d: { ...p.house3d, walkPins: r.pins } }));
     say("Pinned. Aim at it and click to delete.");
+  };
+  // Saved camera spots ("Kitchen view") and screenshots.
+  const walkViews = project.house3d.walkViews;
+  const viewsRef = useRef(walkViews);
+  viewsRef.current = walkViews;
+  const setViews = (change: (v: WalkView[]) => WalkView[]) => update((p) => ({ ...p, house3d: { ...p.house3d, walkViews: change(p.house3d.walkViews) } }));
+  /** V: save where you stand and which way you look. */
+  const saveView = () => {
+    const name = viewName(whereAmI(world, plans, walker.current).roomName, viewsRef.current);
+    setViews((v) => addView(v, viewHere(walker.current, name, newId())));
+    say(`Saved "${name}". Find it under Go to, at the bottom.`);
+  };
+  const goToView = (v: WalkView) => {
+    walker.current = walkerAt(v, walker.current);
+    setWhere(whereAmI(world, plans, walker.current));
+  };
+  /** G: save a picture of the view (without the buttons) as a PNG file. */
+  const screenshot = () => {
+    const c = canvasRef.current;
+    if (!c) return;
+    try {
+      const a = document.createElement("a");
+      a.href = c.toDataURL("image/png");
+      a.download = screenshotName(project.name, whereAmI(world, plans, walker.current).roomName);
+      a.click();
+      say("Screenshot saved to your Downloads folder.");
+    } catch {
+      say("The screenshot didn't work in this browser.");
+    }
   };
   const deletePin = (id: string) => {
     update((p) => ({ ...p, house3d: { ...p.house3d, walkPins: p.house3d.walkPins.filter((x) => x.id !== id) } }));
@@ -463,13 +497,30 @@ export default function Walkthrough({ project, cost, onClose, startWindow }: { p
     const room = levelId ? roomAt(planOf(project.floorPlans, levelId), walker.current.p) : undefined;
     return levelId && room ? { levelId, room } : null;
   };
-  const furnishHere = () => {
+  /** Furnish for me's preview for the room you're in: shown see-through, not saved. */
+  const previewHere = () => {
     const here = roomHere();
     if (!here) return;
-    const res = furnishRoom(planOf(project.floorPlans, here.levelId), here.room.id, ceilingOf(here.levelId));
-    if (res.placed) setLevelPlan(here.levelId, res.plan);
+    const base = planOf(project.floorPlans, here.levelId);
+    const res = furnishRoom(base, here.room.id, ceilingOf(here.levelId), autoPreset);
     setAutoNotes(res.notes);
-    say(furnishSummary(res));
+    if (!res.placed) {
+      setFurnishPreview(null);
+      say(furnishSummary(res));
+    } else setFurnishPreview({ levelId: here.levelId, base, res });
+  };
+  // A preview is of the plan as it was: any change to that floor drops it.
+  const shownPreview = furnishPreview && planOf(project.floorPlans, furnishPreview.levelId) === furnishPreview.base ? furnishPreview : null;
+  const previewItems = useMemo(() => {
+    if (!shownPreview) return [];
+    const ids = new Set(shownPreview.res.added.map((a) => a.id));
+    return layerItems(shownPreview.res.plan).filter((i) => ids.has(i.id));
+  }, [shownPreview]);
+  const furnishHere = () => {
+    if (!shownPreview) return;
+    setLevelPlan(shownPreview.levelId, shownPreview.res.plan);
+    setFurnishPreview(null);
+    say(furnishSummary(shownPreview.res));
   };
 
   /** Change, remove or reset the railing with this key (built on `levelId`); the change is saved on its stairs. */
@@ -752,6 +803,14 @@ export default function Walkthrough({ project, cost, onClose, startWindow }: { p
         setLabelsOn((v) => !v);
         return;
       }
+      if (e.code === "KeyV" && !c) {
+        saveView();
+        return;
+      }
+      if (e.code === "KeyG") {
+        screenshot();
+        return;
+      }
       if (e.code === "KeyK" && !c) {
         lockDoor();
         return;
@@ -931,6 +990,7 @@ export default function Walkthrough({ project, cost, onClose, startWindow }: { p
         {carry && (carry.kind === "new" || carry.kind === "move") && carry.ghost && (
           <ItemGhost ghost={carry.ghost} color={carry.kind === "move" ? carry.item.color : undefined} floorIn={heights[carry.levelId]?.floorIn ?? 0} frame={frame} />
         )}
+        {previewItems.length > 0 && shownPreview && <PreviewGhosts items={previewItems} floorIn={heights[shownPreview.levelId]?.floorIn ?? 0} frame={frame} />}
         {carry && carryOpening && <OpeningGhost g={carryOpening} floorIn={heights[carry.levelId]?.floorIn ?? 0} frame={frame} ok={carryLabel?.ok ?? true} />}
         {carry?.kind === "wall" && carry.hover && <WallGhost a={carry.first ?? carry.hover} b={carry.hover} heightIn={wallHeightIn(carry.height, ceilingOf(carry.levelId))} floorIn={heights[carry.levelId]?.floorIn ?? 0} frame={frame} />}
         {aimedItem && aim?.kind === "furnish" && <ItemHighlight item={aimedItem} floorIn={heights[aim.levelId]?.floorIn ?? 0} ceilingIn={ceilingOf(aim.levelId)} frame={frame} />}
@@ -1064,7 +1124,23 @@ export default function Walkthrough({ project, cost, onClose, startWindow }: { p
             {panel.kind === "outside" && <OutsidePanel key={panel.aim.label} aim={panel.aim} selections={project.exterior.selections} answers={outsideAnswers} onChange={setOutside} />}
             {panel.kind === "design" && tab === "finishes" && <FinishesHelp onOpenWindow={openWindow} />}
             {panel.kind === "design" && tab === "place" && (
-              <PlaceTab picked={null} onPick={pickEntry} roomName={here?.room.name ?? null} canFurnish={Boolean(here && canAutoFurnish(here.room))} onFurnishForMe={furnishHere} notes={autoNotes} onAddRailing={addRailingMode} />
+              <PlaceTab
+                picked={null}
+                onPick={pickEntry}
+                roomName={here?.room.name ?? null}
+                canFurnish={Boolean(here && canAutoFurnish(here.room, autoPreset))}
+                preset={autoPreset}
+                onPreset={(p) => {
+                  setAutoPreset(p);
+                  setFurnishPreview(null);
+                }}
+                preview={shownPreview ? previewLines(shownPreview.res.added) : null}
+                onPreview={previewHere}
+                onFurnishForMe={furnishHere}
+                onCancelPreview={() => setFurnishPreview(null)}
+                notes={autoNotes}
+                onAddRailing={addRailingMode}
+              />
             )}
             {panel.kind === "item" && openItem && panelPlan && (
               <div className="space-y-3" data-testid="walk-item-panel">
@@ -1159,6 +1235,20 @@ export default function Walkthrough({ project, cost, onClose, startWindow }: { p
                 )}
               </div>
             )}
+            {panel.kind === "views" && (
+              <SavedViewsPanel
+                views={walkViews}
+                onGo={(v) => {
+                  goToView(v);
+                  setPanel(null);
+                  start();
+                }}
+                onSave={saveView}
+                onRename={(id, name) => setViews((v) => renameView(v, id, name))}
+                onDelete={(id) => setViews((v) => removeView(v, id))}
+                onScreenshot={screenshot}
+              />
+            )}
             {panel.kind === "labels" && (
               <LabelSettingsPanel
                 settings={labelSettings}
@@ -1199,6 +1289,11 @@ export default function Walkthrough({ project, cost, onClose, startWindow }: { p
           onHour={setHour}
           onSeason={setSeason}
           onJump={jump}
+          views={walkViews}
+          onView={goToView}
+          onSaveView={saveView}
+          onViews={() => setPanel({ kind: "views" })}
+          onScreenshot={screenshot}
         />
       )}
     </div>

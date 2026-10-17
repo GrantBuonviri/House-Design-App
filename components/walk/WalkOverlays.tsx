@@ -5,6 +5,7 @@ import type { Estimate } from "@/lib/cost/estimate";
 import { shortMoney } from "@/lib/cost/estimate";
 import { SEASONS, clockTime, type SeasonId } from "@/lib/house3d/sun";
 import type { Spot, walkWorld } from "@/lib/house3d/walk";
+import type { WalkView } from "@/lib/model/schema";
 import type { DoorMode } from "@/lib/house3d/doors";
 import DoorsPicker from "@/components/house3d/DoorsPicker";
 import UndoButtons from "@/components/project/UndoButtons";
@@ -190,6 +191,7 @@ export function WalkHelp({ onStart }: { onStart: () => void }) {
           <li>L shows room labels on the floor (the ⚙ button sets what they say). Shift+L locks them to the floor plan&apos;s direction instead of turning with you</li>
           <li>T is the tape measure: click two points. Shift keeps it level or upright, C clears</li>
           <li>P pins a measurement so it stays. Aim at a pin and click to delete it</li>
+          <li>V saves this spot (where you stand and which way you look); find it under Go to. G saves a screenshot</li>
           <li>Esc to stop, and Esc again to close</li>
         </ul>
       </div>
@@ -210,8 +212,14 @@ export function WalkControls(props: {
   onHour: (h: number) => void;
   onSeason: (s: SeasonId) => void;
   onJump: (spot: Spot, keepYaw?: boolean) => void;
+  /** Saved camera spots, listed first under Go to. */
+  views: WalkView[];
+  onView: (v: WalkView) => void;
+  onSaveView: () => void;
+  onViews: () => void;
+  onScreenshot: () => void;
 }) {
-  const { hour, sunrise, sunset, daylightSaving, season, world, doorMode, onDoorMode, onHour, onSeason, onJump } = props;
+  const { hour, sunrise, sunset, daylightSaving, season, world, doorMode, onDoorMode, onHour, onSeason, onJump, views, onView, onSaveView, onViews, onScreenshot } = props;
   const place = usePlace();
   return (
     <div className="absolute right-0 bottom-0 left-0 flex flex-wrap items-end gap-x-6 gap-y-3 bg-black/60 px-4 py-3 text-white">
@@ -248,7 +256,10 @@ export function WalkControls(props: {
           onChange={(e) => {
             const v = e.target.value;
             if (v === "front") onJump(world.start, false);
-            else {
+            else if (v.startsWith("view:")) {
+              const sv = views.find((x) => x.id === v.slice(5));
+              if (sv) onView(sv);
+            } else {
               const r = world.rooms.find((x) => `${x.levelId}:${x.id}` === v);
               if (r) onJump(r.spot);
             }
@@ -257,6 +268,15 @@ export function WalkControls(props: {
           <option value="" disabled>
             Pick a room…
           </option>
+          {views.length > 0 && (
+            <optgroup label="Saved spots">
+              {views.map((v) => (
+                <option key={v.id} value={`view:${v.id}`}>
+                  {v.name}
+                </option>
+              ))}
+            </optgroup>
+          )}
           <option value="front">The front door (outside)</option>
           {world.levels.map((l) => (
             <optgroup key={l.id} label={l.name}>
@@ -271,6 +291,17 @@ export function WalkControls(props: {
           ))}
         </select>
       </label>
+      <div className="flex items-end gap-2 text-sm">
+        <button className="rounded-md bg-white/90 px-3 py-1 text-sm text-ink hover:bg-white" onClick={onSaveView} title="Save where you stand and which way you look (V)" data-testid="walk-save-view">
+          Save this spot
+        </button>
+        <button className="rounded-md border border-white/30 px-3 py-1 text-sm hover:bg-white/15" onClick={onViews} data-testid="walk-views">
+          Saved spots{views.length ? ` (${views.length})` : ""}
+        </button>
+        <button className="rounded-md border border-white/30 px-3 py-1 text-sm hover:bg-white/15" onClick={onScreenshot} title="Save a picture of this view (G)" data-testid="walk-screenshot">
+          Screenshot
+        </button>
+      </div>
     </div>
   );
 }

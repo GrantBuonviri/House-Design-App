@@ -455,7 +455,7 @@ export default function PlanCanvas(props: PlanCanvasProps) {
             />
 
             {clearance.length > 0 && <FurnishClearance zones={clearance} />}
-            {(furnishing || showFurnishings) && <FurnishItems items={shownItems} selectedId={single?.kind === "furnish" ? single.id : undefined} badId={badId ?? undefined} s={s} faded={!furnishing} names={labelOn(labels, "fixtureNames")} />}
+            {(furnishing || showFurnishings) && <FurnishItems items={shownItems} selectedIds={new Set(selection.filter((x) => x.kind === "furnish").map((x) => x.id))} badId={badId ?? undefined} s={s} faded={!furnishing} names={labelOn(labels, "fixtureNames")} />}
             {(furnishing || showFurnishings) && (
               <FaucetSymbols faucets={furnishing && furnish?.faucets ? furnish.faucets : faucetsHere} selectedId={single?.kind === "faucet" ? single.id : undefined} pickable={furnishing && tool === "select"} s={s} />
             )}

@@ -9,7 +9,7 @@ import { z } from "zod";
  * Angles are degrees clockwise from north (0 = N, 90 = E).
  */
 
-export const SCHEMA_VERSION = 34;
+export const SCHEMA_VERSION = 35;
 
 export const Point = z.object({ x: z.number(), y: z.number() });
 export type Point = z.infer<typeof Point>;
@@ -737,6 +737,10 @@ export type TopLabels = z.infer<typeof TopLabels>;
 export const TapePin3D = z.object({ id: z.string(), a: z.object({ x: z.number(), y: z.number(), z: z.number() }), b: z.object({ x: z.number(), y: z.number(), z: z.number() }) });
 export type TapePin3D = z.infer<typeof TapePin3D>;
 
+/** A saved camera spot in the walkthrough ("Kitchen view"): where you stood (plan x east, y south; feet up from the main floor, inches) and which way you looked. */
+export const WalkView = z.object({ id: z.string(), name: z.string(), x: z.number(), y: z.number(), feet: z.number(), yaw: z.number(), pitch: z.number().default(0) });
+export type WalkView = z.infer<typeof WalkView>;
+
 export const House3D = z.object({
   roof: Roof.prefault({}),
   /** Room labels on the floor in the walkthrough. */
@@ -745,6 +749,8 @@ export const House3D = z.object({
   topLabels: TopLabels.prefault({}),
   /** Walkthrough tape measurements that were pinned. */
   walkPins: z.array(TapePin3D).default([]),
+  /** Saved camera spots in the walkthrough. */
+  walkViews: z.array(WalkView).default([]),
 });
 export type House3D = z.infer<typeof House3D>;
 

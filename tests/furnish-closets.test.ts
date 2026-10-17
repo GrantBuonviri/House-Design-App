@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import type { FloorPlan } from "@/lib/model/schema";
 import { closetSpotAt, isClosetRod, leftoverClosets, placeCloset, removeLeftoverCloset, CLOSET_SIZES } from "@/lib/furnish/closets";
-import { canAutoFurnish, furnishLevel, furnishRoom, furnishSummary } from "@/lib/furnish/autoFurnish";
+import { canAutoFurnish, furnishLevel, furnishRoom, furnishSummary, previewLines } from "@/lib/furnish/autoFurnish";
 import { layerItems, placeCheck, removeItem } from "@/lib/furnish/layer";
 import { ghostAt, placeGhost } from "@/lib/furnish/stage";
 import { emptyPlan, makeRoom, planOf } from "@/lib/plan/edit";
@@ -189,5 +189,44 @@ describe("Furnish for me", () => {
       }
     }
     expect(furnishSummary({ placed: 3, rooms: ["Kitchen"] })).toMatch(/put 3 things in Kitchen/);
+  });
+
+  it("Full adds furniture that fits, clear of doors; Minimal adds none; running it again adds nothing", () => {
+    for (const types of [RANCH, TWO_STORY]) {
+      const project = house(types);
+      for (const level of project.levels) {
+        const plan = planOf(project.floorPlans, level.id);
+        expect(furnishLevel(plan).plan.furniture).toEqual(plan.furniture);
+        const res = furnishLevel(plan, 96, "full");
+        const added = new Set(res.added.map((a) => a.id));
+        const items = layerItems(res.plan);
+        for (const it of items.filter((i) => added.has(i.id))) {
+          const c = placeCheck(res.plan, it, items);
+          expect(c.ok, it.label).toBe(true);
+          expect(c.blocksDoors, it.label).toEqual([]);
+        }
+        expect(furnishLevel(res.plan, 96, "full").placed).toBe(0);
+      }
+    }
+    const ranch = planOf(house(RANCH).floorPlans, MAIN_LEVEL_ID);
+    const kinds = furnishLevel(ranch, 96, "full").plan.furniture.map((f) => f.kind);
+    for (const k of ["bed-king", "nightstand", "dresser", "sofa", "coffee-table", "tv-stand", "dining-table"]) expect(kinds, k).toContain(k);
+  });
+
+  it("a desk chair faces its desk, and the preview lists what would go in each room", () => {
+    const o = makeRoom(sq(0, 0, 120, 120), "Office", { type: "office" });
+    const south = o.polygon.findIndex((p, i) => p.y === 120 && o.polygon[(i + 1) % 4].y === 120);
+    const plan = { ...emptyPlan(), rooms: [o], openings: [newOpening("door-hinged", { roomId: o.id, edge: south }, 20, 1, 32)] };
+    expect(canAutoFurnish(o)).toBe(false);
+    expect(canAutoFurnish(o, "full")).toBe(true);
+    expect(furnishRoom(plan, o.id).placed).toBe(0);
+    const res = furnishRoom(plan, o.id, 96, "full");
+    const desk = res.plan.furniture.find((f) => f.kind === "desk")!;
+    const chair = res.plan.furniture.find((f) => f.kind === "desk-chair")!;
+    expect(Math.abs(((chair.rotation - desk.rotation + 360) % 360) - 180)).toBeLessThan(1);
+    // Nothing is saved by a preview: the plan passed in is unchanged.
+    expect(plan.furniture).toEqual([]);
+    expect(previewLines(res.added)).toEqual([{ room: "Office", items: "Desk, Desk chair" }]);
+    expect(previewLines([...res.added, { id: "x", label: "Nightstand", room: "Office", roomId: o.id }, { id: "y", label: "Nightstand", room: "Office", roomId: o.id }])[0].items).toBe("Desk, Desk chair, 2 nightstands");
   });
 });
