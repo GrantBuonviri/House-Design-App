@@ -219,7 +219,8 @@ describe("finishes in 3D", () => {
     const floor = buildHouse(p.floorPlans, ctx).parts.find((x) => x.key.endsWith(":r:living"))!;
     expect(floor.mesh.patterns).toBeTruthy();
     expect([...floor.mesh.patterns!]).toContain(PATTERN.carpet);
-    // The underside (the ceiling below) has no pattern.
+    // The underside (the ceiling below) is drywall with Pretty graphics; the slab's edges are plain.
+    expect([...floor.mesh.patterns!]).toContain(PATTERN.drywall);
     expect([...floor.mesh.patterns!]).toContain(0);
   });
 });

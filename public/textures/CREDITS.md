@@ -1,0 +1,34 @@
+# Texture credits
+
+The photo textures the 3D views use with Pretty graphics (see `lib/house3d/looks.ts`). Any texture listed in `TEXTURES` there without a file here is drawn in code instead (`lib/house3d/textureDraw.ts`).
+
+All files are diffuse/albedo (color) maps only, resized to <=1024 px (512 px for carpet, fabric, leather, rug, shingles, metal-seam) and re-encoded as JPEG q80.
+Every texture is CC0 1.0 (public domain); attribution is not required but is recorded here.
+
+Mirrors used (the original asset sites are blocked from this container):
+- HAB = github.com/yosnap/habiteka-app, `public/materials/` (1024 px WebP/JPG copies of ambientCG / Poly Haven maps; its `public/materials/cc0/manifest.json` lists source, license CC0-1.0 and real-world size `sizeMm` for each; `public/materials/outdoor/license.txt` names the grass source).
+- PAPY = github.com/Papyszoo/CC0-Public-Domain-Textures (repo LICENSE is CC0 1.0; each `packs/*/pack.json` names the creator and license CC0). Its maps are 512 px KTX2 (UASTC + Zstd), decoded with the Basis Universal transcoder from the `three@0.170.0` npm package.
+
+"Covers" = real-world width x height of one tile of the image. Sizes from the HAB manifest (`sizeMm`) are marked "manifest"; others are "estimate".
+
+| File | What it is | Downloaded from (exact URL) | Original author / collection (asset page) | License | Covers |
+|---|---|---|---|---|---|
+| wood-floor.jpg | Medium natural oak floor planks | https://raw.githubusercontent.com/yosnap/habiteka-app/main/public/materials/cc0/ambientcg-woodfloor051/color.webp | ambientCG, WoodFloor051 (https://ambientcg.com/view?id=WoodFloor051) | CC0 1.0 | 5.9 x 5.9 ft (1800 mm, manifest) |
+| brick.jpg | Red brick wall, running bond | https://raw.githubusercontent.com/yosnap/habiteka-app/main/public/materials/cc0/ambientcg-bricks101/color.webp | ambientCG, Bricks101 (https://ambientcg.com/view?id=Bricks101) | CC0 1.0 | 5.9 x 5.9 ft (1800 mm, manifest) |
+| plaster.jpg | Fine white plaster / painted wall | https://raw.githubusercontent.com/yosnap/habiteka-app/main/public/materials/cc0/ambientcg-plaster002/color.webp | ambientCG, Plaster002 (https://ambientcg.com/view?id=Plaster002) | CC0 1.0 | 4.9 x 4.9 ft (1500 mm, manifest) |
+| marble.jpg | White marble with fine grey veins | https://raw.githubusercontent.com/yosnap/habiteka-app/main/public/materials/cc0/ambientcg-marble021/color.webp | ambientCG, Marble021 (https://ambientcg.com/view?id=Marble021) | CC0 1.0 | 6.6 x 6.6 ft (2000 mm, manifest) |
+| granite.jpg | Speckled white/grey granite | https://raw.githubusercontent.com/yosnap/habiteka-app/main/public/materials/cc0/ambientcg-granite002a/color.webp | ambientCG, Granite002A (https://ambientcg.com/view?id=Granite002A) | CC0 1.0 | 2.0 x 2.0 ft (600 mm, manifest) |
+| tile.jpg | Cream square floor tiles with grout (6 x 6 tiles, ~13 in each) | https://raw.githubusercontent.com/yosnap/habiteka-app/main/public/materials/cc0/ambientcg-tiles139/color.webp | ambientCG, Tiles139 (https://ambientcg.com/view?id=Tiles139) | CC0 1.0 | 6.6 x 6.6 ft (2000 mm, manifest) |
+| carpet.jpg | Beige wool carpet | https://raw.githubusercontent.com/yosnap/habiteka-app/main/public/materials/cc0/ambientcg-carpet016/color.webp | ambientCG, Carpet016 (https://ambientcg.com/view?id=Carpet016) | CC0 1.0 | 5.6 x 5.6 ft (1700 mm, manifest) |
+| fabric.jpg | Beige woven upholstery fabric | https://raw.githubusercontent.com/Papyszoo/CC0-Public-Domain-Textures/main/packs/ambientcg-textures/textures/Fabric062/Fabric062_1K-PNG_Color.ktx2 | ambientCG, Fabric062 (https://ambientcg.com/view?id=Fabric062) | CC0 1.0 | 1.5 x 1.5 ft (estimate) |
+| siding.jpg | Painted grey horizontal lap-board cladding | https://raw.githubusercontent.com/yosnap/habiteka-app/main/public/materials/cc0/polyhaven-exterior_wall_cladding_03/color.webp | Poly Haven, exterior_wall_cladding_03 (https://polyhaven.com/a/exterior_wall_cladding_03) | CC0 1.0 | 6.4 x 6.4 ft (1960 mm, manifest) |
+| shingles.jpg | Grey roof shingles | https://raw.githubusercontent.com/Papyszoo/CC0-Public-Domain-Textures/main/packs/polyhaven-textures/textures/grey_roof_01/grey_roof_01_albedo.ktx2 | Poly Haven, grey_roof_01 (https://polyhaven.com/a/grey_roof_01) | CC0 1.0 | 10 x 10 ft (estimate) |
+| stucco.jpg | White stucco / textured render | https://raw.githubusercontent.com/yosnap/habiteka-app/main/public/materials/cc0/polyhaven-white_stucco_02/color.webp | Poly Haven, white_stucco_02 (https://polyhaven.com/a/white_stucco_02) | CC0 1.0 | 3.3 x 3.3 ft (1000 mm, manifest) |
+| stone.jpg | Rough fieldstone wall (the 1024 x 512 image stacked twice to make it square) | https://raw.githubusercontent.com/yosnap/habiteka-app/main/public/materials/cc0/ambientcg-bricks075a/color.webp | ambientCG, Bricks075A (https://ambientcg.com/view?id=Bricks075A) | CC0 1.0 | 6.6 x 6.6 ft as stacked (each copy 2000 x 1000 mm, manifest) |
+| concrete.jpg | Grey concrete (mottled) | https://raw.githubusercontent.com/yosnap/habiteka-app/main/public/materials/cc0/ambientcg-concrete036/color.webp | ambientCG, Concrete036 (https://ambientcg.com/view?id=Concrete036) | CC0 1.0 | 6.6 x 6.6 ft (2000 mm, manifest) |
+| grass.jpg | Lawn grass | https://raw.githubusercontent.com/yosnap/habiteka-app/main/public/materials/outdoor/grass-lawn-color.jpg | ambientCG, Grass004 (https://ambientcg.com/view?id=Grass004) | CC0 1.0 | 6.5 x 6.5 ft (estimate) |
+| mulch.jpg | Wood-chip / bark mulch | https://raw.githubusercontent.com/yosnap/habiteka-app/main/public/materials/cc0/polyhaven-wood_chips/color.webp | Poly Haven, wood_chips (https://polyhaven.com/a/wood_chips) | CC0 1.0 | 3.3 x 3.3 ft (1000 mm, manifest) |
+| wood-grain.jpg | Light birch wood boards (cabinet/furniture) | https://raw.githubusercontent.com/yosnap/habiteka-app/main/public/materials/cc0/ambientcg-wood090a/color.webp | ambientCG, Wood090A (https://ambientcg.com/view?id=Wood090A) | CC0 1.0 | 4.6 x 4.6 ft (1400 mm, manifest) |
+| leather.jpg | Brown leather | https://raw.githubusercontent.com/Papyszoo/CC0-Public-Domain-Textures/main/packs/polyhaven-textures/textures/brown_leather/brown_leather_albedo.ktx2 | Poly Haven, brown_leather (https://polyhaven.com/a/brown_leather) | CC0 1.0 | 1.5 x 1.5 ft (estimate) |
+| rug.jpg | Woven rug, blue/cream geometric diamond pattern (not Persian) | https://raw.githubusercontent.com/Papyszoo/CC0-Public-Domain-Textures/main/packs/sharetextures-textures/textures/carpet-13/carpet-13_color_1k.ktx2 | ShareTextures, Carpet 13 (https://www.sharetextures.com/textures) | CC0 1.0 | 3 x 3 ft (estimate) |
+| metal-seam.jpg | Light grey standing-seam metal roof (vertical seams) | https://raw.githubusercontent.com/Papyszoo/CC0-Public-Domain-Textures/main/packs/sharetextures-textures/textures/metal-roof/metal-roof_color_1k.ktx2 | ShareTextures, Metal Roof (https://www.sharetextures.com/textures) | CC0 1.0 | 8 x 8 ft (estimate, ~16 in seam spacing) |

@@ -8,6 +8,7 @@ import { useGraphics } from "@/lib/graphics";
 import { sunDirection } from "@/lib/house3d/sun";
 import { glassMaterial, solidMaterial } from "./House3DView";
 import { mergeParts } from "./geometry";
+import { setDaylight, useHouseMaterials } from "./prettyMaterial";
 import { usePlace } from "@/lib/location/usePlace";
 
 /**
@@ -25,6 +26,7 @@ export type AimTarget = { mesh: THREE.Mesh; owners: Part[] };
 export function HouseMeshes({ parts, aimRef, doorsApart }: { parts: Part[]; aimRef?: React.MutableRefObject<AimTarget | null>; doorsApart?: boolean }) {
   // With `doorsApart`, door leaves are left out: the caller draws them on their own (see DoorLeaves).
   const quality = useGraphics((g) => g.quality);
+  const mat = useHouseMaterials(solidMaterial, glassMaterial);
   const shown = useMemo(() => forQuality(parts, quality), [parts, quality]);
   const solid = useMemo(() => mergeParts(shown.filter((p) => !p.glass && p.layer !== "footprints" && !(doorsApart && p.door))), [shown, doorsApart]);
   const glass = useMemo(() => mergeParts(shown.filter((p) => p.glass && !(doorsApart && p.door))), [shown, doorsApart]);
@@ -35,7 +37,7 @@ export function HouseMeshes({ parts, aimRef, doorsApart }: { parts: Part[]; aimR
       {solid && (
         <mesh
           geometry={solid.geometry}
-          material={solidMaterial}
+          material={mat.solid}
           castShadow
           receiveShadow
           ref={(m) => {
@@ -43,7 +45,7 @@ export function HouseMeshes({ parts, aimRef, doorsApart }: { parts: Part[]; aimR
           }}
         />
       )}
-      {glass && <mesh geometry={glass.geometry} material={glassMaterial} />}
+      {glass && <mesh geometry={glass.geometry} material={mat.glass} />}
     </>
   );
 }
@@ -70,6 +72,8 @@ export function Sky({ day, hour, span, center, version, shadowSize = 4096, showS
   const lat = usePlace().latitudeDeg;
   const sun = useMemo(() => sunDirection(day, hour, lat), [day, hour, lat]);
   const low = Math.max(0, Math.min(1, 1 - sun[1] / 0.35)); // 1 near the horizon, 0 once the sun is up
+  // Pretty's reflections of the room dim from late afternoon into the night.
+  useEffect(() => setDaylight((sun[1] + 0.05) / 0.3), [sun]);
   const sky = useMemo(() => new THREE.Color("#a9cbe8").lerp(new THREE.Color("#f2c49b"), low * 0.8), [low]);
   const sunColor = useMemo(() => new THREE.Color("#fffaf0").lerp(new THREE.Color("#ffb46b"), low), [low]);
   // Nothing in the scene moves, so shadows are only redrawn when the sun (or the house) does.

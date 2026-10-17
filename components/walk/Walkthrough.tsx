@@ -29,6 +29,7 @@ import { effectiveAnswers } from "@/lib/interior/style";
 import { aimAt, type Aim } from "@/lib/interior/surfaces";
 import { Ground } from "@/components/house3d/House3DView";
 import { HouseMeshes, Sky, type AimTarget } from "@/components/house3d/Scene";
+import { PrettyLook } from "@/components/house3d/PrettyLook";
 import { FinishPanel, OutsidePanel } from "./DesignPanel";
 import { DESIGN_KEYS } from "@/lib/tour/help";
 import { Player, type Look } from "./Player";
@@ -983,6 +984,7 @@ export default function Walkthrough({ project, cost, onClose, startWindow }: { p
         <Sky day={seasonInfo.day} hour={shownHour} span={span} version={model} center={model.bounds ? [(model.bounds.min[0] + model.bounds.max[0]) / 2, 0, (model.bounds.min[2] + model.bounds.max[2]) / 2] : [0, 0, 0]} />
         <Ground site={site} frame={frame} plans={plans} ctx={ctx} heights={heights} yard={false} />
         <HouseMeshes parts={model.parts} aimRef={aimTarget} doorsApart />
+        {quality === "pretty" && <PrettyLook />}
         <DoorLeaves parts={doorParts} frame={frame} amountOf={(id) => world.doorAmount[id] ?? 0} groupRef={doorsGroup} />
         <DoorDriver world={world} walker={walker} states={doorStates} modeRef={doorModeRef} />
         {labelsOn && <FloorLabels project={project} settings={labelSettings} frame={frame} heights={heights} walker={walker} costTotal={cost?.total.likely} />}

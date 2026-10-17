@@ -26,6 +26,8 @@ import { concatMeshes, mergeParts, toGeometry } from "./geometry";
 import { DoorLeaves } from "./DoorLeaves";
 import type { DoorMode } from "@/lib/house3d/doors";
 import { withPatterns } from "./patternMaterial";
+import { useHouseMaterials } from "./prettyMaterial";
+import { PrettyLook } from "./PrettyLook";
 import { canvasSettings, useGraphics } from "@/lib/graphics";
 import { usePlace } from "@/lib/location/usePlace";
 
@@ -212,6 +214,7 @@ export default function House3DView(props: Props) {
             showUpTo === Infinity || i < showUpTo ? <LevelMeshes key={`roof-${l.id}`} parts={roofs.parts.filter((p) => p.levelId === l.id)} visible {...drag} /> : null,
           )}
         <Highlight parts={visibleParts} selection={props.selection} />
+        {quality === "pretty" && <PrettyLook aoRadius={4} />}
         {lookingDown && <LabelPlacer bridge={labelBridge} frame={frame} floorIn={labelFloor} />}
       </Canvas>
       {lookingDown && <TopLabelBoxes items={labelItems} settings={topLabels} bridge={labelBridge} frame={frame} floorIn={labelFloor} editing={editing} onChange={props.onTopLabels} />}
@@ -408,6 +411,7 @@ export function Ground({
     };
   }, [site, frame]);
   const features = useMemo(() => mergeParts(buildLandFeatures(site, frame)), [site, frame]);
+  const mat = useHouseMaterials(solidMaterial, glassMaterial);
   useEffect(() => () => features?.geometry.dispose(), [features]);
 
   // A click on the ground (not a drag to turn the view) lets go of what's selected.
@@ -427,13 +431,13 @@ export function Ground({
           down.current = null;
         }}
       />
-      {yardMesh && <mesh geometry={yardMesh.geometry} material={solidMaterial} castShadow receiveShadow />}
+      {yardMesh && <mesh geometry={yardMesh.geometry} material={mat.solid} castShadow receiveShadow />}
       {water.map((w, i) => (
         <mesh key={i} geometry={w.geometry} rotation={[-Math.PI / 2, 0, 0]} position={[0, w.level, 0]} receiveShadow>
           <meshStandardMaterial color="#5b93bd" roughness={0.2} transparent opacity={0.9} />
         </mesh>
       ))}
-      {features && <mesh geometry={features.geometry} material={solidMaterial} castShadow receiveShadow />}
+      {features && <mesh geometry={features.geometry} material={mat.solid} castShadow receiveShadow />}
       {lines?.lanes.map((l, i) => <Line key={`lane${i}`} points={l} color="#b9a27c" lineWidth={7} />)}
       {lines?.streams.map((s, i) =>
         s.kind === "wash" ? (
@@ -470,13 +474,14 @@ function LevelMeshes(props: LevelProps) {
   useEffect(() => () => solid?.geometry.dispose(), [solid]);
   useEffect(() => () => glass?.geometry.dispose(), [glass]);
   const handlers = useDrag(props);
+  const mat = useHouseMaterials(solidMaterial, glassMaterial);
   if (!visible) return null;
   // Out of edit mode the house can't be clicked, so every drag turns the view.
   const on = (picks: (Pick | undefined)[]) => (editing ? handlers(picks) : {});
   return (
     <>
-      {solid && <mesh geometry={solid.geometry} material={solidMaterial} castShadow receiveShadow {...on(solid.picks)} />}
-      {glass && <mesh geometry={glass.geometry} material={glassMaterial} {...on(glass.picks)} />}
+      {solid && <mesh geometry={solid.geometry} material={mat.solid} castShadow receiveShadow {...on(solid.picks)} />}
+      {glass && <mesh geometry={glass.geometry} material={mat.glass} {...on(glass.picks)} />}
       {leaves.length > 0 && <DoorLeaves parts={leaves} frame={props.frame} amountOf={() => (mode === "open" ? 1 : 0)} on={editing ? handlers : undefined} />}
     </>
   );

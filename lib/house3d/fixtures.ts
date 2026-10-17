@@ -3,7 +3,7 @@ import { furnitureType, piecePlace, type Material } from "@/lib/plan/furniture";
 import { add, rotate } from "@/lib/plan/geometry";
 import { COLORS } from "./colors";
 import { hex, MeshBuilder, type Frame, type RGB } from "./mesh";
-import type { RoomLook } from "./finishes";
+import { PATTERN, type RoomLook } from "./finishes";
 
 /**
  * Fixtures and appliances as simple 3D shapes. Each is drawn in its own
@@ -82,6 +82,33 @@ function finished(kind: string, color: RGB, look?: RoomLook): RGB {
   return color;
 }
 
+/** A fixture piece's surface for Pretty graphics, by its plain color: painted cabinets, the counter's stone, steel, porcelain... */
+function finishPattern(color: RGB, look?: RoomLook): number {
+  switch (color) {
+    case COLORS.cabinet:
+      return PATTERN.cabinet;
+    case COLORS.counter:
+      return look?.counterPattern ?? PATTERN.marble;
+    case COLORS.steel:
+      return PATTERN.metal;
+    case COLORS.porcelain:
+      return PATTERN.ceramic;
+    case COLORS.tile:
+      return PATTERN.tile;
+    case COLORS.wood:
+      return PATTERN.wood;
+    case COLORS.trim:
+      return PATTERN.paint;
+    case COLORS.patio:
+      return PATTERN.stone;
+    case COLORS.dark:
+    case COLORS.mechanical:
+      return PATTERN.satin;
+    default:
+      return PATTERN.none;
+  }
+}
+
 export function drawFixture(solid: MeshBuilder, glass: MeshBuilder, f: Frame, fx: Fixture, floorIn: number, look?: RoomLook) {
   const pieces = SHAPES[fx.kind] ?? [{ z0: 0, z1: 30, color: COLORS.cabinet }];
   const c: Point = { x: fx.x, y: fx.y };
@@ -90,7 +117,10 @@ export function drawFixture(solid: MeshBuilder, glass: MeshBuilder, f: Frame, fx
     const mid = add(c, rotate(local, fx.rotation ?? 0));
     const w = (p.w ?? 1) * fx.widthIn;
     const d = (p.d ?? 1) * fx.depthIn;
-    (p.glass ? glass : solid).block(f, mid, fx.rotation ?? 0, w, d, floorIn + p.z0, floorIn + p.z1, finished(fx.kind, p.color, look));
+    const mb = p.glass ? glass : solid;
+    mb.pattern = p.glass ? 0 : finishPattern(p.color, look);
+    mb.block(f, mid, fx.rotation ?? 0, w, d, floorIn + p.z0, floorIn + p.z1, finished(fx.kind, p.color, look));
+    mb.pattern = 0;
   }
 }
 
@@ -110,10 +140,20 @@ export function drawFurniture(mb: MeshBuilder, f: Frame, item: FurnitureItem, fl
     dark: FURNITURE_DARK,
     metal: COLORS.steel,
   };
+  // Surfaces for Pretty graphics: fabric or wood, a rug's pile, bedding, dark legs, metal.
+  const patterns: Record<Material, number> = {
+    main: t?.main === "wood" ? PATTERN.wood : t?.main === "rug" ? PATTERN.rug : PATTERN.fabric,
+    wood: PATTERN.wood,
+    light: PATTERN.fabric,
+    dark: PATTERN.satin,
+    metal: PATTERN.metal,
+  };
   for (const p of t?.pieces ?? [{ z0: 0, z1: 30, material: "main" as Material }]) {
     const { mid, w, d } = piecePlace(item, p);
+    mb.pattern = patterns[p.material];
     mb.block(f, mid, item.rotation ?? 0, w, d, floorIn + p.z0, floorIn + p.z1, colors[p.material]);
   }
+  mb.pattern = 0;
 }
 
 const ADDON_WOOD = hex("#a57a52");
@@ -152,8 +192,11 @@ export function drawAddOn(mb: MeshBuilder, f: Frame, a: AddOn, floorIn: number) 
   const z0 = floorIn + a.bottomIn;
   for (const p of pieces) {
     const mid = add({ x: a.x, y: a.y }, rotate({ x: (p.x ?? 0) * a.widthIn, y: (p.y ?? 0) * a.depthIn }, a.rotation ?? 0));
+    // Pretty graphics: a mirror reflects, steel shines, white parts are painted, the rest is wood.
+    mb.pattern = a.kind === "mirror" ? PATTERN.mirror : p.color === COLORS.steel ? PATTERN.metal : p.color === ADDON_WHITE ? PATTERN.paint : p.color ? PATTERN.satin : PATTERN.wood;
     mb.block(f, mid, a.rotation ?? 0, (p.w ?? 1) * a.widthIn, (p.d ?? 1) * a.depthIn, z0 + p.h0 * a.heightIn, z0 + p.h1 * a.heightIn, p.color ?? main);
   }
+  mb.pattern = 0;
 }
 
 /** A hookup where it comes through the wall: a valve plate, a drain stub, a gas cock or a vent hood. `mountIn` is its height. */

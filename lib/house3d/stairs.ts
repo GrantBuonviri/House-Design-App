@@ -3,6 +3,7 @@ import type { PlanStairs, Point } from "@/lib/model/schema";
 import { sub } from "@/lib/plan/geometry";
 import { LANDING_THICK_IN, SOFFIT_DEPTH_IN, TREAD_BOARD_IN, TREAD_IN, flightUnderside, stairLayout, stairsFrame, type StairFlight, type StairStep } from "@/lib/plan/stairs";
 import { COLORS } from "./colors";
+import { PATTERN } from "./finishes";
 import { MeshBuilder, toScene, type Frame, type Vec3 } from "./mesh";
 
 /**
@@ -83,7 +84,11 @@ function extrude(
     const facing: Vec3 = [d.x * na, nz, d.y * na];
     const riser = Math.abs(ea) < 1e-6 && na < 0;
     const under = nz < -1e-6;
+    // Pretty graphics: wood treads, painted risers, drywall underneath.
+    const was = mb.pattern;
+    mb.pattern = under ? PATTERN.drywall : riser ? PATTERN.paint : PATTERN.wood;
     mb.quad(V(a, 0), V(b, 0), V(b, w), V(a, w), under ? COLORS.ceiling : riser ? COLORS.riser : COLORS.stair, facing);
+    mb.pattern = was;
   }
   let tris: number[][];
   try {

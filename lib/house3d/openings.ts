@@ -3,6 +3,7 @@ import { add, scale } from "@/lib/plan/geometry";
 import { openingType } from "@/lib/plan/catalog";
 import type { OpeningGeometry } from "@/lib/plan/walls";
 import { COLORS } from "./colors";
+import { PATTERN } from "./finishes";
 import { MeshBuilder, type Frame, type RGB } from "./mesh";
 import type { ExteriorLook } from "./exterior";
 
@@ -99,6 +100,8 @@ export function drawOpening(
   const leaves: DoorLeaf[] = [];
   const newLeaf = (motion: DoorMotion): DoorLeaf => {
     const l = { motion, solid: new MeshBuilder(), glass: new MeshBuilder() };
+    // Painted door slabs with Pretty graphics.
+    l.solid.pattern = PATTERN.paint;
     leaves.push(l);
     return l;
   };

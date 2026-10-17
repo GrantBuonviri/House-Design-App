@@ -9,7 +9,7 @@ import { wallKey } from "@/lib/interior/picks";
 import { COLORS, floorColor } from "./colors";
 import { drawAddOn, drawFixture, drawFurniture, drawHookup } from "./fixtures";
 import { DEVICE_INFO, placedHookups } from "@/lib/plan/devices";
-import { roomLook, type RoomLook } from "./finishes";
+import { PATTERN, roomLook, type RoomLook } from "./finishes";
 import { exteriorLook, type ExteriorLook } from "./exterior";
 import { COVERED, cutHoles, floorFootprint, intersectRegions, offsetRing, roofFootprint, subtractRegions, type Region } from "./footprint";
 import { isBelowGround, levelHeights, type LevelHeights } from "./levels";
@@ -178,6 +178,7 @@ export function buildLevel(
   // Where each wall stands on the floor: shown in its place when the wall is hidden.
   const prints = { outside: new MeshBuilder(), inside: new MeshBuilder() };
   const found = new MeshBuilder();
+  found.pattern = PATTERN.concrete;
   const standing = pieces.filter((p) => !p.open && dist(p.a, p.b) > 0.01);
   // Outside walls run up to the next floor where there's one above, so there's no gap at the floor structure.
   // A half wall stops at 42" (its counter cap, if any, goes on top below).
@@ -216,15 +217,15 @@ export function buildLevel(
     };
     const color = p.exterior
       ? { left: ext.siding.color, leftPattern: ext.siding.pattern, right: side(-1), ends: ext.siding.color }
-      : { left: side(1), right: side(-1), ends: COLORS.drywall };
+      : { left: side(1), leftPattern: PATTERN.drywall, right: side(-1), ends: COLORS.drywall };
     const bandColor = band && { ...color, left: band.color, leftPattern: band.pattern, ends: band.color };
     const paint = (c: typeof color) => (a: Point, b: Point) => {
       const which = faceOf(jp[pi], a, b);
       if (which === "left") return { color: c.left, pattern: c.leftPattern };
-      if (which === "right") return { color: c.right };
+      if (which === "right") return { color: c.right, pattern: PATTERN.drywall };
       // An end against another wall shows only above that wall.
       const j = against(feet, pi, a, b);
-      return { color: c.ends, pattern: p.exterior ? c.leftPattern : undefined, from: j >= 0 ? upTos[j] : -Infinity };
+      return { color: c.ends, pattern: p.exterior ? c.leftPattern : PATTERN.drywall, from: j >= 0 ? upTos[j] : -Infinity };
     };
     const tol = Math.max(2, p.thicknessIn / 2 + 0.5);
     const cuts: { t0: number; t1: number; og: OpeningGeometry }[] = [];
@@ -250,7 +251,10 @@ export function buildLevel(
     }
     if (p.height === "half-cap") {
       const cc = lookAt(mid)?.counter ?? COLORS.counter;
+      const cp = lookAt(mid)?.counterPattern ?? PATTERN.marble;
+      walls[group].pattern = cp;
       for (const r of capFeet[pi]) walls[group].prism(f, r, upTo, upTo + WALL_CAP_IN, (a, b) => (against(capFeet, pi, a, b) >= 0 ? null : { color: cc }), cc);
+      walls[group].pattern = 0;
     }
     // The footprint: everywhere the wall meets the floor, so only doorways (openings down to the floor) leave gaps.
     const doorways = cuts.filter((c) => openingSpan(c.og, ceilingIn).bottom <= 0.5).map((c): [number, number] => [c.t0, c.t1]);
@@ -280,6 +284,7 @@ export function buildLevel(
     const glass = new MeshBuilder();
     const host = hostPiece(pieces, og);
     const doorLook = host && !host.exterior ? (lookAt(add(og.center, scale(og.n, 10))) ?? lookAt(add(og.center, scale(og.n, -10)))) : undefined;
+    solid.pattern = PATTERN.paint;
     const leaves = drawOpening(solid, glass, f, og, hostThickness(host), floorIn, ceilingIn, doorLook, host?.exterior ? ext : undefined);
     const pick: Pick = { kind: "opening", id: og.opening.id, levelId: L };
     // Doors and windows hide with the wall they're in (an opening in no wall counts as inside).
@@ -362,6 +367,7 @@ export function buildLevel(
   const open = subtractRegions(floorFootprint(plan), above ? floorFootprint(plans[above.id]) : []);
   if (open.length) {
     const mb = new MeshBuilder();
+    mb.pattern = PATTERN.drywall;
     for (const r of open) mb.flat(f, r.outline, r.holes, topIn, COLORS.ceiling, false);
     parts.push({ key: `${L}:ceiling`, levelId: L, layer: "ceilings", mesh: mb.build() });
   }
@@ -391,6 +397,7 @@ export function buildLevel(
   const entry = entrySteps(plan, floorIn, exteriorIn, site.groundAt);
   if (entry.length) {
     const mb = new MeshBuilder();
+    mb.pattern = PATTERN.concrete;
     for (const s of entry) prism(mb, f, s.outline, Math.min(...s.outline.map(site.groundAt)) - 6, s.top, COLORS.concrete, COLORS.concrete);
     parts.push({ key: `${L}:entry`, levelId: L, layer: "stairs", mesh: mb.build() });
   }
@@ -410,6 +417,7 @@ export function buildLevel(
   const faucetPart = (key: string, pick: Pick | undefined, look: FaucetLook) => {
     for (const quality of ["pretty", "fast"] as const) {
       const mb = new MeshBuilder();
+      if (quality === "pretty") mb.pattern = PATTERN.metal;
       drawFaucet(mb, f, look, floorIn, quality);
       if (!mb.empty) parts.push({ key: `${L}:${key}:${quality}`, levelId: L, layer: "fixtures", ...(pick ? { pick } : {}), mesh: mb.build(), quality });
     }
@@ -428,6 +436,7 @@ export function buildLevel(
   );
   if (hung.length) {
     const mb = new MeshBuilder();
+    mb.pattern = PATTERN.cabinet;
     for (const c of hung) {
       const look = lookAt({ x: c.x, y: c.y });
       mb.block(f, { x: c.x, y: c.y }, c.rotation, c.widthIn - 0.25, c.depthIn, floorIn + c.bottomIn, floorIn + c.bottomIn + c.heightIn, look?.cabinet ?? COLORS.cabinet);
@@ -498,8 +507,9 @@ function drawSlab(mb: MeshBuilder, f: Frame, r: Region, floorIn: number, thick: 
   // Only the top gets the floor pattern.
   mb.pattern = pattern;
   mb.flat(f, r.outline, r.holes, floorIn, color, true);
-  mb.pattern = 0;
+  mb.pattern = PATTERN.drywall;
   mb.flat(f, r.outline, r.holes, floorIn - thick, COLORS.ceiling, false);
+  mb.pattern = 0;
   for (const ring of [r.outline, ...r.holes]) {
     ring.forEach((a, i) => {
       const b = ring[(i + 1) % ring.length];

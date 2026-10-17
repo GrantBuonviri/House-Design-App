@@ -4,6 +4,7 @@ import { yardLayout, type Strip, type Yard } from "@/lib/exterior/yard";
 import type { Plans } from "@/lib/plan/edit";
 import { lookOutside, type HouseContext, type Part } from "./build";
 import { YARD_COLORS, type Finish } from "./exterior";
+import { PATTERN } from "./finishes";
 import type { LevelHeights } from "./levels";
 import type { Site } from "./site";
 import { MeshBuilder, toScene, type Frame, type RGB, type Vec3 } from "./mesh";
@@ -91,7 +92,8 @@ export function buildYard(plans: Plans, ctx: HouseContext & { heights: LevelHeig
   const parts: Part[] = [];
   const paving = (id: "driveway" | "walk", strips: Strip[], look: Finish) => {
     const mb = new MeshBuilder();
-    mb.pattern = look.pattern;
+    // Plain paving is concrete (Pretty graphics give it the concrete texture).
+    mb.pattern = look.pattern || PATTERN.concrete;
     for (const s of strips) drapeStrip(mb, f, s, site.groundAt, LIFT[id], look.color);
     parts.push(...flatPart(`yard:${id}`, main, id, mb));
   };

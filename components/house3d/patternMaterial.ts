@@ -9,7 +9,7 @@ import * as THREE from "three";
  * position on the surface (in feet), so nothing extra is built. Floors use
  * their x and z; walls use the distance along the wall and the height.
  */
-const COMMON = /* glsl */ `
+export const PATTERN_GLSL = /* glsl */ `
 varying float vPattern;
 varying vec3 vPatPos;
 varying vec3 vPatNormal;
@@ -130,7 +130,7 @@ export function withPatterns<M extends THREE.MeshStandardMaterial>(m: M): M {
       .replace("#include <common>", `#include <common>\nattribute float pattern;\nvarying float vPattern;\nvarying vec3 vPatPos;\nvarying vec3 vPatNormal;`)
       .replace("#include <begin_vertex>", `#include <begin_vertex>\nvPattern = pattern;\nvPatPos = position;\nvPatNormal = normal;`);
     shader.fragmentShader = shader.fragmentShader
-      .replace("#include <common>", `#include <common>\n${COMMON}`)
+      .replace("#include <common>", `#include <common>\n${PATTERN_GLSL}`)
       .replace("#include <color_fragment>", `#include <color_fragment>\nif (vPattern > 0.5) diffuseColor.rgb = patternShade(diffuseColor.rgb, vPattern, vPatPos, normalize(vPatNormal));`);
   };
   m.customProgramCacheKey = () => "patterns-2";
