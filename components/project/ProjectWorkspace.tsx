@@ -6,7 +6,7 @@ import dynamic from "next/dynamic";
 import type { Stage } from "@/lib/model/schema";
 import { useProjectStore, type SaveState } from "@/lib/store/projectStore";
 import { downloadProject } from "@/lib/download";
-import { shownStage } from "@/lib/stages";
+import { nextStep, shownStage, stagesDone } from "@/lib/stages";
 import StageBar from "./StageBar";
 import NeedsFirst from "./NeedsFirst";
 import GraphicsToggle from "./GraphicsToggle";
@@ -196,7 +196,7 @@ export default function ProjectWorkspace({ id }: { id: string }) {
       {repaired && <RepairedBar result={repaired} onDismiss={() => setRepaired(null)} />}
 
       <div className="mb-8 flex items-center justify-between gap-4 border-b border-line pb-3">
-        <StageBar current={shownStage(project.stage)} onSelect={setStage} nudges={project.location ? {} : { setup: "Pick where you’ll build" }} />
+        <StageBar current={shownStage(project.stage)} onSelect={setStage} nudges={project.location ? {} : { setup: "Pick where you’ll build" }} done={stagesDone(project)} next={nextStep(project)} />
         <div className="flex shrink-0 items-center gap-3">
           <button className="text-xs text-muted underline-offset-2 hover:text-ink hover:underline" onClick={startTour} data-tour="tour" data-testid="tour-start">
             Take the tour
