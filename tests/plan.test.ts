@@ -565,7 +565,7 @@ describe("reshaping with nodes", () => {
 
   it("reads typed lengths: feet and inches, or inches alone", () => {
     expect(parseTypedLength("12'6")).toBe(150);
-    expect(parseTypedLength("150")).toBe(150);
+    expect(parseTypedLength("150")).toBe(1800);
     expect(parseTypedLength("12'")).toBe(144);
     expect(parseTypedLength("abc")).toBeNull();
   });

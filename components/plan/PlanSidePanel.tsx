@@ -9,7 +9,7 @@ import { useEffect, useRef, useState } from "react";
 import { WINDOW_OPERATIONS, type WindowOperation } from "@/lib/model/schema";
 import { defaultOperation, operationOf, OPERATION_HINT, OPERATION_LABEL } from "@/lib/codes/openings";
 import type { DesignBrief, FloorPlan, Level, PlanBasics, PlanStairs, WallHeight } from "@/lib/model/schema";
-import { formatFeetInches, parseFeetInches } from "@/lib/model/units";
+import { formatFeetInches, lengthPreview, parseFeetInches } from "@/lib/model/units";
 import { ceilingFor, riseBetween, STAIRS_LABEL } from "@/lib/plan/basics";
 import { OPENING_TYPES, fixtureType, openingHeight, openingType } from "@/lib/plan/catalog";
 import { centerOfMany, insertCorner, removeMany, rotateMany, setEdgeLength, setWallLength, updateOpening, updateRoom } from "@/lib/plan/edit";
@@ -632,7 +632,7 @@ function Static({ label, value }: { label: string; value: string }) {
   );
 }
 
-/** A length typed in feet and inches (12' 6", 12.5, 150"), applied on Enter or when you click away. */
+/** A length typed in feet and inches (12' 6", 12 6, 12.5 = feet, 150" = inches), applied on Enter or when you click away. */
 export function LengthField({ label, value, onCommit, disabled, allowZero }: { label: string; value: number; onCommit: (inches: number) => void; disabled?: boolean; allowZero?: boolean }) {
   const shown = formatFeetInches(value);
   const [text, setText] = useState(shown);
@@ -668,8 +668,11 @@ export function LengthField({ label, value, onCommit, disabled, allowZero }: { l
           if (e.key === "Enter") commit();
           if (e.key === "Escape") setText(shown);
         }}
-        title={`Feet and inches, like 12' 6"`}
+        title={`A plain number is feet. Inches need a mark: 12' 6", 12 6, 150"`}
       />
+      <p className={`mt-0.5 text-xs tabular-nums ${bad ? "text-red-600" : "text-muted"}`} aria-live="polite">
+        {bad ? `Can't read that. Try 12' 6", 12 6 or 150"` : text !== shown && lengthPreview(text) ? lengthPreview(text) : "in feet · inches need \""}
+      </p>
     </div>
   );
 }
