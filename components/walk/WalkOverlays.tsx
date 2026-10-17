@@ -154,6 +154,7 @@ export function WalkHelp({ onStart }: { onStart: () => void }) {
           <li>Walk into a door to open it, or click it to open and close it by hand. K locks the door you aim at (a locked door only opens when clicked). O changes the Doors setting</li>
           <li>L shows room labels on the floor (the ⚙ button sets what they say). Shift+L locks them to the floor plan&apos;s direction instead of turning with you</li>
           <li>T is the tape measure: click two points. Shift keeps it level or upright, C clears</li>
+          <li>P pins a measurement so it stays. Aim at a pin and click to delete it</li>
           <li>Esc to stop, and Esc again to close</li>
         </ul>
       </div>
