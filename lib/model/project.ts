@@ -89,6 +89,7 @@ export function migrateProject(raw: unknown): Project {
   // beyond the version.
   // Version 28 to 29 added `house3d.walkLabels.locked` (default off), so no change beyond the version.
   if (version < 30) migrated = migrateV29(migrated);
+  // Version 30 to 31 added faucet changes on fixtures (`Fixture.faucet`, optional), so no change beyond the version.
   return Project.parse({ ...migrated, schemaVersion: SCHEMA_VERSION });
 }
 

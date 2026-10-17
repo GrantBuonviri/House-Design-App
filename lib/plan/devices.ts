@@ -53,6 +53,7 @@ function hookupsFor(kind: string, systems: HouseSystems): DeviceKind[] {
     case "toilet":
       return ["water", "drain"];
     case "sink":
+    case "prep-sink":
     case "vanity":
     case "laundry-sink":
     case "tub":
@@ -146,7 +147,7 @@ const isGarage = (r: Pick<PlanRoom, "type">) => roleOf(r) === "garage";
 const conditioned = (r: PlanRoom) => !isOutdoor(r) && !isGarage(r) && !(isClosetLike(r) && polygonArea(r.polygon) / 144 < 40);
 
 /** Fixtures and built-ins that break up a wall for the outlet spacing ("fixed cabinets" in 210.52(A)(2)). */
-const BUILT_IN = new Set(["counter", "island", "sink", "range", "fridge", "dishwasher", "vanity", "tub", "shower", "fireplace", "washer", "dryer", "laundry-sink", "water-heater", "furnace", "closet"]);
+const BUILT_IN = new Set(["counter", "island", "sink", "prep-sink", "range", "fridge", "dishwasher", "vanity", "tub", "shower", "fireplace", "washer", "dryer", "laundry-sink", "water-heater", "furnace", "closet"]);
 
 // ---------- Walls of a room ----------
 

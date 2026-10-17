@@ -32,6 +32,7 @@ const SHAPES: Record<string, Piece[]> = {
   counter: counter(),
   island: counter(),
   sink: [...counter(), { w: 0.75, d: 0.6, z0: 36, z1: 36.2, color: COLORS.steel }],
+  "prep-sink": [...counter(), { w: 0.7, d: 0.6, z0: 36, z1: 36.2, color: COLORS.steel }],
   range: [{ z0: 0, z1: 35.5, color: COLORS.steel }, { z0: 35.5, z1: 36, color: COLORS.dark }, { d: 0.12, y: -0.44, z0: 36, z1: 44, color: COLORS.steel }],
   fridge: [{ z0: 0, z1: 70, color: COLORS.steel }],
   dishwasher: [{ z0: 0, z1: 34.5, color: COLORS.steel }, { z0: 34.5, z1: 36, color: COLORS.counter }],
@@ -73,7 +74,7 @@ function finished(kind: string, color: RGB, look?: RoomLook): RGB {
   if (color === COLORS.cabinet) return kind === "vanity" ? look.vanity : look.cabinet;
   if (color === COLORS.counter) return look.counter;
   if (color === COLORS.steel) {
-    if (kind === "sink") return look.sink;
+    if (kind === "sink" || kind === "prep-sink") return look.sink;
     if (kind === "fridge") return look.fridge;
     if (kind === "range") return look.range;
     if (kind === "dishwasher") return look.dishwasher;

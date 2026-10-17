@@ -80,6 +80,7 @@ export const ADDON_TYPES: AddOnType[] = [
   { id: "mirror", label: "Mirror", group: "Bath", widthIn: 30, depthIn: 1, heightIn: 36, mount: "wall", bottomIn: 40 },
   { id: "towel-bar", label: "Towel bar", group: "Bath", widthIn: 24, depthIn: 3, heightIn: 2, mount: "wall", bottomIn: 46 },
   { id: "grab-bar", label: "Grab bar", group: "Bath", widthIn: 36, depthIn: 3, heightIn: 2, mount: "wall", bottomIn: 34 },
+  { id: "pot-filler", label: "Pot filler", group: "Kitchen and appliances", widthIn: 4, depthIn: 4, heightIn: 6, mount: "wall", bottomIn: 54 },
   { id: "medicine-cabinet", label: "Medicine cabinet", group: "Bath", widthIn: 16, depthIn: 5, heightIn: 26, mount: "wall", bottomIn: 48 },
   { id: "coat-hooks", label: "Coat hooks", group: "Closets and storage", widthIn: 36, depthIn: 3, heightIn: 6, mount: "wall", bottomIn: 60, stretch: true },
   { id: "lockers", label: "Mudroom lockers", group: "Closets and storage", widthIn: 60, depthIn: 18, heightIn: 72, mount: "floor", bottomIn: 0, stretch: true },
