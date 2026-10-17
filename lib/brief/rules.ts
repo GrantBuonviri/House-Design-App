@@ -9,7 +9,7 @@ import { MAIN_LEVEL_ID, levelIdsFor } from "./levels";
 export type BriefContext = {
   answers: DiscoveryAnswers;
   profile: Profile;
-  /** The place's cost level (1.00 = US average); Boise's when not given. */
+  /** The place's cost level (1.00 = US average); the default place's when not given. */
   costIndex?: number;
   plot: Plot | null;
   /** Where the house sits on the land (plot inches), when it is placed. */

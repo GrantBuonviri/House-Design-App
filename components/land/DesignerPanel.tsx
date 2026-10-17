@@ -2,7 +2,8 @@
 
 import { useEffect, useState } from "react";
 import type { CustomLand } from "@/lib/model/schema";
-import { SOIL_TYPES } from "@/lib/land/generate";
+import { SOIL_TYPES, climateTypeOf, soilTypesFor } from "@/lib/land/generate";
+import { usePlace } from "@/lib/location/usePlace";
 import { acresOf, boxFeet, resizeBox, resizeToAcres, setSideLength, sideLengthFt } from "@/lib/land/designer";
 import Dial from "./Dial";
 
@@ -45,6 +46,7 @@ function slopeHint(p: number): string {
 }
 
 export default function DesignerPanel({ land, onChange }: { land: CustomLand; onChange: (l: CustomLand) => void }) {
+  const place = usePlace();
   const box = boxFeet(land.outline);
   const soil = SOIL_TYPES.find((s) => s.name === land.soil);
   return (
@@ -144,7 +146,7 @@ export default function DesignerPanel({ land, onChange }: { land: CustomLand; on
       <section>
         <label className="field-label" htmlFor="land-soil">Soil</label>
         <select id="land-soil" className="input" value={land.soil} onChange={(e) => onChange({ ...land, soil: e.target.value })}>
-          {SOIL_TYPES.map((s) => (
+          {soilTypesFor(climateTypeOf(place.climateZone)).map((s) => (
             <option key={s.name}>{s.name}</option>
           ))}
         </select>

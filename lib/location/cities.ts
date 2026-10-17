@@ -62,7 +62,7 @@ export function cityById(id: string): City | undefined {
   return BY_ID.get(id);
 }
 
-/** "Boise, ID". */
+/** "City, ST". */
 export function placeLabel(p: { name: string; state: string; cityId?: string; id?: string }): string {
   return (p.cityId ?? p.id ?? "").startsWith("elsewhere-") ? p.name : `${p.name}, ${p.state}`;
 }
@@ -70,7 +70,7 @@ export function placeLabel(p: { name: string; state: string; cityId?: string; id
 const norm = (s: string) => s.toLowerCase().replace(/[^a-z0-9 ]/g, "").trim();
 
 /**
- * Places matching what was typed: a city name ("boise", "san an"), a state
+ * Places matching what was typed: a city name ("denver", "san an"), a state
  * name ("texas") or a two-letter state ("TX"). Best matches first.
  */
 export function searchCities(query: string, limit = 12): City[] {

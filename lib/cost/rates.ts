@@ -52,7 +52,7 @@ export const RatesFile = z.object({
   percents: z.record(z.string(), Percent),
   /** The typical fee table, used where no city schedule is listed and no fee is typed. */
   permit: Permit,
-  /** Real fee schedules by city id (Boise's). Their building values are not scaled by the cost level. */
+  /** Real fee schedules by city id (a city's own schedule). Their building values are not scaled by the cost level. */
   permitSchedules: z.record(z.string(), Permit).default({}),
   calibration: z.object({ label: z.string(), costPerSqft: Range, normalized: z.string().optional(), ...Source }),
 });

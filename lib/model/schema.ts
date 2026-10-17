@@ -922,7 +922,7 @@ export type LocationField = (typeof LOCATION_FIELDS)[number];
  * project's numbers. `edited` lists the fields the person changed.
  */
 export const Location = z.object({
-  /** "boise-id", or "elsewhere-id" for "Elsewhere in Idaho". */
+  /** A city id like "denver-co", or "elsewhere-<st>" for "Elsewhere in <state>". */
   cityId: z.string().min(1),
   name: z.string().min(1),
   /** Two-letter state, e.g. "ID". */
@@ -964,7 +964,7 @@ export const Project = z.object({
   updatedAt: z.string(),
   stage: Stage,
   profile: Profile,
-  /** Where it will be built; null until picked on step one (the app then uses Boise's numbers). */
+  /** Where it will be built; null until picked on step one (the app then uses the default place's numbers). */
   location: Location.nullable().default(null),
   plot: Plot.nullable().default(null),
   discovery: Discovery.prefault({}),

@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { LOCATION_FIELDS, type Location, type LocationField } from "@/lib/model/schema";
 import { cityById, placeFromCity, placeLabel, searchCities, type City } from "@/lib/location/cities";
-import { cityValue, editPlace, resetPlaceField } from "@/lib/location/current";
+import { DEFAULT_PLACE, cityValue, editPlace, resetPlaceField } from "@/lib/location/current";
 import { FIELD_INFO, placeSummary } from "@/lib/location/fields";
 import { useProjectStore } from "@/lib/store/projectStore";
 
@@ -83,7 +83,7 @@ export default function PlaceBox() {
       {location ? (
         <PlaceCard location={location} editing={editing} onToggleEdit={() => setEditing(!editing)} onChange={setLocation} />
       ) : (
-        <p className="field-hint">Until you pick, the app uses Boise, Idaho&apos;s numbers. The place sets the sun, the weather the house is built for, and the cost level.</p>
+        <p className="field-hint">Until you pick, the app uses {DEFAULT_PLACE.name}, {DEFAULT_PLACE.state} numbers. The place sets the sun, the weather the house is built for, and the cost level.</p>
       )}
     </div>
   );

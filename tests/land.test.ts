@@ -8,6 +8,10 @@ import {
   describeSlope,
   feedPlotSeed,
   generatePlot,
+  climateTypeOf,
+  soilTypesFor,
+  SOIL_TYPES,
+  type ClimateType,
   plotAcres,
   polygonArea,
   regeneratePlot,
@@ -425,5 +429,54 @@ describe("ground tools", () => {
     const back = fr.toDesigner(fr.toPlot(p));
     expect(back.x).toBeCloseTo(p.x);
     expect(back.y).toBeCloseTo(p.y);
+  });
+});
+
+describe("made-up soils follow the climate", () => {
+  const soilOf = (seed: number, climate?: ClimateType) => generatePlot(seed, { climate }).soilNote;
+
+  it("reads the climate type from the climate zone", () => {
+    expect(climateTypeOf("5B")).toBe("arid");
+    expect(climateTypeOf("4A")).toBe("humid");
+    expect(climateTypeOf("4C")).toBe("coastal");
+    expect(climateTypeOf("7")).toBe("cold");
+    expect(climateTypeOf("6A")).toBe("cold");
+  });
+
+  it("keeps today's soils for dry places and the default", () => {
+    const old = ["Sandy loam", "Decomposed granite", "Silty loam", "Clay loam", "Caliche", "Heavy clay"];
+    for (let s = 1; s <= 60; s++) {
+      expect(soilOf(s, "arid")).toBe(soilOf(s));
+      expect(old.some((n) => soilOf(s).startsWith(n) || soilOf(s).startsWith("Gravelly loam over a caliche"))).toBe(true);
+    }
+  });
+
+  it("gives humid places their own soils, and the rest of the plot is the same", () => {
+    const humid = Array.from({ length: 80 }, (_, i) => generatePlot(i + 2, { climate: "humid" }));
+    expect(humid.some((p) => p.soilNote.startsWith("Loam:"))).toBe(true);
+    expect(humid.every((p) => !p.soilNote.startsWith("Caliche") && !p.soilNote.includes("caliche"))).toBe(true);
+    for (let s = 2; s < 40; s++) {
+      const a = generatePlot(s);
+      const b = generatePlot(s, { climate: "humid" });
+      expect({ ...b, soilNote: "", drainage: null }).toEqual({ ...a, soilNote: "", drainage: null });
+    }
+  });
+
+  it("keeps the flat plot identical everywhere", () => {
+    const base = generatePlot(FLAT_PLOT_SEED, { flat: true });
+    for (const climate of ["arid", "humid", "cold", "coastal"] as const) {
+      expect(generatePlot(FLAT_PLOT_SEED, { flat: true, climate })).toEqual(base);
+    }
+    expect(base.soilNote).toBe("Compacted engineered fill over sandy loam: an easy, predictable base to build on.");
+  });
+
+  it("lists the place's soils first in the designer", () => {
+    expect(soilTypesFor("arid").map((s) => s.name).slice(0, 6)).toEqual(SOIL_TYPES.slice(0, 6).map((s) => s.name));
+    expect(soilTypesFor("coastal")[0].name).toBe("Sand");
+    expect(soilTypesFor("cold")).toHaveLength(SOIL_TYPES.length);
+  });
+
+  it("names no place in the soil notes", () => {
+    for (const s of SOIL_TYPES) expect(s.note).not.toMatch(/boise|idaho|treasure valley/i);
   });
 });

@@ -104,8 +104,8 @@ export function zoneOf(type: string): Zone {
 }
 
 /**
- * Which way each part of the house faces, by the side the road is on (Boise:
- * noon sun is high in summer and low in winter, afternoons are hot, and the
+ * Which way each part of the house faces, by the side the road is on (in the
+ * northern US: noon sun is high in summer and low in winter, afternoons are hot, and the
  * wind is mostly from the north-west and south-east). The entry faces the
  * road, living spaces and patios get the sunny south side, the kitchen gets
  * morning sun on the east, and bedrooms go on the quieter side away from the

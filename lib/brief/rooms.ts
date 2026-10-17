@@ -1,8 +1,8 @@
 import type { ChosenRoom } from "@/lib/model/schema";
 
 /**
- * The kinds of rooms a brief can hold, with typical sizes for a new house in
- * Boise. Sizes are in square feet. min and max are used to repair sizes that
+ * The kinds of rooms a brief can hold, with typical sizes for a new house.
+ * Sizes are in square feet. min and max are used to repair sizes that
  * get typed in by mistake.
  */
 export type RoomCategory = "living" | "sleeping" | "work" | "service" | "garage" | "outdoor";

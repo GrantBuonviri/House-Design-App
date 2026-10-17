@@ -103,3 +103,20 @@ describe("plans for any place", () => {
     expect(codeSet().local.place).toBe("Boise, Idaho");
   });
 });
+
+describe("no place names left in the app's code", () => {
+  it("names no city or state anywhere in lib/ or components/ except the default place and the old-project migration", () => {
+    const hits: string[] = [];
+    const allowed = ["lib/location/data", "lib/codes/data/local", "lib/location/current.ts", "lib/model/project.ts"];
+    const walk = (dir: string) => {
+      for (const name of readdirSync(dir)) {
+        const path = `${dir}/${name}`;
+        if (allowed.some((a) => path === a || path.startsWith(`${a}/`))) continue;
+        if (statSync(path).isDirectory()) walk(path);
+        else if (/\.tsx?$/.test(name) && /boise|idaho|ada county|treasure valley/i.test(readFileSync(path, "utf8"))) hits.push(path);
+      }
+    };
+    for (const dir of ["lib", "components", "app"]) walk(dir);
+    expect(hits).toEqual([]);
+  });
+});

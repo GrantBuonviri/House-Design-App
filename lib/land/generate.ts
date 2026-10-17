@@ -19,28 +19,58 @@ const NAME_SECOND = [
 ] as const;
 
 export type Soil = { name: string; note: string; drainage: number };
-const SOILS: readonly (readonly [Soil, number])[] = [
-  [{ name: "Sandy loam", note: "Sandy loam: drains well and is easy to dig.", drainage: 1 }, 4],
-  [{ name: "Decomposed granite", note: "Decomposed granite, typical of the Boise foothills: drains fast but erodes on steep cuts.", drainage: 1 }, 3],
-  [{ name: "Silty loam", note: "Silty loam, common in the Treasure Valley: good for building, holds some water.", drainage: 0 }, 4],
-  [{ name: "Clay loam", note: "Clay loam: drains slowly and swells when wet, so the foundation needs good drainage.", drainage: -1 }, 2],
-  [{ name: "Caliche", note: "Gravelly loam over a caliche hardpan: water can't soak in deep, and digging is harder.", drainage: -1 }, 2],
-  [{ name: "Heavy clay", note: "Heavy clay: drains poorly and may need engineered fill under the house.", drainage: -2 }, 1],
-];
+/** The kind of weather a place has, which decides what ground made-up land has. */
+export type ClimateType = "arid" | "humid" | "cold" | "coastal";
 
-/** The six soils made-up plots use, for picking one by hand. */
-export const SOIL_TYPES: readonly Soil[] = SOILS.map(([soil]) => soil);
+const SANDY_LOAM: Soil = { name: "Sandy loam", note: "Sandy loam: drains well and is easy to dig.", drainage: 1 };
+const DECOMPOSED_GRANITE: Soil = { name: "Decomposed granite", note: "Decomposed granite, common on dry foothills: drains fast but erodes on steep cuts.", drainage: 1 };
+const SILTY_LOAM: Soil = { name: "Silty loam", note: "Silty loam, common in river valleys: good for building, holds some water.", drainage: 0 };
+const CLAY_LOAM: Soil = { name: "Clay loam", note: "Clay loam: drains slowly and swells when wet, so the foundation needs good drainage.", drainage: -1 };
+const CALICHE: Soil = { name: "Caliche", note: "Gravelly loam over a caliche hardpan: water can't soak in deep, and digging is harder.", drainage: -1 };
+const HEAVY_CLAY: Soil = { name: "Heavy clay", note: "Heavy clay: drains poorly and may need engineered fill under the house.", drainage: -2 };
+const LOAM: Soil = { name: "Loam", note: "Loam: a balanced soil that drains fairly well and is easy to build on.", drainage: 0 };
+const GLACIAL_TILL: Soil = { name: "Glacial till", note: "Glacial till: stony, dense soil that drains slowly and can hide boulders.", drainage: -1 };
+const PEAT: Soil = { name: "Peat pockets", note: "Silty soil with peat pockets near water: soft and wet in spots, so footings may need to go deeper.", drainage: -2 };
+const SAND: Soil = { name: "Sand", note: "Sand: drains very fast and is easy to dig, but loose near steep cuts.", drainage: 2 };
+
+/** Soils for made-up land by climate type, with how likely each is. The arid list is the original list, unchanged. */
+const SOILS_BY_CLIMATE: Record<ClimateType, readonly (readonly [Soil, number])[]> = {
+  arid: [[SANDY_LOAM, 4], [DECOMPOSED_GRANITE, 3], [SILTY_LOAM, 4], [CLAY_LOAM, 2], [CALICHE, 2], [HEAVY_CLAY, 1]],
+  humid: [[LOAM, 4], [SILTY_LOAM, 4], [CLAY_LOAM, 3], [HEAVY_CLAY, 2], [SANDY_LOAM, 2], [DECOMPOSED_GRANITE, 1]],
+  cold: [[GLACIAL_TILL, 4], [SILTY_LOAM, 4], [SANDY_LOAM, 3], [LOAM, 2], [PEAT, 2], [CLAY_LOAM, 1]],
+  coastal: [[SAND, 4], [SANDY_LOAM, 4], [LOAM, 3], [SILTY_LOAM, 2], [CLAY_LOAM, 1]],
+};
+
+/** Dry (B), marine (C), cold (zones 6 to 8) or else moist, from an IECC climate zone such as "5B". */
+export function climateTypeOf(zone: string): ClimateType {
+  const n = parseInt(zone, 10);
+  if (n >= 6) return "cold";
+  if (/C/i.test(zone)) return "coastal";
+  if (/B/i.test(zone)) return "arid";
+  return "humid";
+}
+
+/** Every soil made-up land or the land designer can use: the arid list first, then the rest. */
+export const SOIL_TYPES: readonly Soil[] = Array.from(
+  new Set([...SOILS_BY_CLIMATE.arid, ...SOILS_BY_CLIMATE.humid, ...SOILS_BY_CLIMATE.cold, ...SOILS_BY_CLIMATE.coastal].map(([soil]) => soil)),
+);
+
+/** The soil picker's list: this climate's soils first, then the others. */
+export function soilTypesFor(climate: ClimateType): readonly Soil[] {
+  const own = SOILS_BY_CLIMATE[climate].map(([soil]) => soil);
+  return [...own, ...SOIL_TYPES.filter((s) => !own.includes(s))];
+}
 
 /** The fields every plot has that only custom land fills in, left empty. */
 function extras(): Pick<Plot, "source" | "custom" | "features" | "roads" | "lanes" | "ground" | "rolls"> {
   return { source: "made-up", custom: null, features: [], roads: [], lanes: [], ground: [], rolls: "gentle" };
 }
 
-export type GenerateOptions = { flat?: boolean };
+export type GenerateOptions = { flat?: boolean; climate?: ClimateType };
 
-/** Rebuild a plot exactly from its seed and flat flag. */
-export function regeneratePlot(plot: Pick<Plot, "seed" | "isFlat">): Plot {
-  return generatePlot(plot.seed, { flat: plot.isFlat });
+/** Rebuild a plot exactly from its seed and flat flag (and the climate it was made for; dry when not given). */
+export function regeneratePlot(plot: Pick<Plot, "seed" | "isFlat">, climate?: ClimateType): Plot {
+  return generatePlot(plot.seed, { flat: plot.isFlat, climate });
 }
 
 /** The seed for the nth card of an infinite feed. */
@@ -51,8 +81,9 @@ export function feedPlotSeed(feedSeed: number, index: number): number {
 }
 
 /**
- * Make a believable, made-up plot of land in the Boise area. Pure and
- * deterministic: the same seed always returns the same plot.
+ * Make a believable, made-up plot of land. Pure and deterministic: the same
+ * seed always returns the same shape, slope and water anywhere; only the soil
+ * comes from the climate (dry when not given).
  */
 export function generatePlot(seed: number, opts: GenerateOptions = {}): Plot {
   if (opts.flat) return flatPlot(seed);
@@ -91,7 +122,7 @@ export function generatePlot(seed: number, opts: GenerateOptions = {}): Plot {
   const downhillDeg = rng.int(0, 359);
 
   // Soil and water
-  const soil = rng.weighted(SOILS);
+  const soil = rng.weighted(SOILS_BY_CLIMATE[opts.climate ?? "arid"]);
   const roadSide = rng.pick(["N", "E", "S", "W"] as const);
   const waterKind = rng.chance(0.42)
     ? rng.weighted<"creek" | "pond" | "lake" | "wash">([
