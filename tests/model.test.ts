@@ -2,7 +2,9 @@ import { describe, expect, it } from "vitest";
 import { FLAT_PLOT_SEED, feedPlotSeed, generatePlot } from "@/lib/land/generate";
 import { buildCustomPlot, newCustomLand } from "@/lib/land/custom";
 import { NAME_MAX, createProject, duplicateProject, migrateProject } from "@/lib/model/project";
-import { Project, SCHEMA_VERSION } from "@/lib/model/schema";
+import { Project, SCHEMA_VERSION, type DesignBrief } from "@/lib/model/schema";
+import { briefFrom, sameBrief } from "@/lib/brief/live";
+import { house, RANCH, TWO_STORY } from "./samples";
 import { cityById, placeFromCity } from "@/lib/location/cities";
 
 describe("createProject", () => {
@@ -101,6 +103,55 @@ describe("migrateProject", () => {
     expect(() => migrateProject({ name: "" })).toThrow();
     const p = createProject("Bad");
     expect(() => migrateProject({ ...p, profile: { ...p.profile, adults: -1 } })).toThrow();
+  });
+});
+
+describe("version 36 houses with their own brief", () => {
+  /** A v36 save whose brief was edited on the old brief page, while the rooms page answers stayed as first picked. */
+  function v36(p: Project, edit: (b: DesignBrief) => DesignBrief) {
+    return JSON.parse(JSON.stringify({ ...p, schemaVersion: 36, brief: edit(p.brief!) }));
+  }
+  const pair = (b: DesignBrief, ta: string, tb: string) => [b.rooms.find((r) => r.type === ta)!.id, b.rooms.find((r) => r.type === tb)!.id];
+
+  for (const [name, sample, floors] of [["ranch", RANCH, 1], ["two-story", TWO_STORY, 2]] as const) {
+    it(`gives back the same brief for the ${name} sample, edits and all`, () => {
+      const p = house([...sample], floors);
+      expect(sameBrief(briefFrom(migrateProject(v36(p, (b) => b))), p.brief!)).toBe(true);
+      const edited = (b: DesignBrief): DesignBrief => {
+        const [k, d] = pair(b, "kitchen", b.rooms.some((r) => r.type === "dining") ? "dining" : "family");
+        return {
+          ...b,
+          rooms: b.rooms.map((r, i) => (i === 0 ? { ...r, name: "Front hall", targetSqFt: 95 } : r.type === "garage" ? { ...r, lengthIn: 288, widthIn: 264, targetSqFt: 528 } : r.type === "bathroom" ? { ...r, levelId: "floor-1", notes: "Tub" } : r)),
+          adjacencies: [...b.adjacencies.filter((e) => !(e.a === k && e.b === d)), { a: b.rooms[0].id, b: b.rooms[1].id, strength: "avoid" }],
+          openKitchen: false,
+          priorities: ["Bring in winter light", "Keep the trees for shade and privacy"],
+          accessibility: ["wheelchair access"],
+          freeText: "Warm and cozy",
+        };
+      };
+      const m = migrateProject(v36(p, edited));
+      const a = m.discovery.answers;
+      expect(sameBrief(briefFrom(m), edited(p.brief!))).toBe(true);
+      expect(a.priorities).toEqual(["sun"]);
+      expect(a.accessible).toBe(true);
+      expect(a.feel).toBe("Warm and cozy");
+      expect(a.openKitchen).toBe(false);
+      expect(a.rooms[0]).toMatchObject({ name: "Front hall", sqft: 95 });
+      expect(a.rooms.find((r) => r.type === "bathroom")).toMatchObject({ description: "Tub" });
+      expect(a.removedConnections).toHaveLength(1);
+      // The saved brief stays as it was until the next edit works it out again.
+      expect(m.brief?.freeText).toBe("Warm and cozy");
+    });
+  }
+
+  it("leaves sizes and floors to the app where the brief had the app's picks", () => {
+    const m = migrateProject(v36(house([...RANCH]), (b) => b));
+    expect(m.discovery.answers.rooms.every((r) => r.sqft === undefined && r.levelId === undefined)).toBe(true);
+  });
+
+  it("opens houses with no brief as before", () => {
+    const p = createProject("No brief");
+    expect(migrateProject(JSON.parse(JSON.stringify({ ...p, schemaVersion: 36 }))).discovery.answers.rooms).toEqual([]);
   });
 });
 

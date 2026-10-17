@@ -1,6 +1,7 @@
 import { LEGACY_LEVEL_IDS, MAIN_LEVEL_ID, levelFor } from "@/lib/brief/levels";
 import { cityById, placeFromCity } from "@/lib/location/cities";
-import { LOCATION_FIELDS, Location, Project, SCHEMA_VERSION, type LocationField, type Profile } from "./schema";
+import { answersFromBrief } from "@/lib/brief/live";
+import { DesignBrief, Discovery, DiscoveryAnswers, LOCATION_FIELDS, Location, Profile, Project, SCHEMA_VERSION, type LocationField } from "./schema";
 
 export function newId(): string {
   return crypto.randomUUID();
@@ -101,7 +102,28 @@ export function migrateRaw(raw: unknown): Record<string, unknown> {
   if (version < 34) migrated = migrateV33(migrated);
   // Version 34 to 35 added saved camera spots in the walkthrough (`house3d.walkViews`, default none), so no change beyond the version.
   // Version 35 to 36 added `RealLot.coverageLimitPct` (optional, empty by default), so no change beyond the version.
+  if (version < 37) migrated = migrateV36(migrated);
   return repairProject({ ...migrated, schemaVersion: SCHEMA_VERSION });
+}
+
+/**
+ * Version 36 to 37: the brief is worked out from the rooms page's answers
+ * instead of being a second copy, so edits made on the old brief page are
+ * copied back into the answers (rooms with their names, sizes, floors and
+ * notes; connections; open kitchen; priorities; accessibility; the feel).
+ */
+function migrateV36(data: Raw): Raw {
+  const brief = DesignBrief.safeParse(data.brief);
+  if (!brief.success) return data;
+  const discovery = Discovery.safeParse(data.discovery ?? {});
+  const prev = discovery.success ? discovery.data.answers : DiscoveryAnswers.parse({});
+  const profile = Profile.safeParse(data.profile ?? {});
+  const location = Location.safeParse(data.location);
+  const answers = answersFromBrief(brief.data, prev, {
+    profile: profile.success ? profile.data : Profile.parse({}),
+    costIndex: location.success ? location.data.costIndex : undefined,
+  });
+  return { ...data, discovery: { ...(discovery.success ? discovery.data : {}), answers } };
 }
 
 /** Version 33 to 34: drop `plan.basics.doorStyle`. */

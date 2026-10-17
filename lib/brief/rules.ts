@@ -4,6 +4,7 @@ import { compassName } from "@/lib/land/sun";
 import { rates as loadRates } from "@/lib/cost/rates";
 import { GARAGE_SQFT, roomType, sqftFromDims } from "./rooms";
 import { MAIN_LEVEL_ID, levelIdsFor } from "./levels";
+import { ACCESSIBLE_TAG, PRIORITIES } from "./priorities";
 
 /** Everything the brief is built from. */
 export type BriefContext = {
@@ -72,21 +73,64 @@ export function ruleLevel(type: string, above: number, below: number): string {
 }
 
 /** The size of a room: its dimensions if given, otherwise a typical size. */
-export function ruleSqft(room: Pick<ChosenRoom, "type" | "lengthIn" | "widthIn">, garageCars: number): number {
+export function ruleSqft(room: Pick<ChosenRoom, "type" | "lengthIn" | "widthIn" | "sqft">, garageCars: number): number {
   const fromDims = sqftFromDims(room.lengthIn, room.widthIn);
   if (fromDims) return fromDims;
+  if (room.sqft) return room.sqft;
   if (room.type === "garage" && garageCars > 0) return GARAGE_SQFT[Math.min(garageCars, 4)];
   return roomType(room.type).sqft;
 }
 
+/** A room with a typed size (length × width, or sq ft) keeps it. */
+export const hasTypedSize = (r: Pick<ChosenRoom, "lengthIn" | "widthIn" | "sqft">) => Boolean(sqftFromDims(r.lengthIn, r.widthIn) || r.sqft);
+
+const CLOSED_KITCHEN = /\bclosed kitchen|\bseparate kitchen|\bkitchen (?:as )?its own room/i;
+
+/** The app's guess for open or closed when the user didn't pick: open, unless the feel asks for a closed kitchen. */
+export const guessOpenKitchen = (feel: string) => !CLOSED_KITCHEN.test(feel);
+
+const BEDROOMS = ["primary-bedroom", "bedroom", "guest-suite"];
+
+/**
+ * With "easy to get around" ticked, the rooms the app moves to the main
+ * floor so there's a bedroom and a full bathroom on it: only rooms whose
+ * floor the app picks, never one the user typed. The primary bedroom goes
+ * with its bath and closet. Returns room ids, empty when nothing moves.
+ */
+export function mainFloorPicks(answers: Pick<DiscoveryAnswers, "rooms" | "floorsAbove" | "floorsBelow" | "accessible">): string[] {
+  if (!answers.accessible) return [];
+  const allowed = levelIdsFor(answers.floorsAbove, answers.floorsBelow);
+  const typed = (r: ChosenRoom) => Boolean(r.levelId && allowed.includes(r.levelId));
+  const level = (r: ChosenRoom) => (typed(r) ? r.levelId! : ruleLevel(r.type, answers.floorsAbove, answers.floorsBelow));
+  const onMain = (types: string[]) => answers.rooms.some((r) => types.includes(r.type) && level(r) === MAIN_LEVEL_ID);
+  const movable = (type: string) => answers.rooms.find((r) => r.type === type && !typed(r) && level(r) !== MAIN_LEVEL_ID);
+  const out: string[] = [];
+  if (!onMain(BEDROOMS)) {
+    const bed = BEDROOMS.map(movable).find(Boolean);
+    if (bed) {
+      out.push(bed.id);
+      if (bed.type === "primary-bedroom") for (const t of ["primary-bath", "primary-closet"]) for (const r of answers.rooms) if (r.type === t && !typed(r) && level(r) !== MAIN_LEVEL_ID) out.push(r.id);
+    }
+  }
+  const baths = ["bathroom", "primary-bath"];
+  const bathOnMain = onMain(baths) || answers.rooms.some((r) => out.includes(r.id) && baths.includes(r.type));
+  if (!bathOnMain) {
+    const bath = baths.map(movable).find(Boolean);
+    if (bath) out.push(bath.id);
+  }
+  return out;
+}
+
 /**
  * A complete Design Brief from the rooms page. The user's rooms are the
- * brief's rooms: same ids, names and count. A smarter version can take this
- * function's place later without changing the page.
+ * brief's rooms: same ids, names and count. Anything the user typed wins;
+ * blanks are the app's picks. Worked out again on every edit
+ * (lib/brief/live.ts), so nothing here is saved on its own.
  */
 export function buildRuleBrief(ctx: BriefContext): DesignBrief {
   const a = ctx.answers;
   const allowed = levelIdsFor(a.floorsAbove, a.floorsBelow);
+  const toMain = new Set(mainFloorPicks(a));
 
   const rooms: Room[] = a.rooms.map((r) => {
     const room: Room = {
@@ -94,29 +138,27 @@ export function buildRuleBrief(ctx: BriefContext): DesignBrief {
       type: roomType(r.type).id,
       name: r.name.trim() || roomType(r.type).label,
       targetSqFt: ruleSqft(r, a.garageCars),
-      levelId: r.levelId && allowed.includes(r.levelId) ? r.levelId : ruleLevel(r.type, a.floorsAbove, a.floorsBelow),
+      levelId: r.levelId && allowed.includes(r.levelId) ? r.levelId : toMain.has(r.id) ? MAIN_LEVEL_ID : ruleLevel(r.type, a.floorsAbove, a.floorsBelow),
     };
-    if (r.lengthIn && r.widthIn) {
-      room.lengthIn = r.lengthIn;
-      room.widthIn = r.widthIn;
-    }
+    if (r.lengthIn) room.lengthIn = r.lengthIn;
+    if (r.widthIn) room.widthIn = r.widthIn;
     if (r.description.trim()) room.notes = r.description.trim();
     return room;
   });
 
-  fitSizes(rooms, new Set(a.rooms.filter((r) => sqftFromDims(r.lengthIn, r.widthIn)).map((r) => r.id)), ctx);
+  fitSizes(rooms, new Set(a.rooms.filter(hasTypedSize).map((r) => r.id)), ctx);
   const hasGarage = rooms.some((r) => r.type === "garage");
   return {
     rooms,
-    adjacencies: withObviousConnections(rooms, a.connections),
+    adjacencies: withObviousConnections(rooms, a.connections, a.removedConnections),
     floors: a.floorsAbove,
     floorsBelow: a.floorsBelow,
     garageBays: hasGarage ? a.garageCars : 0,
-    openKitchen: !/\bclosed kitchen|\bseparate kitchen|\bkitchen (?:as )?its own room/i.test(a.feel),
+    openKitchen: a.openKitchen ?? guessOpenKitchen(a.feel),
     primarySuiteLevel: rooms.find((r) => r.type === "primary-bedroom")?.levelId,
     vibe: feelWords(a.feel),
-    priorities: rulePriorities(ctx),
-    accessibility: [],
+    priorities: PRIORITIES.filter((p) => a.priorities.includes(p.id)).map((p) => p.label),
+    accessibility: a.accessible ? [ACCESSIBLE_TAG] : [],
     freeText: a.feel.trim() || undefined,
     summary: ruleSummary(ctx, rooms),
     source: "rules",
@@ -188,24 +230,33 @@ function fitSizes(rooms: Room[], typed: Set<string>, ctx: BriefContext) {
 
 /** The brief's one line about default sizes: "Sizes fit 5 people and about 2,400 sq ft." Null when every room has a typed size. */
 export function sizingNote(answers: Pick<DiscoveryAnswers, "rooms">, profile: Profile, costIndex?: number): string | null {
-  if (!answers.rooms.some((r) => !sqftFromDims(r.lengthIn, r.widthIn))) return null;
+  if (!answers.rooms.some((r) => !hasTypedSize(r))) return null;
   const s = householdSizing(answers, profile, costIndex);
   if (s.people === null) return s.targetSqft ? `Sizes fit about ${s.targetSqft.toLocaleString("en-US")} sq ft. Rooms you gave a size keep it.` : null;
   const who = `${s.people} ${s.people === 1 ? "person" : "people"}${s.guessed ? " (counted from the bedrooms)" : ""}`;
   return `Sizes fit ${who}${s.targetSqft ? ` and about ${s.targetSqft.toLocaleString("en-US")} sq ft` : ""}. Rooms you gave a size keep it.`;
 }
 
-const samePair = (e: Adjacency, a: string, b: string) => (e.a === a && e.b === b) || (e.a === b && e.b === a);
+export const samePair = (e: Pick<Adjacency, "a" | "b">, a: string, b: string) => (e.a === a && e.b === b) || (e.a === b && e.b === a);
 
-/** The user's connections exactly as they are, plus the obvious ones they didn't mention. */
-export function withObviousConnections(rooms: Room[], userConnections: Adjacency[]): Adjacency[] {
-  const ids = new Set(rooms.map((r) => r.id));
-  const out = userConnections.filter((e) => ids.has(e.a) && ids.has(e.b) && e.a !== e.b);
+/** The obvious connections for these rooms (kitchen and dining, garage and mudroom...), between the first room of each type. */
+export function obviousConnections(rooms: Pick<Room, "id" | "type">[]): Adjacency[] {
   const first = (type: string) => rooms.find((r) => r.type === type);
+  const out: Adjacency[] = [];
   for (const [ta, tb, strength] of OBVIOUS) {
     const x = first(ta);
     const y = first(tb);
-    if (x && y && !out.some((e) => samePair(e, x.id, y.id))) out.push({ a: x.id, b: y.id, strength });
+    if (x && y) out.push({ a: x.id, b: y.id, strength });
+  }
+  return out;
+}
+
+/** The user's connections exactly as they are, plus the obvious ones they didn't mention or take out. */
+export function withObviousConnections(rooms: Pick<Room, "id" | "type">[], userConnections: Adjacency[], removed: { a: string; b: string }[] = []): Adjacency[] {
+  const ids = new Set(rooms.map((r) => r.id));
+  const out = userConnections.filter((e) => ids.has(e.a) && ids.has(e.b) && e.a !== e.b);
+  for (const e of obviousConnections(rooms)) {
+    if (!out.some((o) => samePair(o, e.a, e.b)) && !removed.some((o) => samePair(o, e.a, e.b))) out.push(e);
   }
   return out;
 }
@@ -215,7 +266,8 @@ export function feelWords(feel: string): string[] {
   return FEEL_WORDS.filter(([re]) => re.test(text)).map(([, word]) => word);
 }
 
-function rulePriorities(ctx: BriefContext): string[] {
+/** Tips from the feel and the land ("Entry and garage on the north side…"), shown under the priorities. They don't change the ranking. */
+export function briefTips(ctx: BriefContext): string[] {
   const { answers: a, plot, spot } = ctx;
   const out: string[] = [];
   if (/\bentertain|\bhost|\bparties|\bparty\b|\bguests/i.test(a.feel)) out.push("Room to host and entertain");

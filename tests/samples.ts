@@ -18,13 +18,14 @@ const chosen = (type: string, levelId?: string): ChosenRoom => ({ id: `c${++n}`,
 /** A whole house from the rules: brief, flow sketch, and Suggest a plan. */
 export function house(types: [string, string?][], floorsAbove = 1, floorsBelow = 0, seed = 7): Project {
   const plot = generatePlot(seed);
-  const brief = buildRuleBrief({ answers: DiscoveryAnswers.parse({ rooms: types.map(([t, l]) => chosen(t, l)), floorsAbove, floorsBelow }), profile: { mustHaves: [], dislikes: [] }, plot });
+  const answers = DiscoveryAnswers.parse({ rooms: types.map(([t, l]) => chosen(t, l)), floorsAbove, floorsBelow });
+  const brief = buildRuleBrief({ answers, profile: { mustHaves: [], dislikes: [] }, plot });
   const levels = levelsFor(brief.floors, brief.floorsBelow);
   const basics = defaultBasics();
   const bubbles = suggestDiagrams({ brief, plot, levels });
   const plans = suggestPlans(bubbles, { brief, plot, levels, basics }).plans;
   const p = createProject("Sagebrush House", { ownerName: "Grant" });
-  return { ...p, plot, brief, levels, bubbles, floorPlans: plans, plan: { ...p.plan, basics } };
+  return { ...p, plot, discovery: { answers }, brief, levels, bubbles, floorPlans: plans, plan: { ...p.plan, basics } };
 }
 
 export const RANCH: [string, string?][] = [["entry"], ["kitchen"], ["dining"], ["living"], ["primary-bedroom"], ["primary-bath"], ["bedroom"], ["bedroom"], ["bathroom"], ["garage"], ["laundry"]];

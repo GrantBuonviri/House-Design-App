@@ -4,6 +4,7 @@ import { create } from "zustand";
 import type { Project, Stage } from "@/lib/model/schema";
 import { listBackups, loadHistory, loadProject, saveBackup, saveHistory, saveProject, type HistoryRow } from "@/lib/storage/db";
 import { describeChange } from "./describe";
+import { withLiveBrief } from "@/lib/brief/live";
 import { setCodeLocation } from "@/lib/codes/data";
 
 /** Undo steps kept while a house is open. */
@@ -213,7 +214,8 @@ export const useProjectStore = create<State>((set, get) => {
     update(change, opts) {
       const { project: current, versions, at } = get();
       if (!current) return;
-      const next = { ...change(current), updatedAt: new Date().toISOString() };
+      // The brief is worked out again whenever an edit changes what it is made from.
+      const next = { ...withLiveBrief(current, change(current)), updatedAt: new Date().toISOString() };
       const now = Date.now();
       const merge =
         opts?.coalesce !== undefined &&
