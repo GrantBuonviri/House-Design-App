@@ -16,6 +16,8 @@ export const BACKUP_MS = 15 * 60_000;
 
 export type SaveState = "saved" | "saving" | "unsaved" | "error";
 
+export type HistoryItem = { index: number; label: string; current: boolean; undone: boolean };
+
 type Version = { n: number; project: Project };
 
 type State = {
@@ -56,6 +58,10 @@ type State = {
   setStage: (stage: Stage) => void;
   undo: () => void;
   redo: () => void;
+  /** Jump straight to any version in the list (see `historyList`). */
+  goToVersion: (index: number) => void;
+  /** The last steps by name, newest first, worked out when asked (the list is long and labels diff whole projects). */
+  historyList: (limit?: number) => HistoryItem[];
   /** What Undo and Redo would do, like "move Kitchen", or null when there's nothing. */
   undoLabel: () => string | null;
   redoLabel: () => string | null;
@@ -246,6 +252,20 @@ export const useProjectStore = create<State>((set, get) => {
 
     redo() {
       goTo(get().at + 1);
+    },
+
+    goToVersion(index) {
+      goTo(index);
+    },
+
+    historyList(limit = SAVED_HISTORY) {
+      const { versions, at } = get();
+      const out: HistoryItem[] = [];
+      // Step i is what changed between version i-1 and i; going to version i keeps that step.
+      for (let i = versions.length - 1; i >= 1 && out.length < limit + (versions.length - 1 - at); i--) {
+        out.push({ index: i, label: describeChange(versions[i - 1].project, versions[i].project), current: i === at, undone: i > at });
+      }
+      return out;
     },
 
     undoLabel() {

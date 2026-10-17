@@ -69,6 +69,24 @@ describe("undo and redo", () => {
     expect(useProjectStore.getState().canRedo).toBe(false);
   });
 
+  it("lists the steps by name and jumps to any of them", async () => {
+    await openNew();
+    rename("One");
+    rename("Two", "other");
+    rename("Three", "third");
+    let list = useProjectStore.getState().historyList();
+    expect(list.map((x) => x.index)).toEqual([3, 2, 1]);
+    expect(list[0]).toMatchObject({ label: "rename the house", current: true, undone: false });
+    useProjectStore.getState().goToVersion(1);
+    expect(useProjectStore.getState().project!.name).toBe("One");
+    list = useProjectStore.getState().historyList();
+    expect(list.map((x) => [x.index, x.current, x.undone])).toEqual([[3, false, true], [2, false, true], [1, true, false]]);
+    useProjectStore.getState().goToVersion(0);
+    expect(useProjectStore.getState().project!.name).toBe("Undo house");
+    useProjectStore.getState().goToVersion(3);
+    expect(useProjectStore.getState().project!.name).toBe("Three");
+  });
+
   it("shows old Interior / Exterior saves on Furnish and drops them from the stage bar", () => {
     expect(shownStage("interior")).toBe("furnish");
     expect(shownStage("exterior")).toBe("furnish");
