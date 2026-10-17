@@ -327,7 +327,8 @@ describe("the house on the land", () => {
 
     const without = houseOn("flat", TYPES.slice(0, 6), 1, 0);
     expect(dugOut(without.plans, { ...without.c, heights: levelHeights(without.levels, defaultBasics()) })).toHaveLength(0);
-  });
+    // Two whole houses with ground meshes take about 2s, more on a busy machine.
+  }, 20_000);
 
   it("builds a whole suggested house without falling back to a flat roof", () => {
     const { plans, c } = houseOn(SLOPED, [...TYPES, ["primary-bedroom", "floor-2"], ["primary-bath", "floor-2"]], 2, 1);
