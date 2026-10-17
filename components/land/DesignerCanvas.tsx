@@ -9,6 +9,7 @@ import DesignerFeatures, { type FeatureTool } from "./DesignerFeatures";
 import DesignerGround, { ContourLines, type GroundSettings } from "./DesignerGround";
 import { boxOf, insertCorner, removeCorner, sideLengthFt, snapCorner } from "@/lib/land/designer";
 import { edgeEnds } from "@/lib/land/custom";
+import { keyIsForPage } from "@/lib/keys";
 
 export const CANVAS_W = 640;
 export const CANVAS_H = 520;
@@ -47,6 +48,7 @@ export default function DesignerCanvas({
   const [menu, setMenu] = useState<{ pick: NonNullable<Pick>; at: Point } | null>(null);
   // While a corner is dragged the view stays put, so the lot doesn't rescale under the pointer.
   const frozen = useRef(land.outline);
+  const wrapRef = useRef<HTMLDivElement>(null);
   if (!dragging) frozen.current = land.outline;
   const view = useMemo(() => {
     const b = boxOf(frozen.current);
@@ -65,7 +67,7 @@ export default function DesignerCanvas({
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      if ((e.target as HTMLElement).closest("input, textarea, select")) return;
+      if (!keyIsForPage(e, { here: wrapRef.current })) return;
       if (e.key !== "Delete" && e.key !== "Backspace") return;
       if (pick) {
         e.preventDefault();
@@ -96,7 +98,7 @@ export default function DesignerCanvas({
   const centre = pts.reduce((a, p) => ({ x: a.x + p.x / n, y: a.y + p.y / n }), { x: 0, y: 0 });
 
   return (
-    <div className="relative" style={{ width: CANVAS_W, height: CANVAS_H }} onContextMenu={(e) => e.preventDefault()}>
+    <div ref={wrapRef} className="relative" style={{ width: CANVAS_W, height: CANVAS_H }} onContextMenu={(e) => e.preventDefault()}>
     <Stage
       width={CANVAS_W}
       height={CANVAS_H}

@@ -15,6 +15,7 @@ import type { GroundSettings } from "./DesignerGround";
 import { buildingSpotGrade, landContours } from "@/lib/land/groundTools";
 import { CANVAS_H, CANVAS_W } from "./DesignerCanvas";
 import { DRAINAGE_STYLE, plotFacts } from "./plotText";
+import { keyIsForPage } from "@/lib/keys";
 
 const DesignerCanvas = dynamic(() => import("./DesignerCanvas"), {
   ssr: false,
@@ -84,6 +85,7 @@ export default function LandDesigner({
   };
 
   const lastEdit = useRef(0);
+  const dialogRef = useRef<HTMLDivElement>(null);
   const change = (next: CustomLand) => {
     // Edits that come one after another (a drag, typing) are folded into one undo step.
     const now = Date.now();
@@ -120,7 +122,7 @@ export default function LandDesigner({
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      const typing = !!(e.target as HTMLElement).closest("input, textarea, select");
+      const typing = !keyIsForPage(e, { here: dialogRef.current });
       if (e.key === "Escape" && !typing) cancel();
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "z" && !typing) {
         e.preventDefault();
@@ -149,6 +151,7 @@ export default function LandDesigner({
       }}
     >
       <div
+        ref={dialogRef}
         role="dialog"
         aria-modal="true"
         aria-label="Design your own land"

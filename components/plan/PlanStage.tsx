@@ -57,6 +57,7 @@ import type { DoorMode } from "@/lib/house3d/doors";
 import { PLAN_TOOLS, parseEdgeId, type PlanSelection, type PlanTool } from "./types";
 import { DisplayTabs, LotModeBanner, PlanStartChoices, PlanToolbar, type Display } from "./PlanStageParts";
 import { locationOf } from "@/lib/location/current";
+import { keyIsForPage } from "@/lib/keys";
 
 const PlanCanvas = dynamic(() => import("./PlanCanvas"), {
   ssr: false,
@@ -306,8 +307,7 @@ export default function PlanStage({ onContinue, onGoToSketch, onGoToFurnish }: {
   useEffect(() => {
     if (choosing || editingBasics || comparing || !basics) return;
     function onKey(e: KeyboardEvent) {
-      const t = e.target as HTMLElement;
-      if (t.closest("input, textarea, select, [contenteditable]")) return;
+      if (!keyIsForPage(e)) return;
       // In 3D, nothing can be deleted or moved outside edit mode.
       const locked = display === "3d" && !editing3d;
       // Cmd+D (Ctrl+D) copies what's picked.

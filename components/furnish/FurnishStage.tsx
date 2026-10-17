@@ -1,7 +1,7 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { FloorPlan, Level, Point, Product, WallHeight } from "@/lib/model/schema";
 import { useProjectStore } from "@/lib/store/projectStore";
 import { MAIN_LEVEL_ID } from "@/lib/brief/levels";
@@ -30,6 +30,7 @@ import { faucetsOn } from "@/lib/furnish/faucets";
 import { applyFaucetChange, isRange, pickFaucetProduct, pickPotFiller, potFillerAbove, potFillerPick, usedFor } from "@/lib/furnish/faucetPick";
 import { fixtureType } from "@/lib/plan/catalog";
 import { changeRailingIn, railingTarget, stageRailings, type RailingChange } from "@/lib/furnish/railings";
+import { keyIsForPage } from "@/lib/keys";
 
 const PlanCanvas = dynamic(() => import("@/components/plan/PlanCanvas"), {
   ssr: false,
@@ -76,6 +77,7 @@ export default function FurnishStage({
   const { basics, labels } = project.plan;
   const levels = useMemo(() => [...project.levels].sort((a, b) => a.elevationIn - b.elevationIn), [project.levels]);
 
+  const rootRef = useRef<HTMLDivElement>(null);
   const [levelId, setLevelId] = useState(initialLevelId ?? MAIN_LEVEL_ID);
   const [tool, setTool] = useState<FurnishTool>("select");
   const [pick, setPick] = useState<string | null>(null);
@@ -209,8 +211,7 @@ export default function FurnishStage({
   // Keyboard: tool letters, R to turn, Delete, arrows to nudge, Escape to let go.
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
-      const t = e.target as HTMLElement;
-      if (t.closest("input, textarea, select, [contenteditable]")) return;
+      if (!keyIsForPage(e, { here: rootRef.current })) return;
       if (e.metaKey || e.ctrlKey || e.altKey) return;
       const nudge = { ArrowLeft: [-1, 0], ArrowRight: [1, 0], ArrowUp: [0, -1], ArrowDown: [0, 1] }[e.key];
       // A held key repeats: only the arrows keep nudging.
@@ -355,7 +356,7 @@ export default function FurnishStage({
   }
 
   return (
-    <div className="space-y-4 pb-10" data-testid="furnish-stage">
+    <div ref={rootRef} className="space-y-4 pb-10" data-testid="furnish-stage">
       <div className="flex items-start justify-between gap-6">
         <div className="min-w-0">
           <h2 className="text-xl font-semibold tracking-tight">{walk ? "Top-down view" : "Furnish"}</h2>

@@ -21,6 +21,7 @@ import {
   type PathKind,
   type Pick,
 } from "@/lib/land/featureTools";
+import { isTyping } from "@/lib/keys";
 
 const FT = 12;
 const WATER_LOOK = {
@@ -94,7 +95,8 @@ export default function DesignerFeatures(props: Props) {
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      if (!draft.length || (e.target as HTMLElement).closest("input, textarea, select")) return;
+      // Always inside the land designer, so only typing in a box stops these keys.
+      if (!draft.length || isTyping(e)) return;
       if (e.key === "Escape") {
         e.stopImmediatePropagation();
         draftRef.current = [];

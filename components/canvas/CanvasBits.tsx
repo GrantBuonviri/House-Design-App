@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Shape } from "react-konva";
 import type { Side } from "@/components/bubbles/types";
+import { isTyping } from "@/lib/keys";
 
 /** Pieces shared by the flow sketch and floor plan drawings. */
 
@@ -17,9 +18,8 @@ export function useSpacePan() {
   const [spaceDown, setSpaceDown] = useState(false);
   const hovering = useRef(false);
   useEffect(() => {
-    const typing = (e: KeyboardEvent) => (e.target as HTMLElement | null)?.closest?.("input, textarea, select, [contenteditable]");
     const down = (e: KeyboardEvent) => {
-      if (e.code !== "Space" || !hovering.current || typing(e)) return;
+      if (e.code !== "Space" || !hovering.current || isTyping(e)) return;
       e.preventDefault();
       // A focused button would otherwise be pressed when Space comes back up.
       (e.target as HTMLElement | null)?.closest?.("button")?.blur();
