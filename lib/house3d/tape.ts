@@ -76,3 +76,70 @@ export function snap(p: TapePoint, candidates: TapePoint[]): TapePoint {
   }
   return best ?? p;
 }
+
+export type TapePin = { id: string; a: TapePoint; b: TapePoint };
+
+/** How close (screen pixels) the aim dot has to be to a pin to point at it. */
+export const PIN_AIM_PX = 12;
+
+type View = { eye: TapePoint; dir: TapePoint; fovDeg: number; width: number; height: number };
+
+/** A spot in the house on screen (pixels from the center, y up) and how far in front of the eye it is; null if it is behind. */
+export function toScreen(p: TapePoint, v: View): { x: number; y: number; depth: number } | null {
+  const c = Math.hypot(v.dir.x, v.dir.y);
+  const right = c < 1e-6 ? { x: 1, y: 0, z: 0 } : { x: -v.dir.y / c, y: v.dir.x / c, z: 0 };
+  const up = c < 1e-6 ? { x: 0, y: -1, z: 0 } : { x: (-v.dir.z * v.dir.x) / c, y: (-v.dir.z * v.dir.y) / c, z: c };
+  const d = { x: p.x - v.eye.x, y: p.y - v.eye.y, z: p.z - v.eye.z };
+  const depth = d.x * v.dir.x + d.y * v.dir.y + d.z * v.dir.z;
+  if (depth < 1) return null;
+  const f = v.height / 2 / Math.tan((v.fovDeg * Math.PI) / 360);
+  return { x: (f * (d.x * right.x + d.y * right.y)) / depth, y: (f * (d.x * up.x + d.y * up.y + d.z * up.z)) / depth, depth };
+}
+
+/** Screen distance from the aim dot (the center) to a pin's line or its label (at the middle); Infinity when it is all behind you. */
+export function pinScreenDistance(pin: { a: TapePoint; b: TapePoint }, v: View): number {
+  const lerp = (t: number): TapePoint => ({ x: pin.a.x + (pin.b.x - pin.a.x) * t, y: pin.a.y + (pin.b.y - pin.a.y) * t, z: pin.a.z + (pin.b.z - pin.a.z) * t });
+  // Cut the line at the near plane so a pin partly behind you still counts.
+  const depthAt = (t: number) => {
+    const q = lerp(t);
+    return (q.x - v.eye.x) * v.dir.x + (q.y - v.eye.y) * v.dir.y + (q.z - v.eye.z) * v.dir.z;
+  };
+  const da = depthAt(0);
+  const db = depthAt(1);
+  if (da < 1 && db < 1) return Infinity;
+  let t0 = 0;
+  let t1 = 1;
+  if (da < 1) t0 = (1 - da) / (db - da);
+  if (db < 1) t1 = (da - 1) / (da - db);
+  const s0 = toScreen(lerp(t0), v);
+  const s1 = toScreen(lerp(t1), v);
+  if (!s0 || !s1) return Infinity;
+  const dx = s1.x - s0.x;
+  const dy = s1.y - s0.y;
+  const len2 = dx * dx + dy * dy;
+  const t = len2 < 1e-9 ? 0 : Math.max(0, Math.min(1, -(s0.x * dx + s0.y * dy) / len2));
+  const line = Math.hypot(s0.x + dx * t, s0.y + dy * t);
+  const mid = toScreen(lerp(0.5), v);
+  return Math.min(line, mid ? Math.hypot(mid.x, mid.y) : Infinity);
+}
+
+/** The pin the aim dot is on, if any: the nearest within `PIN_AIM_PX`, skipping any that `hidden` says are behind a wall. */
+export function pinUnderDot(pins: TapePin[], v: View, hidden: (pin: TapePin) => boolean = () => false, maxPx = PIN_AIM_PX): TapePin | null {
+  let best: TapePin | null = null;
+  let bestD = maxPx;
+  for (const p of pins) {
+    const d = pinScreenDistance(p, v);
+    if (d <= bestD && !hidden(p)) {
+      best = p;
+      bestD = d;
+    }
+  }
+  return best;
+}
+
+/** Pin the finished measurement at `index` (the newest by default): it leaves `done` and joins the saved pins. */
+export function pinMeasurement(done: Tape[], pins: TapePin[], id: string, index = done.length - 1): { done: Tape[]; pins: TapePin[] } {
+  const t = done[index];
+  if (!t) return { done, pins };
+  return { done: done.filter((_, i) => i !== index), pins: [...pins, { id, a: t.a, b: t.b }] };
+}

@@ -45,7 +45,8 @@ import { AimDot, WalkControls, WalkHelp, WalkTopBar } from "./WalkOverlays";
 import { FloorLabels } from "./FloorLabels";
 import LabelSettingsPanel from "./LabelSettingsPanel";
 import { TapeMeasure } from "./TapeMeasure";
-import { lockAxis, snap, tapeCandidates, TAPE_KEEP, type Tape, type TapePoint } from "@/lib/house3d/tape";
+import { newId } from "@/lib/model/project";
+import { lockAxis, pinMeasurement, pinUnderDot, snap, tapeCandidates, TAPE_KEEP, type Tape, type TapePoint } from "@/lib/house3d/tape";
 import type { WalkLabels } from "@/lib/model/schema";
 import { effectiveExterior } from "@/lib/exterior/style";
 import { canvasSettings, useGraphics } from "@/lib/graphics";
@@ -75,6 +76,7 @@ type Panel =
   | { kind: "opening"; levelId: string; id: string }
   | { kind: "railing"; levelId: string; key: string }
   | { kind: "faucet"; levelId: string; id: string }
+  | { kind: "pin"; id: string }
   | { kind: "design" }
   | { kind: "labels" };
 
@@ -121,7 +123,7 @@ function carryInfo(c: Carry, plan: FloorPlan): { label: string; ok: boolean; pro
   }
 }
 
-const isDesignPanel = (p: Panel | null) => Boolean(p && p.kind !== "labels");
+const isDesignPanel = (p: Panel | null) => Boolean(p && p.kind !== "labels" && p.kind !== "pin");
 
 /**
  * Walk through the house in first person, like a video game. Click to start,
@@ -163,6 +165,7 @@ export default function Walkthrough({ project, cost, onClose }: { project: Proje
   doorModeRef.current = doorMode;
   const doorsGroup = useRef<THREE.Group | null>(null);
   const [doorHint, setDoorHint] = useState<string | null>(null);
+  const [pinAim, setPinAim] = useState<string | null>(null);
   const [aim, setAim] = useState<Aim | null>(null);
   const [panel, setPanel] = useState<Panel | null>(null);
   const [carry, setCarry] = useState<Carry | null>(null);
@@ -173,6 +176,39 @@ export default function Walkthrough({ project, cost, onClose }: { project: Proje
     if (toastTimer.current) clearTimeout(toastTimer.current);
     if (text) toastTimer.current = setTimeout(() => setToast(null), 4000);
   }, []);
+
+  const walkPins = project.house3d.walkPins;
+  const pinsRef = useRef(walkPins);
+  pinsRef.current = walkPins;
+  /** P or the Pin button: the newest (or the picked) finished measurement becomes a saved pin. */
+  const pinTape = (index?: number) => {
+    const { done } = latest.current.tape;
+    if (!done.length) return;
+    const r = pinMeasurement(done, pinsRef.current, newId(), index);
+    setTape((t) => ({ ...t, done: r.done }));
+    update((p) => ({ ...p, house3d: { ...p.house3d, walkPins: r.pins } }));
+    say("Pinned. Aim at it and click to delete.");
+  };
+  const deletePin = (id: string) => {
+    update((p) => ({ ...p, house3d: { ...p.house3d, walkPins: p.house3d.walkPins.filter((x) => x.id !== id) } }));
+    setPanel(null);
+  };
+  /** The pin under the aim dot, if it's close on screen and no wall is in between. */
+  const pinUnderAim = (w: Walker): string | null => {
+    const pins = pinsRef.current;
+    const c = canvasRef.current;
+    if (!pins.length || !c) return null;
+    const { eye, dir } = eyeRay(w);
+    const world = worldRef.current;
+    const view = { eye, dir, fovDeg: 70, width: c.clientWidth, height: c.clientHeight };
+    return (
+      pinUnderDot(pins, view, (p) => {
+        // Walls between the eye and the pin's middle hide it.
+        const m = { x: (p.a.x + p.b.x) / 2, y: (p.a.y + p.b.y) / 2, z: (p.a.z + p.b.z) / 2 };
+        return sightBlocked(world, eye, m, m.z);
+      })?.id ?? null
+    );
+  };
 
   // A piece being moved is left out of the house until it's put down (it's drawn on its own meanwhile).
   const moving = carry?.kind === "move" ? carry : null;
@@ -223,8 +259,8 @@ export default function Walkthrough({ project, cost, onClose }: { project: Proje
 
   // The latest of everything, for the mouse and key handlers.
   const snapPoints = useMemo(() => tapeCandidates(project.floorPlans, heights, levels.map((l) => l.id)), [project.floorPlans, heights, levels]);
-  const latest = useRef({ aim, carry, panel, design, tab, topDown, locked, plans: project.floorPlans, itemsOn, tapeOn, tape, snapPoints });
-  latest.current = { aim, carry, panel, design, tab, topDown, locked, plans: project.floorPlans, itemsOn, tapeOn, tape, snapPoints };
+  const latest = useRef({ aim, carry, panel, design, tab, topDown, locked, plans: project.floorPlans, itemsOn, tapeOn, tape, snapPoints, pinAim });
+  latest.current = { aim, carry, panel, design, tab, topDown, locked, plans: project.floorPlans, itemsOn, tapeOn, tape, snapPoints, pinAim };
 
   /** The door under the dot, if you're close enough and no wall is in between. */
   const doorUnderDot = useCallback((): DoorInfo | null => {
@@ -608,6 +644,10 @@ export default function Walkthrough({ project, cost, onClose }: { project: Proje
         setTape((t) => ({ ...t, first: null, hover: null }));
         return;
       }
+      if (e.code === "KeyP" && !c && latest.current.tape.done.length) {
+        pinTape();
+        return;
+      }
       if (e.code === "KeyC" && latest.current.tapeOn) {
         setTape({ done: [], first: null, hover: null });
         return;
@@ -643,6 +683,12 @@ export default function Walkthrough({ project, cost, onClose }: { project: Proje
         if (!hover) return;
         const at = first && e.shiftKey ? lockAxis(first, hover) : hover;
         setTape((t) => (!first ? { ...t, first: at } : { done: [...t.done, { a: first, b: at }].slice(-TAPE_KEEP), first: null, hover: null }));
+        return;
+      }
+      const pinId = latest.current.pinAim;
+      if (!d && pinId) {
+        setPanel({ kind: "pin", id: pinId });
+        stopWalking();
         return;
       }
       if (!d && clickDoor()) return;
@@ -748,7 +794,7 @@ export default function Walkthrough({ project, cost, onClose }: { project: Proje
         <DoorLeaves parts={doorParts} frame={frame} amountOf={(id) => world.doorAmount[id] ?? 0} groupRef={doorsGroup} />
         <DoorDriver world={world} walker={walker} states={doorStates} modeRef={doorModeRef} />
         {labelsOn && <FloorLabels project={project} settings={labelSettings} frame={frame} heights={heights} walker={walker} costTotal={cost?.total.likely} />}
-        <TapeMeasure done={tape.done} first={tape.first} hover={tapeOn ? tape.hover : null} frame={frame} units={labelSettings.units} />
+        <TapeMeasure done={tape.done} first={tape.first} hover={tapeOn ? tape.hover : null} frame={frame} units={labelSettings.units} pins={walkPins} aimedPin={pinAim} canPin={!locked} onPin={pinTape} />
         {carry && (carry.kind === "new" || carry.kind === "move") && carry.ghost && (
           <ItemGhost ghost={carry.ghost} color={carry.kind === "move" ? carry.item.color : undefined} floorIn={heights[carry.levelId]?.floorIn ?? 0} frame={frame} />
         )}
@@ -774,6 +820,8 @@ export default function Walkthrough({ project, cost, onClose }: { project: Proje
             const d = latest.current.locked && !latest.current.design && !latest.current.tapeOn && !latest.current.carry ? aimDoor(world.doors, eye, dir, 90, (a, b, z) => sightBlocked(world, a, b, z)) : null;
             const hint = d ? `${d.label}: click to ${doorStates.current[d.id]?.open ? "close" : "open"} · K to ${d.locked ? "unlock" : "lock"}${d.locked ? " (locked)" : ""}` : null;
             setDoorHint((cur) => (cur === hint ? cur : hint));
+            const pin = latest.current.locked && !latest.current.design && !latest.current.carry ? pinUnderAim(w) : null;
+            setPinAim((cur) => (cur === pin ? cur : pin));
           }}
           doorsRef={doorsGroup}
           aimTarget={aimTarget}
@@ -815,13 +863,20 @@ export default function Walkthrough({ project, cost, onClose }: { project: Proje
         <WalkHelp onStart={start} />
       )}
 
-      {locked && doorHint && !design && !tapeOn && !carry && (
+      {locked && pinAim && !design && !carry && (
+        <div className="pointer-events-none absolute top-1/2 left-1/2 mt-5 -translate-x-1/2 rounded-md bg-black/65 px-3 py-1.5 text-center text-sm text-white" data-testid="pin-hint">
+          Click for pin options
+          {tapeOn && <span className="block text-xs text-white/60">The tape is on, so a click measures. Press T to turn it off</span>}
+        </div>
+      )}
+
+      {locked && doorHint && !pinAim && !design && !tapeOn && !carry && (
         <div className="pointer-events-none absolute top-1/2 left-1/2 mt-5 -translate-x-1/2 rounded-md bg-black/65 px-3 py-1.5 text-center text-sm text-white" data-testid="door-hint">
           {doorHint}
         </div>
       )}
 
-      {locked && tapeOn && (
+      {locked && tapeOn && !pinAim && (
         <div className="pointer-events-none absolute top-1/2 left-1/2 mt-5 -translate-x-1/2 rounded-md bg-black/65 px-3 py-1.5 text-center text-sm text-white" data-testid="tape-hint">
           {tape.first ? "Click the second point" : "Click to start measuring"}
           <span className="block text-xs text-white/60">Shift keeps it level or straight up · C clears · T stops</span>
@@ -943,6 +998,18 @@ export default function Walkthrough({ project, cost, onClose }: { project: Proje
                 </div>
               );
             })()}
+            {panel.kind === "pin" && (
+              <div className="space-y-3" data-testid="walk-pin-panel">
+                <p className="text-sm font-medium">Pinned measurement</p>
+                {pinsRef.current.some((x) => x.id === panel.id) ? (
+                  <button className="rounded-md bg-red-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-red-700" onClick={() => deletePin(panel.id)} data-testid="pin-delete">
+                    Delete
+                  </button>
+                ) : (
+                  <p className="text-sm text-muted">That pin is gone.</p>
+                )}
+              </div>
+            )}
             {panel.kind === "labels" && (
               <LabelSettingsPanel
                 settings={labelSettings}

@@ -45,6 +45,7 @@ export function describeChange(before: Project, after: Project): string {
   if (!same("plan")) return before.plan.basics === null && after.plan.basics ? "answer the plan basics" : "change the plan settings";
   if (!same("house3d")) {
     if (json(before.house3d.topLabels) !== json(after.house3d.topLabels)) return describeTopLabels(before, after);
+    if (json(before.house3d.walkPins) !== json(after.house3d.walkPins)) return after.house3d.walkPins.length > before.house3d.walkPins.length ? "pin a measurement" : "delete a pinned measurement";
     return json(before.house3d.walkLabels) !== json(after.house3d.walkLabels) ? "change the floor labels" : "change the roof";
   }
   if (!same("cost")) return "change the water and sewer setting";
