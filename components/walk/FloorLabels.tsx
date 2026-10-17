@@ -10,7 +10,7 @@ import { insidePoint, type Walker } from "@/lib/house3d/walk";
 import { costShares, floorColorOf, labelInk, labelLines, LABEL_LINE_IN, type LabelLine } from "@/lib/house3d/walkLabels";
 import { boundsOf } from "@/lib/plan/geometry";
 
-/** Room labels lying on the floor in the walkthrough, turned to read the way you're facing. Settings: components/walk/LabelSettingsPanel.tsx. */
+/** Room labels lying on the floor in the walkthrough, turned to read the way you're facing, or fixed north-up when `settings.locked`. Settings: components/walk/LabelSettingsPanel.tsx. */
 
 type Made = { key: string; texture: THREE.CanvasTexture; w: number; h: number; x: number; y: number; z: number };
 
@@ -104,12 +104,12 @@ export function FloorLabels({
 
   useEffect(() => () => labels.forEach((l) => l.texture.dispose()), [labels]);
 
-  // Every label turns to read the way you're facing.
+  // Every label turns to read the way you're facing, unless locked (rotation 0 is north-up, like the floor plan).
   const group = useRef<THREE.Group>(null);
   useFrame(() => {
     const g = group.current;
     if (!g) return;
-    const yaw = -(walker.current?.yaw ?? 0);
+    const yaw = settings.locked ? 0 : -(walker.current?.yaw ?? 0);
     for (const child of g.children) child.rotation.y = yaw;
   });
 

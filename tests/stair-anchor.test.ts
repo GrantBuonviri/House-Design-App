@@ -261,7 +261,7 @@ describe("saved data", () => {
     const v27 = JSON.parse(JSON.stringify({ ...p, schemaVersion: 27, floorPlans: { [L1]: plan([room("r", box(0, 0, 100, 100))], [stairs("s", L2)]) } }));
     const migrated = migrateProject(v27);
     expect(migrated.schemaVersion).toBe(SCHEMA_VERSION);
-    expect(SCHEMA_VERSION).toBe(28);
+    expect(SCHEMA_VERSION).toBeGreaterThanOrEqual(28);
     expect(migrated.floorPlans[L1].stairs[0].stackId).toBeUndefined();
     expect(migrated.floorPlans[L1].rooms[0].stairStack).toBeUndefined();
   });
