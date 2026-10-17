@@ -58,7 +58,8 @@ export default function ExteriorPicker({
   const place = accentPlaceFor(exterior, hasGables);
 
   return (
-    <div className="grid grid-cols-[210px_1fr_250px] gap-5">
+    <div className="@container">
+    <div className="grid grid-cols-[170px_1fr] gap-4 @4xl:grid-cols-[210px_1fr_250px] @4xl:gap-5">
       <nav className="space-y-3 text-sm">
         {GROUPS.map((g) => {
           const items = parts.filter((c) => c.group === g);
@@ -127,7 +128,7 @@ export default function ExteriorPicker({
             {products.length === 0 ? (
               <p className="text-sm text-muted">No products for this yet. Add some to data/catalog/{cat.file}.json.</p>
             ) : (
-              <div className="grid grid-cols-2 gap-3 lg:grid-cols-3">
+              <div className="grid grid-cols-2 gap-3 @4xl:grid-cols-3">
                 {shown.map((p) => {
                   const picked = current?.product.id === p.id;
                   return <ProductCard key={p.id} product={p} picked={picked} action={picked ? "Picked" : "Use this"} onAction={() => (picked ? undefined : pick(cat.id, p))} />;
@@ -143,7 +144,7 @@ export default function ExteriorPicker({
         )}
       </div>
 
-      <aside className="space-y-2 text-sm">
+      <aside className="col-span-2 space-y-2 text-sm @4xl:col-span-1">
         <h3 className="font-medium">The outside</h3>
         <ul className="divide-y divide-line">
           {parts.map((c) => {
@@ -162,6 +163,7 @@ export default function ExteriorPicker({
         <p className="pt-2 text-xs text-muted">The cost total at the top changes with every pick. Prices are from each product&apos;s page on the date shown and may have changed.</p>
         <p className="text-xs text-muted">{exteriorCatalog().length} outside products in the catalog.</p>
       </aside>
+    </div>
     </div>
   );
 }

@@ -50,7 +50,8 @@ export default function FinishPicker({
   const accents = room ? [...wallPicks(selections, room.id)] : [];
 
   return (
-    <div className="grid grid-cols-[200px_1fr_240px] gap-5">
+    <div className="@container">
+    <div className="grid grid-cols-[170px_1fr] gap-4 @4xl:grid-cols-[200px_1fr_240px] @4xl:gap-5">
       <nav className="space-y-3 text-sm">
         <button
           onClick={() => setTarget(WHOLE_HOUSE)}
@@ -136,7 +137,7 @@ export default function FinishPicker({
             {products.length === 0 ? (
               <p className="text-sm text-muted">No products in this category yet. Add some to data/catalog/{cat.id}.json.</p>
             ) : (
-              <div className="grid grid-cols-2 gap-3 lg:grid-cols-3">
+              <div className="grid grid-cols-2 gap-3 @4xl:grid-cols-3">
                 {shown.map((p) => {
                   const picked = current?.pick.product.id === p.id;
                   return (
@@ -161,7 +162,7 @@ export default function FinishPicker({
         )}
       </div>
 
-      <aside className="space-y-2 text-sm">
+      <aside className="col-span-2 space-y-2 text-sm @4xl:col-span-1">
         <h3 className="font-medium">{room ? room.name : "Whole house"}</h3>
         <p className="text-xs text-muted">{room ? "What this room uses" : "Picked for every room"}</p>
         <ul className="divide-y divide-line">
@@ -210,6 +211,7 @@ export default function FinishPicker({
         <p className="pt-2 text-xs text-muted">The cost total at the top changes with every pick. Prices are from each product&apos;s page on the date shown and may have changed.</p>
         <p className="text-xs text-muted">{catalog().length} products in the catalog.</p>
       </aside>
+    </div>
     </div>
   );
 }

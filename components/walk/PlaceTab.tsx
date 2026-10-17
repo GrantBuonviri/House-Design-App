@@ -19,11 +19,22 @@ export function DesignTabs({ tab, onTab }: { tab: DesignTab; onTab: (t: DesignTa
 }
 
 /** The Finishes tab before anything is clicked. */
-export function FinishesHelp() {
+export function FinishesHelp({ onOpenWindow }: { onOpenWindow?: (kind: "interior" | "exterior") => void }) {
   return (
     <div className="space-y-2 text-sm text-muted" data-testid="finishes-help">
       <p>Aim at a floor, a wall, a counter, a fixture or a door and click to pick its finish. Outside, aim at the siding, the roof, the windows or the yard.</p>
       <p>Furniture, built-ins and outlets can be clicked here too, to move or change them. Tab switches to Place.</p>
+      {onOpenWindow && (
+        <div className="space-y-1.5 pt-1">
+          <p>To pick a style and finishes for the whole house or room by room:</p>
+          <button className="btn w-full justify-center" onClick={() => onOpenWindow("interior")} data-testid="open-interior-window">
+            Open Interior design (I)
+          </button>
+          <button className="btn w-full justify-center" onClick={() => onOpenWindow("exterior")} data-testid="open-exterior-window">
+            Open Exterior design (X)
+          </button>
+        </div>
+      )}
     </div>
   );
 }

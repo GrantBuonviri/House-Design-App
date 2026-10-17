@@ -11,7 +11,7 @@ import { edgeCompass, roomEdgeAt } from "@/lib/plan/walls";
 import { checkPlacement, defaultFurnitureColor, FURNITURE, newFurniture, overlaps } from "@/lib/plan/furniture";
 import { estimate, type Estimate } from "@/lib/cost/estimate";
 import { catalog } from "@/lib/catalog/catalog";
-import { pickFor, roomFinishes, setPick, setWallPick, toProduct, wallKey, wallPicks } from "@/lib/interior/picks";
+import { pickFor, roomFinishes, setPick, setWallPick, startTarget, toProduct, wallKey, wallPicks } from "@/lib/interior/picks";
 import { aimAt, type AimPart } from "@/lib/interior/surfaces";
 import { applyPick, currentPick, scopesFor, type FinishAim } from "@/lib/interior/scope";
 import { roomLook } from "@/lib/house3d/finishes";
@@ -245,5 +245,15 @@ describe("saving", () => {
     old.schemaVersion = 7;
     delete old.floorPlans[L].furniture;
     expect(migrateProject(old).floorPlans[L].furniture).toEqual([]);
+  });
+});
+
+describe("design windows", () => {
+  it("Interior design's Pick finishes starts on the room you stand in, else the whole house", () => {
+    const rooms = [{ id: "kitchen" }, { id: "bed1" }];
+    expect(startTarget(rooms, "bed1")).toBe("bed1");
+    expect(startTarget(rooms, "garage")).toBe(WHOLE_HOUSE);
+    expect(startTarget(rooms, null)).toBe(WHOLE_HOUSE);
+    expect(startTarget([], undefined)).toBe(WHOLE_HOUSE);
   });
 });

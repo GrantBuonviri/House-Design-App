@@ -96,3 +96,8 @@ export function roomFinishes(selections: Selection[], roomId: string): Map<strin
   for (const s of selections) if (s.targetId === roomId && !s.wall) out.set(s.category, s.product);
   return out;
 }
+
+/** Where the Interior design window's Pick finishes starts: the room you're standing in, if it takes finishes, else the whole house. */
+export function startTarget(rooms: { id: string }[], hereRoomId?: string | null): string {
+  return hereRoomId && rooms.some((r) => r.id === hereRoomId) ? hereRoomId : WHOLE_HOUSE;
+}
