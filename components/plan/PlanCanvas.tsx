@@ -17,6 +17,7 @@ import { arcBetween, leftBulge, pointOnEdge, projectOnEdge, roomEdgeLength } fro
 import { makeRoundRoom } from "@/lib/plan/shapes";
 import { splitWall } from "@/lib/plan/wallEdits";
 import { curveRun, isRun, runInfo, runOf, sharesOf, startBow, type Run } from "@/lib/plan/curveRun";
+import { isStairHall, lockedNote, unlocked } from "@/lib/plan/locks";
 import { addRoom, emptyPlan, insertGluedCorner, makeRoom, moveEdge, moveMany, moveOpeningTo, newPlanId, removeCorner, setCornerGlued, type Plans } from "@/lib/plan/edit";
 import { railingsOn, type Railing, type RailingSlot } from "@/lib/plan/railings";
 import { add, boundsOf, dist, polygonArea, polygonsOverlap, project, rectangle, round1, roundPoint, scale as scaleV, sub, unit } from "@/lib/plan/geometry";
@@ -154,6 +155,8 @@ export default function PlanCanvas(props: Props) {
   const [view, setView] = useState<View>({ scale: 0.6, x: 0, y: 0 });
   const fitted = useRef(false);
   const gesture = useRef<Gesture | null>(null);
+  /** Pressed on anchored stairs or a stair hall: what to say if it's dragged. */
+  const heldNote = useRef<{ note: string; start: Point } | null>(null);
   const [preview, setPreview] = useState<FloorPlan | null>(null);
   const [guides, setGuides] = useState<Guides>({});
   const [lotDelta, setLotDelta] = useState<{ dx: number; dy: number } | null>(null);
@@ -330,11 +333,12 @@ export default function PlanCanvas(props: Props) {
   // The diamonds: every side of a picked room, the picked side of a room, or a picked wall.
   const bendTargets: BendTarget[] = useMemo(() => {
     if (!single) return [];
-    if (single.kind === "room" && selRoom) return selRoom.polygon.map((_, edge) => ({ roomId: selRoom.id, edge }));
-    if (single.kind === "edge") return [{ roomId: parseEdgeId(single.id).roomId, edge: parseEdgeId(single.id).edge }];
+    // Stair hall walls stay straight (the same outline on every floor), so they get no diamonds.
+    if (single.kind === "room" && selRoom) return selRoom.stairStack ? [] : selRoom.polygon.map((_, edge) => ({ roomId: selRoom.id, edge }));
+    if (single.kind === "edge") return isStairHall(plan, parseEdgeId(single.id).roomId) ? [] : [{ roomId: parseEdgeId(single.id).roomId, edge: parseEdgeId(single.id).edge }];
     if (single.kind === "wall") return [{ wallId: single.id }];
     return [];
-  }, [single, selRoom]);
+  }, [single, selRoom, plan]);
   // Two or more picked walls that meet end to end: one diamond bends them together.
   const pickedRun = useMemo(() => {
     const targets = !furnishing && tool === "select" ? runTargets(selection) : null;
@@ -344,7 +348,8 @@ export default function PlanCanvas(props: Props) {
   useEffect(() => {
     setSelCorner((c) => (c && c.roomId === selRoomId ? c : null));
   }, [selRoomId]);
-  const transformTarget = !lotMode && !preview ? selRoom?.id : undefined;
+  // Anchored stair halls don't turn, so they get no turning handle.
+  const transformTarget = !lotMode && !preview && selRoom && !selRoom.anchored ? selRoom.id : undefined;
 
   useEffect(() => {
     const tr = trRef.current;
@@ -719,7 +724,11 @@ export default function PlanCanvas(props: Props) {
       const { roomId, edge } = parseEdgeId(el.id);
       gesture.current = { type: "edge", roomId, edge, start: p, moved: false };
     } else {
-      const ids = next.filter((x) => x.kind !== "edge" && x.kind !== "opening").map((x) => x.id);
+      const all = next.filter((x) => x.kind !== "edge" && x.kind !== "opening").map((x) => x.id);
+      // Anchored stairs and stair halls stay put; anything else picked with them still moves.
+      const ids = unlocked(plan, all);
+      const note = ids.length < all.length ? lockedNote(plan, all) : null;
+      heldNote.current = note ? { note, start: p } : null;
       if (ids.length) gesture.current = { type: "move", start: p, ids, moved: false };
     }
   }
@@ -729,6 +738,10 @@ export default function PlanCanvas(props: Props) {
     const shift = e.evt.shiftKey;
     if (tool === "door" || tool === "place" || tool === "stairs" || drafting) setCursor(p);
     const g = gesture.current;
+    if (heldNote.current && e.evt.buttons && dist(p, heldNote.current.start) * s > 3) {
+      onMessage(heldNote.current.note);
+      heldNote.current = null;
+    }
     if (tape) {
       if (tapePts.length === 1) setTapeEnd(snapFrom(tapePts[0], p, pickTargets([]), tol, snap, shift).p);
       return;
@@ -1100,12 +1113,12 @@ export default function PlanCanvas(props: Props) {
             ))}
 
             {stairsComingUp.map((st) => (
-              <StairsSymbol key={`down-${st.id}`} d={stairsDrawing(st, riseFor(st, below!.level))} cut={stairsCut(st, riseFor(st, below!.level))} scale={s} down />
+              <StairsSymbol key={`down-${st.id}`} d={stairsDrawing(st, riseFor(st, below!.level))} cut={stairsCut(st, riseFor(st, below!.level))} scale={s} down anchored={st.anchored} />
             ))}
             {shown.stairs.map((st) => {
               const d = stairsDrawing(st, riseFor(st, level));
               const under = stairsComingUp.some((b) => polygonsOverlap(stairsDrawing(b, riseFor(b, below!.level)).footprint, d.footprint));
-              return <StairsSymbol key={st.id} id={st.id} d={d} cut={stairsCut(st, riseFor(st, level))} hideAbove={under} selected={isPicked(selection, st.id)} scale={s} />;
+              return <StairsSymbol key={st.id} id={st.id} d={d} cut={stairsCut(st, riseFor(st, level))} hideAbove={under} selected={isPicked(selection, st.id)} scale={s} anchored={st.anchored} />;
             })}
 
             <RailingLines

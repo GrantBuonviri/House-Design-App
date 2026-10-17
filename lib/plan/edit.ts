@@ -5,6 +5,7 @@ import { add, clockwise, collinearOverlap, dist, dot, edgesOf, polygonCenter, ro
 import { clampOffset, hostSegment, nearestHost, sameHost } from "./walls";
 import { bulgeOf, leftBulge, pointOnEdge, projectOnEdge, reverseBulges, roomEdgeArc, roomEdgeLength, scaledBulge, wallArc, wallLength, withBulges } from "./arcs";
 import { carryOpenWalls, pruneOpenWalls } from "./openWalls";
+import { unlocked } from "./locks";
 
 /**
  * Editing helpers for one level's floor plan. Each returns a new plan, so the
@@ -44,9 +45,9 @@ export function updateRoom(plan: FloorPlan, id: string, patch: Partial<PlanRoom>
   return { ...plan, rooms: plan.rooms.map((r) => (r.id === id ? { ...r, ...patch } : r)) };
 }
 
-/** Delete rooms, walls, doors and windows, stairs, fixtures and furniture. Doors and windows in deleted walls go too. */
+/** Delete rooms, walls, doors and windows, stairs, fixtures and furniture. Doors and windows in deleted walls go too. Anchored stairs and stair halls stay. */
 export function removeMany(plan: FloorPlan, ids: string[]): FloorPlan {
-  const gone = new Set(ids);
+  const gone = new Set(unlocked(plan, ids));
   const hostGone = (o: Opening) => ("roomId" in o.host ? gone.has(o.host.roomId) : gone.has(o.host.wallId));
   return pruneOpenWalls({
     ...(plan.openWalls ? { openWalls: plan.openWalls } : {}),
@@ -70,10 +71,11 @@ export function removeMany(plan: FloorPlan, ids: string[]): FloorPlan {
 
 /**
  * Move rooms, walls, stairs and fixtures together. Doors and windows ride
- * along with their walls, and fixtures with their room.
+ * along with their walls, and fixtures with their room. Anchored stairs and
+ * stair halls stay put.
  */
 export function moveMany(plan: FloorPlan, ids: string[], dx: number, dy: number): FloorPlan {
-  const ids_ = new Set(ids);
+  const ids_ = new Set(unlocked(plan, ids));
   const d = { x: dx, y: dy };
   const mv = (p: Point) => roundPoint(add(p, d));
   return carryOpenWalls(plan, {
@@ -87,9 +89,9 @@ export function moveMany(plan: FloorPlan, ids: string[], dx: number, dy: number)
   });
 }
 
-/** Turn rooms (with their fixtures), walls, stairs and fixtures around a point. */
+/** Turn rooms (with their fixtures), walls, stairs and fixtures around a point. Anchored stairs and stair halls stay put. */
 export function rotateMany(plan: FloorPlan, ids: string[], deg: number, about: Point): FloorPlan {
-  const ids_ = new Set(ids);
+  const ids_ = new Set(unlocked(plan, ids));
   const rt = (p: Point) => roundPoint(rotate(p, deg, about));
   const turn = (r: number) => ((Math.round((r + deg) * 10) / 10) % 360 + 360) % 360;
   return carryOpenWalls(plan, {
@@ -103,9 +105,9 @@ export function rotateMany(plan: FloorPlan, ids: string[], deg: number, about: P
   });
 }
 
-/** Of these ids, the rooms, loose walls and stairs: what the Turn items in the right-click menu can turn. */
+/** Of these ids, the rooms, loose walls and stairs that aren't anchored: what the Turn items in the right-click menu can turn. */
 export function turnableIds(plan: FloorPlan, ids: string[]): string[] {
-  return ids.filter((id) => plan.rooms.some((r) => r.id === id) || plan.walls.some((w) => w.id === id) || plan.stairs.some((st) => st.id === id));
+  return unlocked(plan, ids).filter((id) => plan.rooms.some((r) => r.id === id) || plan.walls.some((w) => w.id === id) || plan.stairs.some((st) => st.id === id));
 }
 
 /** The middle of everything with these ids, for turning them together. */

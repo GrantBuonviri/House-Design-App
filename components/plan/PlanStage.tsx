@@ -40,6 +40,8 @@ import { levelAbove } from "@/lib/plan/basics";
 import { closeGap } from "@/lib/plan/overlaps";
 import { fillBelow, fillShapes, overhangsOf, pullBack, supportOf } from "@/lib/plan/support";
 import { copyableIds } from "@/lib/plan/arrange";
+import { anchor, flightsOf, reconcileStacks, refitHalls, stackOfItem, unanchor } from "@/lib/plan/anchor";
+import { lockedNote } from "@/lib/plan/locks";
 import PlanSidePanel from "./PlanSidePanel";
 import { pruneTopLabels } from "@/lib/house3d/topLabels";
 import House3DPanel from "@/components/house3d/House3DPanel";
@@ -216,7 +218,36 @@ export default function PlanStage({ onContinue, onGoToSketch, onGoToFurnish }: {
       update((p) => ({ ...p, floorPlans: change(p.floorPlans) }), coalesce ? { coalesce: `plan.${coalesce}` } : undefined),
     [update],
   );
-  const setLevelPlan = useCallback((pl: FloorPlan, coalesce?: string) => setPlans((ps) => ({ ...ps, [level.id]: pl }), coalesce), [setPlans, level.id]);
+  const stackCtx = useMemo(() => ({ levels, basics }), [levels, basics]);
+  /** One floor's new plan. Stairs stacks are kept whole on every floor (see lib/plan/anchor.ts). */
+  const setPlanOn = useCallback(
+    (id: string, pl: FloorPlan, coalesce?: string) => {
+      let note: string | null = null;
+      setPlans((ps) => {
+        const r = reconcileStacks(ps, { ...ps, [id]: pl }, id, stackCtx);
+        note = r.note;
+        return r.plans;
+      }, coalesce);
+      if (note) setFlash(note);
+    },
+    [setPlans, stackCtx],
+  );
+  const setLevelPlan = useCallback((pl: FloorPlan, coalesce?: string) => setPlanOn(level.id, pl, coalesce), [setPlanOn, level.id]);
+  /** The Anchor / Unanchor buttons, for stairs or a stair hall on this floor. */
+  const setAnchored = (id: string, on: boolean) => {
+    const stackId = stackOfItem(plan, id);
+    if (!on) {
+      if (!stackId) return;
+      setPlans((ps) => unanchor(ps, stackId));
+      setFlash("Unanchored the stairs. They and their stair halls still move together on every floor.");
+      return;
+    }
+    const flight = plan.stairs.some((s) => s.id === id) ? { levelId: level.id, id } : stackId ? (([f]) => f && { levelId: f.levelId, id: f.stairs.id })(flightsOf(plans, stackCtx, stackId)) : null;
+    const out = flight && anchor(plans, stackCtx, flight.levelId, flight.id);
+    if (!out) return setFlash("There are no stairs left in this stair hall to anchor.");
+    setPlans(() => out.plans);
+    setFlash(out.note);
+  };
   const setView = (patch: Partial<typeof project.plan>) => update((p) => ({ ...p, plan: { ...p.plan, ...patch } }));
   const setTopLabels = (next: TopLabels) => {
     const ids = new Set(Object.values(project.floorPlans).flatMap((f) => f.rooms.map((r) => r.id)));
@@ -270,8 +301,10 @@ export default function PlanStage({ onContinue, onGoToSketch, onGoToFurnish }: {
       const removable = locked ? [] : sel.filter((s) => s.kind !== "edge");
       if ((e.key === "Delete" || e.key === "Backspace") && removable.length) {
         e.preventDefault();
+        const note = lockedNote(plan, removable.map((s) => s.id));
         setLevelPlan(removeMany(plan, removable.map((s) => s.id)));
-        setSelection([]);
+        setSelection(note ? sel.filter((s) => lockedNote(plan, [s.id])) : []);
+        if (note) setFlash(note);
         return;
       }
       // One wall of a room picked: Delete takes the wall out (outside walls stay).
@@ -289,6 +322,8 @@ export default function PlanStage({ onContinue, onGoToSketch, onGoToFurnish }: {
       if (nudge && movable.length) {
         e.preventDefault();
         const step = e.shiftKey ? 12 : 1;
+        const note = lockedNote(plan, movable.map((s) => s.id));
+        if (note) setFlash(note);
         setLevelPlan(moveMany(plan, movable.map((s) => s.id), nudge[0] * step, nudge[1] * step), "nudge");
         return;
       }
@@ -486,7 +521,7 @@ export default function PlanStage({ onContinue, onGoToSketch, onGoToFurnish }: {
       return;
     }
     if (w.stairsU) {
-      setPlans((ps) => makeStairsU(ps, w.stairsU!));
+      setPlans((ps) => refitHalls(makeStairsU(ps, w.stairsU!), stackCtx));
       setFlash("Made both stairs U-shaped. Undo puts them back.");
       return;
     }
@@ -630,7 +665,7 @@ export default function PlanStage({ onContinue, onGoToSketch, onGoToFurnish }: {
                 if (id !== level.id) setLevelId(id);
                 setSelection(s);
               }}
-              onChange={(id, pl, coalesce) => setPlans((ps) => ({ ...ps, [id]: pl }), coalesce)}
+              onChange={setPlanOn}
               onTopLabels={setTopLabels}
             />
             <p className="mt-2 text-xs text-muted">
@@ -670,6 +705,7 @@ export default function PlanStage({ onContinue, onGoToSketch, onGoToFurnish }: {
                 onChange={setLevelPlan}
                 onSelect={setSelection}
                 onPreviewWindow={(id) => setPreviewing({ levelId: level.id, openingId: id })}
+                onAnchor={setAnchored}
               />
             )}
             <PlanChecks {...dismissProps} levels={levels} levelId={level.id} onPick={pickWarning} onFix={fixWarning} />
@@ -758,7 +794,7 @@ export default function PlanStage({ onContinue, onGoToSketch, onGoToFurnish }: {
                 Fill the floor below
               </button>
             )}
-            {menu && <PlanContextMenu at={menu} items={contextItems(plan, menu, sel, { change: setLevelPlan, select: setSelection, message: setFlash })} onClose={() => setMenu(null)} />}
+            {menu && <PlanContextMenu at={menu} items={contextItems(plan, menu, sel, { change: setLevelPlan, select: setSelection, message: setFlash, anchor: setAnchored })} onClose={() => setMenu(null)} />}
             {lotOn && <LotModeBanner onDone={() => setLotMode(false)} />}
             <p className="mt-2 text-xs text-muted">
               {hint}{" "}
@@ -789,6 +825,7 @@ export default function PlanStage({ onContinue, onGoToSketch, onGoToFurnish }: {
               onChange={setLevelPlan}
               onSelect={setSelection}
               onPreviewWindow={(id) => setPreviewing({ levelId: level.id, openingId: id })}
+              onAnchor={setAnchored}
             />
             {help && <KeyboardHelp onClose={() => setHelp(false)} />}
             <PlanChecks {...dismissProps} levels={levels} levelId={level.id} onPick={pickWarning} onFix={fixWarning} />

@@ -4,6 +4,7 @@ import { cleanRing } from "@/lib/house3d/footprint";
 import { reshapeRoom, moveMany } from "./edit";
 import { add, clockwise, dist, dot, edgesOf, leftNormal, len, polygonArea, polygonsOverlap, scale, sub, unit } from "./geometry";
 import { curvesOf, cutOutline, refitArcs } from "./refit";
+import { lockedIds } from "./locks";
 
 /**
  * Fixing rooms that were dropped on top of each other (`trimOverlap`) or left
@@ -37,14 +38,33 @@ export type Trim = { roomId: string; byId: string };
  * After rooms were moved, trim every room that wasn't moved back to the edge
  * of the ones that were, so they share one wall. Overlaps that can't be fixed
  * cleanly (a room left in two pieces, or nothing of it left) stay as they are.
+ * An anchored stair hall isn't trimmed: a room moved onto it is cut back to
+ * the hall's wall instead.
  */
 export function trimOverlap(plan: FloorPlan, movedIds: string[]): { plan: FloorPlan; trims: Trim[] } {
+  const locked = lockedIds(plan);
   const moved = plan.rooms.filter((r) => movedIds.includes(r.id));
   const movedOutlines = moved.map(cutOutline);
   let next = plan;
   const trims: Trim[] = [];
   for (const room of plan.rooms) {
     if (movedIds.includes(room.id)) continue;
+    if (locked.has(room.id)) {
+      // The rooms that moved onto it stop at its wall.
+      const hall = cutOutline(room);
+      for (const m of moved) {
+        if (locked.has(m.id)) continue;
+        const now = next.rooms.find((r) => r.id === m.id)!;
+        const outline = cutOutline(now);
+        if (!polygonsOverlap(outline, hall)) continue;
+        const cut = cutAway(outline, hall);
+        if (!cut) continue;
+        const fit = refitArcs(clockwise(cut), curvesOf([now]));
+        next = reshapeRoom(next, m.id, fit.polygon, fit.bulges ?? []);
+        trims.push({ roomId: m.id, byId: room.id });
+      }
+      continue;
+    }
     const whole = cutOutline(room);
     let poly: Point[] | null = whole;
     let by: PlanRoom | null = null;
@@ -124,7 +144,9 @@ export function closeGap(plan: FloorPlan, gap: Gap): FloorPlan {
   const a = plan.rooms.find((r) => r.id === gap.aId);
   const b = plan.rooms.find((r) => r.id === gap.bId);
   if (!a || !b || len({ x: gap.dx, y: gap.dy }) < 0.01) return plan;
-  // dx, dy move b toward a. When a is the smaller room, move a the other way instead.
-  if (polygonArea(a.polygon) < polygonArea(b.polygon)) return moveMany(plan, [a.id], -gap.dx, -gap.dy);
+  const locked = lockedIds(plan);
+  if (locked.has(a.id) && locked.has(b.id)) return plan;
+  // dx, dy move b toward a. When a is the smaller room, move a the other way instead (an anchored stair hall never moves).
+  if (locked.has(b.id) || (!locked.has(a.id) && polygonArea(a.polygon) < polygonArea(b.polygon))) return moveMany(plan, [a.id], -gap.dx, -gap.dy);
   return moveMany(plan, [b.id], gap.dx, gap.dy);
 }

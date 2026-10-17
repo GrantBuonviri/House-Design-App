@@ -5,6 +5,7 @@ import { reverseBulges, roomEdgeLength, withBulges } from "./arcs";
 import { boundsOf, dist, edgesOf, isRectangle, round1, roundPoint } from "./geometry";
 import { moveMany, newPlanId, reshapeRoom } from "./edit";
 import { pruneOpenWalls } from "./openWalls";
+import { isLocked, unlocked } from "./locks";
 
 /**
  * Whole-selection helpers: copy things (`duplicateMany`), flip them
@@ -78,14 +79,17 @@ export function duplicateMany(plan: FloorPlan, ids: string[], d: Point = { x: CO
   };
   let working = plan;
   const rooms = m.rooms.map((r) => {
-    const { briefRoomId: _brief, ...rest } = r;
+    const { briefRoomId: _brief, stairStack: _stack, anchored: _anchored, ...rest } = r;
     void _brief;
+    void _stack;
+    void _anchored;
     const copy = { ...rest, id: fresh(r.id, "r"), name: copyName(working, r.name), polygon: r.polygon.map(mv) };
     working = { ...working, rooms: [...working.rooms, copy] };
     return copy;
   });
   const walls = m.walls.map((w) => ({ ...w, id: fresh(w.id, "w"), a: mv(w.a), b: mv(w.b) }));
-  const stairs = m.stairs.map((s) => ({ ...s, id: fresh(s.id, "s"), x: round1(s.x + d.x), y: round1(s.y + d.y) }));
+  // Copies of anchored or stacked stairs start free, on their own.
+  const stairs = m.stairs.map(({ stackId: _stack, anchored: _anchored, ...s }) => (void _stack, void _anchored, { ...s, id: fresh(s.id, "s"), x: round1(s.x + d.x), y: round1(s.y + d.y) }));
   const fixtures = m.fixtures.map((f) => ({ ...f, id: fresh(f.id, "f"), x: round1(f.x + d.x), y: round1(f.y + d.y), roomId: f.roomId && map.has(f.roomId) ? map.get(f.roomId) : f.roomId }));
   const furniture = m.furniture.map((f) => ({ ...f, id: newPlanId("m"), x: round1(f.x + d.x), y: round1(f.y + d.y), roomId: f.roomId ? map.get(f.roomId) : f.roomId }));
   const riders = ridersIn(plan, m.roomIds);
@@ -116,7 +120,7 @@ export type Flip = "left-right" | "top-bottom";
  * whole selection, so the group stays where it is.
  */
 export function mirrorMany(plan: FloorPlan, ids: string[], flip: Flip): FloorPlan {
-  const m = members(plan, ids);
+  const m = members(plan, unlocked(plan, ids));
   const pts = [...m.rooms.flatMap((r) => r.polygon), ...m.walls.flatMap((w) => [w.a, w.b]), ...m.stairs, ...m.fixtures];
   const box = boundsOf(pts.map((p) => ({ x: p.x, y: p.y })));
   if (!box) return plan;
@@ -169,6 +173,7 @@ export type Align = "tops" | "bottoms" | "lefts" | "rights" | "same-width" | "sa
 export function whyNotAlign(plan: FloorPlan, ids: string[], how: Align): string | null {
   const rooms = plan.rooms.filter((r) => ids.includes(r.id));
   if (rooms.length < 2) return "Pick two or more rooms.";
+  if (rooms.some((r) => isLocked(plan, r.id))) return "Anchored stair halls stay where they are. Click Unanchor on the stairs to line them up.";
   if ((how === "same-width" || how === "same-depth") && !rooms.every((r) => isRectangle(r.polygon) && axisAligned(r.polygon))) return "Making sizes match works on straight rectangular rooms.";
   return null;
 }
@@ -179,7 +184,8 @@ const axisAligned = (poly: Point[]) => edgesOf(poly).every((e) => Math.abs(e.a.x
  * Line rooms up with the topmost / bottommost / leftmost / rightmost one, or
  * make them all the width or depth of the first room picked (kept at their top-left corners).
  */
-export function alignMany(plan: FloorPlan, ids: string[], how: Align): FloorPlan {
+export function alignMany(plan: FloorPlan, ids_: string[], how: Align): FloorPlan {
+  const ids = unlocked(plan, ids_);
   if (whyNotAlign(plan, ids, how)) return plan;
   const rooms = ids.map((id) => plan.rooms.find((r) => r.id === id)).filter((r): r is PlanRoom => !!r);
   const box = (r: PlanRoom) => boundsOf(r.polygon)!;

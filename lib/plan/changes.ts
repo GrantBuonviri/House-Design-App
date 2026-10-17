@@ -311,7 +311,7 @@ const OPEN_UP_MAX_IN = 144;
  */
 export function applyChange(plan: FloorPlan, c: PlanChange, ctx: { exteriorIn: number; seeds: (p: FloorPlan) => string[] }): { plan: FloorPlan; rooms: string[] } | null {
   const room = plan.rooms.find((r) => r.id === c.room);
-  if (!room) return null;
+  if (!room || room.stairStack) return null;
   const other = c.other && c.other !== OUTSIDE ? plan.rooms.find((r) => r.id === c.other) : undefined;
   const side = c.side === "none" ? null : c.side;
   let next: FloorPlan | null = null;
@@ -410,9 +410,14 @@ export function applyChange(plan: FloorPlan, c: PlanChange, ctx: { exteriorIn: n
   }
   if (!next) return null;
   next = tidy(next);
+  // Stair halls keep their outline (it's the same on every floor), so a change that reshapes one is skipped.
+  const was = new Map(plan.rooms.map((r) => [r.id, r]));
+  if (next.rooms.some((r) => was.get(r.id)?.stairStack && json(was.get(r.id)!.polygon) !== json(r.polygon)) || plan.rooms.some((r) => r.stairStack && !next!.rooms.some((x) => x.id === r.id))) return null;
   if (!stillSound(plan, next, ctx.seeds(plan), ctx.seeds(next), check)) return null;
   return { plan: next, rooms: touched };
 }
+
+const json = (x: unknown) => JSON.stringify(x);
 
 // ---------- A list of changes ----------
 

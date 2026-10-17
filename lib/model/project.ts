@@ -83,6 +83,9 @@ export function migrateProject(raw: unknown): Project {
   // means automatic), so no change beyond the version.
   // Version 26 to 27 added the floor above and overhang label switches, color and
   // strength (`plan.labels`, all with defaults), so no change beyond the version.
+  // Version 27 to 28 added stair stacks and anchoring (`PlanStairs.stackId`,
+  // `PlanStairs.anchored`, `PlanRoom.stairStack`, `PlanRoom.anchored`, all optional), so no change
+  // beyond the version.
   return Project.parse({ ...migrated, schemaVersion: SCHEMA_VERSION });
 }
 
