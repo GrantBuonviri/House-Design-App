@@ -1,4 +1,5 @@
 import type { Project, RealLot } from "@/lib/model/schema";
+import { houseSpot } from "@/lib/house3d/site";
 import { CODE_DATA, CODE_EDITIONS, codeEntry, codeNum, codeText } from "@/lib/codes/data";
 import { reportCounts, type RuleReport } from "@/lib/codes/rules";
 import { inchText } from "@/lib/codes/rules";
@@ -218,7 +219,7 @@ function lotText(lot: RealLot): string {
 
 function foundationText(p: Project): string {
   if (!p.plot) return "TBD";
-  const f = plotImplications(p.plot).foundation;
+  const f = plotImplications(p.plot, houseSpot(p)).foundation;
   const basement = p.levels.some((l) => l.kind === "basement");
   if (basement) return f.type === "slab" || f.type === "crawlspace" ? "Full basement" : f.label;
   return f.type === "slab" ? "Slab or crawlspace" : "Crawlspace with stepped stem walls";

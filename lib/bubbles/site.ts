@@ -64,7 +64,7 @@ export function spotFromVector(v: Point, centerRadius: number): Spot {
 }
 
 /** The parts of a house that tend to sit together. */
-export type Zone = "entry" | "garage" | "porch" | "living" | "kitchen" | "outdoor" | "private" | "service" | "center";
+export type Zone = "entry" | "garage" | "porch" | "living" | "kitchen" | "outdoor" | "private" | "service" | "buffer" | "center";
 
 const ZONE_OF: Record<string, Zone> = {
   entry: "entry",
@@ -92,9 +92,9 @@ const ZONE_OF: Record<string, Zone> = {
   bathroom: "private",
   "guest-suite": "private",
   bonus: "private",
-  laundry: "service",
-  storage: "service",
-  mechanical: "service",
+  laundry: "buffer",
+  storage: "buffer",
+  mechanical: "buffer",
   craft: "service",
   gym: "service",
 };
@@ -104,17 +104,24 @@ export function zoneOf(type: string): Zone {
 }
 
 /**
- * Which way each part of the house faces, by the side the road is on. The
- * entry and garage face the road, living spaces and patios get the sunny
- * south side, bedrooms go on the quieter side away from the road, and the
- * garage sits on the less sunny flank (on the west it also shades the house
- * from hot afternoon sun).
+ * Which way each part of the house faces, by the side the road is on (Boise:
+ * noon sun is high in summer and low in winter, afternoons are hot, and the
+ * wind is mostly from the north-west and south-east). The entry faces the
+ * road, living spaces and patios get the sunny south side, the kitchen gets
+ * morning sun on the east, and bedrooms go on the quieter side away from the
+ * road. The garage sits on the less sunny flank, and the road side still
+ * wins for it (the driveway has to reach it; on a south road it takes the west
+ * half). Storage, laundry and mechanical rooms ("buffer") go north or west,
+ * north-west first when the garage isn't there, so they shield the house from
+ * hot afternoon sun and north-west wind. (On an east road the kitchen stays in
+ * the middle: the east side is the entry's, and a kitchen there would leave the
+ * entry tucked between it and the garage.)
  */
 const BY_ROAD: Record<Plot["roadSide"], Record<Zone, Spot>> = {
-  N: { entry: "N", garage: "NW", porch: "N", living: "S", kitchen: "center", outdoor: "S", private: "E", service: "W", center: "center" },
-  S: { entry: "S", garage: "SW", porch: "S", living: "SE", kitchen: "center", outdoor: "E", private: "N", service: "W", center: "center" },
-  E: { entry: "E", garage: "NE", porch: "E", living: "S", kitchen: "center", outdoor: "SW", private: "W", service: "N", center: "center" },
-  W: { entry: "W", garage: "NW", porch: "W", living: "S", kitchen: "center", outdoor: "SE", private: "E", service: "N", center: "center" },
+  N: { entry: "N", garage: "NW", porch: "N", living: "S", kitchen: "SE", outdoor: "S", private: "E", service: "W", buffer: "W", center: "center" },
+  S: { entry: "S", garage: "SW", porch: "S", living: "SE", kitchen: "E", outdoor: "E", private: "N", service: "W", buffer: "NW", center: "center" },
+  E: { entry: "E", garage: "NE", porch: "E", living: "S", kitchen: "center", outdoor: "SW", private: "W", service: "N", buffer: "NW", center: "center" },
+  W: { entry: "W", garage: "NW", porch: "W", living: "S", kitchen: "SE", outdoor: "SE", private: "E", service: "N", buffer: "N", center: "center" },
 };
 
 /** Rooms that are nicer with daylight, for the open side of a walkout basement. */
@@ -129,10 +136,11 @@ export type Site = {
   mirrorAxis: "x" | "y";
 };
 
-export function siteOf(plot: Plot | null): Site {
+/** `spot` is where the house sits on the land (plot inches), so the walkout follows the slope under it. */
+export function siteOf(plot: Plot | null, spot?: Point): Site {
   // Without land, assume the road is on the north and the back yard faces south.
   if (!plot) return { roadSide: "N", walkout: null, mirrorAxis: "x" };
-  const f = plotImplications(plot).foundation.type;
+  const f = plotImplications(plot, spot).foundation.type;
   const walkout = f === "walkout" || f === "stepped" ? (compassShort(plot.slope.downhillDeg) as Spot) : null;
   return { roadSide: plot.roadSide, walkout, mirrorAxis: plot.roadSide === "N" || plot.roadSide === "S" ? "x" : "y" };
 }

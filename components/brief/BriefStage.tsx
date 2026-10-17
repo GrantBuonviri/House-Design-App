@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import type { DesignBrief, DiscoveryAnswers } from "@/lib/model/schema";
+import { houseSpot } from "@/lib/house3d/site";
 import { syncLevels } from "@/lib/brief/levels";
 import { buildRuleBrief } from "@/lib/brief/rules";
 import { plotFacts } from "@/components/land/plotText";
@@ -36,7 +37,7 @@ export default function BriefStage({ onContinue, onPickLand }: { onContinue: () 
   const buildBrief = () => {
     if (project.brief && !window.confirm("Replace your current brief, including any edits you made to it?")) return;
     update((p) => {
-      const brief = buildRuleBrief({ answers: p.discovery.answers, profile: p.profile, plot: p.plot });
+      const brief = buildRuleBrief({ answers: p.discovery.answers, profile: p.profile, plot: p.plot, spot: houseSpot(p) });
       return { ...p, brief, levels: syncLevels(p.levels, brief) };
     });
     setView("brief");
@@ -88,7 +89,7 @@ export default function BriefStage({ onContinue, onPickLand }: { onContinue: () 
     );
   }
 
-  const facts = project.plot ? plotFacts(project.plot) : null;
+  const facts = project.plot ? plotFacts(project.plot, houseSpot(project)) : null;
   const ready = answers.rooms.length > 0;
 
   return (
@@ -108,7 +109,7 @@ export default function BriefStage({ onContinue, onPickLand }: { onContinue: () 
           )}
         </div>
 
-        <RoomsPage answers={answers} setAnswers={setAnswers} plot={project.plot} />
+        <RoomsPage answers={answers} setAnswers={setAnswers} plot={project.plot} spot={houseSpot(project)} />
 
 
         <div className="flex items-center justify-end gap-4">

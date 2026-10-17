@@ -17,6 +17,7 @@ import { Note } from "@/components/brief/bits";
 import AlternativesView from "./AlternativesView";
 import LevelTabs from "./LevelTabs";
 import SidePanel from "./SidePanel";
+import { houseSpot } from "@/lib/house3d/site";
 import ViewOptions, { type Overlay } from "./ViewOptions";
 import { TOOLS, type LandView, type Selection, type Side, type Tool } from "./types";
 
@@ -63,7 +64,8 @@ export default function BubbleStage({ onContinue, onGoToRooms }: { onContinue: (
   const diagram = diagramOf(diagrams, level.id);
   const belowLevel = [...levels].reverse().find((l) => l.elevationIn < level.elevationIn);
   const below = belowLevel && diagrams[belowLevel.id]?.bubbles.length ? { name: belowLevel.name, diagram: diagrams[belowLevel.id] } : null;
-  const ctx: SketchContext | null = brief ? { brief, plot, levels } : null;
+  const spot = useMemo(() => houseSpot(project), [project]);
+  const ctx: SketchContext | null = brief ? { brief, plot, levels, spot } : null;
   const missing = brief && !choosing ? missingRooms(brief, diagrams) : [];
 
   // What's selected and still there (Undo can take things away).
@@ -76,11 +78,11 @@ export default function BubbleStage({ onContinue, onGoToRooms }: { onContinue: (
     const out: Record<Side, string[]> = { N: [], E: [], S: ["Sunny side"], W: [] };
     if (plot) {
       out[plot.roadSide].unshift("Road");
-      const site = siteOf(plot);
+      const site = siteOf(plot, spot);
       if (site.walkout) out[nearestSide(plot.slope.downhillDeg)].push("Downhill");
     }
     return out;
-  }, [plot]);
+  }, [plot, spot]);
 
   // ---- The land under the sketch ----
   const drawing = useMemo(() => (plot ? landDrawing(plot) : null), [plot]);

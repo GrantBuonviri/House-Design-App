@@ -18,7 +18,7 @@ export const MIN_DIFFERENCE = 0.12;
  * skipped, and ideas whose titles are in `skip` (already shown) come last.
  */
 export function ruleAlternatives(ctx: SketchContext, current: Diagrams, skip: string[] = []): Alternative[] {
-  const site = siteOf(ctx.plot);
+  const site = siteOf(ctx.plot, ctx.spot);
   const now = currentSpots(ctx, current);
   const typeOf = new Map(ctx.brief.rooms.map((r) => [bubbleIdFor(r.id), r.type]));
   const zone = (id: string) => zoneOf(typeOf.get(id) ?? "");

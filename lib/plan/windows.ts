@@ -1,5 +1,6 @@
 import type { FloorPlan, Level, Opening, PlanRoom, Point, WindowOperation } from "@/lib/model/schema";
 import { escapeCheck } from "@/lib/codes/openings";
+import { codeNum } from "@/lib/codes/data";
 import { freeSpot, newOpening, openingRooms } from "./connect";
 import { openingType } from "./catalog";
 import { hostSegment } from "./walls";
@@ -12,6 +13,22 @@ import { sharedEdges, widestUnit } from "./bend";
 /** Suggest a plan: windows on outside walls, more and bigger on the sunny south side. */
 
 const SOUTH: Point = { x: 0, y: 1 };
+
+/**
+ * Afternoon sun comes from the west and Boise afternoons are hot, so west glass is kept small:
+ * at most 25% of a room's window area, and 4% of the house's floor area in all. Walls facing
+ * within 60 degrees of due west count as west.
+ */
+const WEST_SHARE = 0.25;
+const WEST_OF_FLOOR = 0.04;
+const isWest = (n: Point) => n.x <= -0.5;
+/** A window over the kitchen sink: its sill sits 42" up, just over the counter and backsplash. */
+const SINK_SILL_IN = 42;
+const SINK_HEIGHT_IN = 36;
+/** How close (inches) a sink's centre is to an outside wall for the window to go over it. */
+const SINK_REACH_IN = 36;
+
+const sqft = (widthIn: number, heightIn: number) => (widthIn * heightIn) / 144;
 
 // ---------- Windows ----------
 
@@ -84,6 +101,8 @@ export function buriedStretch(s: Stretch, covered: Point[][]): boolean {
 export function addWindows(plan: FloorPlan, level: Pick<Level, "kind">, covered: Point[][] = []): { plan: FloorPlan; added: number } {
   let p = plan;
   let added = 0;
+  const westBudget = (plan.rooms.filter((r) => areaKind(r) === "living").reduce((n, r) => n + polygonArea(r.polygon), 0) / 144) * WEST_OF_FLOOR;
+  let westUsed = 0;
   for (const room of plan.rooms) {
     const type = room.type ?? "other";
     if (areaKind(room) !== "living" || NO_WINDOWS.has(type)) continue;
@@ -93,8 +112,8 @@ export function addWindows(plan: FloorPlan, level: Pick<Level, "kind">, covered:
       // Not where another room is just a few inches away.
       .filter((x) => x.usable >= 24 && !roomJustOutside(plan, x.w) && !buriedStretch(x.w, covered))
       .map((x) => ({ ...x, facing: dot(x.n, SOUTH) }))
-      // Sunniest first, then east and west, north last; longer walls first.
-      .sort((a, b) => b.facing - a.facing || b.usable - a.usable);
+      // Sunniest first, then east before west, north last; longer walls first.
+      .sort((a, b) => b.facing - a.facing || a.n.x * -1 - b.n.x * -1 || b.usable - a.usable);
     const bedroom = BEDROOMS.has(type);
     if (!mine.length) {
       // Too little outside wall for the usual windows; a bedroom still gets an escape window if one fits.
@@ -142,7 +161,29 @@ export function addWindows(plan: FloorPlan, level: Pick<Level, "kind">, covered:
       }
     }
 
+    // A kitchen gets a window over the sink, or on its best wall where a sink can go later.
+    let sinkArea = 0;
+    let sinkWest = false;
+    if (type === "kitchen" && level.kind !== "basement") {
+      const sink = sinkWindow(p, room, mine);
+      if (sink) {
+        p = { ...p, openings: [...p.openings, sink.opening] };
+        added++;
+        sinkArea = sqft(sink.opening.widthIn, sink.opening.heightIn);
+        sinkWest = sink.west;
+        // The sink window is one of the kitchen's two.
+        const first = plans.findIndex((x) => x.count > 0);
+        if (first >= 0 && plans.reduce((n, x) => n + x.count, 0) >= 2) plans[first] = { ...plans[first], count: plans[first].count - 1 };
+      }
+    }
+    if (level.kind !== "basement") {
+      const need = (polygonArea(room.polygon) / 144) * ((codeNum("light.glazingPctOfFloor") * 1.15) / 100);
+      const cut = capWest(plans, mine, sinkArea, sinkWest, Math.max(0, westBudget - westUsed), need);
+      westUsed += cut.westArea + (sinkWest ? sinkArea : 0);
+    }
+
     for (const { piece, count, place } of plans) {
+      if (count <= 0) continue;
       const { w } = piece;
       const slot = (w.t1 - w.t0) / count;
       for (let k = 0; k < count; k++) {
@@ -180,6 +221,93 @@ export function addWindows(plan: FloorPlan, level: Pick<Level, "kind">, covered:
   return { plan: p, added };
 }
 
+type Planned = { piece: { w: Stretch; n: Point; usable: number; facing: number }; count: number; place: Placement };
+type Piece = Planned["piece"];
+
+const areaOf = (e: Planned) => e.count * sqft(e.place.widthIn, openingType(e.place.style).heightIn);
+
+/**
+ * Trims the planned windows on west walls down to the west glass limit, then moves some of what
+ * was cut to a south or east wall that has no window yet. Returns the west glass left, in sq ft.
+ * A room with no other wall keeps one small west window rather than none.
+ */
+function capWest(plans: Planned[], mine: Piece[], sinkArea: number, sinkWest: boolean, houseLeft: number, needSqft: number): { westArea: number } {
+  const west = (e: Planned) => isWest(e.piece.n);
+  const other = plans.filter((e) => !west(e)).reduce((n, e) => n + areaOf(e), 0) + (sinkWest ? 0 : sinkArea);
+  // w <= 25% of (w + other)  means  w <= other / 3.
+  const room = other > 0 ? other * (WEST_SHARE / (1 - WEST_SHARE)) : 0;
+  let westArea = plans.filter(west).reduce((n, e) => n + areaOf(e), 0) + (sinkWest ? sinkArea : 0);
+  // Light comes first: where the other walls can't give the room the 8% glass the code wants, west windows make up the rest.
+  const limit = Math.max(Math.min(room, houseLeft), Math.min(westArea, needSqft - other));
+  const before = westArea;
+  const sizeable = () => plans.filter((e) => west(e) && e.count > 0);
+  while (westArea > limit) {
+    const big = [...sizeable()].sort((a, b) => areaOf(b) - areaOf(a))[0];
+    if (!big) break;
+    const only = plans.every((e) => e === big || e.count <= 0) && sinkArea === 0;
+    if (big.count > 1) big.count--;
+    else if (big.place.style === "window-picture") big.place = { style: "window", widthIn: 48 };
+    else if (big.place.widthIn > 24) big.place = { ...big.place, widthIn: Math.max(24, big.place.widthIn - 12) };
+    else if (only) break;
+    else big.count = 0;
+    westArea = plans.filter(west).reduce((n, e) => n + areaOf(e), 0) + (sinkWest ? sinkArea : 0);
+  }
+  // Give some of it back on a south or east wall that has no window yet.
+  const removed = before - westArea;
+  if (removed > 0.5) {
+    const used = new Set(plans.filter((e) => e.count > 0).map((e) => e.piece.w.host.edge + ":" + e.piece.w.t0));
+    const spare = mine.find((m) => !isWest(m.n) && m.facing > -0.6 && !used.has(m.w.host.edge + ":" + m.w.t0));
+    if (spare) {
+      const widthIn = Math.min(48, Math.floor((spare.usable - 12) / 12) * 12);
+      if (widthIn >= 36) plans.push({ piece: spare, count: 1, place: { style: "window", widthIn } });
+    }
+  }
+  return { westArea };
+}
+
+/**
+ * The kitchen window: over the sink when one is on an outside wall, else in the middle of the
+ * best outside wall (south, then east) so a sink can go under it later. Sill 42".
+ */
+function sinkWindow(plan: FloorPlan, room: PlanRoom, mine: Piece[]): { opening: Opening; west: boolean } | null {
+  const sinks = plan.fixtures.filter((f) => f.kind === "sink" && (f.roomId === room.id || pointInPolygon({ x: f.x, y: f.y }, room.polygon)));
+  const tryPiece = (piece: Piece, want: number | null) => {
+    const { w } = piece;
+    const L = w.t1 - w.t0;
+    const widthIn = Math.min(L - 2 * END_IN >= 48 ? 48 : 36, Math.floor((L - 2 * END_IN) / 6) * 6);
+    if (widthIn < 24) return null;
+    const lo = w.t0 + END_IN;
+    const hi = w.t1 - END_IN;
+    const centre = Math.min(hi - widthIn / 2, Math.max(lo + widthIn / 2, want ?? (w.t0 + w.t1) / 2));
+    const at = freeSpot(plan, w.host, centre - widthIn / 2 - 1, centre + widthIn / 2 + 1, widthIn, 6);
+    if (at === null) return null;
+    const o = { ...newOpening("window", w.host, at, 1, widthIn), heightIn: SINK_HEIGHT_IN, sillIn: SINK_SILL_IN };
+    return { opening: o, west: isWest(piece.n) };
+  };
+  for (const sink of sinks) {
+    const c = { x: sink.x, y: sink.y };
+    const near = mine
+      .map((piece) => {
+        const along = dot(sub(c, piece.w.a), unit(sub(piece.w.b, piece.w.a)));
+        const foot = add(piece.w.a, scale(unit(sub(piece.w.b, piece.w.a)), along));
+        return { piece, along, gap: dist(c, foot) };
+      })
+      .filter((x) => x.gap <= SINK_REACH_IN && x.along >= x.piece.w.t0 && x.along <= x.piece.w.t1)
+      .sort((a, b) => a.gap - b.gap)[0];
+    if (near) {
+      const got = tryPiece(near.piece, near.along);
+      if (got) return got;
+    }
+  }
+  // No sink on an outside wall: the best wall that isn't facing north or west if there is one.
+  const order = [...mine].sort((a, b) => Number(isWest(a.n)) - Number(isWest(b.n)));
+  for (const piece of order) {
+    const got = tryPiece(piece, null);
+    if (got) return got;
+  }
+  return null;
+}
+
 /** Outside windows of a room. */
 function outsideWindows(plan: FloorPlan, roomId: string): Opening[] {
   return plan.openings.filter((o) => o.kind === "window" && openingRooms(plan, o).includes(roomId) && openingRooms(plan, o).includes(null));
@@ -213,7 +341,14 @@ export function makeEscapeWindow(plan: FloorPlan, roomId: string, level: Pick<Le
     const seg = hostSegment(plan, o.host);
     return !!seg && buriedStretch({ a: seg.a, b: seg.b, t0: o.offsetIn - 1, t1: o.offsetIn + 1, host: { roomId, edge: 0 } }, covered);
   };
-  const own = outsideWindows(plan, roomId).filter((o) => !buried(o)).sort((a, b) => b.widthIn * b.heightIn - a.widthIn * a.heightIn);
+  const westWindow = (o: Opening) => {
+    const seg = hostSegment(plan, o.host);
+    return seg ? isWest(leftNormal(unit(sub(seg.b, seg.a)))) : false;
+  };
+  // Not a west window if another will do: afternoon sun comes in there.
+  const own = outsideWindows(plan, roomId)
+    .filter((o) => !buried(o))
+    .sort((a, b) => Number(westWindow(a)) - Number(westWindow(b)) || b.widthIn * b.heightIn - a.widthIn * a.heightIn);
   for (const o of own) {
     const without = { ...plan, openings: plan.openings.filter((x) => x.id !== o.id) };
     const seg = hostSegment(plan, o.host);
@@ -231,7 +366,7 @@ export function makeEscapeWindow(plan: FloorPlan, roomId: string, level: Pick<Le
   const pieces = outsideStretches(plan, room)
     .filter((w) => !roomJustOutside(plan, w) && !buriedStretch(w, covered))
     .map((w) => ({ w, facing: dot(leftNormal(unit(sub(w.b, w.a))), SOUTH) }))
-    .sort((a, b) => b.facing - a.facing || b.w.t1 - b.w.t0 - (a.w.t1 - a.w.t0));
+    .sort((a, b) => b.facing - a.facing || Number(isWest(leftNormal(unit(sub(a.w.b, a.w.a))))) - Number(isWest(leftNormal(unit(sub(b.w.b, b.w.a))))) || b.w.t1 - b.w.t0 - (a.w.t1 - a.w.t0));
   for (const { w } of pieces) {
     const fitsCurve = w.radius ? Math.floor(widestUnit(w.radius) / 6) * 6 : Infinity;
     const widthIn = Math.min(Math.max(minW, 36), fitsCurve, Math.floor((w.t1 - w.t0 - 2 * ESCAPE_END_IN) / 6) * 6);

@@ -1,6 +1,6 @@
 "use client";
 
-import type { ChosenRoom, DiscoveryAnswers, Plot } from "@/lib/model/schema";
+import type { ChosenRoom, DiscoveryAnswers, Plot, Point } from "@/lib/model/schema";
 import { CATEGORIES, MAX_PER_TYPE, BRIEF_ROOM_TYPES, newRoomId, setTypeCount, sqftFromDims } from "@/lib/brief/rooms";
 import { MAX_ABOVE, MAX_BELOW, levelIdsFor, levelName } from "@/lib/brief/levels";
 import { plotImplications } from "@/lib/land/implications";
@@ -20,13 +20,15 @@ export default function RoomsPage({
   answers: a,
   setAnswers,
   plot,
+  spot,
 }: {
   answers: DiscoveryAnswers;
   setAnswers: SetAnswers;
   plot: Plot | null;
+  spot?: Point;
 }) {
   const levels = levelIdsFor(a.floorsAbove, a.floorsBelow);
-  const foundation = plot ? plotImplications(plot).foundation : null;
+  const foundation = plot ? plotImplications(plot, spot).foundation : null;
   const suitsWalkout = foundation?.type === "walkout" || foundation?.type === "stepped";
 
   const setRooms = (rooms: ChosenRoom[], key: string) => setAnswers({ rooms, connections: keepConnections(a, rooms) }, key);

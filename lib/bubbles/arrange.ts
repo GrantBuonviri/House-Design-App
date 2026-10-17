@@ -3,7 +3,7 @@ import { MAIN_LEVEL_ID, nearestLevel } from "@/lib/brief/levels";
 import { roomType } from "@/lib/brief/rooms";
 import { freeSpot, layout, type LayoutLink, type LayoutNode } from "./layout";
 import { bubbleForRoom, bubbleIdFor, emptyDiagram, isDrawn, stairsBubble, type Bubble } from "./shapes";
-import { ruleSpot, siteOf, spotFromVector, spotVector, type Spot } from "./site";
+import { ruleSpot, siteOf, spotFromVector, spotVector, zoneOf, type Spot } from "./site";
 
 /**
  * Turning the brief and the land into bubble diagrams, one per level.
@@ -12,7 +12,7 @@ import { ruleSpot, siteOf, spotFromVector, spotVector, type Spot } from "./site"
  * line up on every floor.
  */
 
-export type SketchContext = { brief: DesignBrief; plot: Plot | null; levels: Level[] };
+export type SketchContext = { brief: DesignBrief; plot: Plot | null; levels: Level[]; /** Where the house sits on the land (plot inches). */ spot?: Point };
 export type Diagrams = Record<string, BubbleDiagram>;
 
 const OUTSIDE = new Set(["garage", "outdoor"]);
@@ -93,12 +93,39 @@ function flowsFor(brief: DesignBrief, bubbles: Bubble[]): BubbleDiagram["flows"]
     .map((l) => ({ id: `f-${l.a}-${l.b}`, from: l.a, to: l.b }));
 }
 
-/** The built-in choice of spot for every room in the brief. */
+/**
+ * The built-in choice of spot for every room in the brief. Three or more plain bedrooms on one floor
+ * that would all land on one spot spread over the spots next to it, skipping spots other
+ * rooms (entry, garage, living spaces, storage) already use, so they aren't piled up.
+ */
 export function ruleSpots(ctx: SketchContext): Map<string, Spot> {
-  const site = siteOf(ctx.plot);
+  const site = siteOf(ctx.plot, ctx.spot);
   const kind = new Map(ctx.levels.map((l) => [l.id, l.kind]));
-  return new Map(ctx.brief.rooms.map((r) => [r.id, ruleSpot(r.type, kind.get(levelForRoom(r, ctx.levels)) ?? "main", site)]));
+  const out = new Map(ctx.brief.rooms.map((r) => [r.id, ruleSpot(r.type, kind.get(levelForRoom(r, ctx.levels)) ?? "main", site)]));
+  for (const level of ctx.levels) {
+    const here = ctx.brief.rooms.filter((r) => levelForRoom(r, ctx.levels) === level.id);
+    const beds = here.filter((r) => r.type === "bedroom");
+    // Two bedrooms beside the primary suite sit fine together; three or more would pile up on one spot.
+    if (beds.length < 3) continue;
+    const taken = new Set(here.filter((r) => r.type !== "bedroom" && !["private"].includes(zoneOf(r.type))).map((r) => out.get(r.id)!));
+    const base = out.get(beds[0].id)!;
+    const at = RING.indexOf(base);
+    if (at < 0) continue;
+    const used = new Set<Spot>();
+    for (const bed of beds) {
+      const pick = [0, 1, -1, 2, -2, 3, -3]
+        .map((d) => RING[(at + d + RING.length) % RING.length])
+        .find((sp) => !used.has(sp) && !taken.has(sp));
+      const spot = pick ?? base;
+      used.add(spot);
+      out.set(bed.id, spot);
+    }
+  }
+  return out;
 }
+
+/** The eight compass spots in order around the house. */
+const RING: Spot[] = ["N", "NE", "E", "SE", "S", "SW", "W", "NW"];
 
 /**
  * A complete starting sketch: every brief room as a bubble on its floor, at
@@ -265,7 +292,7 @@ function relayout(
  * usual spot. Everything already drawn stays exactly where it is.
  */
 export function addMissingRooms(ctx: SketchContext, current: Diagrams, roomIds: string[]): Diagrams {
-  const site = siteOf(ctx.plot);
+  const site = siteOf(ctx.plot, ctx.spot);
   const main = mainLevelId(ctx.levels);
   const center = centerOf(current[main]?.bubbles ?? []);
   const out: Diagrams = { ...current };
