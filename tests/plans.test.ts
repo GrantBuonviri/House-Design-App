@@ -228,7 +228,7 @@ describe("the outside of the house (part 2)", () => {
 
   it("fails a house that reaches past a lot line, even with no setback entered", () => {
     // A lot 30 ft wide, narrower than the house, which sits centered on it.
-    const over = onRealLot(ranch, { frontFt: 30, setbacks: { front: 20, side: null, rear: 15 } });
+    const over = onRealLot(ranch, { frontFt: 30, setbacks: { front: 20, side: null, rear: 15, streetSide: null } });
     const left = siteLayout(over)!.checks.find((c) => c.side === "left")!;
     expect(left.providedFt).toBeLessThan(-1);
     expect(left.ok).toBe(false);
