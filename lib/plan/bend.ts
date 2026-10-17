@@ -2,6 +2,7 @@ import type { FloorPlan, Opening, PlanRoom, Point } from "@/lib/model/schema";
 import { bulgeOf, isCurved, roomEdgeArc, roomEdgeLength, withBulges, wallArc, wallLength } from "./arcs";
 import { add, dist, leftNormal, round1, scale, signedArea, sub, unit } from "./geometry";
 import { clampOffset } from "./walls";
+import { isStairHall } from "./locks";
 
 /**
  * Bending a wall: the helpers behind the diamond handle and the Radius and
@@ -157,6 +158,8 @@ function keepProportion(plan: FloorPlan, before: FloorPlan, hosts: BendTarget[])
 export function bendWall(plan: FloorPlan, t: BendTarget, left: number, alone = false): FloorPlan {
   const info = bendInfo(plan, t);
   if (!info) return plan;
+  // Stair hall walls stay straight, so the hall lines up on every floor.
+  if (left && "roomId" in t && (isStairHall(plan, t.roomId) || (!alone && sharedEdges(plan, t.roomId, t.edge).some((s) => isStairHall(plan, s.roomId))))) return plan;
   const clamped = Math.max(-maxBow(info.chord), Math.min(maxBow(info.chord), left));
   const bow = isCurved(clamped) ? round1(clamped) : 0;
   if (!("roomId" in t)) {

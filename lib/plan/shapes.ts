@@ -3,6 +3,7 @@ import { dist, dot, edgesOf, sub, unit } from "./geometry";
 import { bulgeOf, isCurved, projectOnEdge } from "./arcs";
 import { sharedEdges } from "./bend";
 import { makeRoom, reshapeRoom } from "./edit";
+import { HALL_CURVE_NOTE } from "./locks";
 
 /** Shortcut shapes: Round corner, the Round room preset and Half-round bay. */
 
@@ -35,7 +36,7 @@ export function roundableRadius(room: Pick<PlanRoom, "polygon" | "bulges">, i: n
 /** Replace one corner with two corners joined by a curved edge that meets both walls smoothly. */
 export function roundCorner(plan: FloorPlan, roomId: string, i: number, radius = DEFAULT_CORNER_RADIUS_IN, share = 1): FloorPlan | null {
   const room = plan.rooms.find((r) => r.id === roomId);
-  if (!room) return null;
+  if (!room || room.stairStack) return null;
   const r = roundableRadius(room, i, radius, share);
   if (r === null) return null;
   const n = room.polygon.length;
@@ -94,6 +95,7 @@ export function makeRoundRoom(center: Point, diameter: number): PlanRoom {
 export function whyNoBay(plan: FloorPlan, roomId: string, edge: number): string | null {
   const room = plan.rooms.find((r) => r.id === roomId);
   if (!room) return "Pick a wall of a room.";
+  if (room.stairStack) return HALL_CURVE_NOTE;
   if (isCurved(bulgeOf(room, edge))) return "This wall is already curved. Make it straight first.";
   if (sharedEdges(plan, roomId, edge).length > 0) return "Bays go on outside walls, not on a wall two rooms share.";
   const e = edgesOf(room.polygon)[edge];

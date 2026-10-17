@@ -285,9 +285,12 @@ export function StairsSymbol({
   selected,
   scale,
   down,
+  anchored,
   onTransformEnd,
 }: {
   id?: string;
+  /** Anchored stairs get a small anchor mark by their label (floor plan editor only). */
+  anchored?: boolean;
   d: StairsDrawing;
   cut?: StairsCut;
   /** Leave out this floor's stairs past the cut (stairs from below are drawn there instead). */
@@ -304,7 +307,7 @@ export function StairsSymbol({
   const len = Math.hypot(p1.x - p0.x, p1.y - p0.y) || 1;
   const off = 13 / scale;
   const at = { x: p0.x - ((p1.x - p0.x) / len) * off, y: p0.y - ((p1.y - p0.y) / len) * off };
-  const tag = cut ? (down ? "DN" : "UP") : down ? "Down" : "Up";
+  const tag = `${cut ? (down ? "DN" : "UP") : down ? "Down" : "Up"}${anchored ? " ⚓" : ""}`;
   const w = 60 / scale;
   const piece = (pts: Point[], k: string, faint: boolean) => (
     <Line key={k} points={flat(pts)} closed fill={faint ? undefined : "#f1ece3"} stroke={color} strokeWidth={1} strokeScaleEnabled={false} dash={faint ? [6, 4] : undefined} opacity={faint ? 0.6 : 0.85} listening={false} />

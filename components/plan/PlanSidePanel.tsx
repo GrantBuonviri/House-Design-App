@@ -1,6 +1,8 @@
 "use client";
 
 import { keepRailingEdits, resetRailings } from "@/lib/plan/railings";
+import AnchorBox from "./AnchorBox";
+import { isStairHall } from "@/lib/plan/locks";
 import ArrangeButtons from "./ArrangeButtons";
 import CurveFields, { RunCurveFields } from "./CurveFields";
 import { BayFields, RoundCornerFields } from "./ShapeFields";
@@ -54,6 +56,8 @@ type Props = {
   onSelect: (s: PlanSelection) => void;
   /** Open the Preview window popup for a window or sliding glass door on an outside wall. */
   onPreviewWindow?: (openingId: string) => void;
+  /** Anchor (true) or unanchor stairs, or the stairs of a stair hall, by the stairs' or hall's id. Changes every floor of the stack. */
+  onAnchor?: (id: string, on: boolean) => void;
 };
 
 /** Details of whatever is selected on the plan, the catalog for the placing tools, or a summary of the floor. */
@@ -164,8 +168,10 @@ export default function PlanSidePanel(props: Props) {
     const brRoom = brief?.rooms.find((r) => r.id === room.briefRoomId);
     const rect = isRectangle(room.polygon) && !roomHasCurves(room);
     const set = (patch: Parameters<typeof updateRoom>[2], key: string) => onChange(updateRoom(plan, room.id, patch), `${key}.${room.id}`);
+    const locked = !!(room.stairStack && room.anchored);
     return (
-      <Panel title="Room">
+      <Panel title={room.stairStack ? "Stair hall" : "Room"}>
+        {room.stairStack && props.onAnchor && <AnchorBox hall anchored={locked} onAnchor={(on) => props.onAnchor!(room.id, on)} />}
         {combined === room.id && <p className="mb-3 rounded bg-accent/10 p-2 text-xs">Rooms combined. Give the new room a name.</p>}
         <label className="field-label" htmlFor="room-name">
           Name
@@ -224,16 +230,20 @@ export default function PlanSidePanel(props: Props) {
           corner, or the diamond to bend the wall into a curve; double-click a wall to show the corner dots, and again to add one. To take a corner away, pick it and press Delete, or right-click it and pick Combine walls. Right-click a wall to split it here or into equal pieces.
         </p>
 
-        <RoundCornerFields plan={plan} roomId={room.id} onChange={onChange} />
+        {!room.stairStack && <RoundCornerFields plan={plan} roomId={room.id} onChange={onChange} />}
 
         <OverhangField room={room} overhang={props.overhangs?.find((o) => o.roomId === room.id)} onSet={(v) => set({ overhang: v === "none" ? undefined : v }, "overhang")} />
 
-        <TurnButtons onTurn={(deg) => onChange(rotateMany(plan, [room.id], deg, polygonCenter(room.polygon)))} />
-        <ArrangeButtons plan={plan} ids={[room.id]} onChange={onChange} onSelect={onSelect} />
+        {!locked && (
+          <>
+            <TurnButtons onTurn={(deg) => onChange(rotateMany(plan, [room.id], deg, polygonCenter(room.polygon)))} />
+            <ArrangeButtons plan={plan} ids={[room.id]} onChange={onChange} onSelect={onSelect} />
 
-        <button className="mt-4 text-sm text-red-700 hover:underline" onClick={() => remove([room.id])}>
-          Delete this room
-        </button>
+            <button className="mt-4 text-sm text-red-700 hover:underline" onClick={() => remove([room.id])}>
+              Delete this room
+            </button>
+          </>
+        )}
       </Panel>
     );
   }
@@ -254,7 +264,7 @@ export default function PlanSidePanel(props: Props) {
       <Panel title={`Wall of ${r.name}`}>
         <LengthField label="Length" value={seg.length} onCommit={(v) => onChange(setEdgeLength(plan, roomId, edge, v))} />
         <p className="field-hint">The far end moves; drag the wall on the drawing to push it in or out.</p>
-        <CurveFields plan={plan} target={{ roomId, edge }} onChange={onChange} />
+        {!isStairHall(plan, roomId) && <CurveFields plan={plan} target={{ roomId, edge }} onChange={onChange} />}
         <BayFields plan={plan} roomId={roomId} edge={edge} onChange={onChange} />
         <div className="mt-4 grid grid-cols-2 gap-2">
           <button className="btn text-sm" onClick={() => addHere("door-hinged")}>
@@ -439,12 +449,14 @@ export default function PlanSidePanel(props: Props) {
     const ups = levels.filter((l) => l.elevationIn > level.elevationIn);
     const to = levels.find((l) => l.id === st.toLevelId);
     const d = to ? stairsDrawing(st, riseBetween(basics, level, to)) : null;
+    const locked = !!st.anchored;
     return (
       <Panel title="Stairs">
+        {props.onAnchor && <AnchorBox anchored={locked} onAnchor={(on) => props.onAnchor!(st.id, on)} />}
         <label className="field-label" htmlFor="st-shape">
           Shape
         </label>
-        <select id="st-shape" className="input" value={st.shape} onChange={(e) => set({ shape: e.target.value as PlanStairs["shape"] })}>
+        <select id="st-shape" className="input" disabled={locked} value={st.shape} onChange={(e) => set({ shape: e.target.value as PlanStairs["shape"] })}>
           {(Object.keys(STAIRS_LABEL) as PlanStairs["shape"][]).map((k) => (
             <option key={k} value={k}>
               {STAIRS_LABEL[k]}
@@ -452,14 +464,14 @@ export default function PlanSidePanel(props: Props) {
           ))}
         </select>
         <div className="mt-4">
-          <LengthField label="Width" value={st.widthIn} onCommit={(v) => set({ widthIn: Math.max(MIN_STAIRS_WIDTH_IN, Math.min(72, v)) })} />
+          <LengthField label="Width" disabled={locked} value={st.widthIn} onCommit={(v) => set({ widthIn: Math.max(MIN_STAIRS_WIDTH_IN, Math.min(72, v)) })} />
         </div>
         {ups.length > 0 && (
           <>
             <label className="field-label mt-4" htmlFor="st-to">
               Climbs to
             </label>
-            <select id="st-to" className="input" value={st.toLevelId ?? ""} onChange={(e) => set({ toLevelId: e.target.value })}>
+            <select id="st-to" className="input" disabled={locked} value={st.toLevelId ?? ""} onChange={(e) => set({ toLevelId: e.target.value })}>
               {ups.map((l) => (
                 <option key={l.id} value={l.id}>
                   {l.name}
@@ -474,8 +486,8 @@ export default function PlanSidePanel(props: Props) {
             {to?.name.toLowerCase()} too.
           </p>
         )}
-        <TurnButtons onTurn={(deg) => set({ rotation: (((st.rotation + deg) % 360) + 360) % 360 })} />
-        {st.shape !== "straight" && (
+        {!locked && <TurnButtons onTurn={(deg) => set({ rotation: (((st.rotation + deg) % 360) + 360) % 360 })} />}
+        {!locked && st.shape !== "straight" && (
           <button className="btn mt-2 w-full text-sm" onClick={() => set({ flip: !st.flip })}>
             Turn the other way
           </button>
@@ -488,9 +500,11 @@ export default function PlanSidePanel(props: Props) {
             Put railings back to automatic
           </button>
         ) : null}
-        <button className="mt-4 text-sm text-red-700 hover:underline" onClick={() => remove([st.id])}>
-          Delete these stairs
-        </button>
+        {!locked && (
+          <button className="mt-4 text-sm text-red-700 hover:underline" onClick={() => remove([st.id])}>
+            Delete these stairs
+          </button>
+        )}
       </Panel>
     );
   }
@@ -612,7 +626,7 @@ function Static({ label, value }: { label: string; value: string }) {
 }
 
 /** A length typed in feet and inches (12' 6", 12.5, 150"), applied on Enter or when you click away. */
-export function LengthField({ label, value, onCommit }: { label: string; value: number; onCommit: (inches: number) => void }) {
+export function LengthField({ label, value, onCommit, disabled }: { label: string; value: number; onCommit: (inches: number) => void; disabled?: boolean }) {
   const shown = formatFeetInches(value);
   const [text, setText] = useState(shown);
   const [bad, setBad] = useState(false);
@@ -639,6 +653,7 @@ export function LengthField({ label, value, onCommit }: { label: string; value: 
       <input
         id={id}
         className={`input tabular-nums ${bad ? "border-red-400" : ""}`}
+        disabled={disabled}
         value={text}
         onChange={(e) => setText(e.target.value)}
         onBlur={commit}

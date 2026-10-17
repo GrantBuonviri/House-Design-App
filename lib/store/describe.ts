@@ -23,7 +23,7 @@ export function describeChange(before: Project, after: Project): string {
   if (!same("brief")) return after.brief && before.brief ? "change the design brief" : after.brief ? "make the design brief" : "clear the design brief";
   if (!same("bubbles")) return describeLevels(before, after, "bubbles", describeSketch) ?? "change the flow sketch";
   if (!same("sketch")) return "change the flow sketch settings";
-  if (!same("floorPlans")) return describeLevels(before, after, "floorPlans", describePlan) ?? "change the floor plan";
+  if (!same("floorPlans")) return describeStacks(before, after) ?? describeLevels(before, after, "floorPlans", describePlan) ?? "change the floor plan";
   if (!same("plan")) {
     const a = before.plan.dismissed;
     const b = after.plan.dismissed;
@@ -81,6 +81,23 @@ function describeLevels<K extends "bubbles" | "floorPlans">(
     before[key][changed[0]] as NonNullable<Project[K][string]> | undefined,
     after[key][changed[0]] as NonNullable<Project[K][string]> | undefined,
   );
+}
+
+/** Anchoring and stacks that changed on several floors at once (see lib/plan/anchor.ts). */
+function describeStacks(before: Project, after: Project): string | null {
+  const stairs = (p: Project) => new Map(Object.values(p.floorPlans).flatMap((f) => f.stairs).map((s) => [s.id, s]));
+  const a = stairs(before);
+  const b = stairs(after);
+  const flags = [...b.values()].filter((s) => a.has(s.id) && !!a.get(s.id)!.anchored !== !!s.anchored);
+  if (flags.length) return flags[0].anchored ? "anchor the stairs" : "unanchor the stairs";
+  const floors = Object.keys({ ...before.floorPlans, ...after.floorPlans }).filter((id) => json(before.floorPlans[id]) !== json(after.floorPlans[id]));
+  if (floors.length < 2) return null;
+  const stacked = [...b.values()].filter((s) => s.stackId && a.has(s.id));
+  if (stacked.some((s) => moved(a.get(s.id)!, s) && json(a.get(s.id)) !== json(s))) return "move the stairs on every floor";
+  const halls = (p: Project) => new Map(Object.values(p.floorPlans).flatMap((f) => f.rooms).filter((r) => r.stairStack).map((r) => [r.id, r]));
+  const ha = halls(before);
+  if ([...halls(after).values()].some((r) => ha.has(r.id) && json(ha.get(r.id)!.polygon) !== json(r.polygon))) return "move the stair hall wall on every floor";
+  return null;
 }
 
 type Named = { id: string };

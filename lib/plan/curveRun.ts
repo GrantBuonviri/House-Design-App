@@ -4,6 +4,7 @@ import { bendInfo, maxBow, sharedEdges, type BendTarget } from "./bend";
 import { cross, dist, leftNormal, project, round1, roundPoint, signedArea, sub, unit } from "./geometry";
 import { keepOpeningsInPlace } from "./edit";
 import { clampOffset, hostSegment } from "./walls";
+import { HALL_CURVE_NOTE, isStairHall } from "./locks";
 
 /**
  * Curving several walls together: walls that meet end to end (sides of one
@@ -30,6 +31,7 @@ const sameTarget = (x: BendTarget, y: BendTarget) =>
  */
 export function runOf(plan: FloorPlan, targets: BendTarget[]): Run | { why: string } {
   const segs: { target: BendTarget; a: Point; b: Point }[] = [];
+  if (targets.some((t) => "roomId" in t && (isStairHall(plan, t.roomId) || sharedEdges(plan, t.roomId, t.edge).some((s) => isStairHall(plan, s.roomId))))) return { why: HALL_CURVE_NOTE };
   for (const t of targets) {
     const info = bendInfo(plan, t);
     if (!info) return { why: "These walls don't meet end to end." };

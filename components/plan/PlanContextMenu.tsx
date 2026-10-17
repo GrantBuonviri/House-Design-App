@@ -1,5 +1,6 @@
 "use client";
 
+import { isLocked } from "@/lib/plan/locks";
 import { useEffect, useRef, useState } from "react";
 import type { FloorPlan } from "@/lib/model/schema";
 import { mirrorMany, copyableIds } from "@/lib/plan/arrange";
@@ -26,10 +27,17 @@ export function contextItems(
   plan: FloorPlan,
   c: ContextAt,
   selection: PlanSelection,
-  act: { change: (p: FloorPlan) => void; select: (s: PlanSelection) => void; message: (t: string) => void },
+  act: { change: (p: FloorPlan) => void; select: (s: PlanSelection) => void; message: (t: string) => void; anchor?: (id: string, on: boolean) => void },
 ): Item[] {
   const { el } = c;
   if (!el) return [];
+  // Anchored stairs and stair halls can't move: offer Unanchor instead (copies of stairs start free).
+  if ((el.kind === "stairs" || el.kind === "room") && isLocked(plan, el.id)) {
+    const items: Item[] = [{ label: "Unanchor", run: () => act.anchor?.(el.id, false) }];
+    if (el.kind === "stairs") items.push("line", { label: "Duplicate  ⌘D", run: () => duplicateAndSelect(plan, [el.id], act.change, act.select) });
+    return items;
+  }
+  const anchoring: Item[] = act.anchor && el.kind === "stairs" ? [{ label: "Anchor", run: () => act.anchor!(el.id, true) }, "line"] : [];
   const picked = selection.some((s) => s.id === el.id) ? selection : [el];
   const ids = picked.filter((s) => s.kind !== "edge" && s.kind !== "opening").map((s) => s.id);
   const copies = copyableIds(plan, ids);
@@ -157,7 +165,7 @@ export function contextItems(
     else if (walls.length <= 1) walling.push(edit("Split wall here", splitWall(plan, el.id, c.at)), pieces((k) => splitWallEqual(plan, el.id, k)));
     if (walling.length) walling.push("line");
   }
-  return [...curving, ...walling, ...arrange, ...(arrange.length ? (["line"] as Item[]) : []), ...turnGroup, ...(turnGroup.length ? (["line"] as Item[]) : []), remove(ids.length > 1 ? `Delete ${ids.length} things` : `Delete ${noun}`, ids.length ? ids : [el.id])];
+  return [...anchoring, ...curving, ...walling, ...arrange, ...(arrange.length ? (["line"] as Item[]) : []), ...turnGroup, ...(turnGroup.length ? (["line"] as Item[]) : []), remove(ids.length > 1 ? `Delete ${ids.length} things` : `Delete ${noun}`, ids.length ? ids : [el.id])];
 }
 
 export default function PlanContextMenu({ at, items, onClose }: { at: { x: number; y: number }; items: Item[]; onClose: () => void }) {

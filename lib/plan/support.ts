@@ -7,6 +7,7 @@ import { clockwise, dist, edgesOf, lerp, polygonArea, polygonCenter, roundPoint 
 import { areaKind } from "./measure";
 import type { SnapTargets } from "./snap";
 import { flatPlans } from "./flatten";
+import { isLocked } from "./locks";
 import type { Arc } from "./arcs";
 import { curvesOf, cutOutline, refitArcs, refitRoom } from "./refit";
 
@@ -130,7 +131,7 @@ export function pulledBack(room: PlanRoom, regions: Region[]): Point[] | null {
 /** Trim a room to the support area, keeping its curves and following curves of the floor below (`arcs`). The plan comes back unchanged when that can't be done cleanly. */
 export function pullBack(plan: FloorPlan, roomId: string, regions: Region[], arcs: Arc[] = []): FloorPlan {
   const room = plan.rooms.find((r) => r.id === roomId);
-  const pts = room && pulledBack(room, regions);
+  const pts = room && !isLocked(plan, roomId) && pulledBack(room, regions);
   if (!room || !pts) return plan;
   const fit = refitArcs(pts, [...curvesOf([room]), ...arcs]);
   return reshapeRoom(plan, roomId, fit.polygon, fit.bulges ?? []);
@@ -160,7 +161,7 @@ export function keepInside(plan: FloorPlan, regions: Region[], arcs: Arc[] = [])
   let out = plan;
   let trimmed = 0;
   for (const o of overhangsOf(plan.rooms, regions)) {
-    if (o.ok) continue;
+    if (o.ok || isLocked(plan, o.roomId)) continue;
     const room = out.rooms.find((r) => r.id === o.roomId)!;
     const pts = largestInside(cutOutline(room), regions);
     if (!pts) continue;
