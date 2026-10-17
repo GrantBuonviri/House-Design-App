@@ -2,6 +2,7 @@ import Dexie, { type EntityTable, type Table } from "dexie";
 import { migrateProject, newId, withSuffix } from "@/lib/model/project";
 import { repairProjectData, type RepairResult } from "@/lib/model/repair";
 import { CustomLand, type Project } from "@/lib/model/schema";
+import { SavedStart } from "@/lib/brief/starts";
 
 /** Projects are saved in the browser's IndexedDB under the name "house-design-app". */
 class HouseDb extends Dexie {
@@ -16,6 +17,8 @@ class HouseDb extends Dexie {
   backups!: EntityTable<BackupRow, "id">;
   /** Deleted houses, kept for DELETED_DAYS so they can be restored. */
   deleted!: EntityTable<DeletedRow, "id">;
+  /** Quick starts the user saved on the rooms page, for use in any house. */
+  starts!: EntityTable<SavedStart, "id">;
 
   constructor() {
     super("house-design-app");
@@ -23,6 +26,7 @@ class HouseDb extends Dexie {
     this.version(2).stores({ history: "[projectId+n], projectId", historyMeta: "projectId" });
     this.version(3).stores({ myLand: "id, updatedAt, name" });
     this.version(4).stores({ backups: "++id, projectId, [projectId+at]", deleted: "id, deletedAt" });
+    this.version(5).stores({ starts: "id, updatedAt" });
   }
 }
 
@@ -238,4 +242,26 @@ export async function saveMyLand(land: CustomLand): Promise<MyLandRow> {
 
 export async function deleteMyLand(id: string): Promise<void> {
   await getDb().myLand.delete(id);
+}
+
+/** The user's saved quick starts, newest first. Rows that no longer read are left out. */
+export async function listStarts(): Promise<SavedStart[]> {
+  const rows = await getDb().starts.orderBy("updatedAt").reverse().toArray();
+  return rows.flatMap((row) => {
+    const start = SavedStart.safeParse(row);
+    return start.success ? [start.data] : [];
+  });
+}
+
+/** Save (or update) a quick start. */
+export async function saveStart(start: SavedStart): Promise<void> {
+  await getDb().starts.put(SavedStart.parse(start));
+}
+
+export async function renameStart(id: string, name: string, now = new Date()): Promise<void> {
+  await getDb().starts.update(id, { name, updatedAt: now.toISOString() });
+}
+
+export async function deleteStart(id: string): Promise<void> {
+  await getDb().starts.delete(id);
 }

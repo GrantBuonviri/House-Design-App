@@ -1,5 +1,6 @@
 import { migrateProject, newId, withSuffix } from "@/lib/model/project";
 import type { Project } from "@/lib/model/schema";
+import { SavedStart } from "@/lib/brief/starts";
 
 /** Export/import file format. The wrapper lets us recognize our own files. */
 const FILE_KIND = "house-design-app/project";
@@ -19,8 +20,8 @@ export function exportFileName(project: Project): string {
   return `${slug || "house"}.house.json`;
 }
 
-export function exportAllJson(projects: Project[]): string {
-  return JSON.stringify({ kind: ALL_KIND, exportedAt: new Date().toISOString(), projects }, null, 2);
+export function exportAllJson(projects: Project[], starts: SavedStart[] = []): string {
+  return JSON.stringify({ kind: ALL_KIND, exportedAt: new Date().toISOString(), projects, starts }, null, 2);
 }
 
 export function exportAllFileName(date = new Date()): string {
@@ -55,9 +56,9 @@ function readProject(raw: unknown, takenIds: Set<string>): Project {
  * that don't read are counted in `skipped`; it throws only when none do.
  * Ids already in `takenIds` (or earlier in the file) get fresh ones.
  */
-export function importAnyJson(text: string, takenIds: Set<string> = new Set()): { projects: Project[]; skipped: number } {
-  const data = parseJson(text) as { kind?: unknown; projects?: unknown };
-  if (data?.kind !== ALL_KIND) return { projects: [importProjectJson(text, takenIds)], skipped: 0 };
+export function importAnyJson(text: string, takenIds: Set<string> = new Set()): { projects: Project[]; skipped: number; starts: SavedStart[] } {
+  const data = parseJson(text) as { kind?: unknown; projects?: unknown; starts?: unknown };
+  if (data?.kind !== ALL_KIND) return { projects: [importProjectJson(text, takenIds)], skipped: 0, starts: [] };
   if (!Array.isArray(data.projects)) throw new Error("That file is damaged or incomplete.");
   const taken = new Set(takenIds);
   const projects: Project[] = [];
@@ -74,7 +75,11 @@ export function importAnyJson(text: string, takenIds: Set<string> = new Set()): 
     }
   }
   if (!projects.length && firstError) throw firstError;
-  return { projects, skipped };
+  const starts = (Array.isArray(data.starts) ? data.starts : []).flatMap((raw) => {
+    const start = SavedStart.safeParse(raw);
+    return start.success ? [start.data] : [];
+  });
+  return { projects, skipped, starts };
 }
 
 /**

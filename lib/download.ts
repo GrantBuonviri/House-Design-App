@@ -1,3 +1,4 @@
+import type { SavedStart } from "@/lib/brief/starts";
 import type { Project } from "@/lib/model/schema";
 import { exportAllFileName, exportAllJson, exportFileName, exportProjectJson } from "@/lib/storage/exchange";
 
@@ -7,8 +8,8 @@ export function downloadProject(project: Project) {
 }
 
 /** Save every house in one file ("Export all houses"). */
-export function downloadAllProjects(projects: Project[]) {
-  downloadJson(exportAllJson(projects), exportAllFileName());
+export function downloadAllProjects(projects: Project[], starts: SavedStart[] = []) {
+  downloadJson(exportAllJson(projects, starts), exportAllFileName());
 }
 
 /** A house's saved data exactly as stored (it may not open), for "Download its saved data". */
