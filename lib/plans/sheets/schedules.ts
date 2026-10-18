@@ -16,7 +16,7 @@ import { inchText, isSleeping } from "@/lib/codes/rules";
 import { DRAW_AREA } from "../frame";
 import { archFeet, capHeight, heading, HEADING_H, table, textBlock, type Item } from "../draw";
 import { houseFacts, type HouseFacts } from "../house";
-import { addOnType } from "@/lib/furnish/catalog";
+import { addOnType, isDecor } from "@/lib/furnish/catalog";
 import { FAUCET_SHAPES, faucetOf } from "@/lib/furnish/faucets";
 import { potFillerRoomId } from "@/lib/cost/furnishQuantities";
 import { ADDON_TAG } from "./symbols";
@@ -460,8 +460,8 @@ export function builtInLines(project: Project): BuiltInLine[] {
   for (const l of h.levels) {
     const plan = h.plan(l.id);
     for (const a of plan.addOns ?? []) {
-      // Pot fillers are on the plumbing fixture schedule.
-      if (a.kind === "pot-filler") continue;
+      // Pot fillers are on the plumbing fixture schedule; decor isn't part of the build.
+      if (a.kind === "pot-filler" || isDecor(a.kind)) continue;
       const type = addOnType(a.kind);
       const size = `${archFeet(a.widthIn)} x ${archFeet(a.heightIn)} x ${archFeet(a.depthIn)}`;
       const key = `${a.kind}|${size}`;

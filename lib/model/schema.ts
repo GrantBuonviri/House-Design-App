@@ -9,7 +9,7 @@ import { z } from "zod";
  * Angles are degrees clockwise from north (0 = N, 90 = E).
  */
 
-export const SCHEMA_VERSION = 37;
+export const SCHEMA_VERSION = 38;
 
 export const Point = z.object({ x: z.number(), y: z.number() });
 export type Point = z.infer<typeof Point>;
@@ -587,7 +587,7 @@ export const DeviceEdits = z.object({
 });
 export type DeviceEdits = z.infer<typeof DeviceEdits>;
 
-/** A built-in or extra placed in Furnish (shelving, window seat, mirror, ceiling fan). Kinds are in lib/furnish/catalog.ts. */
+/** A built-in or extra placed in Furnish (shelving, window seat, mirror, ceiling fan), or decor (lamps, wall art, curtains). Kinds are in lib/furnish/catalog.ts. */
 export const AddOn = z.object({
   id: z.string(),
   kind: z.string(),
@@ -601,6 +601,8 @@ export const AddOn = z.object({
   bottomIn: z.number().min(0).default(0),
   color: z.string().optional(),
   roomId: z.string().optional(),
+  /** Curtains and blinds: the window they hang on, so they follow it when it moves or changes size. */
+  openingId: z.string().optional(),
 });
 export type AddOn = z.infer<typeof AddOn>;
 

@@ -28,7 +28,10 @@ import { isClosetRod } from "@/lib/furnish/closets";
 import { effectiveAnswers } from "@/lib/interior/style";
 import { aimAt, type Aim } from "@/lib/interior/surfaces";
 import { Ground } from "@/components/house3d/House3DView";
-import { HouseMeshes, Sky, type AimTarget } from "@/components/house3d/Scene";
+import { HouseMeshes, Sky, setGlow, type AimTarget } from "@/components/house3d/Scene";
+import { NightLights } from "./NightLights";
+import { latestHour, lightSources, lightsAmount, linkedRooms, liveLights, nightAmount } from "@/lib/house3d/nightLights";
+import { sunPosition } from "@/lib/land/sun";
 import { PrettyLook } from "@/components/house3d/PrettyLook";
 import { FinishPanel, OutsidePanel } from "./DesignPanel";
 import { DESIGN_KEYS } from "@/lib/tour/help";
@@ -159,6 +162,7 @@ const isDesignPanel = (p: Panel | null) => Boolean(p && p.kind !== "labels" && p
  */
 export default function Walkthrough({ project, cost, onClose, startWindow }: { project: Project; cost?: Estimate | null; onClose: () => void; startWindow?: DesignWindowKind }) {
   const quality = useGraphics((g) => g.quality);
+  const pretty = quality === "pretty";
   const update = useProjectStore((s) => s.update);
 
   const levels = useMemo(() => [...project.levels].sort((a, b) => a.elevationIn - b.elevationIn), [project.levels]);
@@ -290,6 +294,12 @@ export default function Walkthrough({ project, cost, onClose, startWindow }: { p
     () => (design ? itemsOn : quality === "pretty" ? Object.fromEntries(levels.map((l) => [l.id, stageItems(planOf(project.floorPlans, l.id), furnishLayouts(project, l), ceilingOf(l.id))])) : {}),
     [design, itemsOn, quality, project, levels, ceilingOf],
   );
+  // Lamps and lights on each floor, and which rooms see into which, for the lights at night (Pretty only).
+  const lightsByLevel = useMemo(
+    () => (pretty ? levels.flatMap((l) => (plateItems[l.id] ? lightSources(planOf(project.floorPlans, l.id), plateItems[l.id], l.id, ceilingOf(l.id)) : [])) : []),
+    [pretty, levels, plateItems, project.floorPlans, ceilingOf],
+  );
+  const roomLinks = useMemo(() => (pretty ? Object.fromEntries(levels.map((l) => [l.id, linkedRooms(planOf(project.floorPlans, l.id))])) : {}), [pretty, levels, project.floorPlans]);
   const site = useMemo(() => siteFor(project.plot, offset, plans), [project.plot, offset, plans]);
   const ctx: HouseContext = useMemo(
     () => ({ levels, basics, house3d: project.house3d, site, frame, interior: project.interior.selections, exterior: project.exterior, systems: project.plans.systems }),
@@ -308,10 +318,18 @@ export default function Walkthrough({ project, cost, onClose, startWindow }: { p
   const place = usePlace();
   const { sunrise, sunset } = daylight(seasonInfo.day, place.latitudeDeg);
   const [hour, setHour] = useState(14);
-  const shownHour = Math.min(sunset, Math.max(sunrise, hour));
+  // With Pretty the slider runs on into the night, when the lamps and lights come on.
+  const nightEnd = pretty ? latestHour(sunset) : sunset;
+  const shownHour = Math.min(nightEnd, Math.max(sunrise, hour));
+  const [lightsOn, setLightsOn] = useState(true);
+  const altitude = sunPosition(seasonInfo.day, shownHour, place.latitudeDeg).altitudeDeg;
+  const night = pretty ? nightAmount(altitude) : 0;
+  const glow = pretty && lightsOn ? lightsAmount(altitude) : 0;
+  useEffect(() => setGlow(glow), [glow]);
+  useEffect(() => () => setGlow(0), []);
 
   const [locked, setLocked] = useState(false);
-  const [where, setWhere] = useState({ levelName: "", roomName: "Outside" });
+  const [where, setWhere] = useState<ReturnType<typeof whereAmI> & { p?: Point }>({ levelName: "", roomName: "Outside" });
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const walker = useRef<Walker>({ ...world.start, vz: 0, pitch: 0 });
   const unlockedAt = useRef(0);
@@ -986,10 +1004,18 @@ export default function Walkthrough({ project, cost, onClose, startWindow }: { p
       >
         <PerspectiveCamera makeDefault fov={70} near={0.3} far={6000} />
         <ViewShift open={!!win && !locked} />
-        <Sky day={seasonInfo.day} hour={shownHour} span={span} version={model} center={model.bounds ? [(model.bounds.min[0] + model.bounds.max[0]) / 2, 0, (model.bounds.min[2] + model.bounds.max[2]) / 2] : [0, 0, 0]} />
+        <Sky day={seasonInfo.day} hour={shownHour} night={night} span={span} version={model} center={model.bounds ? [(model.bounds.min[0] + model.bounds.max[0]) / 2, 0, (model.bounds.min[2] + model.bounds.max[2]) / 2] : [0, 0, 0]} />
         <Ground site={site} frame={frame} plans={plans} ctx={ctx} heights={heights} yard={false} />
         <HouseMeshes parts={model.parts} aimRef={aimTarget} doorsApart />
         {quality === "pretty" && <PrettyLook />}
+        {glow > 0 && where.levelId && (
+          <NightLights
+            lights={liveLights(lightsByLevel, { levelId: where.levelId, roomId: where.roomId, p: where.p ?? walker.current.p }, roomLinks[where.levelId] ?? new Map())}
+            amount={glow}
+            frame={frame}
+            floorOf={(id) => heights[id]?.floorIn ?? 0}
+          />
+        )}
         <DoorLeaves parts={doorParts} frame={frame} amountOf={(id) => world.doorAmount[id] ?? 0} groupRef={doorsGroup} />
         <DoorDriver world={world} walker={walker} states={doorStates} modeRef={doorModeRef} />
         {labelsOn && <FloorLabels project={project} settings={labelSettings} frame={frame} heights={heights} walker={walker} costTotal={cost?.total.likely} />}
@@ -1005,7 +1031,7 @@ export default function Walkthrough({ project, cost, onClose, startWindow }: { p
         {aimedOpening && aim?.kind === "opening" && <OpeningGhost g={aimedOpening} floorIn={heights[aim.levelId]?.floorIn ?? 0} frame={frame} ok highlight />}
         {(design || quality === "pretty") &&
           levels.map((l) =>
-            plateItems[l.id]?.length && heights[l.id] ? <DevicePlates key={l.id} items={plateItems[l.id]} floorIn={heights[l.id].floorIn} ceilingIn={ceilingOf(l.id)} frame={frame} /> : null,
+            plateItems[l.id]?.length && heights[l.id] ? <DevicePlates key={l.id} items={plateItems[l.id]} floorIn={heights[l.id].floorIn} ceilingIn={ceilingOf(l.id)} frame={frame} lit={pretty} /> : null,
           )}
         <Player
           walker={walker}
@@ -1013,8 +1039,8 @@ export default function Walkthrough({ project, cost, onClose, startWindow }: { p
           frame={frame}
           step={(w, input, dt) => walkStep(world, w, input, dt)}
           onWhere={(w) => {
-            const next = whereAmI(world, plans, w);
-            setWhere((cur) => (cur.levelName === next.levelName && cur.roomName === next.roomName ? cur : next));
+            const next = { ...whereAmI(world, plans, w), p: { ...w.p } };
+            setWhere((cur) => (cur.levelName === next.levelName && cur.roomName === next.roomName && cur.roomId === next.roomId ? cur : next));
             // The door under the dot, for the hint below it.
             const { eye, dir } = eyeRay(w);
             const d = latest.current.locked && !latest.current.design && !latest.current.tapeOn && !latest.current.carry ? aimDoor(world.doors, eye, dir, 90, (a, b, z) => sightBlocked(world, a, b, z)) : null;
@@ -1301,6 +1327,7 @@ export default function Walkthrough({ project, cost, onClose, startWindow }: { p
           onSaveView={saveView}
           onViews={() => setPanel({ kind: "views" })}
           onScreenshot={screenshot}
+          {...(pretty ? { latest: nightEnd, lightsOn, onLights: setLightsOn } : {})}
         />
       )}
     </div>

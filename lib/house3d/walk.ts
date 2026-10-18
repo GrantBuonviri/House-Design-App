@@ -428,12 +428,12 @@ export function floorSpot(world: WalkWorld, plans: Plans, n: number, w: Pick<Wal
 }
 
 /** The floor and room you're in, for the label on screen. */
-export function whereAmI(world: WalkWorld, plans: Plans, w: Walker): { levelName: string; roomName: string } {
+export function whereAmI(world: WalkWorld, plans: Plans, w: Walker): { levelName: string; roomName: string; levelId?: string; roomId?: string } {
   plans = flatPlans(plans);
   const lv = [...world.levels].reverse().find((l) => l.floorIn <= w.feet + STEP_UP_IN) ?? world.levels[0];
   if (!lv) return { levelName: "", roomName: "Outside" };
   const plan = planOf(plans, lv.id);
   // Smallest room first, so a closet inside a bedroom reads as the closet.
   const room = [...plan.rooms].sort((a, b) => polygonArea(a.polygon) - polygonArea(b.polygon)).find((r) => pointInPolygon(w.p, r.polygon));
-  return { levelName: lv.name, roomName: room ? room.name : "Outside" };
+  return { levelName: lv.name, roomName: room ? room.name : "Outside", levelId: lv.id, ...(room ? { roomId: room.id } : {}) };
 }

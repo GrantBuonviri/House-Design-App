@@ -28,6 +28,7 @@ export const FURNISH_GROUPS = [
   "Heating and air",
   "Built-ins and extras",
   "Furniture",
+  "Decor",
   "Doors and windows",
   "Walls",
 ] as const;
@@ -54,7 +55,14 @@ export type CatalogEntry = {
   priced: boolean;
   /** Can be stretched along its width. */
   stretch?: boolean;
+  /** Sits on top of whatever furniture is under it (a table lamp on a nightstand, pillows on a sofa). */
+  onTop?: boolean;
+  /** Curtains or blinds: hung on a window, and they follow it. */
+  covering?: Covering;
 };
+
+/** Window coverings: curtains hang outside the window from above it nearly to the floor, blinds sit inside its frame. */
+export type Covering = "curtains" | "blinds";
 
 // ---------- Add-ons: built-ins and extras ----------
 
@@ -68,6 +76,10 @@ export type AddOnType = {
   mount: Mount;
   bottomIn: number;
   stretch?: boolean;
+  /** Decor isn't part of the build cost. */
+  decor?: boolean;
+  onTop?: boolean;
+  covering?: Covering;
 };
 
 export const ADDON_TYPES: AddOnType[] = [
@@ -84,7 +96,17 @@ export const ADDON_TYPES: AddOnType[] = [
   { id: "medicine-cabinet", label: "Medicine cabinet", group: "Bath", widthIn: 16, depthIn: 5, heightIn: 26, mount: "wall", bottomIn: 48 },
   { id: "coat-hooks", label: "Coat hooks", group: "Closets and storage", widthIn: 36, depthIn: 3, heightIn: 6, mount: "wall", bottomIn: 60, stretch: true },
   { id: "lockers", label: "Mudroom lockers", group: "Closets and storage", widthIn: 60, depthIn: 18, heightIn: 72, mount: "floor", bottomIn: 0, stretch: true },
+  // Decor (not priced): drawn in detail with Pretty, lib/house3d/decor3d.ts.
+  { id: "table-lamp", label: "Table lamp", group: "Decor", widthIn: 14, depthIn: 14, heightIn: 24, mount: "floor", bottomIn: 0, decor: true, onTop: true },
+  { id: "pendant", label: "Pendant light", group: "Decor", widthIn: 16, depthIn: 16, heightIn: 30, mount: "ceiling", bottomIn: 66, decor: true },
+  { id: "wall-art", label: "Wall art", group: "Decor", widthIn: 30, depthIn: 1.5, heightIn: 40, mount: "wall", bottomIn: 50, decor: true, stretch: true },
+  { id: "throw-pillows", label: "Throw pillows", group: "Decor", widthIn: 44, depthIn: 6, heightIn: 18, mount: "floor", bottomIn: 0, decor: true, onTop: true, stretch: true },
+  { id: "curtains", label: "Curtains", group: "Decor", widthIn: 60, depthIn: 4, heightIn: 84, mount: "wall", bottomIn: 0.5, decor: true, covering: "curtains" },
+  { id: "blinds", label: "Blinds", group: "Decor", widthIn: 36, depthIn: 2, heightIn: 48, mount: "wall", bottomIn: 36, decor: true, covering: "blinds" },
 ];
+
+/** Decor add-ons: lamps, art, pillows, curtains and blinds (not priced, left off the building plans). */
+export const isDecor = (kind: string) => Boolean(addOnType(kind)?.decor);
 
 export function addOnType(id: string): AddOnType | undefined {
   return ADDON_TYPES.find((t) => t.id === id);
@@ -152,8 +174,9 @@ function build(): CatalogEntry[] {
       priced: true,
     });
   }
-  for (const t of ADDON_TYPES) out.push({ id: `addon:${t.id}`, kind: "addon", type: t.id, label: t.label, group: t.group, widthIn: t.widthIn, depthIn: t.depthIn, heightIn: t.heightIn, mount: t.mount, bottomIn: t.bottomIn, priced: true, stretch: t.stretch });
-  for (const t of FURNITURE) out.push({ id: `furniture:${t.id}`, kind: "furniture", type: t.id, label: t.label, group: "Furniture", widthIn: t.widthIn, depthIn: t.depthIn, heightIn: furnitureHeight(t.id), mount: "floor", bottomIn: 0, priced: false });
+  for (const t of ADDON_TYPES)
+    out.push({ id: `addon:${t.id}`, kind: "addon", type: t.id, label: t.label, group: t.group, widthIn: t.widthIn, depthIn: t.depthIn, heightIn: t.heightIn, mount: t.mount, bottomIn: t.bottomIn, priced: !t.decor, stretch: t.stretch, ...(t.onTop ? { onTop: true } : {}), ...(t.covering ? { covering: t.covering } : {}) });
+  for (const t of FURNITURE) out.push({ id: `furniture:${t.id}`, kind: "furniture", type: t.id, label: t.label, group: t.group === "Decor" ? "Decor" : "Furniture", widthIn: t.widthIn, depthIn: t.depthIn, heightIn: furnitureHeight(t.id), mount: "floor", bottomIn: 0, priced: false });
   out.push(
     { id: "closet:reach-in", kind: "closet", type: "reach-in", label: "Reach-in closet", group: "Closets and storage", widthIn: 72, depthIn: 26, heightIn: 96, mount: "floor", bottomIn: 0, priced: true, stretch: true },
     { id: "closet:walk-in", kind: "closet", type: "walk-in", label: "Walk-in closet", group: "Closets and storage", widthIn: 72, depthIn: 72, heightIn: 96, mount: "floor", bottomIn: 0, priced: true, stretch: true },
@@ -193,5 +216,6 @@ export function swapChoices(id: string): CatalogEntry[] {
   const e = BY_ID.get(id);
   if (!e) return [];
   const placeable = (x: CatalogEntry) => x.kind !== "opening" && x.kind !== "wall" && x.kind !== "closet";
-  return FURNISH_CATALOG.filter((x) => x.id !== id && x.group === e.group && placeable(x) && x.mount === e.mount);
+  // Curtains swap only for blinds (and back): both hang on a window.
+  return FURNISH_CATALOG.filter((x) => x.id !== id && x.group === e.group && placeable(x) && x.mount === e.mount && !x.covering === !e.covering);
 }

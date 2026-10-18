@@ -103,6 +103,7 @@ export function migrateRaw(raw: unknown): Record<string, unknown> {
   // Version 34 to 35 added saved camera spots in the walkthrough (`house3d.walkViews`, default none), so no change beyond the version.
   // Version 35 to 36 added `RealLot.coverageLimitPct` (optional, empty by default), so no change beyond the version.
   if (version < 37) migrated = migrateV36(migrated);
+  // Version 37 to 38 added the window curtains and blinds hang on (`AddOn.openingId`, optional), so no change beyond the version.
   return repairProject({ ...migrated, schemaVersion: SCHEMA_VERSION });
 }
 

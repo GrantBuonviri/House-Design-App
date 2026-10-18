@@ -65,7 +65,8 @@ describe("furnish catalog", () => {
 describe("furnish layer edits", () => {
   it("places, moves, turns, resizes and removes every kind of item", () => {
     const { plan, bed } = twoRooms();
-    for (const e of FURNISH_CATALOG.filter((x) => !["closet", "opening", "wall"].includes(x.kind))) {
+    // Curtains and blinds go on a window (tests/decor.test.ts).
+    for (const e of FURNISH_CATALOG.filter((x) => !["closet", "opening", "wall"].includes(x.kind) && !x.covering)) {
       const placed = placeItem(plan, e.id, { x: 190, y: 70 });
       expect(placed.id, e.id).toBeTruthy();
       const it0 = only(placed.plan, placed.id);

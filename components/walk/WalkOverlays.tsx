@@ -218,8 +218,12 @@ export function WalkControls(props: {
   onSaveView: () => void;
   onViews: () => void;
   onScreenshot: () => void;
+  /** With Pretty: the slider runs into the night (to `latest`), and the lamps and lights have an on/off switch. */
+  latest?: number;
+  lightsOn?: boolean;
+  onLights?: (on: boolean) => void;
 }) {
-  const { hour, sunrise, sunset, daylightSaving, season, world, doorMode, onDoorMode, onHour, onSeason, onJump, views, onView, onSaveView, onViews, onScreenshot } = props;
+  const { hour, sunrise, sunset, daylightSaving, season, world, doorMode, onDoorMode, onHour, onSeason, onJump, views, onView, onSaveView, onViews, onScreenshot, latest, lightsOn, onLights } = props;
   const place = usePlace();
   return (
     <div className="absolute right-0 bottom-0 left-0 flex flex-wrap items-end gap-x-6 gap-y-3 bg-black/60 px-4 py-3 text-white">
@@ -228,12 +232,25 @@ export function WalkControls(props: {
           <span>Time of day</span>
           <span data-testid="walk-time">{clockTime(hour, daylightSaving, place)}</span>
         </span>
-        <input type="range" className="mt-1 w-full accent-white" min={sunrise} max={sunset} step={0.25} value={hour} onChange={(e) => onHour(Number(e.target.value))} aria-label="Time of day" />
+        <input type="range" className="mt-1 w-full accent-white" min={sunrise} max={latest ?? sunset} step={0.25} value={hour} onChange={(e) => onHour(Number(e.target.value))} aria-label="Time of day" />
         <span className="flex justify-between text-[11px] text-white/60">
           <span>Sunrise {clockTime(sunrise, daylightSaving, place)}</span>
           <span>Sunset {clockTime(sunset, daylightSaving, place)}</span>
+          {latest !== undefined && <span>Night {clockTime(latest, daylightSaving, place)}</span>}
         </span>
       </label>
+      {onLights && (
+        <div className="text-sm">
+          <span className="block text-xs text-white/75">Lights</span>
+          <div className="mt-1 flex overflow-hidden rounded-md border border-white/30" role="radiogroup" aria-label="Lights">
+            {[true, false].map((on) => (
+              <button key={String(on)} role="radio" aria-checked={lightsOn === on} onClick={() => onLights(on)} className={`px-3 py-1 text-sm ${lightsOn === on ? "bg-white text-ink" : "hover:bg-white/15"}`}>
+                {on ? "On" : "Off"}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
       <div className="text-sm">
         <span className="block text-xs text-white/75">Season</span>
         <div className="mt-1 flex overflow-hidden rounded-md border border-white/30" role="radiogroup" aria-label="Season">

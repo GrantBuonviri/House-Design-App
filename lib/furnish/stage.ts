@@ -9,6 +9,7 @@ import type { PlacedDevice } from "@/lib/plan/devices";
 import { catalogEntry, type CatalogEntry } from "./catalog";
 import { CLOSET_SIZES, closetSpotAt, placeCloset, type ClosetSize, type ClosetSpot, type ClosetType } from "./closets";
 import { lineUp, type SnapLine } from "./snapping";
+import { coveringFit, restHeight } from "./decor";
 import { layerItems, placeCheck, placeItem, removeItem, snapToWall, swapItem, updateItem, type FurnishCheck, type ItemPatch, type LayerItem } from "./layer";
 
 /**
@@ -103,7 +104,15 @@ export function ghostAt(plan: FloorPlan, entryId: string, cursor: Point, turn: n
     return { entryId, x: spot.x, y: spot.y, rotation: spot.rotation, widthIn: spot.widthIn, depthIn: spot.depthIn, heightIn: e.heightIn, bottomIn: 0, check: { ok: spot.ok, roomId: spot.roomId, problem: spot.problem, blocksDoors: [] }, closet: spot };
   }
   const size = placedSize(e, ceilingIn);
-  const snap = snapToWall(plan, cursor, { widthIn: size.widthIn, depthIn: size.depthIn, mount: e.mount });
+  if (e.covering) {
+    // Curtains and blinds: sized to the window nearest the mouse.
+    const fit = coveringFit(plan, e.type, cursor, ceilingIn);
+    const g = fit ? { x: fit.x, y: fit.y, rotation: fit.rotation, widthIn: fit.widthIn, depthIn: fit.depthIn, heightIn: fit.heightIn, bottomIn: fit.bottomIn } : { x: round1(cursor.x), y: round1(cursor.y), rotation: 0, ...size };
+    return { entryId, ...g, check: placeCheck(plan, { entryId, ...g }, items) };
+  }
+  if (e.onTop) size.bottomIn = restHeight(plan, cursor);
+  // Things resting on furniture don't back onto a wall.
+  const snap = e.onTop ? null : snapToWall(plan, cursor, { widthIn: size.widthIn, depthIn: size.depthIn, mount: e.mount });
   const at = snap ?? { x: round1(cursor.x), y: round1(cursor.y), rotation: 0 };
   const rotation = (((at.rotation + turn) % 360) + 360) % 360;
   // Turned off the wall it snapped to, it's no longer backed onto it, so it can line up both ways.
@@ -127,7 +136,7 @@ export function placeGhost(plan: FloorPlan, g: Ghost, ceilingIn = 96): { plan: F
  * it unless `free` (Alt held), and says whether it fits there.
  */
 export function dragItem(plan: FloorPlan, item: LayerItem, to: Point, items: LayerItem[], free = false): { plan: FloorPlan; id: string; check: FurnishCheck; item: LayerItem; snaps: SnapLine[] } {
-  const snap = item.mount === "ceiling" ? null : snapToWall(plan, to, { widthIn: item.widthIn, depthIn: item.depthIn, mount: item.mount }, 12);
+  const snap = item.mount === "ceiling" || catalogEntry(item.entryId)?.onTop ? null : snapToWall(plan, to, { widthIn: item.widthIn, depthIn: item.depthIn, mount: item.mount }, 12);
   const at0 = snap ?? { x: round1(to.x), y: round1(to.y), rotation: item.rotation };
   const lined = free ? { x: at0.x, y: at0.y, lines: [] } : lineUp(plan, { ...item, ...at0 }, items, Boolean(snap));
   const at = { x: lined.x, y: lined.y, rotation: at0.rotation };

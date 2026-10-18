@@ -226,7 +226,7 @@ describe("Furnish for me", () => {
     expect(Math.abs(((chair.rotation - desk.rotation + 360) % 360) - 180)).toBeLessThan(1);
     // Nothing is saved by a preview: the plan passed in is unchanged.
     expect(plan.furniture).toEqual([]);
-    expect(previewLines(res.added)).toEqual([{ room: "Office", items: "Desk, Desk chair" }]);
-    expect(previewLines([...res.added, { id: "x", label: "Nightstand", room: "Office", roomId: o.id }, { id: "y", label: "Nightstand", room: "Office", roomId: o.id }])[0].items).toBe("Desk, Desk chair, 2 nightstands");
+    expect(previewLines(res.added)).toEqual([{ room: "Office", items: "Desk, Desk chair, Snake plant" }]);
+    expect(previewLines([...res.added, { id: "x", label: "Nightstand", room: "Office", roomId: o.id }, { id: "y", label: "Nightstand", room: "Office", roomId: o.id }])[0].items).toBe("Desk, Desk chair, Snake plant, 2 nightstands");
   });
 });

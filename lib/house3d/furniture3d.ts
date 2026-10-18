@@ -2,8 +2,9 @@ import type { AddOn, Fixture, FurnitureItem } from "@/lib/model/schema";
 import { furnitureType } from "@/lib/plan/furniture";
 import { COLORS } from "./colors";
 import { handle } from "./cabinets3d";
-import { ItemFrame, lightness, shade, type Ring } from "./detail";
+import { ItemFrame, shade, type Ring } from "./detail";
 import { PATTERN } from "./finishes";
+import { drawDecorFurniture } from "./decor3d";
 import { hex, type Frame, type MeshBuilder, type RGB } from "./mesh";
 
 /**
@@ -77,6 +78,11 @@ export const DETAILED_FURNITURE = new Set([
   "desk-chair",
   "bar-stools",
   "plant",
+  // Decor, drawn in decor3d.ts.
+  "rug-runner",
+  "floor-lamp",
+  "plant-snake",
+  "plant-tree",
 ]);
 
 /** A small repeatable random number from a string and a counter, so books and leaves stay put between redraws. */
@@ -227,7 +233,7 @@ export function bookcase(it: ItemFrame, W: number, D: number, H: number, color: 
  * A piece of furniture in detail. Returns false for kinds without a detailed
  * shape (those keep their simple boxes in both settings).
  */
-export function drawFurnitureDetail(mb: MeshBuilder, f: Frame, item: FurnitureItem, floorIn: number): boolean {
+export function drawFurnitureDetail(mb: MeshBuilder, f: Frame, item: FurnitureItem, floorIn: number, glow: MeshBuilder = mb): boolean {
   if (!DETAILED_FURNITURE.has(item.kind)) return false;
   const t = furnitureType(item.kind);
   const it = new ItemFrame(mb, f, { x: item.x, y: item.y }, item.rotation ?? 0, floorIn);
@@ -240,6 +246,8 @@ export function drawFurnitureDetail(mb: MeshBuilder, f: Frame, item: FurnitureIt
   const mainPattern = isWood ? PATTERN.wood : cloth;
   const legColor = isWood ? main : DARK;
   const legPattern = isWood ? PATTERN.wood : PATTERN.satin;
+  // Lamps, plants and rugs (a lamp's shade goes in `glow`).
+  if (drawDecorFurniture(mb, glow, f, item, floorIn, { color: wood, pattern: PATTERN.wood })) return true;
 
   switch (item.kind) {
     case "sofa":
@@ -268,18 +276,6 @@ export function drawFurnitureDetail(mb: MeshBuilder, f: Frame, item: FurnitureIt
     case "bookshelf":
       bookcase(it, W, D, 72, main, mainPattern, item.id);
       break;
-    case "rug-large":
-    case "rug-small": {
-      const b = Math.min(W, D) * 0.06;
-      const z1 = 0.5;
-      it.box(-W / 2 + b, W / 2 - b, -D / 2 + b, D / 2 - b, 0, z1, main, PATTERN.rug);
-      const edge = shade(main, lightness(main) > 0.4 ? 0.62 : 1.6);
-      it.box(-W / 2, W / 2, -D / 2, -D / 2 + b, 0, z1, edge, PATTERN.rug);
-      it.box(-W / 2, W / 2, D / 2 - b, D / 2, 0, z1, edge, PATTERN.rug);
-      it.box(-W / 2, -W / 2 + b, -D / 2 + b, D / 2 - b, 0, z1, edge, PATTERN.rug);
-      it.box(W / 2 - b, W / 2, -D / 2 + b, D / 2 - b, 0, z1, edge, PATTERN.rug);
-      break;
-    }
     case "dining-table": {
       roundTop(it, 0, 0, (W * 0.95) / 2, (D * 0.95) / 2, 28.5, 30, main, mainPattern, 10);
       const ax = (W * 0.95) / 2 - 3;
