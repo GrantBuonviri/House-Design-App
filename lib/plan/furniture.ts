@@ -27,7 +27,7 @@ export type FurniturePiece = {
 export type FurnitureType = {
   id: string;
   label: string;
-  group: "Living" | "Dining" | "Bedroom" | "Office" | "Other";
+  group: "Living" | "Dining" | "Bedroom" | "Office" | "Decor" | "Other";
   widthIn: number;
   depthIn: number;
   /** What its main color is: fabric follows the color answers, wood follows the wood tone. */
@@ -93,8 +93,8 @@ export const FURNITURE: FurnitureType[] = [
     pieces: [...box(22), { y: -0.2, w: 0.9, d: 0.1, z0: 26, z1: 56, material: "dark" }, { y: -0.2, w: 0.1, d: 0.3, z0: 22, z1: 26, material: "dark" }],
   },
   { id: "bookshelf", label: "Bookshelf", group: "Living", widthIn: 36, depthIn: 14, main: "wood", pieces: box(72) },
-  { id: "rug-large", label: "Rug, 8' × 10'", group: "Living", widthIn: 120, depthIn: 96, main: "rug", flat: true, pieces: [{ z0: 0, z1: 0.5, material: "main" }] },
-  { id: "rug-small", label: "Rug, 5' × 8'", group: "Living", widthIn: 96, depthIn: 60, main: "rug", flat: true, pieces: [{ z0: 0, z1: 0.5, material: "main" }] },
+  { id: "rug-large", label: "Rug, 8' × 10'", group: "Decor", widthIn: 120, depthIn: 96, main: "rug", flat: true, pieces: [{ z0: 0, z1: 0.5, material: "main" }] },
+  { id: "rug-small", label: "Rug, 5' × 8'", group: "Decor", widthIn: 96, depthIn: 60, main: "rug", flat: true, pieces: [{ z0: 0, z1: 0.5, material: "main" }] },
   {
     id: "dining-table",
     label: "Dining table and 6 chairs",
@@ -127,7 +127,28 @@ export const FURNITURE: FurnitureType[] = [
     pieces: [{ w: 0.8, d: 0.8, z0: 16, z1: 19, material: "main" }, { y: -0.38, w: 0.8, d: 0.1, z0: 19, z1: 38, material: "main" }, { w: 0.12, d: 0.12, z0: 0, z1: 16, material: "metal" }],
   },
   { id: "bar-stools", label: "Bar stools (3)", group: "Other", widthIn: 66, depthIn: 18, main: "wood", pieces: [-0.33, 0, 0.33].flatMap((x) => [{ x, w: 0.25, d: 0.9, z0: 26, z1: 28, material: "main" as Material }, { x, w: 0.06, d: 0.15, z0: 0, z1: 26, material: "metal" as Material }]) },
-  { id: "plant", label: "Floor plant", group: "Other", widthIn: 20, depthIn: 20, main: "wood", pieces: [{ w: 0.7, d: 0.7, z0: 0, z1: 14, material: "dark" }, { z0: 14, z1: 54, material: "light" }] },
+  { id: "plant", label: "Floor plant", group: "Decor", widthIn: 20, depthIn: 20, main: "wood", pieces: [{ w: 0.7, d: 0.7, z0: 0, z1: 14, material: "dark" }, { z0: 14, z1: 54, material: "light" }] },
+  // Decor: lamps, plants and rugs that stand on the floor (wall art, table lamps, pendants and curtains are add-ons, lib/furnish/catalog.ts).
+  { id: "rug-runner", label: "Runner, 2½' × 8'", group: "Decor", widthIn: 96, depthIn: 30, main: "rug", flat: true, pieces: [{ z0: 0, z1: 0.5, material: "main" }] },
+  {
+    id: "floor-lamp",
+    label: "Floor lamp",
+    group: "Decor",
+    widthIn: 18,
+    depthIn: 18,
+    main: "wood",
+    pieces: [{ w: 0.6, d: 0.6, z0: 0, z1: 1.5, material: "dark" }, { w: 0.08, d: 0.08, z0: 1.5, z1: 50, material: "main" }, { z0: 50, z1: 62, material: "light" }],
+  },
+  { id: "plant-snake", label: "Snake plant", group: "Decor", widthIn: 14, depthIn: 14, main: "wood", pieces: [{ w: 0.8, d: 0.8, z0: 0, z1: 11, material: "dark" }, { w: 0.6, d: 0.6, z0: 11, z1: 34, material: "light" }] },
+  {
+    id: "plant-tree",
+    label: "Olive tree",
+    group: "Decor",
+    widthIn: 28,
+    depthIn: 28,
+    main: "wood",
+    pieces: [{ w: 0.55, d: 0.55, z0: 0, z1: 16, material: "dark" }, { w: 0.08, d: 0.08, z0: 16, z1: 44, material: "wood" }, { z0: 44, z1: 76, material: "light" }],
+  },
 ];
 
 export function furnitureType(id: string): FurnitureType | undefined {

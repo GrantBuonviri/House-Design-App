@@ -6,7 +6,9 @@ import type { Opening, Point } from "@/lib/model/schema";
 import { drawAddOn, drawFixture, drawFurniture } from "@/lib/house3d/fixtures";
 import { hex, MeshBuilder, type Frame, type MeshData } from "@/lib/house3d/mesh";
 import { COLORS } from "@/lib/house3d/colors";
-import { DEVICE_INFO } from "@/lib/plan/devices";
+import { DEVICE_INFO, isLight } from "@/lib/plan/devices";
+import { ItemFrame } from "@/lib/house3d/detail";
+import { glowMaterial } from "@/components/house3d/Scene";
 import { angleOf, sub } from "@/lib/plan/geometry";
 import type { OpeningGeometry } from "@/lib/plan/walls";
 import type { LayerItem } from "@/lib/furnish/layer";
@@ -24,6 +26,7 @@ type Shape = Pick<Ghost, "entryId" | "x" | "y" | "rotation" | "widthIn" | "depth
 
 const WHITE = hex("#f4f2ee");
 const PLATE = hex("#fbfaf7");
+const LIGHT_COVER = hex("#f7f3ea");
 
 /** An item's shape as the house would draw it (furniture, fixtures and built-ins), or a plain box. */
 function drawShape(mb: MeshBuilder, frame: Frame, g: Shape, floorIn: number) {
@@ -131,24 +134,65 @@ export function RailingHighlight({ a, b, za, zb, heightIn, floorIn, frame }: { a
   return <mesh geometry={geometry} material={material} renderOrder={3} />;
 }
 
-/** Cover plates for outlets and switches on the walls, and discs for ceiling lights, fans and alarms. Hookups are drawn by the house. */
-export function DevicePlates({ items, floorIn, ceilingIn, frame }: { items: LayerItem[]; floorIn: number; ceilingIn: number; frame: Frame }) {
-  const data = useMemo(() => {
+/** Cover plates for outlets and switches on the walls, and discs for ceiling lights, fans and alarms. Hookups are drawn by the house. With `lit`, the lights' covers glow with the lamps (see setGlow). */
+export function DevicePlates({ items, floorIn, ceilingIn, frame, lit = false }: { items: LayerItem[]; floorIn: number; ceilingIn: number; frame: Frame; lit?: boolean }) {
+  const { plates, lights } = useMemo(() => {
     const mb = new MeshBuilder();
+    const glow = new MeshBuilder();
     for (const it of items) {
       if (it.kind !== "device") continue;
       const kind = it.entryId.slice(it.entryId.indexOf(":") + 1) as keyof typeof DEVICE_INFO;
       if (["water", "drain", "gas", "dryer-vent", "junction"].includes(kind)) continue;
       const info = DEVICE_INFO[kind];
       if (!info) continue;
+      if (lit && isLight(kind)) {
+        drawLight(glow, frame, it, floorIn, ceilingIn, kind);
+        continue;
+      }
       if (info.wall) mb.block(frame, { x: it.x, y: it.y }, it.rotation, 3, 0.6, floorIn + it.bottomIn - 2.25, floorIn + it.bottomIn + 2.25, PLATE);
       else mb.block(frame, { x: it.x, y: it.y }, it.rotation, 6, 6, floorIn + ceilingIn - 1.2, floorIn + ceilingIn - 0.2, PLATE);
     }
-    return mb.build();
-  }, [items, floorIn, ceilingIn, frame]);
-  const geometry = useMemo(() => toGeometry(data), [data]);
+    return { plates: mb.build(), lights: glow.empty ? null : glow.build() };
+  }, [items, floorIn, ceilingIn, frame, lit]);
+  const geometry = useMemo(() => toGeometry(plates), [plates]);
+  const lightGeometry = useMemo(() => (lights ? toGeometry(lights) : null), [lights]);
   useEffect(() => () => geometry.dispose(), [geometry]);
+  useEffect(() => () => lightGeometry?.dispose(), [lightGeometry]);
   const material = useMemo(() => new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.6 }), []);
   useEffect(() => () => material.dispose(), [material]);
-  return <mesh geometry={geometry} material={material} />;
+  return (
+    <>
+      <mesh geometry={geometry} material={material} />
+      {lightGeometry && <mesh geometry={lightGeometry} material={glowMaterial} />}
+    </>
+  );
+}
+
+/** A ceiling light's cover (a flush dome, or a recessed trim ring), or a wall sconce. */
+function drawLight(mb: MeshBuilder, frame: Frame, it: LayerItem, floorIn: number, ceilingIn: number, kind: string) {
+  if (kind === "light-wall") {
+    const w = new ItemFrame(mb, frame, { x: it.x, y: it.y }, it.rotation, floorIn + it.bottomIn);
+    w.box(-2.5, 2.5, -1, -0.4, -4, 4, PLATE, 0);
+    w.loft([{ z: -3, rx: 0, ry: 0, cy: 2 }, { z: -3, rx: 2.4, ry: 2.4, cy: 2 }, { z: 4, rx: 3, ry: 3, cy: 2 }, { z: 4, rx: 0, ry: 0, cy: 2 }], LIGHT_COVER, 0, 16);
+    return;
+  }
+  const top = floorIn + ceilingIn;
+  const c = new ItemFrame(mb, frame, { x: it.x, y: it.y }, it.rotation, top);
+  if (kind === "light-recessed") {
+    c.loft([{ z: -0.4, rx: 0, ry: 0 }, { z: -0.4, rx: 3.2, ry: 3.2 }, { z: -0.05, rx: 3.6, ry: 3.6 }, { z: -0.05, rx: 0, ry: 0 }], LIGHT_COVER, 0, 18);
+    return;
+  }
+  c.loft(
+    [
+      { z: -3.6, rx: 0, ry: 0 },
+      { z: -3.6, rx: 3, ry: 3 },
+      { z: -2.6, rx: 5.2, ry: 5.2 },
+      { z: -1.2, rx: 6.3, ry: 6.3 },
+      { z: -0.1, rx: 6.6, ry: 6.6 },
+      { z: -0.1, rx: 0, ry: 0 },
+    ],
+    LIGHT_COVER,
+    0,
+    20,
+  );
 }

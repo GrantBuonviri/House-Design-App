@@ -125,6 +125,8 @@ prettyGlassMaterial.envMapIntensity = 1.2;
 export function setDaylight(day: number) {
   const d = Math.max(0, Math.min(1, day));
   prettySolidMaterial.envMapIntensity = 0.1 + 0.3 * d;
+  // Windows stop mirroring the bright built-in room after dark, so the night sky shows through them.
+  prettyGlassMaterial.envMapIntensity = 0.15 + 1.05 * d;
 }
 setDaylight(1);
 

@@ -160,8 +160,18 @@ const ADDON_WOOD = hex("#a57a52");
 const ADDON_WHITE = hex("#f4f2ee");
 const GAS_YELLOW = hex("#d9b23a");
 
-/** An add-on's main color: its own, or wood. */
-export const addOnColor = (a: Pick<AddOn, "color">): RGB => (a.color ? hex(a.color) : ADDON_WOOD);
+/** Decor's own colors when none is picked: a linen curtain, a dark art frame... */
+const DECOR_DEFAULT: Record<string, string> = {
+  "table-lamp": "#d9d2c4",
+  pendant: "#2b2b2b",
+  "wall-art": "#2b2620",
+  "throw-pillows": "#b98a68",
+  curtains: "#e8e1d3",
+  blinds: "#f1eee8",
+};
+
+/** An add-on's main color: its own, decor's usual one, or wood. */
+export const addOnColor = (a: Pick<AddOn, "color"> & { kind?: string }): RGB => (a.color ? hex(a.color) : a.kind && DECOR_DEFAULT[a.kind] ? hex(DECOR_DEFAULT[a.kind]) : ADDON_WOOD);
 
 /** Add-on shapes, like the fixtures': shares of the item's width and depth, heights as shares of its own height (h) or inches (z). */
 type AddOnPiece = { x?: number; y?: number; w?: number; d?: number; h0: number; h1: number; color?: RGB };
@@ -186,6 +196,13 @@ const ADDON_SHAPES: Record<string, AddOnPiece[]> = {
   "medicine-cabinet": [{ h0: 0, h1: 1, color: ADDON_WHITE }],
   "coat-hooks": [{ d: 0.3, y: -0.35, h0: 0, h1: 1 }, ...[-0.35, 0, 0.35].map((x) => ({ x, w: 0.04, h0: 0.2, h1: 0.6, color: COLORS.dark }))],
   lockers: [{ h0: 0, h1: 1 }, { d: 0.6, y: 0.2, h0: 0.25, h1: 0.27, color: ADDON_WHITE }],
+  // Decor as simple shapes (Pretty draws them in detail, decor3d.ts).
+  "table-lamp": [{ w: 0.4, d: 0.4, h0: 0, h1: 0.55 }, { w: 0.9, d: 0.9, h0: 0.55, h1: 1, color: FURNITURE_LIGHT }],
+  pendant: [{ w: 0.06, d: 0.06, h0: 0.3, h1: 1 }, { h0: 0, h1: 0.3, color: FURNITURE_LIGHT }],
+  "wall-art": [{ h0: 0, h1: 1 }, { w: 0.8, d: 0.4, y: 0.4, h0: 0.1, h1: 0.9, color: ADDON_WHITE }],
+  "throw-pillows": [{ x: -0.25, w: 0.45, h0: 0, h1: 0.9 }, { x: 0.25, w: 0.45, h0: 0, h1: 0.9 }],
+  curtains: [{ x: -0.4, w: 0.2, h0: 0, h1: 0.97 }, { x: 0.4, w: 0.2, h0: 0, h1: 0.97 }, { d: 0.3, h0: 0.97, h1: 1, color: COLORS.dark }],
+  blinds: [{ h0: 0.55, h1: 1 }],
 };
 
 /** A built-in or extra (shelving, a window seat, a mirror, a ceiling fan) as simple boxes. */

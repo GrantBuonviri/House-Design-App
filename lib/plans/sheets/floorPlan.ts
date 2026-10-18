@@ -15,7 +15,7 @@ import { houseFacts } from "../house";
 import { windowWells, wellNote } from "@/lib/plan/wells";
 import { levelCabinets } from "./cabinets";
 import { cabinetCorners } from "@/lib/plan/cabinets";
-import { addOnType } from "@/lib/furnish/catalog";
+import { addOnType, isDecor } from "@/lib/furnish/catalog";
 import { ADDON_TAG } from "./symbols";
 import { DRAW_AREA } from "../frame";
 import { viewTitle } from "../view";
@@ -271,6 +271,8 @@ function drawPlan(project: Project, level: Level, viewNumber: number, base: bool
 
   // Built-ins and extras placed in Furnish: floor ones solid, wall-hung and ceiling ones dashed, each tagged.
   for (const a of plan.addOns ?? []) {
+    // Decor (lamps, art, curtains) isn't part of the build.
+    if (isDecor(a.kind)) continue;
     const L = (x: number, y: number) => add(rotate({ x, y }, a.rotation), { x: a.x, y: a.y });
     const w = a.widthIn;
     const d = Math.max(a.depthIn, 3);

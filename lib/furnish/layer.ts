@@ -11,6 +11,7 @@ import { DEVICE_INFO, removeDevice, updateDevice, type PlacedDevice } from "@/li
 import { furnitureType, overlaps } from "@/lib/plan/furniture";
 import { fixtureType } from "@/lib/plan/catalog";
 import { catalogEntry, entryFor, type CatalogEntry, type Mount } from "./catalog";
+import { coveringFit, coveringOf, fittedAddOns, restHeight } from "./decor";
 
 /**
  * The furnish layer: everything Furnish places on a floor, kept in the
@@ -117,7 +118,7 @@ export function layerItems(plan: FloorPlan, layouts: { cabinets?: PlacedCabinet[
   const l = furnishOf(plan);
   return [
     ...l.fixtures.map(fromFixture),
-    ...l.addOns.map(fromAddOn),
+    ...fittedAddOns(plan, ceilingIn).map(fromAddOn),
     ...(layouts.cabinets ? layouts.cabinets.map((c) => fromCabinet(c, c.auto)) : l.cabinets.added.map((c) => fromCabinet(c, false))),
     ...(layouts.devices ? layouts.devices.map((d) => fromDevice(d, d.auto, ceilingIn)) : l.devices.added.map((d) => fromDevice(d, false, ceilingIn))),
     ...l.furniture.map(fromFurniture),
@@ -170,8 +171,14 @@ export function placeItem(plan: FloorPlan, entryId: string, at: Point, opts: Pla
       return { plan: { ...plan, furniture: [...plan.furniture, f] }, id: f.id };
     }
     case "addon": {
-      const bottom = e.mount === "ceiling" ? Math.max(0, ceilingIn - e.heightIn) : e.bottomIn;
-      const a: AddOn = { id: newPlanId("ao"), kind: e.type, x, y, rotation, widthIn: opts.widthIn ?? e.widthIn, depthIn: opts.depthIn ?? e.depthIn, heightIn: opts.heightIn ?? e.heightIn, bottomIn: opts.bottomIn ?? bottom, ...(opts.color ? { color: opts.color } : {}), ...room };
+      const bottom = e.mount === "ceiling" ? Math.max(0, ceilingIn - e.heightIn) : e.onTop ? restHeight(plan, at) : e.bottomIn;
+      let a: AddOn = { id: newPlanId("ao"), kind: e.type, x, y, rotation, widthIn: opts.widthIn ?? e.widthIn, depthIn: opts.depthIn ?? e.depthIn, heightIn: opts.heightIn ?? e.heightIn, bottomIn: opts.bottomIn ?? bottom, ...(opts.color ? { color: opts.color } : {}), ...room };
+      if (e.covering) {
+        // Curtains and blinds go on the nearest window and follow it from then on.
+        const fit = coveringFit(plan, e.type, at, ceilingIn);
+        if (!fit) return { plan, id: null };
+        a = { ...a, ...fit };
+      }
       return { plan: { ...plan, addOns: [...(plan.addOns ?? []), a] }, id: a.id };
     }
     case "cabinet": {
@@ -210,7 +217,20 @@ export function updateItem(plan: FloorPlan, item: LayerItem, patch: ItemPatch): 
     case "furniture":
       return { ...plan, furniture: plan.furniture.map((f) => (f.id === item.id ? withRoom({ ...f, ...base, ...size<FurnitureItem>(f, ["widthIn", "depthIn", "color"]) }) : f)) };
     case "addon":
-      return { ...plan, addOns: (plan.addOns ?? []).map((a) => (a.id === item.id ? withRoom({ ...a, ...base, ...size<AddOn>(a, ["widthIn", "depthIn", "heightIn", "bottomIn", "color"]) }) : a)) };
+      return {
+        ...plan,
+        addOns: (plan.addOns ?? []).map((a) => {
+          if (a.id !== item.id) return a;
+          const next = withRoom({ ...a, ...base, ...size<AddOn>(a, ["widthIn", "depthIn", "heightIn", "bottomIn", "color"]) });
+          if (!moved) return next;
+          // Moved curtains go on the window nearest where they're dropped (they stay put with none near); a lamp or pillows rest on what's under them.
+          if (coveringOf(a.kind)) {
+            const fit = coveringFit(plan, a.kind, p);
+            return fit ? withRoom({ ...next, ...fit }) : a;
+          }
+          return catalogEntry(item.entryId)?.onTop ? { ...next, bottomIn: restHeight(plan, p, a.id) } : next;
+        }),
+      };
     case "cabinet": {
       const cab = cabinetOf(plan, item);
       return updateCabinet(plan, cab, { ...base, ...size<Cabinet>(cab, ["widthIn", "depthIn", "heightIn", "bottomIn"]), roomId });
@@ -304,7 +324,8 @@ const NESTS = new Set(["fixture:sink", "fixture:prep-sink", "fixture:range", "fi
 const nestsWith = (a: string, b: string) => (HOLDERS.has(a) && (NESTS.has(b) || b.startsWith("cabinet:"))) || (HOLDERS.has(b) && (NESTS.has(a) || a.startsWith("cabinet:")));
 
 const outlineOf = (c: Pick<LayerItem, "x" | "y" | "widthIn" | "depthIn" | "rotation">) => rectangle(c.x, c.y, c.widthIn, c.depthIn, c.rotation ?? 0);
-const isFlat = (entryId: string) => entryId.startsWith("furniture:") && Boolean(furnitureType(entryId.slice(10))?.flat);
+/** Rugs (walked over) and things resting on furniture (a table lamp, pillows): they never stand in anything's way. */
+const isFlat = (entryId: string) => (entryId.startsWith("furniture:") && Boolean(furnitureType(entryId.slice(10))?.flat)) || Boolean(catalogEntry(entryId)?.onTop);
 
 /** The space in front of and behind each door, about as deep as it's wide: where it swings and where you walk through. */
 export function doorZones(plan: FloorPlan): { id: string; zone: Point[] }[] {
@@ -333,6 +354,10 @@ export function placeCheck(plan: FloorPlan, c: Candidate, others: LayerItem[] = 
   const room = flat.rooms.find((r) => areaKind(r) !== "outdoor" && pointInPolygon(center, r.polygon)) ?? flat.rooms.find((r) => pointInPolygon(center, r.polygon));
   const mount = e?.mount ?? "floor";
   const outline = outlineOf(c);
+  if (e?.covering) {
+    if (!room) return { ok: false, problem: "It needs to go inside a room.", blocksDoors: [] };
+    return coveringFit(plan, e.type, center) ? { ok: true, roomId: room.id, blocksDoors: [] } : { ok: false, roomId: room.id, problem: `${e.label} go on a window.`, blocksDoors: [] };
+  }
   if (mount === "wall") {
     const back = add(center, scale(rotate({ x: 0, y: 1 }, c.rotation), -c.depthIn / 2));
     if (!nearestHost(plan, back, OFF_WALL_IN + 4)) return { ok: false, roomId: room?.id, problem: "It needs to go flat on a wall.", blocksDoors: [] };

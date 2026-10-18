@@ -9,6 +9,8 @@ import { wallKey } from "@/lib/interior/picks";
 import { COLORS, floorColor } from "./colors";
 import { addOnColor, drawAddOn, drawFixture, drawFurniture, drawHookup } from "./fixtures";
 import { drawAddOnDetail, drawClosetDetail, drawFurnitureDetail } from "./furniture3d";
+import { drawDecorDetail } from "./decor3d";
+import { fittedAddOns } from "@/lib/furnish/decor";
 import { APRON_IN, drawFixtureDetail, isFarmhouse } from "./kitchenBath";
 import { CROWN_FROM_IN, drawCabinet } from "./cabinets3d";
 import { DEVICE_INFO, placedHookups } from "@/lib/plan/devices";
@@ -86,6 +88,8 @@ export type Part = {
   door?: { id: string; motion: DoorMotion };
   /** Furniture is picked in the walkthrough only, so it carries its id here rather than a `pick`. */
   furnitureId?: string;
+  /** Lamp shades and light fixtures: the walkthrough makes these glow in the evening and at night (Pretty only). */
+  glow?: boolean;
   /** Drawn only with this graphics setting (railing balusters with Pretty, a see-through panel in their place with Fast). Left out: always. */
   quality?: Quality;
 };
@@ -492,7 +496,7 @@ export function buildLevel(
   }
 
   // ---- Built-ins and extras, and the hookups behind fixtures ----
-  for (const a of plan.addOns ?? []) {
+  for (const a of fittedAddOns(plan, ceilingIn)) {
     if (a.kind === "pot-filler") {
       // A faucet on the wall: the kitchen's pot filler pick (or its faucet pick) gives the finish.
       const room = roomAt({ x: a.x, y: a.y });
@@ -505,9 +509,11 @@ export function buildLevel(
     const mb = new MeshBuilder();
     drawAddOn(mb, f, a, floorIn);
     const detail = new MeshBuilder();
-    const fast = drawAddOnDetail(detail, f, a, floorIn, addOnColor(a)) ? { quality: "fast" as const } : {};
+    const glow = new MeshBuilder();
+    const fast = drawAddOnDetail(detail, f, a, floorIn, addOnColor(a)) || drawDecorDetail(detail, glow, f, a, floorIn, addOnColor(a)) ? { quality: "fast" as const } : {};
     if (!mb.empty) parts.push({ key: `${L}:ao:${a.id}`, levelId: L, layer: "fixtures", mesh: mb.build(), ...fast });
     if (!detail.empty) parts.push({ key: `${L}:aop:${a.id}`, levelId: L, layer: "fixtures", mesh: detail.build(), quality: "pretty" });
+    if (!glow.empty) parts.push({ key: `${L}:aog:${a.id}`, levelId: L, layer: "fixtures", mesh: glow.build(), quality: "pretty", glow: true });
   }
   const hookups = placedHookups(plan, ctx.systems ?? HouseSystems.parse({}));
   if (hookups.length) {
@@ -543,9 +549,11 @@ export function buildLevel(
     const mb = new MeshBuilder();
     drawFurniture(mb, f, item, floorIn);
     const detail = new MeshBuilder();
-    const fast = drawFurnitureDetail(detail, f, item, floorIn) ? { quality: "fast" as const } : {};
+    const glow = new MeshBuilder();
+    const fast = drawFurnitureDetail(detail, f, item, floorIn, glow) ? { quality: "fast" as const } : {};
     if (!mb.empty) parts.push({ key: `${L}:fu:${item.id}`, levelId: L, layer: "furniture", furnitureId: item.id, mesh: mb.build(), ...fast });
     if (!detail.empty) parts.push({ key: `${L}:fup:${item.id}`, levelId: L, layer: "furniture", furnitureId: item.id, mesh: detail.build(), quality: "pretty" });
+    if (!glow.empty) parts.push({ key: `${L}:fug:${item.id}`, levelId: L, layer: "furniture", furnitureId: item.id, mesh: glow.build(), quality: "pretty", glow: true });
   }
   // ---- Window wells outside a basement's escape windows ----
   if (level.kind === "basement") {

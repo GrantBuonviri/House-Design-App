@@ -22,7 +22,8 @@ import { BEDROOMS_FOR_CLOSETS, closetOnEdge, hasCloset, placeCloset, type Closet
  *
  * Two choices: Minimal is just that; Full adds furniture too (beds with
  * nightstands and a dresser, a sofa with a coffee table and a TV stand, a
- * dining table, a desk and chair). Either can be previewed first: the result
+ * dining table, a desk and chair) and decor where it fits (table lamps,
+ * rugs, pillows, a floor lamp, a pendant over the table, plants). Either can be previewed first: the result
  * lists what it would add (`added`) before anything is saved.
  */
 
@@ -30,7 +31,7 @@ export type FurnishPreset = "minimal" | "full";
 
 export const FURNISH_PRESETS: { id: FurnishPreset; label: string; hint: string }[] = [
   { id: "minimal", label: "Minimal", hint: "What each room needs: kitchen counters and appliances, bath fixtures, laundry, bedroom closets, the water heater and furnace, coat hooks." },
-  { id: "full", label: "Full", hint: "All of that, plus furniture: beds with nightstands and a dresser, a sofa, coffee table and TV stand, a dining table, a desk and chair." },
+  { id: "full", label: "Full", hint: "All of that, plus furniture and decor: beds with nightstands, lamps and a dresser, a sofa with pillows, a coffee table, rug, floor lamp and TV stand, a dining table with a pendant, a desk and chair, and plants." },
 ];
 
 /** One thing Furnish for me put in (or would, in a preview). */
@@ -328,7 +329,13 @@ function furnish(f: Filler) {
     if (anyFurniture(f, BEDS)) return;
     const bed = firstOf(f, t === "primary-bedroom" ? ["furniture:bed-king", "furniture:bed-queen"] : ["furniture:bed-queen", "furniture:bed-full", "furniture:bed-twin"], "middle");
     if (!bed) return f.missing("a bed");
-    for (const s of [-1, 1]) f.putIfFits("furniture:nightstand", fromHost("furniture:nightstand", bed, s * (bed.widthIn / 2 + 2 + 11), 9));
+    for (const s of [-1, 1]) {
+      const stand = fromHost("furniture:nightstand", bed, s * (bed.widthIn / 2 + 2 + 11), 9);
+      // A table lamp on each nightstand.
+      if (f.putIfFits("furniture:nightstand", stand)) f.putIfFits("addon:table-lamp", { ...stand, widthIn: 14, depthIn: 14 });
+    }
+    // A rug across the foot half of the bed.
+    putRug(f, bed, ["furniture:rug-small"], bed.depthIn * 0.5);
     // The dresser across from the foot of the bed.
     const foot = add({ x: bed.x, y: bed.y }, scale(rotate({ x: 0, y: 1 }, bed.rotation), bed.depthIn / 2 + 120));
     f.place("furniture:dresser", [60, 48, 36], foot);
@@ -338,8 +345,13 @@ function furnish(f: Filler) {
     if (!sofa) return f.missing("a sofa");
     // 18" of floor between the sofa and the coffee table.
     f.putIfFits("furniture:coffee-table", fromHost("furniture:coffee-table", sofa, 0, sofa.depthIn + 18 + 12));
+    // Decor: pillows on the sofa, a rug under the front legs and the coffee table, a floor lamp at one end, a plant in a corner.
+    f.putIfFits("addon:throw-pillows", { ...fromHost("addon:throw-pillows", sofa, 0, 10), widthIn: Math.max(20, sofa.widthIn - 24) });
+    putRug(f, sofa, ["furniture:rug-large", "furniture:rug-small"], sofa.depthIn * 0.6);
+    for (const s of [1, -1]) if (f.putIfFits("furniture:floor-lamp", fromHost("furniture:floor-lamp", sofa, s * (sofa.widthIn / 2 + 12), 12))) break;
     const across = add({ x: sofa.x, y: sofa.y }, scale(rotate({ x: 0, y: 1 }, sofa.rotation), 240));
     f.place("furniture:tv-stand", undefined, across);
+    f.place("furniture:plant");
   } else if (t === "dining") {
     if (furnitureIn(f, "dining-table")) return;
     // In the middle of the room, long side along the room's longest wall.
@@ -348,12 +360,23 @@ function furnish(f: Filler) {
     const rotation = (((Math.round(angleOf(sub(longest.b, longest.a))) % 180) + 180) % 180);
     const e = catalogEntry("furniture:dining-table")!;
     const fit = { x: round1(c.x), y: round1(c.y), widthIn: e.widthIn, depthIn: e.depthIn };
-    if (!f.putIfFits("furniture:dining-table", { ...fit, rotation }) && !f.putIfFits("furniture:dining-table", { ...fit, rotation: (rotation + 90) % 180 })) f.missing("a dining table");
+    if (!f.putIfFits("furniture:dining-table", { ...fit, rotation }) && !f.putIfFits("furniture:dining-table", { ...fit, rotation: (rotation + 90) % 180 })) return f.missing("a dining table");
+    // A pendant over the table.
+    f.putIfFits("addon:pendant", { ...fit, rotation, widthIn: 16, depthIn: 16 });
   } else if (t === "office") {
     if (furnitureIn(f, "desk")) return;
     const desk = firstOf(f, ["furniture:desk"], "middle");
     if (!desk) return f.missing("a desk");
     f.putIfFits("furniture:desk-chair", fromHost("furniture:desk-chair", desk, 0, desk.depthIn + 13, 180));
+    f.place("furniture:plant-snake");
+  }
+}
+
+/** A rug laid square to `host`, its back edge `out` inches in front of the host's back: the first size that fits the room. */
+function putRug(f: Filler, host: Host, rugs: string[], out: number) {
+  for (const id of rugs) {
+    const e = catalogEntry(id)!;
+    if (f.putIfFits(id, { ...fromHost(id, host, 0, out + e.depthIn / 2) })) return;
   }
 }
 
