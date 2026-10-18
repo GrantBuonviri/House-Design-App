@@ -160,6 +160,9 @@ const ADDON_WOOD = hex("#a57a52");
 const ADDON_WHITE = hex("#f4f2ee");
 const GAS_YELLOW = hex("#d9b23a");
 
+/** An add-on's main color: its own, or wood. */
+export const addOnColor = (a: Pick<AddOn, "color">): RGB => (a.color ? hex(a.color) : ADDON_WOOD);
+
 /** Add-on shapes, like the fixtures': shares of the item's width and depth, heights as shares of its own height (h) or inches (z). */
 type AddOnPiece = { x?: number; y?: number; w?: number; d?: number; h0: number; h1: number; color?: RGB };
 const ADDON_SHAPES: Record<string, AddOnPiece[]> = {
@@ -187,7 +190,7 @@ const ADDON_SHAPES: Record<string, AddOnPiece[]> = {
 
 /** A built-in or extra (shelving, a window seat, a mirror, a ceiling fan) as simple boxes. */
 export function drawAddOn(mb: MeshBuilder, f: Frame, a: AddOn, floorIn: number) {
-  const main = a.color ? hex(a.color) : ADDON_WOOD;
+  const main = addOnColor(a);
   const pieces = ADDON_SHAPES[a.kind] ?? [{ h0: 0, h1: 1 }];
   const z0 = floorIn + a.bottomIn;
   for (const p of pieces) {
