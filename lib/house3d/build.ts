@@ -7,7 +7,8 @@ import { isClosedIn, stairsDrawing } from "@/lib/plan/stairs";
 import { HALF_WALL_IN, openingGeometries, roomEdgeAt, WALL_CAP_IN, WALL_CAP_OVERHANG_IN, wallPieces, type OpeningGeometry, type WallPiece } from "@/lib/plan/walls";
 import { wallKey } from "@/lib/interior/picks";
 import { COLORS, floorColor } from "./colors";
-import { drawAddOn, drawFixture, drawFurniture, drawHookup } from "./fixtures";
+import { addOnColor, drawAddOn, drawFixture, drawFurniture, drawHookup } from "./fixtures";
+import { drawAddOnDetail, drawClosetDetail, drawFurnitureDetail } from "./furniture3d";
 import { APRON_IN, drawFixtureDetail, isFarmhouse } from "./kitchenBath";
 import { CROWN_FROM_IN, drawCabinet } from "./cabinets3d";
 import { DEVICE_INFO, placedHookups } from "@/lib/plan/devices";
@@ -438,7 +439,9 @@ export function buildLevel(
     drawFixture(solid, glass, f, fx, floorIn, fxRoom);
     const pick: Pick = { kind: "fixture", id: fx.id, levelId: L };
     const detail = { solid: new MeshBuilder(), glass: new MeshBuilder() };
-    const detailed = drawFixtureDetail(detail.solid, detail.glass, f, fx, floorIn, fxRoom, { others: plan.fixtures, ceilingIn, cabinetOverRange: fx.kind === "range" && upperOver(fx) });
+    const detailed =
+      drawFixtureDetail(detail.solid, detail.glass, f, fx, floorIn, fxRoom, { others: plan.fixtures, ceilingIn, cabinetOverRange: fx.kind === "range" && upperOver(fx) }) ||
+      drawClosetDetail(detail.solid, f, fx, floorIn);
     const fast = detailed ? { quality: "fast" as const } : {};
     if (!solid.empty) parts.push({ key: `${L}:f:${fx.id}`, levelId: L, layer: "fixtures", pick, mesh: solid.build(), ...fast });
     if (!glass.empty) parts.push({ key: `${L}:fg:${fx.id}`, levelId: L, layer: "fixtures", pick, mesh: glass.build(), glass: true, ...fast });
@@ -501,7 +504,10 @@ export function buildLevel(
     }
     const mb = new MeshBuilder();
     drawAddOn(mb, f, a, floorIn);
-    if (!mb.empty) parts.push({ key: `${L}:ao:${a.id}`, levelId: L, layer: "fixtures", mesh: mb.build() });
+    const detail = new MeshBuilder();
+    const fast = drawAddOnDetail(detail, f, a, floorIn, addOnColor(a)) ? { quality: "fast" as const } : {};
+    if (!mb.empty) parts.push({ key: `${L}:ao:${a.id}`, levelId: L, layer: "fixtures", mesh: mb.build(), ...fast });
+    if (!detail.empty) parts.push({ key: `${L}:aop:${a.id}`, levelId: L, layer: "fixtures", mesh: detail.build(), quality: "pretty" });
   }
   const hookups = placedHookups(plan, ctx.systems ?? HouseSystems.parse({}));
   if (hookups.length) {
@@ -532,11 +538,14 @@ export function buildLevel(
   ).filter((d) => d.kind === "hose-bib");
   for (const d of bibs) faucetPart(`hb:${d.id}`, undefined, { shape: "spigot", at: { x: d.x, y: d.y }, rotation: d.rotation ?? 0, z: DEVICE_INFO["hose-bib"].mountIn ?? 18, color: BRASS });
 
-  // ---- Furniture ----
+  // ---- Furniture (in detail with Pretty, furniture3d.ts) ----
   for (const item of plan.furniture) {
     const mb = new MeshBuilder();
     drawFurniture(mb, f, item, floorIn);
-    if (!mb.empty) parts.push({ key: `${L}:fu:${item.id}`, levelId: L, layer: "furniture", furnitureId: item.id, mesh: mb.build() });
+    const detail = new MeshBuilder();
+    const fast = drawFurnitureDetail(detail, f, item, floorIn) ? { quality: "fast" as const } : {};
+    if (!mb.empty) parts.push({ key: `${L}:fu:${item.id}`, levelId: L, layer: "furniture", furnitureId: item.id, mesh: mb.build(), ...fast });
+    if (!detail.empty) parts.push({ key: `${L}:fup:${item.id}`, levelId: L, layer: "furniture", furnitureId: item.id, mesh: detail.build(), quality: "pretty" });
   }
   // ---- Window wells outside a basement's escape windows ----
   if (level.kind === "basement") {

@@ -16,7 +16,7 @@ import { aimAt, type AimPart } from "@/lib/interior/surfaces";
 import { applyPick, currentPick, scopesFor, type FinishAim } from "@/lib/interior/scope";
 import { roomLook } from "@/lib/house3d/finishes";
 import { hex } from "@/lib/house3d/mesh";
-import { buildHouse, type HouseContext } from "@/lib/house3d/build";
+import { buildHouse, forQuality, type HouseContext } from "@/lib/house3d/build";
 import { siteFor } from "@/lib/house3d/site";
 import { levelHeights } from "@/lib/house3d/levels";
 import { walkWorld } from "@/lib/house3d/walk";
@@ -220,7 +220,8 @@ describe("furniture", () => {
     const ctx: HouseContext = { levels, basics, house3d: House3D.parse({}), site: siteFor(flat, { x: 0, y: 0 }, p.floorPlans), frame: { ox: 0, oy: 0 } };
     const model = buildHouse(p.floorPlans, ctx);
     const parts = model.parts.filter((x) => x.layer === "furniture");
-    expect(parts.map((x) => x.furnitureId).sort()).toEqual(["r1", "s1"]);
+    // A plain copy for Fast and a detailed one for Pretty.
+    for (const q of ["fast", "pretty"] as const) expect(forQuality(parts, q).map((x) => x.furnitureId).sort()).toEqual(["r1", "s1"]);
     expect(parts.every((x) => !x.pick)).toBe(true);
     const bare = walkWorld({ [L]: plan([living]) }, { ...ctx, heights: levelHeights(levels, basics) });
     const world = walkWorld(p.floorPlans, { ...ctx, heights: levelHeights(levels, basics) });
